@@ -1,0 +1,54 @@
+# Node.js
+node_modules/
+dist/
+npm-debug.log*
+yarn-error.log
+yarn-debug.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+src-tauri/*.log
+src-tauri/Cargo.lock
+
+# Vite
+*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Supabase / PowerSync
+supabase/config.toml
+supabase/.temp/
+*.sqlite
+*.sqlite3
+*.db
+
+# Testing
+coverage/
+.vitest/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+.mcp.json
