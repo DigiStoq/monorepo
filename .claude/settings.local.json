@@ -1,5 +1,11 @@
 {
   "permissions": {
-    "allow": ["Bash(npx lint-staged)", "Bash(npx eslint:*)", "Bash(git add:*)"]
+    "allow": [
+      "Bash(npx lint-staged)",
+      "Bash(npx eslint:*)",
+      "Bash(git add:*)",
+      "Bash(npx tauri icon:*)",
+      "Bash(npm run tauri:dev:*)"
+    ]
   }
 }

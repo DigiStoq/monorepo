@@ -29,8 +29,7 @@
   },
   "plugins": {
     "shell": {
-      "open": true,
-      "scope": []
+      "open": true
     },
     "sql": {
       "preload": ["sqlite:digistoq.db"]

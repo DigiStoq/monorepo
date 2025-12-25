@@ -45,6 +45,5 @@ export default defineConfig({
   // Optimize PowerSync dependencies
   optimizeDeps: {
     exclude: ["@journeyapps/wa-sqlite", "@powersync/web"],
-    include: ["@powersync/web > js-logger"],
   },
 });
