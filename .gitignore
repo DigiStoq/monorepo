@@ -53,3 +53,4 @@ logs/
 *.log
 .mcp.json
 /.claude
+.claude/settings.local.json
