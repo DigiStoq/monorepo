@@ -1,4 +1,4 @@
-import { usePowerSync } from "@powersync/web/react";
+import { usePowerSync } from "@powersync/react";
 import { useEffect, useState } from "react";
 import type { Product } from "../types";
 import type { ProductRecord } from "@/lib/powersync";
@@ -7,17 +7,17 @@ import type { ProductRecord } from "@/lib/powersync";
 function mapRecordToProduct(record: ProductRecord): Product {
   return {
     id: record.id,
-    name: record.name,
-    sku: record.sku,
-    description: record.description,
-    category: record.category,
-    unit_price: record.unit_price,
-    cost_price: record.cost_price,
-    quantity_in_stock: record.quantity_in_stock,
-    reorder_level: record.reorder_level,
+    name: record.name ?? "",
+    sku: record.sku ?? "",
+    description: record.description ?? "",
+    category: record.category ?? "",
+    unit_price: record.unit_price ?? 0,
+    cost_price: record.cost_price ?? 0,
+    quantity_in_stock: record.quantity_in_stock ?? 0,
+    reorder_level: record.reorder_level ?? 0,
     is_active: record.is_active === 1,
-    created_at: record.created_at,
-    updated_at: record.updated_at,
+    created_at: record.created_at ?? "",
+    updated_at: record.updated_at ?? "",
   };
 }
 
