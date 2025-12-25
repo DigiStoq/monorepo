@@ -2,6 +2,7 @@ import type {
   AbstractPowerSyncDatabase,
   CrudEntry,
   PowerSyncBackendConnector,
+  PowerSyncCredentials,
 } from "@powersync/web";
 import { UpdateType } from "@powersync/web";
 import { createClient } from "@supabase/supabase-js";
@@ -18,7 +19,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     this.supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }
 
-  async fetchCredentials() {
+  async fetchCredentials(): Promise<PowerSyncCredentials> {
     // Get the current session
     const {
       data: { session },
@@ -28,7 +29,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       throw new Error("No active session. User must be authenticated.");
     }
 
-    const credentials: { endpoint: string; token: string; expiresAt?: Date } = {
+    const credentials: PowerSyncCredentials = {
       endpoint: POWERSYNC_URL,
       token: session.access_token,
     };
@@ -103,7 +104,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
   }
 
   // Get the Supabase client for direct queries if needed
-  getSupabaseClient() {
+  getSupabaseClient(): typeof this.supabase {
     return this.supabase;
   }
 }
