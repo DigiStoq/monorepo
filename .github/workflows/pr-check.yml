@@ -1,0 +1,52 @@
+name: PR Quality Check
+
+on:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+    checks: write # Required for Reviewdog to add checks
+    pull-requests: write # Required for Reviewdog to comment on PRs
+
+jobs:
+    review:
+        name: Runner
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            # 1. Type Check (Does it even compile?)
+            - name: TypeScript Check
+              run: npx tsc --noEmit
+
+            # 2. Automated Code Review (Reviewdog)
+            # This runs ESLint and comments strictly on the 'new' code you changed
+            - name: Run ESLint Review
+              uses: reviewdog/action-eslint@v1
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  reporter: github-pr-review # Comments directly on the code lines
+                  fail_level: error
+
+            # 3. Security Check (Secret Scanning)
+            # Checks if you accidentally committed API keys or passwords
+            - name: Gitleaks Security Scan
+              uses: gitleaks/gitleaks-action@v2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            # 4. Build Check (Does it build?)
+            # This ensures you didn't break the build logic
+            - name: Test Build
+              run: npm run build
