@@ -31,9 +31,20 @@ export default defineConfig({
     sourcemap: !!process.env.TAURI_DEBUG,
   },
 
+  // PowerSync web workers require ES module format
+  worker: {
+    format: "es",
+  },
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+
+  // Optimize PowerSync dependencies
+  optimizeDeps: {
+    exclude: ["@journeyapps/wa-sqlite", "@powersync/web"],
+    include: ["@powersync/web > js-logger"],
   },
 });
