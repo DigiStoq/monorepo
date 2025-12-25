@@ -5,7 +5,12 @@
       "Bash(npx eslint:*)",
       "Bash(git add:*)",
       "Bash(npx tauri icon:*)",
-      "Bash(npm run tauri:dev:*)"
+      "Bash(npm run tauri:dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cat:*)",
+      "Bash(npm search:*)",
+      "Bash(npm view:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
