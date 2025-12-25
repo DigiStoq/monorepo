@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { PowerSyncContext } from "@powersync/web/react";
+import { PowerSyncContext } from "@powersync/react";
 import type { PowerSyncDatabase } from "@powersync/web";
 import { initializePowerSync, disconnectPowerSync } from "@/lib/powersync";
 import { ProductList } from "@/features/inventory";
