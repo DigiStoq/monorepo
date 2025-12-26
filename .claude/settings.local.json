@@ -10,7 +10,11 @@
       "Bash(cat:*)",
       "Bash(npm search:*)",
       "Bash(npm view:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Skill(document-skills:docx)",
+      "Skill(document-skills:docx:*)",
+      "Bash(pandoc:*)",
+      "Bash(unzip:*)"
     ]
   }
 }
