@@ -1,0 +1,297 @@
+import { useQuery } from "@powersync/react";
+import { useCallback } from "react";
+import { getPowerSyncDatabase } from "@/lib/powersync";
+import type { Expense } from "@/features/purchases/types";
+
+export type ExpenseCategory =
+  | "rent"
+  | "utilities"
+  | "salaries"
+  | "office"
+  | "travel"
+  | "marketing"
+  | "maintenance"
+  | "insurance"
+  | "taxes"
+  | "other";
+
+// Database row type (snake_case columns from SQLite)
+interface ExpenseRow {
+  id: string;
+  expense_number: string;
+  category: ExpenseCategory;
+  customer_id: string | null;
+  customer_name: string | null;
+  date: string;
+  amount: number;
+  payment_mode: string;
+  reference_number: string | null;
+  description: string;
+  notes: string | null;
+  attachment_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapRowToExpense(row: ExpenseRow): Expense {
+  return {
+    id: row.id,
+    expenseNumber: row.expense_number,
+    category: row.category,
+    supplierId: row.customer_id ?? undefined,
+    supplierName: row.customer_name ?? undefined,
+    date: row.date,
+    amount: row.amount,
+    paymentMode: row.payment_mode,
+    referenceNumber: row.reference_number ?? undefined,
+    description: row.description,
+    notes: row.notes ?? undefined,
+    attachmentUrl: row.attachment_url ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function useExpenses(filters?: {
+  category?: ExpenseCategory;
+  supplierId?: string;
+  paymentMode?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}): { expenses: Expense[]; isLoading: boolean; error: Error | undefined } {
+  const categoryFilter = filters?.category ?? null;
+  const supplierFilter = filters?.supplierId ?? null;
+  const modeFilter = filters?.paymentMode ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+
+  const { data, isLoading, error } = useQuery<ExpenseRow>(
+    `SELECT * FROM expenses
+     WHERE ($1 IS NULL OR category = $1)
+     AND ($2 IS NULL OR customer_id = $2)
+     AND ($3 IS NULL OR payment_mode = $3)
+     AND ($4 IS NULL OR date >= $4)
+     AND ($5 IS NULL OR date <= $5)
+     AND ($6 IS NULL OR expense_number LIKE $6 OR description LIKE $6)
+     ORDER BY date DESC, created_at DESC`,
+    [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
+  );
+
+  const expenses = data.map(mapRowToExpense);
+
+  return { expenses, isLoading, error };
+}
+
+export function useExpenseById(id: string | null): {
+  expense: Expense | null;
+  isLoading: boolean;
+  error: Error | undefined;
+} {
+  const { data, isLoading, error } = useQuery<ExpenseRow>(
+    id ? `SELECT * FROM expenses WHERE id = ?` : `SELECT * FROM expenses WHERE 1 = 0`,
+    id ? [id] : []
+  );
+
+  const expense = data[0] ? mapRowToExpense(data[0]) : null;
+
+  return { expense, isLoading, error };
+}
+
+interface ExpenseMutations {
+  createExpense: (data: {
+    expenseNumber: string;
+    category: ExpenseCategory;
+    supplierId?: string;
+    supplierName?: string;
+    date: string;
+    amount: number;
+    paymentMode: string;
+    referenceNumber?: string;
+    description: string;
+    notes?: string;
+    attachmentUrl?: string;
+  }) => Promise<string>;
+  updateExpense: (
+    id: string,
+    data: Partial<{
+      category: ExpenseCategory;
+      supplierId: string;
+      supplierName: string;
+      date: string;
+      amount: number;
+      paymentMode: string;
+      referenceNumber: string;
+      description: string;
+      notes: string;
+      attachmentUrl: string;
+    }>
+  ) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
+}
+
+export function useExpenseMutations(): ExpenseMutations {
+  const db = getPowerSyncDatabase();
+
+  const createExpense = useCallback(
+    async (data: {
+      expenseNumber: string;
+      category: ExpenseCategory;
+      supplierId?: string;
+      supplierName?: string;
+      date: string;
+      amount: number;
+      paymentMode: string;
+      referenceNumber?: string;
+      description: string;
+      notes?: string;
+      attachmentUrl?: string;
+    }): Promise<string> => {
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+
+      await db.execute(
+        `INSERT INTO expenses (
+          id, expense_number, category, customer_id, customer_name, date, amount,
+          payment_mode, reference_number, description, notes, attachment_url,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.expenseNumber,
+          data.category,
+          data.supplierId ?? null,
+          data.supplierName ?? null,
+          data.date,
+          data.amount,
+          data.paymentMode,
+          data.referenceNumber ?? null,
+          data.description,
+          data.notes ?? null,
+          data.attachmentUrl ?? null,
+          now,
+          now,
+        ]
+      );
+
+      return id;
+    },
+    [db]
+  );
+
+  const updateExpense = useCallback(
+    async (
+      id: string,
+      data: Partial<{
+        category: ExpenseCategory;
+        supplierId: string;
+        supplierName: string;
+        date: string;
+        amount: number;
+        paymentMode: string;
+        referenceNumber: string;
+        description: string;
+        notes: string;
+        attachmentUrl: string;
+      }>
+    ): Promise<void> => {
+      const now = new Date().toISOString();
+      const fields: string[] = [];
+      const values: (string | number | null)[] = [];
+
+      if (data.category !== undefined) {
+        fields.push("category = ?");
+        values.push(data.category);
+      }
+      if (data.supplierId !== undefined) {
+        fields.push("customer_id = ?");
+        values.push(data.supplierId);
+      }
+      if (data.supplierName !== undefined) {
+        fields.push("customer_name = ?");
+        values.push(data.supplierName);
+      }
+      if (data.date !== undefined) {
+        fields.push("date = ?");
+        values.push(data.date);
+      }
+      if (data.amount !== undefined) {
+        fields.push("amount = ?");
+        values.push(data.amount);
+      }
+      if (data.paymentMode !== undefined) {
+        fields.push("payment_mode = ?");
+        values.push(data.paymentMode);
+      }
+      if (data.referenceNumber !== undefined) {
+        fields.push("reference_number = ?");
+        values.push(data.referenceNumber);
+      }
+      if (data.description !== undefined) {
+        fields.push("description = ?");
+        values.push(data.description);
+      }
+      if (data.notes !== undefined) {
+        fields.push("notes = ?");
+        values.push(data.notes);
+      }
+      if (data.attachmentUrl !== undefined) {
+        fields.push("attachment_url = ?");
+        values.push(data.attachmentUrl);
+      }
+
+      fields.push("updated_at = ?");
+      values.push(now);
+      values.push(id);
+
+      if (fields.length > 1) {
+        await db.execute(`UPDATE expenses SET ${fields.join(", ")} WHERE id = ?`, values);
+      }
+    },
+    [db]
+  );
+
+  const deleteExpense = useCallback(
+    async (id: string): Promise<void> => {
+      await db.execute(`DELETE FROM expenses WHERE id = ?`, [id]);
+    },
+    [db]
+  );
+
+  return {
+    createExpense,
+    updateExpense,
+    deleteExpense,
+  };
+}
+
+interface ExpenseStats {
+  totalExpenses: number;
+  thisMonthExpenses: number;
+  byCategory: Array<{ category: string; sum: number }>;
+}
+
+export function useExpenseStats(): ExpenseStats {
+  const { data: totalExpenses } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM expenses`
+  );
+
+  const { data: thisMonthExpenses } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM expenses
+     WHERE date >= date('now', 'start of month')`
+  );
+
+  const { data: byCategory } = useQuery<{ category: string; sum: number }>(
+    `SELECT category, COALESCE(SUM(amount), 0) as sum FROM expenses
+     WHERE date >= date('now', 'start of month')
+     GROUP BY category
+     ORDER BY sum DESC`
+  );
+
+  return {
+    totalExpenses: totalExpenses[0]?.sum ?? 0,
+    thisMonthExpenses: thisMonthExpenses[0]?.sum ?? 0,
+    byCategory: byCategory,
+  };
+}

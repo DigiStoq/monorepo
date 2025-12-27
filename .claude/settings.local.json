@@ -14,7 +14,11 @@
       "Skill(document-skills:docx)",
       "Skill(document-skills:docx:*)",
       "Bash(pandoc:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(dir:*)",
+      "Bash(taskkill:*)",
+      "Bash(del \"d:\\\\Software-Dev\\\\GitHub\\\\monorepo\\\\src\\\\features\\\\reports\\\\pages\\\\party-statement-report.tsx\")",
+      "Bash(cargo check:*)"
     ]
   }
 }
