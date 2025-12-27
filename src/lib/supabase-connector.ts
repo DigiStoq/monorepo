@@ -12,12 +12,11 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISABLE_KEY;
 const POWERSYNC_URL = import.meta.env.VITE_POWERSYNC_URL;
 
-export class SupabaseConnector implements PowerSyncBackendConnector {
-  private supabase;
+// Shared Supabase client instance
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-  constructor() {
-    this.supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  }
+export class SupabaseConnector implements PowerSyncBackendConnector {
+  private supabase = supabase;
 
   async fetchCredentials(): Promise<PowerSyncCredentials> {
     // Get the current session
@@ -25,8 +24,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       data: { session },
     } = await this.supabase.auth.getSession();
 
+    // If no session, return null credentials - sync won't work but local db will
     if (!session) {
-      throw new Error("No active session. User must be authenticated.");
+      console.warn("No auth session - PowerSync sync disabled. Data stored locally only.");
+      // Return empty credentials - PowerSync will work offline-only
+      return {
+        endpoint: POWERSYNC_URL,
+        token: "", // Empty token means no sync
+      };
     }
 
     const credentials: PowerSyncCredentials = {

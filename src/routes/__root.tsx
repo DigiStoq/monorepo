@@ -1,0 +1,234 @@
+import { useCallback } from "react";
+import { Outlet, useNavigate, useLocation } from "@tanstack/react-router";
+import {
+  AppShell,
+  Sidebar,
+  SidebarLogo,
+  SidebarUser,
+  type NavItem,
+} from "@/components/layout";
+import { ToastProvider } from "@/components/ui";
+import { useUIStore, useAuthStore } from "@/stores";
+import {
+  LayoutDashboard,
+  Users,
+  Package,
+  ShoppingCart,
+  Receipt,
+  Wallet,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  Wrench,
+  LogOut,
+} from "lucide-react";
+
+// ============================================================================
+// NAVIGATION CONFIG
+// ============================================================================
+
+const navigationItems: NavItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/",
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    icon: Users,
+    href: "/customers",
+  },
+  {
+    id: "items",
+    label: "Items",
+    icon: Package,
+    href: "/items",
+  },
+  {
+    id: "sale",
+    label: "Sale",
+    icon: ShoppingCart,
+    children: [
+      { id: "sale-invoices", label: "Sale Invoices", href: "/sale/invoices" },
+      { id: "sale-estimates", label: "Estimates/Quotations", href: "/sale/estimates" },
+      { id: "sale-payment-in", label: "Payment In", href: "/sale/payment-in" },
+      { id: "sale-credit-notes", label: "Credit Notes", href: "/sale/credit-notes" },
+    ],
+  },
+  {
+    id: "purchase",
+    label: "Purchase",
+    icon: Receipt,
+    children: [
+      { id: "purchase-invoices", label: "Purchase Invoices", href: "/purchase/invoices" },
+      { id: "purchase-payment-out", label: "Payment Out", href: "/purchase/payment-out" },
+      { id: "purchase-expenses", label: "Expenses", href: "/purchase/expenses" },
+    ],
+  },
+  {
+    id: "cash-bank",
+    label: "Cash & Bank",
+    icon: Wallet,
+    children: [
+      { id: "bank-accounts", label: "Bank Accounts", href: "/cash-bank/accounts" },
+      { id: "cash-in-hand", label: "Cash in Hand", href: "/cash-bank/cash" },
+      { id: "cheques", label: "Cheques", href: "/cash-bank/cheques" },
+      { id: "loans", label: "Loans", href: "/cash-bank/loans" },
+    ],
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    icon: BarChart3,
+    href: "/reports",
+  },
+];
+
+const bottomItems: NavItem[] = [
+  {
+    id: "utilities",
+    label: "Utilities",
+    icon: Wrench,
+    href: "/utilities",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    href: "/settings",
+  },
+  {
+    id: "help",
+    label: "Help & Support",
+    icon: HelpCircle,
+    href: "/help",
+  },
+];
+
+// ============================================================================
+// ROOT LAYOUT
+// ============================================================================
+
+export function RootLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // UI Store
+  const {
+    sidebarCollapsed,
+    sidebarExpandedIds,
+    toggleSidebar,
+    toggleSidebarSection,
+  } = useUIStore();
+
+  // Auth Store
+  const { user, signOut } = useAuthStore();
+
+  // Handle logout
+  const handleLogout = useCallback(async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  }, [signOut, navigate]);
+
+  // Determine active item from current path
+  const getActiveId = (): string => {
+    const path = location.pathname;
+
+    // Find matching nav item
+    for (const item of [...navigationItems, ...bottomItems]) {
+      if (item.href === path) return item.id;
+      if (item.children) {
+        for (const child of item.children) {
+          if (child.href === path) return child.id;
+        }
+      }
+    }
+
+    // Default to dashboard
+    if (path === "/") return "dashboard";
+    return "";
+  };
+
+  const handleNavigate = useCallback(
+    (item: NavItem) => {
+      if (item.href) {
+        navigate({ to: item.href });
+      }
+    },
+    [navigate]
+  );
+
+  return (
+    <ToastProvider position="top-right">
+      <AppShell
+        sidebarCollapsed={sidebarCollapsed}
+        sidebar={
+          <Sidebar
+            items={navigationItems}
+            activeId={getActiveId()}
+            expandedIds={sidebarExpandedIds}
+            onToggleExpand={toggleSidebarSection}
+            onNavigate={handleNavigate}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
+            header={
+              <SidebarLogo
+                logo={
+                  <span className="text-white font-bold text-lg">D</span>
+                }
+                name="DigiStoq"
+                tagline="Inventory Management"
+                isCollapsed={sidebarCollapsed}
+                onClick={() => navigate({ to: "/" })}
+              />
+            }
+            footer={
+              <div className="space-y-2">
+                {/* Bottom Navigation Items */}
+                {!sidebarCollapsed && (
+                  <div className="space-y-1 mb-3">
+                    {bottomItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleNavigate(item)}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-sidebar-hover hover:text-white transition-colors"
+                        >
+                          {Icon && <Icon className="h-4 w-4" />}
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                    {/* Logout Button */}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* User Profile */}
+                <SidebarUser
+                  name={user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
+                  email={user?.email ?? ""}
+                  isCollapsed={sidebarCollapsed}
+                  onClick={() => navigate({ to: "/settings/profile" })}
+                />
+              </div>
+            }
+          />
+        }
+      >
+        <Outlet />
+      </AppShell>
+    </ToastProvider>
+  );
+}

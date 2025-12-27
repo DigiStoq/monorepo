@@ -24,7 +24,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost; connect-src 'self' https://*.supabase.co https://*.powersync.com"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.powersync.com wss://*.powersync.co https://rqjsrlxvipbydkbinibr.supabase.co wss://rqjsrlxvipbydkbinibr.supabase.co ipc: http://ipc.localhost; worker-src 'self' blob:"
     }
   },
   "plugins": {

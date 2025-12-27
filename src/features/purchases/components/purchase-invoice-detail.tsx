@@ -1,0 +1,273 @@
+import { cn } from "@/lib/cn";
+import { Card, CardHeader, CardBody, Button, Badge } from "@/components/ui";
+import {
+  X,
+  Printer,
+  Trash2,
+  Edit,
+  Calendar,
+  Building2,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  DollarSign,
+} from "lucide-react";
+import type { PurchaseInvoice, PurchaseInvoiceStatus } from "../types";
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface PurchaseInvoiceDetailProps {
+  invoice: PurchaseInvoice;
+  onClose?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onPrint?: () => void;
+  onRecordPayment?: () => void;
+  className?: string;
+}
+
+// ============================================================================
+// STATUS CONFIG
+// ============================================================================
+
+const statusConfig: Record<PurchaseInvoiceStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
+  draft: { label: "Draft", variant: "secondary", icon: FileText },
+  received: { label: "Received", variant: "info", icon: Clock },
+  paid: { label: "Paid", variant: "success", icon: CheckCircle },
+  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
+  overdue: { label: "Overdue", variant: "error", icon: AlertCircle },
+  cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
+};
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+export function PurchaseInvoiceDetail({
+  invoice,
+  onClose,
+  onEdit,
+  onDelete,
+  onPrint,
+  onRecordPayment,
+  className,
+}: PurchaseInvoiceDetailProps) {
+  const status = statusConfig[invoice.status];
+  const StatusIcon = status.icon;
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString("en-US", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+  const canPay = invoice.status !== "paid" && invoice.status !== "cancelled" && invoice.amountDue > 0;
+
+  return (
+    <div className={cn("h-full flex flex-col", className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {invoice.invoiceNumber}
+          </h2>
+          <p className="text-sm text-slate-500">Purchase Invoice</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onPrint}>
+            <Printer className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Status & Amount Card */}
+        <Card className={cn(
+          invoice.status === "paid" ? "bg-success-light border-success/20" :
+          invoice.status === "overdue" ? "bg-error-light border-error/20" :
+          "bg-slate-50"
+        )}>
+          <CardBody className="text-center py-6">
+            <Badge variant={status.variant} size="lg" className="mb-3">
+              <StatusIcon className="h-4 w-4 mr-1" />
+              {status.label}
+            </Badge>
+            <p className="text-3xl font-bold text-slate-900">{formatCurrency(invoice.total)}</p>
+            {invoice.amountDue > 0 && invoice.amountDue !== invoice.total && (
+              <p className="text-lg text-error mt-1">
+                Due: {formatCurrency(invoice.amountDue)}
+              </p>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Quick Action */}
+        {canPay && (
+          <Button fullWidth leftIcon={<DollarSign className="h-4 w-4" />} onClick={onRecordPayment}>
+            Record Payment
+          </Button>
+        )}
+
+        {/* Invoice Details */}
+        <Card>
+          <CardHeader title="Details" />
+          <CardBody className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <Building2 className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Supplier</p>
+                <p className="font-medium text-slate-900">{invoice.customerName}</p>
+              </div>
+            </div>
+
+            {invoice.supplierInvoiceNumber && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Supplier Invoice #</p>
+                  <p className="font-medium text-slate-900">{invoice.supplierInvoiceNumber}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <Calendar className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Invoice Date</p>
+                <p className="font-medium text-slate-900">{formatDate(invoice.date)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                invoice.status === "overdue" ? "bg-error-light" : "bg-slate-100"
+              )}>
+                <Clock className={cn("h-4 w-4", invoice.status === "overdue" ? "text-error" : "text-slate-500")} />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Due Date</p>
+                <p className={cn("font-medium", invoice.status === "overdue" ? "text-error" : "text-slate-900")}>
+                  {formatDate(invoice.dueDate)}
+                </p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Items */}
+        <Card>
+          <CardHeader title="Items" />
+          <CardBody className="p-0">
+            <div className="divide-y divide-slate-100">
+              {invoice.items.map((item) => (
+                <div key={item.id} className="p-4 flex justify-between">
+                  <div>
+                    <p className="font-medium text-slate-900">{item.itemName}</p>
+                    <p className="text-sm text-slate-500">
+                      {item.quantity} {item.unit} × {formatCurrency(item.unitPrice)}
+                    </p>
+                  </div>
+                  <p className="font-medium text-slate-900">{formatCurrency(item.amount)}</p>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Summary */}
+        <Card>
+          <CardBody className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Subtotal</span>
+              <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+            </div>
+            {invoice.discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Discount</span>
+                <span className="font-medium text-success">-{formatCurrency(invoice.discountAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Tax</span>
+              <span className="font-medium">{formatCurrency(invoice.taxAmount)}</span>
+            </div>
+            <div className="pt-2 border-t border-slate-200 flex justify-between">
+              <span className="font-semibold text-slate-900">Total</span>
+              <span className="font-bold text-primary-600">{formatCurrency(invoice.total)}</span>
+            </div>
+            {invoice.amountPaid > 0 && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Paid</span>
+                  <span className="font-medium text-success">{formatCurrency(invoice.amountPaid)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Balance Due</span>
+                  <span className="font-medium text-error">{formatCurrency(invoice.amountDue)}</span>
+                </div>
+              </>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Notes */}
+        {invoice.notes && (
+          <Card>
+            <CardHeader title="Notes" />
+            <CardBody>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">{invoice.notes}</p>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Timestamps */}
+        <Card>
+          <CardBody className="text-xs text-slate-400 space-y-1">
+            <p>Created: {formatDate(invoice.createdAt)}</p>
+            <p>Updated: {formatDate(invoice.updatedAt)}</p>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="p-4 border-t border-slate-200 space-y-2">
+        <Button fullWidth variant="outline" leftIcon={<Edit className="h-4 w-4" />} onClick={onEdit}>
+          Edit Purchase
+        </Button>
+        <Button
+          fullWidth
+          variant="ghost"
+          leftIcon={<Trash2 className="h-4 w-4" />}
+          onClick={onDelete}
+          className="text-error hover:bg-error-light"
+        >
+          Delete Purchase
+        </Button>
+      </div>
+    </div>
+  );
+}

@@ -1,7 +1,22 @@
 import { usePowerSync } from "@powersync/react";
 import { useEffect, useState } from "react";
 import type { Product } from "../types";
-import type { ProductRecord } from "@/lib/powersync";
+
+// Type for database record
+interface ProductRecord {
+  id: string;
+  name: string | null;
+  sku: string | null;
+  description: string | null;
+  category: string | null;
+  unit_price: number | null;
+  cost_price: number | null;
+  quantity_in_stock: number | null;
+  reorder_level: number | null;
+  is_active: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 // Convert database record to Product type
 function mapRecordToProduct(record: ProductRecord): Product {
