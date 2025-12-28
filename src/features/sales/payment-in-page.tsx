@@ -118,7 +118,7 @@ export function PaymentInPage() {
               onEdit={() => {
                 setIsFormOpen(true);
               }}
-              onDelete={handleDeletePayment}
+              onDelete={() => { void handleDeletePayment(); }}
               onPrint={() => {
                 console.log("Print payment:", currentSelectedPayment.id);
               }}
@@ -138,7 +138,7 @@ export function PaymentInPage() {
             <PaymentInForm
               customers={customers}
               invoices={invoices}
-              onSubmit={handleSubmitPayment}
+              onSubmit={(data) => { void handleSubmitPayment(data); }}
               onCancel={handleCloseForm}
               isSubmitting={isSubmitting}
               className="p-6"

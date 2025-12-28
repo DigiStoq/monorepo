@@ -56,10 +56,10 @@ export function PurchaseInvoiceForm({
 }: PurchaseInvoiceFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
   const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(initialData?.supplierInvoiceNumber ?? "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate !== undefined ? initialData.dueDate : "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
 
@@ -247,7 +247,7 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="text"
                     value={supplierInvoiceNumber}
-                    onChange={(e) => setSupplierInvoiceNumber(e.target.value)}
+                    onChange={(e) => { setSupplierInvoiceNumber(e.target.value); }}
                     placeholder="Supplier's invoice number"
                   />
                 </div>
@@ -262,7 +262,7 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => { setDate(e.target.value); }}
                   />
                 </div>
 
@@ -274,7 +274,7 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="date"
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={(e) => { setDueDate(e.target.value); }}
                   />
                 </div>
               </div>
@@ -354,7 +354,7 @@ export function PurchaseInvoiceForm({
                               options={itemOptions}
                               value={item.itemId}
                               onChange={(value) =>
-                                handleUpdateLineItem(item.id, "itemId", value)
+                                { handleUpdateLineItem(item.id, "itemId", value); }
                               }
                               size="sm"
                             />
@@ -365,11 +365,11 @@ export function PurchaseInvoiceForm({
                               min="1"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -382,11 +382,11 @@ export function PurchaseInvoiceForm({
                               step="0.01"
                               value={item.unitPrice}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -399,11 +399,11 @@ export function PurchaseInvoiceForm({
                               max="100"
                               value={item.discountPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -416,11 +416,11 @@ export function PurchaseInvoiceForm({
                               max="100"
                               value={item.taxPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -433,7 +433,7 @@ export function PurchaseInvoiceForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveLineItem(item.id)}
+                              onClick={() => { handleRemoveLineItem(item.id); }}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -455,7 +455,7 @@ export function PurchaseInvoiceForm({
                 placeholder="Add any notes about this purchase..."
                 rows={3}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => { setNotes(e.target.value); }}
               />
             </CardBody>
           </Card>
@@ -478,7 +478,7 @@ export function PurchaseInvoiceForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => { setDiscountPercent(parseFloat(e.target.value) || 0); }}
                   size="sm"
                   className="w-16 text-right"
                 />

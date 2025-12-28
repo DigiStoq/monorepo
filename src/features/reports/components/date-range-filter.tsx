@@ -164,14 +164,14 @@ export function DateRangeFilter({ value, onChange, className }: DateRangeFilterP
           <Input
             type="date"
             value={value.from}
-            onChange={(e) => onChange({ ...value, from: e.target.value })}
+            onChange={(e) => { onChange({ ...value, from: e.target.value }); }}
             className="w-36"
           />
           <span className="text-slate-400">to</span>
           <Input
             type="date"
             value={value.to}
-            onChange={(e) => onChange({ ...value, to: e.target.value })}
+            onChange={(e) => { onChange({ ...value, to: e.target.value }); }}
             className="w-36"
           />
         </>

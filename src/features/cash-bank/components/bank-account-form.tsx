@@ -51,9 +51,15 @@ export function BankAccountForm({
   // Form state
   const [name, setName] = useState(initialData?.name ?? "");
   const [bankName, setBankName] = useState(initialData?.bankName ?? "");
-  const [accountNumber, setAccountNumber] = useState(initialData?.accountNumber ?? "");
-  const [accountType, setAccountType] = useState<BankAccountType>(initialData?.accountType ?? "checking");
-  const [openingBalance, setOpeningBalance] = useState<number>(initialData?.openingBalance ?? 0);
+  const [accountNumber, setAccountNumber] = useState(
+    initialData?.accountNumber ?? ""
+  );
+  const [accountType, setAccountType] = useState<BankAccountType>(
+    initialData?.accountType ?? "checking"
+  );
+  const [openingBalance, setOpeningBalance] = useState<number>(
+    initialData?.openingBalance ?? 0
+  );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
   // Format currency
@@ -97,7 +103,9 @@ export function BankAccountForm({
                 <Input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                  }}
                   placeholder="e.g., Business Checking"
                 />
               </div>
@@ -110,7 +118,9 @@ export function BankAccountForm({
                 <Select
                   options={accountTypeOptions}
                   value={accountType}
-                  onChange={(value) => setAccountType(value as BankAccountType)}
+                  onChange={(value) => {
+                    setAccountType(value as BankAccountType);
+                  }}
                 />
               </div>
 
@@ -122,7 +132,9 @@ export function BankAccountForm({
                 <Input
                   type="text"
                   value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
+                  onChange={(e) => {
+                    setBankName(e.target.value);
+                  }}
                   placeholder="e.g., Chase Bank"
                 />
               </div>
@@ -135,7 +147,9 @@ export function BankAccountForm({
                 <Input
                   type="text"
                   value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
+                  onChange={(e) => {
+                    setAccountNumber(e.target.value);
+                  }}
                   placeholder="Enter account number"
                 />
               </div>
@@ -156,11 +170,14 @@ export function BankAccountForm({
                   type="number"
                   step="0.01"
                   value={openingBalance}
-                  onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    setOpeningBalance(parseFloat(e.target.value) || 0);
+                  }}
                   placeholder="0.00"
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Enter the current balance in this account. Use negative for credit cards or loans.
+                  Enter the current balance in this account. Use negative for
+                  credit cards or loans.
                 </p>
               </div>
             </CardBody>
@@ -173,21 +190,30 @@ export function BankAccountForm({
                 placeholder="Add any notes about this account..."
                 rows={4}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                }}
               />
             </CardBody>
           </Card>
 
           {/* Summary */}
-          <Card className={cn(
-            "border",
-            openingBalance >= 0
-              ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100"
-              : "bg-gradient-to-br from-red-50 to-orange-50 border-red-100"
-          )}>
+          <Card
+            className={cn(
+              "border",
+              openingBalance >= 0
+                ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100"
+                : "bg-gradient-to-br from-red-50 to-orange-50 border-red-100"
+            )}
+          >
             <CardBody className="text-center py-6">
               <p className="text-sm text-slate-600 mb-1">Opening Balance</p>
-              <p className={cn("text-3xl font-bold", openingBalance >= 0 ? "text-success" : "text-error")}>
+              <p
+                className={cn(
+                  "text-3xl font-bold",
+                  openingBalance >= 0 ? "text-success" : "text-error"
+                )}
+              >
                 {formatCurrency(openingBalance)}
               </p>
             </CardBody>

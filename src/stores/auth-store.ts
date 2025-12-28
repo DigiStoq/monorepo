@@ -137,15 +137,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { error };
     }
 
-    if (data.session) {
-      await saveSession(data.session);
-      set({
-        user: data.user,
-        session: data.session,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    }
+    await saveSession(data.session);
+    set({
+      user: data.user,
+      session: data.session,
+      isAuthenticated: true,
+      isLoading: false,
+    });
 
     return { error: null };
   },

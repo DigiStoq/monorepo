@@ -65,8 +65,8 @@ export function LowStockReport() {
       title="Low Stock Alert"
       subtitle="Items below minimum stock levels"
       backPath="/reports"
-      onExport={() => console.log("Export low stock report")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export low stock report"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
@@ -74,7 +74,7 @@ export function LowStockReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -82,7 +82,7 @@ export function LowStockReport() {
             <input
               type="checkbox"
               checked={showOutOfStock}
-              onChange={(e) => setShowOutOfStock(e.target.checked)}
+              onChange={(e) => { setShowOutOfStock(e.target.checked); }}
               className="rounded border-slate-300"
             />
             Show only out of stock

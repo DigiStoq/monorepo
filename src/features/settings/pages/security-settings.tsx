@@ -83,7 +83,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => !disabled && onChange(!checked)}
+      onClick={() => { if (!disabled) onChange(!checked); }}
       disabled={disabled}
       className={cn(
         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
@@ -135,7 +135,7 @@ export function SecuritySettingsPage() {
       title="Security Settings"
       description="Manage your account security and access"
       actions={
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -156,7 +156,7 @@ export function SecuritySettingsPage() {
               <Toggle
                 checked={settings.twoFactorEnabled}
                 onChange={(v) =>
-                  setSettings((prev) => ({ ...prev, twoFactorEnabled: v }))
+                  { setSettings((prev) => ({ ...prev, twoFactorEnabled: v })); }
                 }
               />
             </SettingsRow>
@@ -176,10 +176,10 @@ export function SecuritySettingsPage() {
                       <button
                         key={method.value}
                         onClick={() =>
-                          setSettings((prev) => ({
+                          { setSettings((prev) => ({
                             ...prev,
                             twoFactorMethod: method.value as "app" | "sms" | "email",
-                          }))
+                          })); }
                         }
                         className={cn(
                           "p-4 rounded-lg border text-left transition-all",
@@ -226,10 +226,10 @@ export function SecuritySettingsPage() {
               <select
                 value={settings.sessionTimeout}
                 onChange={(e) =>
-                  setSettings((prev) => ({
+                  { setSettings((prev) => ({
                     ...prev,
                     sessionTimeout: parseInt(e.target.value),
-                  }))
+                  })); }
                 }
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -250,7 +250,7 @@ export function SecuritySettingsPage() {
             <div>
               <p className="font-medium text-slate-900">Active Sessions</p>
               <p className="text-sm text-slate-500">
-                You're currently signed in on 2 devices
+                You&apos;re currently signed in on 2 devices
               </p>
             </div>
             <Button variant="secondary" size="sm" className="text-error hover:text-error">
@@ -273,7 +273,7 @@ export function SecuritySettingsPage() {
               <Toggle
                 checked={settings.requirePasswordChange}
                 onChange={(v) =>
-                  setSettings((prev) => ({ ...prev, requirePasswordChange: v }))
+                  { setSettings((prev) => ({ ...prev, requirePasswordChange: v })); }
                 }
               />
             </SettingsRow>
@@ -282,10 +282,10 @@ export function SecuritySettingsPage() {
                 <select
                   value={settings.passwordChangeDays ?? 90}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    { setSettings((prev) => ({
                       ...prev,
                       passwordChangeDays: parseInt(e.target.value),
-                    }))
+                    })); }
                   }
                   className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
@@ -314,10 +314,10 @@ export function SecuritySettingsPage() {
               <Toggle
                 checked={(settings.allowedIPs?.length ?? 0) > 0}
                 onChange={(v) =>
-                  setSettings((prev) => ({
+                  { setSettings((prev) => ({
                     ...prev,
                     allowedIPs: v ? [""] : [],
-                  }))
+                  })); }
                 }
               />
             </SettingsRow>
@@ -330,10 +330,10 @@ export function SecuritySettingsPage() {
                 <textarea
                   value={settings.allowedIPs?.join("\n") ?? ""}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    { setSettings((prev) => ({
                       ...prev,
                       allowedIPs: e.target.value.split("\n").filter(Boolean),
-                    }))
+                    })); }
                   }
                   rows={4}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"

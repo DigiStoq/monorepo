@@ -68,8 +68,8 @@ export function ExpenseForm({
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [category, setCategory] = useState<ExpenseCategory>(initialData?.category ?? "other");
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
   const [amount, setAmount] = useState<number>(initialData?.amount ?? 0);
   const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(initialData?.paymentMode ?? "cash");
   const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
@@ -127,7 +127,7 @@ export function ExpenseForm({
                 <Select
                   options={categoryOptions}
                   value={category}
-                  onChange={(value) => setCategory(value as ExpenseCategory)}
+                  onChange={(value) => { setCategory(value as ExpenseCategory); }}
                 />
               </div>
 
@@ -139,7 +139,7 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => { setDescription(e.target.value); }}
                   placeholder="What was this expense for?"
                 />
               </div>
@@ -152,7 +152,7 @@ export function ExpenseForm({
                 <Input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => { setDate(e.target.value); }}
                 />
               </div>
 
@@ -165,7 +165,7 @@ export function ExpenseForm({
                   min="0"
                   step="0.01"
                   value={amount}
-                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => { setAmount(parseFloat(e.target.value) || 0); }}
                   placeholder="0.00"
                 />
               </div>
@@ -186,7 +186,7 @@ export function ExpenseForm({
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => setPaymentMode(value as PaymentOutMode)}
+                  onChange={(value) => { setPaymentMode(value as PaymentOutMode); }}
                 />
               </div>
 
@@ -211,7 +211,7 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  onChange={(e) => { setReferenceNumber(e.target.value); }}
                   placeholder="Bill number, receipt number, etc."
                 />
               </div>
@@ -225,7 +225,7 @@ export function ExpenseForm({
                 placeholder="Add any additional notes..."
                 rows={3}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => { setNotes(e.target.value); }}
               />
             </CardBody>
           </Card>

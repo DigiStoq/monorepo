@@ -45,7 +45,7 @@ export function SignupPage(): ReactNode {
       // Check if email confirmation is required
       const authState = useAuthStore.getState();
       if (authState.isAuthenticated) {
-        navigate({ to: "/" });
+        void navigate({ to: "/" });
       } else {
         // Email confirmation required
         setSuccess(true);
@@ -57,13 +57,17 @@ export function SignupPage(): ReactNode {
 
   if (success) {
     return (
-      <AuthLayout title="Check your email" subtitle="We've sent you a confirmation link">
+      <AuthLayout
+        title="Check your email"
+        subtitle="We've sent you a confirmation link"
+      >
         <div className="text-center space-y-4">
           <div className="h-16 w-16 bg-success-light rounded-full flex items-center justify-center mx-auto">
             <Mail className="h-8 w-8 text-success" />
           </div>
           <p className="text-slate-600">
-            Click the link in your email to confirm your account and start using DigiStoq.
+            Click the link in your email to confirm your account and start using
+            DigiStoq.
           </p>
           <Link
             to="/login"
@@ -78,7 +82,12 @@ export function SignupPage(): ReactNode {
 
   return (
     <AuthLayout title="Create account" subtitle="Get started with DigiStoq">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+        className="space-y-5"
+      >
         {/* Error Message */}
         {displayError && (
           <div className="bg-error-light text-error text-sm p-3 rounded-lg">
@@ -92,7 +101,9 @@ export function SignupPage(): ReactNode {
           label="Full name (optional)"
           placeholder="John Doe"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
           leftIcon={<User size={18} className="text-slate-400" />}
           autoComplete="name"
           disabled={isLoading}
@@ -104,7 +115,9 @@ export function SignupPage(): ReactNode {
           label="Email address"
           placeholder="you@example.com"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
           leftIcon={<Mail size={18} className="text-slate-400" />}
           autoComplete="email"
           disabled={isLoading}
@@ -116,7 +129,9 @@ export function SignupPage(): ReactNode {
           label="Password"
           placeholder="Create a password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+          }}
           leftIcon={<Lock size={18} className="text-slate-400" />}
           showPasswordToggle
           helperText="Must be at least 6 characters"
@@ -130,7 +145,9 @@ export function SignupPage(): ReactNode {
           label="Confirm password"
           placeholder="Confirm your password"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value);
+          }}
           leftIcon={<Lock size={18} className="text-slate-400" />}
           showPasswordToggle
           autoComplete="new-password"
@@ -138,12 +155,7 @@ export function SignupPage(): ReactNode {
         />
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={isLoading}
-          size="lg"
-        >
+        <Button type="submit" fullWidth isLoading={isLoading} size="lg">
           Create account
         </Button>
 

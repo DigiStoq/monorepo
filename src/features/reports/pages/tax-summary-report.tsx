@@ -67,8 +67,8 @@ export function TaxSummaryReport() {
       title="Tax Summary"
       subtitle="Sales tax collected vs purchase tax paid"
       backPath="/reports"
-      onExport={() => console.log("Export tax summary")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export tax summary"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />

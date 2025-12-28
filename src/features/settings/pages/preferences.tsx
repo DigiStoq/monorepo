@@ -47,7 +47,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => { onChange(!checked); }}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
         checked ? "bg-teal-600" : "bg-slate-200"
       }`}
@@ -116,7 +116,7 @@ export function PreferencesPage() {
       title="Preferences"
       description="Customize your app experience"
       actions={
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -138,7 +138,7 @@ export function PreferencesPage() {
                   return (
                     <button
                       key={option.value}
-                      onClick={() => updateField("theme", option.value)}
+                      onClick={() => { updateField("theme", option.value); }}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
                         isActive
@@ -156,7 +156,7 @@ export function PreferencesPage() {
             <SettingsRow label="Compact Mode" description="Use smaller spacing and fonts">
               <Toggle
                 checked={preferences.compactMode}
-                onChange={(v) => updateField("compactMode", v)}
+                onChange={(v) => { updateField("compactMode", v); }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -172,7 +172,7 @@ export function PreferencesPage() {
             <SettingsRow label="Date Format">
               <select
                 value={preferences.dateFormat}
-                onChange={(e) => updateField("dateFormat", e.target.value as DateFormat)}
+                onChange={(e) => { updateField("dateFormat", e.target.value as DateFormat); }}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {dateFormatOptions.map((opt) => (
@@ -186,13 +186,13 @@ export function PreferencesPage() {
               <select
                 value={preferences.numberFormat.decimalSeparator}
                 onChange={(e) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalSeparator: e.target.value as "." | ",",
                     },
-                  }))
+                  })); }
                 }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -204,13 +204,13 @@ export function PreferencesPage() {
               <select
                 value={preferences.numberFormat.thousandsSeparator}
                 onChange={(e) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       thousandsSeparator: e.target.value as "," | "." | " ",
                     },
-                  }))
+                  })); }
                 }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -223,13 +223,13 @@ export function PreferencesPage() {
               <select
                 value={preferences.numberFormat.decimalPlaces}
                 onChange={(e) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalPlaces: parseInt(e.target.value),
                     },
-                  }))
+                  })); }
                 }
                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -253,7 +253,7 @@ export function PreferencesPage() {
               <select
                 value={preferences.defaultInvoiceTerms}
                 onChange={(e) =>
-                  updateField("defaultInvoiceTerms", parseInt(e.target.value))
+                  { updateField("defaultInvoiceTerms", parseInt(e.target.value)); }
                 }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -269,7 +269,7 @@ export function PreferencesPage() {
             <SettingsRow label="Payment Terms Text">
               <select
                 value={preferences.defaultPaymentTerms}
-                onChange={(e) => updateField("defaultPaymentTerms", e.target.value)}
+                onChange={(e) => { updateField("defaultPaymentTerms", e.target.value); }}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="Due on Receipt">Due on Receipt</option>
@@ -283,7 +283,7 @@ export function PreferencesPage() {
             <SettingsRow label="Auto-Save" description="Automatically save changes">
               <Toggle
                 checked={preferences.autoSave}
-                onChange={(v) => updateField("autoSave", v)}
+                onChange={(v) => { updateField("autoSave", v); }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -301,7 +301,7 @@ export function PreferencesPage() {
               return (
                 <button
                   key={widget.id}
-                  onClick={() => toggleWidget(widget.id)}
+                  onClick={() => { toggleWidget(widget.id); }}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left",
                     isActive
@@ -358,13 +358,13 @@ export function PreferencesPage() {
               <select
                 value={preferences.printSettings.paperSize}
                 onChange={(e) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     printSettings: {
                       ...prev.printSettings,
                       paperSize: e.target.value as "A4" | "Letter" | "Legal",
                     },
-                  }))
+                  })); }
                 }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -377,10 +377,10 @@ export function PreferencesPage() {
               <Toggle
                 checked={preferences.printSettings.showLogo}
                 onChange={(v) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showLogo: v },
-                  }))
+                  })); }
                 }
               />
             </SettingsRow>
@@ -391,10 +391,10 @@ export function PreferencesPage() {
               <Toggle
                 checked={preferences.printSettings.showSignature}
                 onChange={(v) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showSignature: v },
-                  }))
+                  })); }
                 }
               />
             </SettingsRow>
@@ -405,10 +405,10 @@ export function PreferencesPage() {
               <Toggle
                 checked={preferences.printSettings.showTerms}
                 onChange={(v) =>
-                  setPreferences((prev) => ({
+                  { setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showTerms: v },
-                  }))
+                  })); }
                 }
               />
             </SettingsRow>

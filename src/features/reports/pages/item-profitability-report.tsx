@@ -38,7 +38,7 @@ export function ItemProfitabilityReport() {
 
   // Filter and sort data
   const processedData = useMemo(() => {
-    let data = mockItemProfitability.filter((item) =>
+    const data = mockItemProfitability.filter((item) =>
       item.itemName.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -109,8 +109,8 @@ export function ItemProfitabilityReport() {
       title="Item Profitability"
       subtitle="Profit margin analysis by item"
       backPath="/reports"
-      onExport={() => console.log("Export profitability report")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export profitability report"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -119,7 +119,7 @@ export function ItemProfitabilityReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -178,20 +178,20 @@ export function ItemProfitabilityReport() {
                     <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Units Sold</th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("revenue")}
+                      onClick={() => { handleSort("revenue"); }}
                     >
                       Revenue <SortIcon column="revenue" />
                     </th>
                     <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Cost</th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("profit")}
+                      onClick={() => { handleSort("profit"); }}
                     >
                       Profit <SortIcon column="profit" />
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("margin")}
+                      onClick={() => { handleSort("margin"); }}
                     >
                       Margin <SortIcon column="margin" />
                     </th>

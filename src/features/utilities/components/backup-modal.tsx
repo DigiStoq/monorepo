@@ -220,7 +220,7 @@ export function BackupModal({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setDestination("local")}
+              onClick={() => { setDestination("local"); }}
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "local"
@@ -234,7 +234,7 @@ export function BackupModal({
             </button>
             <button
               type="button"
-              onClick={() => setDestination("cloud")}
+              onClick={() => { setDestination("cloud"); }}
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "cloud"
@@ -273,7 +273,7 @@ export function BackupModal({
             <input
               type="checkbox"
               checked={includeAttachments}
-              onChange={(e) => setIncludeAttachments(e.target.checked)}
+              onChange={(e) => { setIncludeAttachments(e.target.checked); }}
               className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
@@ -286,7 +286,7 @@ export function BackupModal({
             <input
               type="checkbox"
               checked={compress}
-              onChange={(e) => setCompress(e.target.checked)}
+              onChange={(e) => { setCompress(e.target.checked); }}
               className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
@@ -301,7 +301,7 @@ export function BackupModal({
           <CardBody className="flex items-start gap-3">
             <Database className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-blue-900">What's included in the backup</p>
+              <p className="text-sm font-medium text-blue-900">What&apos;s included in the backup</p>
               <ul className="text-xs text-blue-700 mt-1 space-y-0.5 list-disc list-inside">
                 <li>All customers and items</li>
                 <li>Invoices, payments, and expenses</li>
@@ -318,7 +318,7 @@ export function BackupModal({
           Cancel
         </Button>
         <Button
-          onClick={handleBackup}
+          onClick={() => { void handleBackup(); }}
           disabled={isProcessing}
           leftIcon={
             isProcessing ? (

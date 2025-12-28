@@ -127,16 +127,16 @@ export function DayBookReport() {
     <ReportLayout
       title="Day Book"
       subtitle="All transactions chronologically"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
+      onRefresh={() => { console.log("Refresh"); }}
+      onExport={() => { console.log("Export"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
           <Select
             options={typeOptions}
             value={typeFilter}
-            onChange={(value) => setTypeFilter(value as DayBookEntry["type"] | "all")}
+            onChange={(value) => { setTypeFilter(value as DayBookEntry["type"] | "all"); }}
             className="w-48"
           />
         </div>
@@ -242,7 +242,7 @@ export function DayBookReport() {
                               {entry.referenceNumber}
                             </td>
                             <td className="px-4 py-2 text-sm text-slate-900">
-                              {entry.customerName || "-"}
+                              {entry.customerName ?? "-"}
                             </td>
                             <td className="px-4 py-2 text-sm text-slate-600">
                               {entry.description}

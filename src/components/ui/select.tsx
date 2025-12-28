@@ -59,7 +59,10 @@ export interface SelectProps {
   name?: string;
 }
 
-export interface MultiSelectProps extends Omit<SelectProps, "value" | "onChange"> {
+export interface MultiSelectProps extends Omit<
+  SelectProps,
+  "value" | "onChange"
+> {
   /** Currently selected values */
   value?: string[];
   /** Callback when values change */
@@ -72,7 +75,10 @@ export interface MultiSelectProps extends Omit<SelectProps, "value" | "onChange"
 // STYLES
 // ============================================================================
 
-const sizeStyles: Record<SelectSize, { trigger: string; option: string; icon: string }> = {
+const sizeStyles: Record<
+  SelectSize,
+  { trigger: string; option: string; icon: string }
+> = {
   sm: {
     trigger: "h-8 px-3 text-xs",
     option: "px-3 py-1.5 text-xs",
@@ -162,14 +168,19 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Close on outside click
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(event.target as Node)
+        ) {
           setIsOpen(false);
           setSearchQuery("");
         }
       };
 
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }, []);
 
     // Focus search input when opened
@@ -208,7 +219,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             break;
           case "Enter":
             e.preventDefault();
-            if (filteredOptions[highlightedIndex] && !filteredOptions[highlightedIndex].disabled) {
+            if (
+              filteredOptions[highlightedIndex] &&
+              !filteredOptions[highlightedIndex].disabled
+            ) {
               onChange?.(filteredOptions[highlightedIndex].value);
               setIsOpen(false);
               setSearchQuery("");
@@ -231,10 +245,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Scroll highlighted option into view
     useEffect(() => {
       if (isOpen && listRef.current) {
-        const highlightedEl = listRef.current.children[highlightedIndex] as HTMLElement;
-        if (highlightedEl) {
-          highlightedEl.scrollIntoView({ block: "nearest" });
-        }
+        const highlightedEl = listRef.current.children[highlightedIndex] as
+          | HTMLElement
+          | undefined;
+        highlightedEl?.scrollIntoView({ block: "nearest" });
       }
     }, [highlightedIndex, isOpen]);
 
@@ -267,7 +281,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         )}
 
         {/* Hidden input for form submission */}
-        {name && <input type="hidden" name={name} value={value || ""} />}
+        {name && <input type="hidden" name={name} value={value ?? ""} />}
 
         {/* Trigger Button */}
         <button
@@ -275,7 +289,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           id={id}
           type="button"
           disabled={disabled}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!disabled) setIsOpen(!isOpen);
+          }}
           onKeyDown={handleKeyDown}
           className={cn(
             "relative flex items-center justify-between gap-2 w-full",
@@ -287,7 +303,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               ? "border-error focus-visible:ring-error/30"
               : "border-slate-200 hover:border-slate-300 focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
             disabled && "opacity-50 cursor-not-allowed bg-slate-50",
-            isOpen && !hasError && "border-primary-500 ring-2 ring-primary-500/30"
+            isOpen &&
+              !hasError &&
+              "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -352,7 +370,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                      }}
                       onKeyDown={handleKeyDown}
                       placeholder={searchPlaceholder}
                       className={cn(
@@ -381,8 +401,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                       key={option.value}
                       type="button"
                       disabled={option.disabled}
-                      onClick={() => !option.disabled && handleSelect(option.value)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
+                      onClick={() => {
+                        if (!option.disabled) handleSelect(option.value);
+                      }}
+                      onMouseEnter={() => {
+                        setHighlightedIndex(index);
+                      }}
                       className={cn(
                         "w-full flex items-center justify-between gap-2",
                         "transition-colors duration-100",
@@ -401,7 +425,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                         {option.label}
                       </span>
                       {option.value === value && (
-                        <Check className={cn(styles.icon, "text-primary-600 shrink-0")} />
+                        <Check
+                          className={cn(
+                            styles.icon,
+                            "text-primary-600 shrink-0"
+                          )}
+                        />
                       )}
                     </button>
                   ))
@@ -412,14 +441,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         </AnimatePresence>
 
         {/* Helper/Error Text */}
-        {(helperText || error) && (
+        {(helperText ?? error) && (
           <p
             className={cn(
               "mt-1.5 text-xs",
               hasError ? "text-error" : "text-slate-500"
             )}
           >
-            {error || helperText}
+            {error ?? helperText}
           </p>
         )}
       </div>
@@ -474,14 +503,19 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // Close on outside click
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(event.target as Node)
+        ) {
           setIsOpen(false);
           setSearchQuery("");
         }
       };
 
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }, []);
 
     // Focus search input when opened
@@ -547,7 +581,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
           id={id}
           type="button"
           disabled={disabled}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!disabled) setIsOpen(!isOpen);
+          }}
           className={cn(
             "relative flex items-center justify-between gap-2 w-full min-h-[40px]",
             "bg-white border rounded-[10px]",
@@ -558,7 +594,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
               ? "border-error focus-visible:ring-error/30"
               : "border-slate-200 hover:border-slate-300 focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
             disabled && "opacity-50 cursor-not-allowed bg-slate-50",
-            isOpen && !hasError && "border-primary-500 ring-2 ring-primary-500/30"
+            isOpen &&
+              !hasError &&
+              "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -576,7 +614,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   {opt.label}
                   <button
                     type="button"
-                    onClick={(e) => handleRemove(opt.value, e)}
+                    onClick={(e) => {
+                      handleRemove(opt.value, e);
+                    }}
                     className="hover:bg-primary-100 rounded p-0.5 transition-colors"
                     aria-label={`Remove ${opt.label}`}
                   >
@@ -621,7 +661,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                      }}
                       placeholder={searchPlaceholder}
                       className={cn(
                         "w-full pl-8 pr-3 py-1.5 text-sm",
@@ -643,15 +685,20 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   filteredOptions.map((option, index) => {
                     const isSelected = value.includes(option.value);
                     const isDisabled =
-                      option.disabled || (!isSelected && !canSelectMore);
+                      (option.disabled ?? false) ||
+                      (!isSelected && !canSelectMore);
 
                     return (
                       <button
                         key={option.value}
                         type="button"
                         disabled={isDisabled}
-                        onClick={() => !isDisabled && handleToggle(option.value)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onClick={() => {
+                          if (!isDisabled) handleToggle(option.value);
+                        }}
+                        onMouseEnter={() => {
+                          setHighlightedIndex(index);
+                        }}
                         className={cn(
                           "w-full flex items-center justify-between gap-2",
                           "transition-colors duration-100",
@@ -692,14 +739,14 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         </AnimatePresence>
 
         {/* Helper/Error Text */}
-        {(helperText || error) && (
+        {(helperText ?? error) && (
           <p
             className={cn(
               "mt-1.5 text-xs",
               hasError ? "text-error" : "text-slate-500"
             )}
           >
-            {error || helperText}
+            {error ?? helperText}
           </p>
         )}
       </div>

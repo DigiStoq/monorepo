@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Card, CardBody, CardHeader } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface SettingsCardProps {
   title: string;

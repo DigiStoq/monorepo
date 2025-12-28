@@ -199,11 +199,11 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           [
             itemId,
             id,
-            item.itemId ?? null,
+            item.itemId,
             item.itemName,
             item.description ?? null,
             item.quantity,
-            item.unit ?? null,
+            item.unit,
             item.unitPrice,
             item.discountPercent ?? 0,
             item.taxPercent ?? 0,

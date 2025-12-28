@@ -304,7 +304,7 @@ export const badgePulseVariants: Variants = {
 // NUMBER COUNTER ANIMATION HELPER
 // ============================================================================
 
-export const getCounterSpringConfig = (duration: number = 0.8) => ({
+export const getCounterSpringConfig = (duration = 0.8) => ({
   type: "spring",
   stiffness: 100,
   damping: 20,

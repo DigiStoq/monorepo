@@ -112,8 +112,8 @@ export function PurchaseRegisterReport() {
       title="Purchase Register"
       subtitle="Detailed list of all purchase invoices"
       backPath="/reports"
-      onExport={() => console.log("Export purchase register")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export purchase register"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -122,7 +122,7 @@ export function PurchaseRegisterReport() {
               type="text"
               placeholder="Search invoices..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>

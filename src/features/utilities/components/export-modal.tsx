@@ -43,7 +43,7 @@ const entityOptions: SelectOption[] = [
   { value: "expenses", label: "Expenses" },
 ];
 
-const formatOptions: Array<{ value: ExportFormat; label: string; icon: React.ReactNode; description: string }> = [
+const formatOptions: { value: ExportFormat; label: string; icon: React.ReactNode; description: string }[] = [
   {
     value: "csv",
     label: "CSV",
@@ -186,7 +186,7 @@ export function ExportModal({
           <Select
             options={entityOptions}
             value={entityType}
-            onChange={(v) => setEntityType(v as ExportEntityType)}
+            onChange={(v) => { setEntityType(v as ExportEntityType); }}
           />
         </div>
 
@@ -200,13 +200,13 @@ export function ExportModal({
               <Input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => { setDateFrom(e.target.value); }}
                 placeholder="From"
               />
               <Input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => { setDateTo(e.target.value); }}
                 placeholder="To"
               />
             </div>
@@ -226,7 +226,7 @@ export function ExportModal({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setFormat(opt.value)}
+                onClick={() => { setFormat(opt.value); }}
                 className={cn(
                   "p-4 rounded-xl border-2 text-center transition-all",
                   format === opt.value
@@ -266,7 +266,7 @@ export function ExportModal({
           Cancel
         </Button>
         <Button
-          onClick={handleExport}
+          onClick={() => { void handleExport(); }}
           disabled={isExporting}
           leftIcon={
             isExporting ? (

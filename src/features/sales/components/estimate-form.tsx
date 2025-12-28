@@ -58,9 +58,9 @@ export function EstimateForm({
   const defaultDate = new Date().toISOString().slice(0, 10);
   const defaultValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // 30 days from now
 
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
-  const [validUntil, setValidUntil] = useState<string>(initialData?.validUntil !== undefined ? initialData.validUntil : defaultValidUntil);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [validUntil, setValidUntil] = useState<string>(initialData?.validUntil ?? defaultValidUntil);
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [terms, setTerms] = useState(initialData?.terms ?? "");
   const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
@@ -249,7 +249,7 @@ export function EstimateForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => { setDate(e.target.value); }}
                   />
                 </div>
 
@@ -261,7 +261,7 @@ export function EstimateForm({
                   <Input
                     type="date"
                     value={validUntil}
-                    onChange={(e) => setValidUntil(e.target.value)}
+                    onChange={(e) => { setValidUntil(e.target.value); }}
                   />
                 </div>
               </div>
@@ -344,7 +344,7 @@ export function EstimateForm({
                               options={itemOptions}
                               value={item.itemId}
                               onChange={(value) =>
-                                handleUpdateLineItem(item.id, "itemId", value)
+                                { handleUpdateLineItem(item.id, "itemId", value); }
                               }
                               size="sm"
                             />
@@ -355,11 +355,11 @@ export function EstimateForm({
                               min="1"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -372,11 +372,11 @@ export function EstimateForm({
                               step="0.01"
                               value={item.unitPrice}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -389,11 +389,11 @@ export function EstimateForm({
                               max="100"
                               value={item.discountPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -406,11 +406,11 @@ export function EstimateForm({
                               max="100"
                               value={item.taxPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -423,7 +423,7 @@ export function EstimateForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveLineItem(item.id)}
+                              onClick={() => { handleRemoveLineItem(item.id); }}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -446,14 +446,14 @@ export function EstimateForm({
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => { setNotes(e.target.value); }}
                 />
                 <Textarea
                   label="Terms & Conditions"
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
-                  onChange={(e) => setTerms(e.target.value)}
+                  onChange={(e) => { setTerms(e.target.value); }}
                 />
               </div>
             </CardBody>
@@ -477,7 +477,7 @@ export function EstimateForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => { setDiscountPercent(parseFloat(e.target.value) || 0); }}
                   size="sm"
                   className="w-16 text-right"
                 />

@@ -94,10 +94,10 @@ export function CreditNotesPage() {
             <CreditNoteDetail
               creditNote={currentSelectedCreditNote}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteCreditNote}
-              onPrint={() => console.log("Print credit note")}
-              onShare={() => console.log("Share credit note")}
+              onEdit={() => { setIsFormOpen(true); }}
+              onDelete={() => { void handleDeleteCreditNote(); }}
+              onPrint={() => { console.log("Print credit note"); }}
+              onShare={() => { console.log("Share credit note"); }}
             />
           </div>
         )}

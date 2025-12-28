@@ -17,7 +17,8 @@ import {
 export function DashboardPage() {
   // Data from PowerSync
   const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
-  const { transactions, isLoading: transactionsLoading } = useRecentTransactions(10);
+  const { transactions, isLoading: transactionsLoading } =
+    useRecentTransactions(10);
   const { chartData, isLoading: chartLoading } = useSalesChartData(7);
 
   const handleQuickAction = (actionId: string) => {
@@ -40,11 +41,19 @@ export function DashboardPage() {
       />
 
       {/* Metrics */}
-      <MetricCards metrics={metrics} isLoading={metricsLoading} className="mb-6" />
+      <MetricCards
+        metrics={metrics}
+        isLoading={metricsLoading}
+        className="mb-6"
+      />
 
       {/* Charts and Actions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <SalesChart data={chartData} isLoading={chartLoading} className="lg:col-span-2" />
+        <SalesChart
+          data={chartData}
+          isLoading={chartLoading}
+          className="lg:col-span-2"
+        />
         <QuickActions onAction={handleQuickAction} />
       </div>
 
@@ -52,13 +61,17 @@ export function DashboardPage() {
       <RecentTransactions
         transactions={transactions as Transaction[]}
         isLoading={transactionsLoading}
-        onViewAll={() => console.log("View all transactions")}
+        onViewAll={() => {
+          console.log("View all transactions");
+        }}
         onTransactionClick={handleTransactionClick}
       />
 
       {/* Floating Action Button (Mobile) */}
       <FloatingActionButton
-        onClick={() => handleQuickAction("add-sale")}
+        onClick={() => {
+          handleQuickAction("add-sale");
+        }}
         className="lg:hidden"
       />
     </PageContainer>

@@ -40,7 +40,7 @@ export function ForgotPasswordPage(): ReactNode {
             <CheckCircle className="h-8 w-8 text-success" />
           </div>
           <p className="text-slate-600">
-            We've sent a password reset link to <strong>{email}</strong>.
+            We&apos;ve sent a password reset link to <strong>{email}</strong>.
             Click the link in the email to reset your password.
           </p>
           <div className="pt-2">
@@ -62,7 +62,12 @@ export function ForgotPasswordPage(): ReactNode {
       title="Reset password"
       subtitle="Enter your email and we'll send you a reset link"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+        className="space-y-5"
+      >
         {/* Error Message */}
         {displayError && (
           <div className="bg-error-light text-error text-sm p-3 rounded-lg">
@@ -76,19 +81,16 @@ export function ForgotPasswordPage(): ReactNode {
           label="Email address"
           placeholder="you@example.com"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
           leftIcon={<Mail size={18} className="text-slate-400" />}
           autoComplete="email"
           disabled={isLoading}
         />
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={isLoading}
-          size="lg"
-        >
+        <Button type="submit" fullWidth isLoading={isLoading} size="lg">
           Send reset link
         </Button>
 

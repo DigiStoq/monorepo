@@ -30,7 +30,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
       sidebar,
       header,
       children,
-      sidebarCollapsed = false,
+      _sidebarCollapsed = false,
       hideSidebar = false,
       fixedHeader = true,
       className,
@@ -46,9 +46,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
       >
         {/* Sidebar */}
         {!hideSidebar && sidebar && (
-          <div className="relative shrink-0">
-            {sidebar}
-          </div>
+          <div className="relative shrink-0">{sidebar}</div>
         )}
 
         {/* Main Area */}
@@ -66,9 +64,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
           )}
 
           {/* Content */}
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
     );
@@ -105,7 +101,10 @@ const paddingStyles = {
 };
 
 export const PageContainer = forwardRef<HTMLDivElement, PageContainerProps>(
-  ({ maxWidth = "2xl", padding = "md", className, children, ...props }, ref) => {
+  (
+    { maxWidth = "2xl", padding = "md", className, children, ...props },
+    ref
+  ) => {
     return (
       <div
         ref={ref}

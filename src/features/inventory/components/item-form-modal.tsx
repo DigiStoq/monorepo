@@ -79,7 +79,9 @@ export function ItemFormModal({
   isLoading,
 }: ItemFormModalProps) {
   const isEditing = Boolean(item);
-  const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "stock">("basic");
+  const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "stock">(
+    "basic"
+  );
 
   // Category options
   const categoryOptions: SelectOption[] = [
@@ -118,16 +120,16 @@ export function ItemFormModal({
     if (item) {
       reset({
         name: item.name,
-        sku: item.sku || "",
+        sku: item.sku,
         type: item.type,
-        description: item.description || "",
-        category: item.category || "",
+        description: item.description ?? "",
+        category: item.category ?? "",
         unit: item.unit,
         salePrice: item.salePrice,
-        purchasePrice: item.purchasePrice || 0,
-        taxRate: item.taxRate || 0,
+        purchasePrice: item.purchasePrice,
+        taxRate: item.taxRate ?? 0,
         openingStock: item.stockQuantity,
-        lowStockAlert: item.lowStockAlert || 5,
+        lowStockAlert: item.lowStockAlert,
       });
     } else {
       reset({
@@ -150,13 +152,13 @@ export function ItemFormModal({
   const handleFormSubmit = (data: ItemSchemaType) => {
     onSubmit({
       ...data,
-      sku: data.sku || undefined,
-      description: data.description || undefined,
-      category: data.category || undefined,
-      purchasePrice: data.purchasePrice || undefined,
-      taxRate: data.taxRate || undefined,
-      openingStock: data.openingStock || undefined,
-      lowStockAlert: data.lowStockAlert || undefined,
+      sku: data.sku ?? undefined,
+      description: data.description ?? undefined,
+      category: data.category ?? undefined,
+      purchasePrice: data.purchasePrice ?? undefined,
+      taxRate: data.taxRate ?? undefined,
+      openingStock: data.openingStock ?? undefined,
+      lowStockAlert: data.lowStockAlert ?? undefined,
     });
   };
 
@@ -172,14 +174,18 @@ export function ItemFormModal({
       onClose={onClose}
       size="lg"
       title={isEditing ? "Edit Item" : "Add New Item"}
-      description={isEditing ? `Update ${item?.name}` : "Add a product or service"}
+      description={
+        isEditing ? `Update ${item?.name}` : "Add a product or service"
+      }
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button
-            onClick={handleSubmit(handleFormSubmit)}
+            onClick={() => {
+              void handleSubmit(handleFormSubmit)();
+            }}
             isLoading={isLoading}
           >
             {isEditing ? "Update Item" : "Add Item"}
@@ -193,7 +199,9 @@ export function ItemFormModal({
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+            onClick={() => {
+              setActiveTab(tab.id as typeof activeTab);
+            }}
             className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === tab.id
                 ? "bg-white text-slate-900 shadow-sm"
@@ -222,7 +230,9 @@ export function ItemFormModal({
                 label="Item Type"
                 options={typeOptions}
                 value={selectedType}
-                onChange={(value) => setValue("type", value as ItemType)}
+                onChange={(value) => {
+                  setValue("type", value as ItemType);
+                }}
               />
 
               <Input
@@ -237,15 +247,19 @@ export function ItemFormModal({
               <Select
                 label="Category"
                 options={categoryOptions}
-                value={watch("category") || ""}
-                onChange={(value) => setValue("category", value)}
+                value={watch("category") ?? ""}
+                onChange={(value) => {
+                  setValue("category", value);
+                }}
               />
 
               <Select
                 label="Unit"
                 options={unitOptions}
                 value={watch("unit")}
-                onChange={(value) => setValue("unit", value)}
+                onChange={(value) => {
+                  setValue("unit", value);
+                }}
               />
             </div>
 
@@ -310,7 +324,9 @@ export function ItemFormModal({
                         <p className="text-lg font-semibold text-success">
                           ${profit.toFixed(2)}
                         </p>
-                        <p className="text-xs text-slate-500">Per unit profit</p>
+                        <p className="text-xs text-slate-500">
+                          Per unit profit
+                        </p>
                       </div>
                       <div>
                         <p className="text-lg font-semibold text-slate-900">
@@ -361,7 +377,8 @@ export function ItemFormModal({
                   {item?.stockQuantity} {item?.unit}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Adjust stock through stock adjustment or purchase/sale transactions
+                  Adjust stock through stock adjustment or purchase/sale
+                  transactions
                 </p>
               </div>
             )}

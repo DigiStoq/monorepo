@@ -59,7 +59,7 @@ export interface PurchaseInvoiceItemFormData {
 export interface PurchaseFilters {
   search: string;
   status: PurchaseInvoiceStatus | "all";
-  customerId: string | "all";
+  customerId: string;
   dateRange: {
     from: string | null;
     to: string | null;

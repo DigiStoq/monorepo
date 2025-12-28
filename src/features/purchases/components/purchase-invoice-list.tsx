@@ -265,7 +265,7 @@ export function PurchaseInvoiceList({
         <SearchInput
           placeholder="Search purchases..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
           className="flex-1"
         />
 
@@ -274,7 +274,7 @@ export function PurchaseInvoiceList({
             options={statusOptions}
             value={filters.status}
             onChange={(value) =>
-              setFilters((f) => ({ ...f, status: value as PurchaseInvoiceStatus | "all" }))
+              { setFilters((f) => ({ ...f, status: value as PurchaseInvoiceStatus | "all" })); }
             }
             size="md"
           />

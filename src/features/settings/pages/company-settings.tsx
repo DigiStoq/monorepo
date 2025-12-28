@@ -82,7 +82,7 @@ export function CompanySettingsPage() {
       title="Company Settings"
       description="Manage your business profile and registration details"
       actions={
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -125,7 +125,7 @@ export function CompanySettingsPage() {
                 <Input
                   type="text"
                   value={settings.name}
-                  onChange={(e) => updateField("name", e.target.value)}
+                  onChange={(e) => { updateField("name", e.target.value); }}
                   className="w-64"
                 />
               </SettingsRow>
@@ -133,7 +133,7 @@ export function CompanySettingsPage() {
                 <Input
                   type="text"
                   value={settings.legalName ?? ""}
-                  onChange={(e) => updateField("legalName", e.target.value)}
+                  onChange={(e) => { updateField("legalName", e.target.value); }}
                   className="w-64"
                 />
               </SettingsRow>
@@ -152,7 +152,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.street}
-                onChange={(e) => updateAddress("street", e.target.value)}
+                onChange={(e) => { updateAddress("street", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -160,7 +160,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.city}
-                onChange={(e) => updateAddress("city", e.target.value)}
+                onChange={(e) => { updateAddress("city", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -168,7 +168,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.state}
-                onChange={(e) => updateAddress("state", e.target.value)}
+                onChange={(e) => { updateAddress("state", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -176,7 +176,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.postalCode}
-                onChange={(e) => updateAddress("postalCode", e.target.value)}
+                onChange={(e) => { updateAddress("postalCode", e.target.value); }}
                 className="w-40"
               />
             </SettingsRow>
@@ -184,7 +184,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.country}
-                onChange={(e) => updateAddress("country", e.target.value)}
+                onChange={(e) => { updateAddress("country", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -202,7 +202,7 @@ export function CompanySettingsPage() {
               <Input
                 type="tel"
                 value={settings.contact.phone}
-                onChange={(e) => updateContact("phone", e.target.value)}
+                onChange={(e) => { updateContact("phone", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -210,7 +210,7 @@ export function CompanySettingsPage() {
               <Input
                 type="email"
                 value={settings.contact.email}
-                onChange={(e) => updateContact("email", e.target.value)}
+                onChange={(e) => { updateContact("email", e.target.value); }}
                 className="w-64"
               />
             </SettingsRow>
@@ -218,7 +218,7 @@ export function CompanySettingsPage() {
               <Input
                 type="url"
                 value={settings.contact.website ?? ""}
-                onChange={(e) => updateContact("website", e.target.value)}
+                onChange={(e) => { updateContact("website", e.target.value); }}
                 className="w-64"
                 leftIcon={<Globe className="h-4 w-4" />}
               />
@@ -237,7 +237,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.registration.taxId ?? ""}
-                onChange={(e) => updateRegistration("taxId", e.target.value)}
+                onChange={(e) => { updateRegistration("taxId", e.target.value); }}
                 className="w-64 font-mono"
                 placeholder="12-3456789"
               />
@@ -246,7 +246,7 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.registration.ein ?? ""}
-                onChange={(e) => updateRegistration("ein", e.target.value)}
+                onChange={(e) => { updateRegistration("ein", e.target.value); }}
                 className="w-48 font-mono"
                 placeholder="12-3456789"
               />
@@ -264,7 +264,7 @@ export function CompanySettingsPage() {
             <SettingsRow label="Currency" description="Default currency for transactions">
               <select
                 value={settings.currency}
-                onChange={(e) => updateField("currency", e.target.value)}
+                onChange={(e) => { updateField("currency", e.target.value); }}
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="USD">USD ($)</option>
@@ -278,13 +278,13 @@ export function CompanySettingsPage() {
                 <select
                   value={settings.financialYear.startMonth}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    { setSettings((prev) => ({
                       ...prev,
                       financialYear: {
                         ...prev.financialYear,
                         startMonth: parseInt(e.target.value),
                       },
-                    }))
+                    })); }
                   }
                   className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
@@ -304,13 +304,13 @@ export function CompanySettingsPage() {
                 <select
                   value={settings.financialYear.startDay}
                   onChange={(e) =>
-                    setSettings((prev) => ({
+                    { setSettings((prev) => ({
                       ...prev,
                       financialYear: {
                         ...prev.financialYear,
                         startDay: parseInt(e.target.value),
                       },
-                    }))
+                    })); }
                   }
                   className="w-20 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
@@ -325,7 +325,7 @@ export function CompanySettingsPage() {
             <SettingsRow label="Timezone">
               <select
                 value={settings.timezone}
-                onChange={(e) => updateField("timezone", e.target.value)}
+                onChange={(e) => { updateField("timezone", e.target.value); }}
                 className="w-64 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="America/New_York">America/New_York (EST)</option>

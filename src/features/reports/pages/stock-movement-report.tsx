@@ -57,8 +57,8 @@ export function StockMovementReport() {
       title="Stock Movement Report"
       subtitle="Item-wise stock inflows and outflows"
       backPath="/reports"
-      onExport={() => console.log("Export stock movement")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export stock movement"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -67,7 +67,7 @@ export function StockMovementReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>

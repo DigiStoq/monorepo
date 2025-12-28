@@ -383,7 +383,7 @@ export function InvoiceDetail({
       </Card>
 
       {/* Notes & Terms */}
-      {(invoice.notes || invoice.terms) && (
+      {(invoice.notes ?? invoice.terms) && (
         <Card>
           <CardBody>
             <div className="grid grid-cols-2 gap-6">

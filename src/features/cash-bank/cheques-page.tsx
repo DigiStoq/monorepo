@@ -1,6 +1,12 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { ChequeList, ChequeDetail, ChequeForm } from "./components";
@@ -12,7 +18,8 @@ export function ChequesPage() {
   // Data from PowerSync
   const { cheques, isLoading, error } = useCheques();
   const { customers } = useCustomers();
-  const { createCheque, updateChequeStatus, deleteCheque } = useChequeMutations();
+  const { createCheque, updateChequeStatus, deleteCheque } =
+    useChequeMutations();
 
   // State
   const [selectedCheque, setSelectedCheque] = useState<Cheque | null>(null);
@@ -49,7 +56,7 @@ export function ChequesPage() {
         chequeNumber: data.chequeNumber,
         type: data.type,
         customerId: data.customerId,
-        customerName: customer?.name || "",
+        customerName: customer?.name ?? "",
         bankName: data.bankName,
         date: data.date,
         dueDate: data.dueDate,
@@ -121,7 +128,10 @@ export function ChequesPage() {
         title="Cheques"
         description="Manage received and issued cheques"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateCheque}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreateCheque}
+          >
             Add Cheque
           </Button>
         }
@@ -135,10 +145,7 @@ export function ChequesPage() {
               <Spinner size="lg" />
             </div>
           ) : (
-            <ChequeList
-              cheques={cheques}
-              onChequeClick={handleChequeClick}
-            />
+            <ChequeList cheques={cheques} onChequeClick={handleChequeClick} />
           )}
         </div>
 
@@ -148,11 +155,21 @@ export function ChequesPage() {
             <ChequeDetail
               cheque={currentSelectedCheque}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteCheque}
-              onMarkCleared={handleMarkCleared}
-              onMarkBounced={handleMarkBounced}
-              onCancel={handleCancelCheque}
+              onEdit={() => {
+                setIsFormOpen(true);
+              }}
+              onDelete={() => {
+                void handleDeleteCheque();
+              }}
+              onMarkCleared={() => {
+                void handleMarkCleared();
+              }}
+              onMarkBounced={() => {
+                void handleMarkBounced();
+              }}
+              onCancel={() => {
+                void handleCancelCheque();
+              }}
             />
           </div>
         )}
@@ -161,13 +178,13 @@ export function ChequesPage() {
       {/* Cheque Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>
-            Add Cheque
-          </ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>Add Cheque</ModalHeader>
           <ModalBody>
             <ChequeForm
               customers={customers}
-              onSubmit={handleSubmitCheque}
+              onSubmit={(data) => {
+                void handleSubmitCheque(data);
+              }}
               onCancel={handleCloseForm}
             />
           </ModalBody>

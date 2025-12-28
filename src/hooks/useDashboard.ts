@@ -174,10 +174,10 @@ export function useRecentTransactions(limit = 10): {
 
   // Combine and sort all transactions
   const transactions = [
-    ...(salesData ?? []),
-    ...(purchasesData ?? []),
-    ...(paymentInsData ?? []),
-    ...(paymentOutsData ?? []),
+    ...salesData,
+    ...purchasesData,
+    ...paymentInsData,
+    ...paymentOutsData,
   ]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit)
@@ -236,7 +236,7 @@ export function useSalesChartData(days = 7): {
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split("T")[0];
 
-    const dayData = data?.find((d) => d.date === dateStr);
+    const dayData = data.find((d) => d.date === dateStr);
     chartData.push({
       date: date.toLocaleDateString("en-US", { weekday: "short" }),
       sales: dayData?.total ?? 0,

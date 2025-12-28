@@ -39,7 +39,7 @@ export interface ItemFormData {
 export interface ItemFilters {
   search: string;
   type: ItemType | "all";
-  category: string | "all";
+  category: string;
   stockStatus: "all" | "in-stock" | "low-stock" | "out-of-stock";
   sortBy: "name" | "price" | "stock" | "recent";
   sortOrder: "asc" | "desc";

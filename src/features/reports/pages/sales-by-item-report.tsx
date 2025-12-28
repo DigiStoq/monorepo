@@ -52,7 +52,7 @@ export function SalesByItemReport() {
 
   // Filter and sort data
   const processedData = useMemo(() => {
-    let data = mockItemSales.filter((item) =>
+    const data = mockItemSales.filter((item) =>
       item.itemName.toLowerCase().includes(search.toLowerCase()) ||
       item.sku.toLowerCase().includes(search.toLowerCase()) ||
       item.category.toLowerCase().includes(search.toLowerCase())
@@ -118,8 +118,8 @@ export function SalesByItemReport() {
       title="Sales by Item"
       subtitle="Item-wise sales performance analysis"
       backPath="/reports"
-      onExport={() => console.log("Export item sales")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export item sales"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -128,7 +128,7 @@ export function SalesByItemReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -185,7 +185,7 @@ export function SalesByItemReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("quantity")}
+                      onClick={() => { handleSort("quantity"); }}
                     >
                       Qty Sold <SortIcon column="quantity" />
                     </th>
@@ -194,7 +194,7 @@ export function SalesByItemReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("revenue")}
+                      onClick={() => { handleSort("revenue"); }}
                     >
                       Revenue <SortIcon column="revenue" />
                     </th>
@@ -203,7 +203,7 @@ export function SalesByItemReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("profit")}
+                      onClick={() => { handleSort("profit"); }}
                     >
                       Profit <SortIcon column="profit" />
                     </th>

@@ -53,7 +53,8 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, onClick }: ItemCardProps) {
-  const isLowStock = item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
+  const isLowStock =
+    item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;
 
   const formatCurrency = (value: number) =>
@@ -99,15 +100,15 @@ function ItemCard({ item, onClick }: ItemCardProps) {
               <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
             )}
             {isOutOfStock && (
-              <Badge variant="error" size="sm">Out of Stock</Badge>
+              <Badge variant="error" size="sm">
+                Out of Stock
+              </Badge>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
             {item.sku && (
-              <span className="flex items-center gap-1">
-                SKU: {item.sku}
-              </span>
+              <span className="flex items-center gap-1">SKU: {item.sku}</span>
             )}
             {item.category && (
               <Badge variant="secondary" size="sm">
@@ -129,8 +130,8 @@ function ItemCard({ item, onClick }: ItemCardProps) {
                 isOutOfStock
                   ? "text-error"
                   : isLowStock
-                  ? "text-warning"
-                  : "text-slate-500"
+                    ? "text-warning"
+                    : "text-slate-500"
               )}
             >
               {item.stockQuantity} {item.unit}
@@ -182,8 +183,10 @@ export function ItemList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesName = item.name.toLowerCase().includes(searchLower);
-          const matchesSku = item.sku?.toLowerCase().includes(searchLower);
-          const matchesCategory = item.category?.toLowerCase().includes(searchLower);
+          const matchesSku = item.sku.toLowerCase().includes(searchLower);
+          const matchesCategory = item.category
+            ?.toLowerCase()
+            .includes(searchLower);
           if (!matchesName && !matchesSku && !matchesCategory) return false;
         }
 
@@ -199,12 +202,16 @@ export function ItemList({
 
         // Stock status filter
         if (filters.stockStatus !== "all" && item.type === "product") {
-          if (filters.stockStatus === "out-of-stock" && item.stockQuantity > 0) {
+          if (
+            filters.stockStatus === "out-of-stock" &&
+            item.stockQuantity > 0
+          ) {
             return false;
           }
           if (
             filters.stockStatus === "low-stock" &&
-            (item.stockQuantity === 0 || item.stockQuantity > item.lowStockAlert)
+            (item.stockQuantity === 0 ||
+              item.stockQuantity > item.lowStockAlert)
           ) {
             return false;
           }
@@ -232,7 +239,8 @@ export function ItemList({
             comparison = b.stockQuantity - a.stockQuantity;
             break;
           case "recent":
-            comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            comparison =
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
             break;
         }
 
@@ -281,7 +289,9 @@ export function ItemList({
         <SearchInput
           placeholder="Search items..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, search: e.target.value }));
+          }}
           className="flex-1"
         />
 
@@ -289,9 +299,9 @@ export function ItemList({
           <Select
             options={typeOptions}
             value={filters.type}
-            onChange={(value) =>
-              setFilters((f) => ({ ...f, type: value as ItemType | "all" }))
-            }
+            onChange={(value) => {
+              setFilters((f) => ({ ...f, type: value as ItemType | "all" }));
+            }}
             size="md"
           />
 
@@ -299,9 +309,9 @@ export function ItemList({
             <Select
               options={categoryOptions}
               value={filters.category}
-              onChange={(value) =>
-                setFilters((f) => ({ ...f, category: value }))
-              }
+              onChange={(value) => {
+                setFilters((f) => ({ ...f, category: value }));
+              }}
               size="md"
             />
           )}
@@ -309,12 +319,12 @@ export function ItemList({
           <Select
             options={stockOptions}
             value={filters.stockStatus}
-            onChange={(value) =>
+            onChange={(value) => {
               setFilters((f) => ({
                 ...f,
                 stockStatus: value as ItemFilters["stockStatus"],
-              }))
-            }
+              }));
+            }}
             size="md"
           />
 
@@ -332,7 +342,9 @@ export function ItemList({
               <Box className="h-4 w-4 text-primary-600" />
               <p className="text-xs text-primary-600 font-medium">Products</p>
             </div>
-            <p className="text-lg font-bold text-primary-700">{totals.products}</p>
+            <p className="text-lg font-bold text-primary-700">
+              {totals.products}
+            </p>
           </CardBody>
         </Card>
 
@@ -342,7 +354,9 @@ export function ItemList({
               <Layers className="h-4 w-4 text-purple-600" />
               <p className="text-xs text-purple-600 font-medium">Services</p>
             </div>
-            <p className="text-lg font-bold text-purple-700">{totals.services}</p>
+            <p className="text-lg font-bold text-purple-700">
+              {totals.services}
+            </p>
           </CardBody>
         </Card>
 
@@ -352,7 +366,9 @@ export function ItemList({
               <AlertTriangle className="h-4 w-4 text-warning" />
               <p className="text-xs text-warning-dark font-medium">Low Stock</p>
             </div>
-            <p className="text-lg font-bold text-warning-dark">{totals.lowStock}</p>
+            <p className="text-lg font-bold text-warning-dark">
+              {totals.lowStock}
+            </p>
           </CardBody>
         </Card>
       </div>
@@ -369,7 +385,10 @@ export function ItemList({
           }
           action={
             !filters.search && (
-              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddItem}>
+              <Button
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={onAddItem}
+              >
                 Add Item
               </Button>
             )
@@ -378,7 +397,8 @@ export function ItemList({
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-slate-500 mb-2">
-            {filteredItems.length} {filteredItems.length === 1 ? "item" : "items"}
+            {filteredItems.length}{" "}
+            {filteredItems.length === 1 ? "item" : "items"}
           </p>
 
           {filteredItems.map((item) => (

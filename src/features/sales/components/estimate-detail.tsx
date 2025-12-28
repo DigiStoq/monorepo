@@ -267,7 +267,7 @@ export function EstimateDetail({
         </Card>
 
         {/* Notes & Terms */}
-        {(estimate.notes || estimate.terms) && (
+        {(estimate.notes ?? estimate.terms) && (
           <Card>
             {estimate.notes && (
               <>

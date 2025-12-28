@@ -163,13 +163,13 @@ export function EstimatesPage() {
             <EstimateDetail
               estimate={currentSelectedEstimate}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteEstimate}
-              onPrint={() => console.log("Print estimate")}
-              onShare={() => console.log("Share estimate")}
-              onSend={handleSendEstimate}
-              onMarkAccepted={handleMarkAccepted}
-              onMarkRejected={handleMarkRejected}
+              onEdit={() => { setIsFormOpen(true); }}
+              onDelete={() => { void handleDeleteEstimate(); }}
+              onPrint={() => { console.log("Print estimate"); }}
+              onShare={() => { console.log("Share estimate"); }}
+              onSend={() => { void handleSendEstimate(); }}
+              onMarkAccepted={() => { void handleMarkAccepted(); }}
+              onMarkRejected={() => { void handleMarkRejected(); }}
               onConvertToInvoice={handleConvertToInvoice}
             />
           </div>
@@ -184,7 +184,7 @@ export function EstimatesPage() {
             <EstimateForm
               customers={customers}
               items={items}
-              onSubmit={handleSubmitEstimate}
+              onSubmit={(data) => { void handleSubmitEstimate(data); }}
               onCancel={handleCloseForm}
               isSubmitting={isSubmitting}
               className="p-6"

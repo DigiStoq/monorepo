@@ -171,9 +171,9 @@ export function useEstimateMutations(): EstimateMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+      const subtotal = items.reduce((sum: number, item) => sum + item.amount, 0);
       const taxAmount = items.reduce(
-        (sum, item) => sum + (item.amount * (item.taxPercent ?? 0)) / 100,
+        (sum: number, item) => sum + (item.amount * (item.taxPercent ?? 0)) / 100,
         0
       );
       const total = subtotal + taxAmount - (data.discountAmount ?? 0);

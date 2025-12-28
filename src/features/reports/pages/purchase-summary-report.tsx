@@ -68,8 +68,8 @@ export function PurchaseSummaryReport() {
       title="Purchase Summary"
       subtitle="Overview of purchase performance"
       backPath="/reports"
-      onExport={() => console.log("Export purchase summary")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export purchase summary"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />

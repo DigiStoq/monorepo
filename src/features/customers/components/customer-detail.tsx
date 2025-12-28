@@ -52,9 +52,7 @@ function InfoItem({ icon, label, value }: InfoItemProps) {
 
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-slate-100 rounded-lg shrink-0">
-        {icon}
-      </div>
+      <div className="p-2 bg-slate-100 rounded-lg shrink-0">{icon}</div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
         <p className="text-sm font-medium text-slate-900">{value}</p>
@@ -111,7 +109,9 @@ export function CustomerDetail({
           "credit-note": "Credit Note",
           "debit-note": "Debit Note",
         };
-        const isCredit = ["sale", "payment-in", "debit-note"].includes(row.type);
+        const isCredit = ["sale", "payment-in", "debit-note"].includes(
+          row.type
+        );
         return (
           <Badge variant={isCredit ? "success" : "error"} size="sm">
             {typeLabels[row.type]}
@@ -122,7 +122,7 @@ export function CustomerDetail({
     {
       key: "invoiceNumber",
       header: "Reference",
-      accessor: (row) => row.invoiceNumber || "-",
+      accessor: (row) => row.invoiceNumber ?? "-",
     },
     {
       key: "amount",
@@ -130,9 +130,16 @@ export function CustomerDetail({
       align: "right",
       accessor: (row) => row.amount,
       cell: (row) => {
-        const isCredit = ["sale", "payment-in", "debit-note"].includes(row.type);
+        const isCredit = ["sale", "payment-in", "debit-note"].includes(
+          row.type
+        );
         return (
-          <span className={cn("font-medium", isCredit ? "text-success" : "text-error")}>
+          <span
+            className={cn(
+              "font-medium",
+              isCredit ? "text-success" : "text-error"
+            )}
+          >
             {isCredit ? "+" : "-"}
             {formatCurrency(row.amount)}
           </span>
@@ -145,7 +152,12 @@ export function CustomerDetail({
       align: "right",
       accessor: (row) => row.balance,
       cell: (row) => (
-        <span className={cn("font-medium", row.balance >= 0 ? "text-success" : "text-error")}>
+        <span
+          className={cn(
+            "font-medium",
+            row.balance >= 0 ? "text-success" : "text-error"
+          )}
+        >
           {formatCurrency(row.balance)}
         </span>
       ),
@@ -174,7 +186,12 @@ export function CustomerDetail({
   const isReceivable = customer.currentBalance > 0;
   const hasBalance = customer.currentBalance !== 0;
 
-  const fullAddress = [customer.address, customer.city, customer.state, customer.zipCode]
+  const fullAddress = [
+    customer.address,
+    customer.city,
+    customer.state,
+    customer.zipCode,
+  ]
     .filter(Boolean)
     .join(", ");
 
@@ -191,15 +208,15 @@ export function CustomerDetail({
                   customer.type === "customer"
                     ? "success"
                     : customer.type === "supplier"
-                    ? "warning"
-                    : "info"
+                      ? "warning"
+                      : "info"
                 }
               >
                 {customer.type === "customer"
                   ? "Customer"
                   : customer.type === "supplier"
-                  ? "Supplier"
-                  : "Customer & Supplier"}
+                    ? "Supplier"
+                    : "Customer & Supplier"}
               </Badge>
               {!customer.isActive && (
                 <Badge variant="secondary">Inactive</Badge>
@@ -248,9 +265,9 @@ export function CustomerDetail({
                   )}
                 >
                   {isReceivable ? (
-                    <ArrowDownLeft className={cn("h-6 w-6", isReceivable ? "text-success" : "text-error")} />
+                    <ArrowDownLeft className="h-6 w-6 text-success" />
                   ) : (
-                    <ArrowUpRight className={cn("h-6 w-6", isReceivable ? "text-success" : "text-error")} />
+                    <ArrowUpRight className="h-6 w-6 text-error" />
                   )}
                 </div>
               </div>

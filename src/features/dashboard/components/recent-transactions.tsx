@@ -7,7 +7,11 @@ import { ArrowUpRight, ArrowDownLeft, ChevronRight } from "lucide-react";
 // TYPES
 // ============================================================================
 
-export type TransactionType = "sale" | "purchase" | "payment-in" | "payment-out";
+export type TransactionType =
+  | "sale"
+  | "purchase"
+  | "payment-in"
+  | "payment-out";
 
 export interface Transaction {
   id: string;
@@ -32,7 +36,11 @@ export interface RecentTransactionsProps {
 
 const typeConfig: Record<
   TransactionType,
-  { label: string; color: "success" | "error" | "primary" | "warning"; isIncoming: boolean }
+  {
+    label: string;
+    color: "success" | "error" | "primary" | "warning";
+    isIncoming: boolean;
+  }
 > = {
   sale: { label: "Sale", color: "success", isIncoming: true },
   purchase: { label: "Purchase", color: "error", isIncoming: false },
@@ -62,7 +70,7 @@ export function RecentTransactions({
     return <TableSkeleton className={className} rows={5} columns={4} />;
   }
 
-  const displayTransactions = transactions || [];
+  const displayTransactions = transactions ?? [];
 
   return (
     <Card className={className}>
@@ -108,13 +116,9 @@ export function RecentTransactions({
                     )}
                   >
                     {isIncoming ? (
-                      <ArrowDownLeft
-                        className={cn("h-5 w-5", isIncoming ? "text-success" : "text-error")}
-                      />
+                      <ArrowDownLeft className="h-5 w-5 text-success" />
                     ) : (
-                      <ArrowUpRight
-                        className={cn("h-5 w-5", isIncoming ? "text-success" : "text-error")}
-                      />
+                      <ArrowUpRight className="h-5 w-5 text-error" />
                     )}
                   </div>
 
@@ -129,7 +133,8 @@ export function RecentTransactions({
                       </Badge>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {transaction.invoiceNumber && `${transaction.invoiceNumber} • `}
+                      {transaction.invoiceNumber &&
+                        `${transaction.invoiceNumber} • `}
                       {transaction.date}
                     </div>
                   </div>

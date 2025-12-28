@@ -56,12 +56,12 @@ export function PaymentOutForm({
 }: PaymentOutFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
   const [amount, setAmount] = useState<number>(initialData?.amount ?? 0);
   const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(initialData?.paymentMode ?? "cash");
   const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
-  const [invoiceId, setInvoiceId] = useState<string>(initialData?.invoiceId !== undefined ? initialData.invoiceId : "");
+  const [invoiceId, setInvoiceId] = useState<string>(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
   // Customer options (suppliers only)
@@ -165,7 +165,7 @@ export function PaymentOutForm({
                 <Input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => { setDate(e.target.value); }}
                 />
               </div>
 
@@ -178,7 +178,7 @@ export function PaymentOutForm({
                   min="0"
                   step="0.01"
                   value={amount}
-                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => { setAmount(parseFloat(e.target.value) || 0); }}
                   placeholder="0.00"
                 />
               </div>
@@ -191,7 +191,7 @@ export function PaymentOutForm({
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => setPaymentMode(value as PaymentOutMode)}
+                  onChange={(value) => { setPaymentMode(value as PaymentOutMode); }}
                 />
               </div>
 
@@ -203,7 +203,7 @@ export function PaymentOutForm({
                 <Input
                   type="text"
                   value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  onChange={(e) => { setReferenceNumber(e.target.value); }}
                   placeholder="Transaction ID, cheque number, etc."
                 />
               </div>
@@ -255,7 +255,7 @@ export function PaymentOutForm({
                 placeholder="Add any notes about this payment..."
                 rows={4}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => { setNotes(e.target.value); }}
               />
             </CardBody>
           </Card>

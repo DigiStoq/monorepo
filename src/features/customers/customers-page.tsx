@@ -17,14 +17,19 @@ import type { Customer, CustomerTransaction, CustomerFormData } from "./types";
 export function CustomersPage() {
   // Data from PowerSync
   const { customers, isLoading, error } = useCustomers();
-  const { createCustomer, updateCustomer, deleteCustomer } = useCustomerMutations();
+  const { createCustomer, updateCustomer, deleteCustomer } =
+    useCustomerMutations();
 
   // State
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update selected customer when data changes
@@ -95,7 +100,12 @@ export function CustomersPage() {
 
   const handleAddTransaction = (type: "payment-in" | "payment-out") => {
     // TODO: Open transaction modal - will navigate to payment forms
-    console.log("Add transaction:", type, "for customer:", currentSelectedCustomer?.id);
+    console.log(
+      "Add transaction:",
+      type,
+      "for customer:",
+      currentSelectedCustomer?.id
+    );
   };
 
   if (error) {
@@ -116,7 +126,10 @@ export function CustomersPage() {
         title="Customers"
         description="Manage your customers and suppliers"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddCustomer}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleAddCustomer}
+          >
             Add Customer
           </Button>
         }
@@ -160,7 +173,9 @@ export function CustomersPage() {
           setIsFormModalOpen(false);
           setEditingCustomer(null);
         }}
-        onSubmit={handleFormSubmit}
+        onSubmit={(data) => {
+          void handleFormSubmit(data);
+        }}
         isLoading={isSubmitting}
       />
 
@@ -178,8 +193,10 @@ export function CustomersPage() {
           <ModalBody>
             <p className="text-slate-600">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-slate-900">{customerToDelete?.name}</span>?
-              This action cannot be undone.
+              <span className="font-semibold text-slate-900">
+                {customerToDelete?.name}
+              </span>
+              ? This action cannot be undone.
             </p>
           </ModalBody>
           <ModalFooter>
@@ -193,7 +210,13 @@ export function CustomersPage() {
             >
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleConfirmDelete} isLoading={isSubmitting}>
+            <Button
+              variant="danger"
+              onClick={() => {
+                void handleConfirmDelete();
+              }}
+              isLoading={isSubmitting}
+            >
               Delete
             </Button>
           </ModalFooter>

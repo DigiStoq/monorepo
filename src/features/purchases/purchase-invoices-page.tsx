@@ -14,7 +14,7 @@ export function PurchaseInvoicesPage() {
   const { invoices, isLoading, error } = usePurchaseInvoices();
   const { customers } = useCustomers({ type: "supplier" });
   const { items } = useItems({ isActive: true });
-  const { createInvoice, updateInvoiceStatus, deleteInvoice } = usePurchaseInvoiceMutations();
+  const { createInvoice, deleteInvoice } = usePurchaseInvoiceMutations();
 
   // State
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseInvoice | null>(null);
@@ -133,9 +133,9 @@ export function PurchaseInvoicesPage() {
             <PurchaseInvoiceDetail
               invoice={currentSelectedPurchase}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeletePurchase}
-              onPrint={() => console.log("Print invoice")}
+              onEdit={() => { setIsFormOpen(true); }}
+              onDelete={() => { void handleDeletePurchase(); }}
+              onPrint={() => { console.log("Print invoice"); }}
               onRecordPayment={handleRecordPayment}
             />
           </div>
@@ -152,7 +152,7 @@ export function PurchaseInvoicesPage() {
             <PurchaseInvoiceForm
               customers={customers}
               items={items}
-              onSubmit={handleSubmitPurchase}
+              onSubmit={(data) => { void handleSubmitPurchase(data); }}
               onCancel={handleCloseForm}
               isSubmitting={isSubmitting}
               className="p-6"

@@ -85,12 +85,14 @@ function CustomerCard({ customer, onClick }: CustomerCardProps) {
                 customer.type === "customer"
                   ? "success"
                   : customer.type === "supplier"
-                  ? "warning"
-                  : "info"
+                    ? "warning"
+                    : "info"
               }
               size="sm"
             >
-              {customer.type === "both" ? "C/S" : customer.type.charAt(0).toUpperCase()}
+              {customer.type === "both"
+                ? "C/S"
+                : customer.type.charAt(0).toUpperCase()}
             </Badge>
           </div>
 
@@ -173,7 +175,9 @@ export function CustomerList({
           const searchLower = filters.search.toLowerCase();
           const matchesName = customer.name.toLowerCase().includes(searchLower);
           const matchesPhone = customer.phone?.includes(filters.search);
-          const matchesEmail = customer.email?.toLowerCase().includes(searchLower);
+          const matchesEmail = customer.email
+            ?.toLowerCase()
+            .includes(searchLower);
           if (!matchesName && !matchesPhone && !matchesEmail) return false;
         }
 
@@ -183,7 +187,10 @@ export function CustomerList({
         }
 
         // Balance filter
-        if (filters.balanceType === "receivable" && customer.currentBalance <= 0) {
+        if (
+          filters.balanceType === "receivable" &&
+          customer.currentBalance <= 0
+        ) {
           return false;
         }
         if (filters.balanceType === "payable" && customer.currentBalance >= 0) {
@@ -200,10 +207,12 @@ export function CustomerList({
             comparison = a.name.localeCompare(b.name);
             break;
           case "balance":
-            comparison = Math.abs(b.currentBalance) - Math.abs(a.currentBalance);
+            comparison =
+              Math.abs(b.currentBalance) - Math.abs(a.currentBalance);
             break;
           case "recent":
-            comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            comparison =
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
             break;
         }
 
@@ -256,7 +265,9 @@ export function CustomerList({
         <SearchInput
           placeholder="Search customers..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, search: e.target.value }));
+          }}
           className="flex-1"
         />
 
@@ -264,25 +275,31 @@ export function CustomerList({
           <Select
             options={typeOptions}
             value={filters.type}
-            onChange={(value) =>
-              setFilters((f) => ({ ...f, type: value as CustomerType | "all" }))
-            }
+            onChange={(value) => {
+              setFilters((f) => ({
+                ...f,
+                type: value as CustomerType | "all",
+              }));
+            }}
             size="md"
           />
 
           <Select
             options={balanceOptions}
             value={filters.balanceType}
-            onChange={(value) =>
+            onChange={(value) => {
               setFilters((f) => ({
                 ...f,
                 balanceType: value as "all" | "receivable" | "payable",
-              }))
-            }
+              }));
+            }}
             size="md"
           />
 
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddCustomer}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={onAddCustomer}
+          >
             Add Customer
           </Button>
         </div>
@@ -321,7 +338,10 @@ export function CustomerList({
           }
           action={
             !filters.search && (
-              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddCustomer}>
+              <Button
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={onAddCustomer}
+              >
                 Add Customer
               </Button>
             )
@@ -330,7 +350,8 @@ export function CustomerList({
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-slate-500 mb-2">
-            {filteredCustomers.length} {filteredCustomers.length === 1 ? "customer" : "customers"}
+            {filteredCustomers.length}{" "}
+            {filteredCustomers.length === 1 ? "customer" : "customers"}
           </p>
 
           {filteredCustomers.map((customer) => (

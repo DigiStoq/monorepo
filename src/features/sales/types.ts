@@ -59,7 +59,7 @@ export interface SaleInvoiceItemFormData {
 export interface SaleFilters {
   search: string;
   status: InvoiceStatus | "all";
-  customerId: string | "all";
+  customerId: string;
   dateRange: {
     from: string | null;
     to: string | null;
@@ -106,6 +106,20 @@ export interface PaymentInFormData {
 
 export type EstimateStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "converted";
 
+export interface EstimateItem {
+  id: string;
+  estimateId: string;
+  itemId?: string;
+  itemName: string;
+  description?: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+  discountPercent?: number;
+  taxPercent?: number;
+  amount: number;
+}
+
 export interface Estimate {
   id: string;
   estimateNumber: string;
@@ -141,6 +155,19 @@ export interface EstimateFormData {
 // ============================================================================
 
 export type CreditNoteReason = "return" | "discount" | "error" | "other";
+
+export interface CreditNoteItem {
+  id: string;
+  creditNoteId: string;
+  itemId?: string;
+  itemName: string;
+  description?: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+  taxPercent?: number;
+  amount: number;
+}
 
 export interface CreditNote {
   id: string;

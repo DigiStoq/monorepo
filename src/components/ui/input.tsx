@@ -14,8 +14,10 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 export type InputSize = "sm" | "md" | "lg";
 export type InputState = "default" | "error" | "success";
 
-export interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+export interface InputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "size"
+> {
   /** Input size */
   size?: InputSize;
   /** Validation state */
@@ -125,7 +127,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Compute actual type
     const computedType =
-      isPasswordType && showPassword ? "text" : type ?? "text";
+      isPasswordType && showPassword ? "text" : (type ?? "text");
 
     // Compute state from error prop
     const computedState = error ? "error" : state;
@@ -135,10 +137,23 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Compute padding for icons
     const hasLeftIcon = !!leftIcon;
-    const hasRightIcon = !!rightIcon || shouldShowToggle || computedState !== "default";
+    const hasRightIcon =
+      !!rightIcon || shouldShowToggle || computedState !== "default";
 
-    const paddingLeft = hasLeftIcon ? (size === "sm" ? "pl-8" : size === "lg" ? "pl-12" : "pl-10") : "";
-    const paddingRight = hasRightIcon ? (size === "sm" ? "pr-8" : size === "lg" ? "pr-12" : "pr-10") : "";
+    const paddingLeft = hasLeftIcon
+      ? size === "sm"
+        ? "pl-8"
+        : size === "lg"
+          ? "pl-12"
+          : "pl-10"
+      : "";
+    const paddingRight = hasRightIcon
+      ? size === "sm"
+        ? "pr-8"
+        : size === "lg"
+          ? "pr-12"
+          : "pr-10"
+      : "";
 
     // State icon
     const stateIcon =
@@ -159,9 +174,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className={inputWrapperStyles}>
           {/* Left Icon */}
           {leftIcon && (
-            <span className={cn(iconStyles, leftIconStyles)}>
-              {leftIcon}
-            </span>
+            <span className={cn(iconStyles, leftIconStyles)}>{leftIcon}</span>
           )}
 
           {/* Input */}
@@ -182,7 +195,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {/* Right Side Icons */}
-          <div className={cn(iconStyles, rightIconStyles, "flex items-center gap-1 pointer-events-auto")}>
+          <div
+            className={cn(
+              iconStyles,
+              rightIconStyles,
+              "flex items-center gap-1 pointer-events-auto"
+            )}
+          >
             {/* Custom right icon */}
             {rightIcon && !shouldShowToggle && !stateIcon && (
               <span className="pointer-events-none">{rightIcon}</span>
@@ -197,7 +216,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {shouldShowToggle && (
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
                 className="p-1 rounded hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
@@ -213,7 +234,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {/* Helper/Error Text */}
-        {(error || helperText) && (
+        {(error ?? helperText) && (
           <p
             className={cn(
               helperTextStyles,
@@ -236,7 +257,10 @@ Input.displayName = "Input";
 
 import { Search, X } from "lucide-react";
 
-export interface SearchInputProps extends Omit<InputProps, "leftIcon" | "type"> {
+export interface SearchInputProps extends Omit<
+  InputProps,
+  "leftIcon" | "type"
+> {
   /** Callback when clear button is clicked */
   onClear?: () => void;
   /** Show clear button when value exists */
@@ -278,8 +302,10 @@ SearchInput.displayName = "SearchInput";
 // TEXTAREA
 // ============================================================================
 
-export interface TextareaProps
-  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {
+export interface TextareaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "size"
+> {
   /** Textarea size (affects padding/font) */
   size?: InputSize;
   /** Validation state */
@@ -339,7 +365,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
 
-        {(error || helperText) && (
+        {(error ?? helperText) && (
           <p
             className={cn(
               helperTextStyles,

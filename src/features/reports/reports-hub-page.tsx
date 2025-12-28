@@ -134,7 +134,7 @@ export function ReportsHubPage() {
             type="text"
             placeholder="Search reports..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); }}
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>

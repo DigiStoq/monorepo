@@ -89,7 +89,7 @@ export function RestoreWizard({
       const restoreResult = await onRestore({
         source,
         backupId: selectedBackup?.id,
-        file: uploadedFile || undefined,
+        file: uploadedFile ?? undefined,
         overwriteExisting,
       });
       setResult(restoreResult);
@@ -157,7 +157,7 @@ export function RestoreWizard({
         setStep("confirm");
         break;
       case "confirm":
-        handleRestore();
+        void handleRestore();
         break;
     }
   };
@@ -227,7 +227,7 @@ export function RestoreWizard({
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => setSource("local")}
+                onClick={() => { setSource("local"); }}
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "local"
@@ -244,7 +244,7 @@ export function RestoreWizard({
 
               <button
                 type="button"
-                onClick={() => setSource("cloud")}
+                onClick={() => { setSource("cloud"); }}
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "cloud"
@@ -298,7 +298,7 @@ export function RestoreWizard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setUploadedFile(null)}
+                      onClick={() => { setUploadedFile(null); }}
                     >
                       Choose different file
                     </Button>
@@ -328,7 +328,7 @@ export function RestoreWizard({
                     <button
                       key={backup.id}
                       type="button"
-                      onClick={() => setSelectedBackup(backup)}
+                      onClick={() => { setSelectedBackup(backup); }}
                       className={cn(
                         "w-full p-4 rounded-lg border-2 text-left transition-all",
                         selectedBackup?.id === backup.id
@@ -396,7 +396,7 @@ export function RestoreWizard({
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Size</span>
                   <span className="font-medium text-slate-900">
-                    {formatFileSize(source === "local" ? uploadedFile?.size || 0 : selectedBackup?.size || 0)}
+                    {formatFileSize(source === "local" ? uploadedFile?.size ?? 0 : selectedBackup?.size ?? 0)}
                   </span>
                 </div>
               </CardBody>
@@ -418,7 +418,7 @@ export function RestoreWizard({
               <input
                 type="checkbox"
                 checked={overwriteExisting}
-                onChange={(e) => setOverwriteExisting(e.target.checked)}
+                onChange={(e) => { setOverwriteExisting(e.target.checked); }}
                 className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <div className="flex items-center gap-2">

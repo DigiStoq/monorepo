@@ -115,10 +115,10 @@ export function PaymentOutPage() {
             <PaymentOutDetail
               payment={currentSelectedPayment}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeletePayment}
-              onPrint={() => console.log("Print payment")}
-              onShare={() => console.log("Share payment")}
+              onEdit={() => { setIsFormOpen(true); }}
+              onDelete={() => { void handleDeletePayment(); }}
+              onPrint={() => { console.log("Print payment"); }}
+              onShare={() => { console.log("Share payment"); }}
             />
           </div>
         )}
@@ -134,7 +134,7 @@ export function PaymentOutPage() {
             <PaymentOutForm
               customers={customers}
               invoices={invoices}
-              onSubmit={handleSubmitPayment}
+              onSubmit={(data) => { void handleSubmitPayment(data); }}
               onCancel={handleCloseForm}
               isSubmitting={isSubmitting}
               className="p-6"

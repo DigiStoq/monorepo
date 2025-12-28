@@ -263,7 +263,7 @@ export function PaymentInList({
         <SearchInput
           placeholder="Search payments..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
           className="flex-1"
         />
 
@@ -272,7 +272,7 @@ export function PaymentInList({
             options={paymentModeOptions}
             value={filters.paymentMode}
             onChange={(value) =>
-              setFilters((f) => ({ ...f, paymentMode: value as PaymentMode | "all" }))
+              { setFilters((f) => ({ ...f, paymentMode: value as PaymentMode | "all" })); }
             }
             size="md"
           />

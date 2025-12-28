@@ -49,7 +49,7 @@ export function PurchaseBySupplierReport() {
 
   // Filter and sort data
   const processedData = useMemo(() => {
-    let data = mockSupplierPurchases.filter((supplier) =>
+    const data = mockSupplierPurchases.filter((supplier) =>
       supplier.partyName.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -124,8 +124,8 @@ export function PurchaseBySupplierReport() {
       title="Purchases by Supplier"
       subtitle="Supplier-wise purchase analysis"
       backPath="/reports"
-      onExport={() => console.log("Export supplier purchases")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export supplier purchases"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -134,7 +134,7 @@ export function PurchaseBySupplierReport() {
               type="text"
               placeholder="Search suppliers..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -183,20 +183,20 @@ export function PurchaseBySupplierReport() {
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Supplier</th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("invoices")}
+                      onClick={() => { handleSort("invoices"); }}
                     >
                       Invoices <SortIcon column="invoices" />
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("purchases")}
+                      onClick={() => { handleSort("purchases"); }}
                     >
                       Total Purchases <SortIcon column="purchases" />
                     </th>
                     <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Paid</th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("due")}
+                      onClick={() => { handleSort("due"); }}
                     >
                       Due <SortIcon column="due" />
                     </th>

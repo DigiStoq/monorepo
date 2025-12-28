@@ -54,7 +54,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => { onChange(!checked); }}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
         checked ? "bg-teal-600" : "bg-slate-200"
       }`}
@@ -145,7 +145,7 @@ export function TaxInvoiceSettingsPage() {
       title="Tax & Invoice Settings"
       description="Configure tax rates and invoice preferences"
       actions={
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -163,7 +163,7 @@ export function TaxInvoiceSettingsPage() {
               <Toggle
                 checked={taxSettings.taxEnabled}
                 onChange={(v) =>
-                  setTaxSettings((prev) => ({ ...prev, taxEnabled: v }))
+                  { setTaxSettings((prev) => ({ ...prev, taxEnabled: v })); }
                 }
               />
             </SettingsRow>
@@ -174,7 +174,7 @@ export function TaxInvoiceSettingsPage() {
               <Toggle
                 checked={taxSettings.taxInclusive}
                 onChange={(v) =>
-                  setTaxSettings((prev) => ({ ...prev, taxInclusive: v }))
+                  { setTaxSettings((prev) => ({ ...prev, taxInclusive: v })); }
                 }
               />
             </SettingsRow>
@@ -182,7 +182,7 @@ export function TaxInvoiceSettingsPage() {
               <Toggle
                 checked={taxSettings.roundTax}
                 onChange={(v) =>
-                  setTaxSettings((prev) => ({ ...prev, roundTax: v }))
+                  { setTaxSettings((prev) => ({ ...prev, roundTax: v })); }
                 }
               />
             </SettingsRow>
@@ -217,7 +217,7 @@ export function TaxInvoiceSettingsPage() {
                     <Input
                       type="text"
                       value={rate.name}
-                      onChange={(e) => updateTaxRate(rate.id, { name: e.target.value })}
+                      onChange={(e) => { updateTaxRate(rate.id, { name: e.target.value }); }}
                       className="w-32"
                       placeholder="Name"
                     />
@@ -225,7 +225,7 @@ export function TaxInvoiceSettingsPage() {
                       type="number"
                       value={rate.rate}
                       onChange={(e) =>
-                        updateTaxRate(rate.id, { rate: parseFloat(e.target.value) || 0 })
+                        { updateTaxRate(rate.id, { rate: parseFloat(e.target.value) || 0 }); }
                       }
                       className="w-20"
                       placeholder="Rate"
@@ -235,7 +235,7 @@ export function TaxInvoiceSettingsPage() {
                       type="text"
                       value={rate.description ?? ""}
                       onChange={(e) =>
-                        updateTaxRate(rate.id, { description: e.target.value })
+                        { updateTaxRate(rate.id, { description: e.target.value }); }
                       }
                       className="flex-1"
                       placeholder="Description"
@@ -243,7 +243,7 @@ export function TaxInvoiceSettingsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditingRate(null)}
+                      onClick={() => { setEditingRate(null); }}
                     >
                       Done
                     </Button>
@@ -271,7 +271,7 @@ export function TaxInvoiceSettingsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setDefaultRate(rate.id)}
+                          onClick={() => { setDefaultRate(rate.id); }}
                           className="text-xs"
                         >
                           Set Default
@@ -280,14 +280,14 @@ export function TaxInvoiceSettingsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingRate(rate.id)}
+                        onClick={() => { setEditingRate(rate.id); }}
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteRate(rate.id)}
+                        onClick={() => { deleteRate(rate.id); }}
                         className="text-error hover:text-error"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -312,7 +312,7 @@ export function TaxInvoiceSettingsPage() {
                 type="text"
                 value={invoiceSettings.prefix}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({ ...prev, prefix: e.target.value }))
+                  { setInvoiceSettings((prev) => ({ ...prev, prefix: e.target.value })); }
                 }
                 className="w-24 font-mono"
               />
@@ -322,10 +322,10 @@ export function TaxInvoiceSettingsPage() {
                 type="number"
                 value={invoiceSettings.nextNumber}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({
+                  { setInvoiceSettings((prev) => ({
                     ...prev,
                     nextNumber: parseInt(e.target.value) || 1,
-                  }))
+                  })); }
                 }
                 className="w-28 font-mono"
               />
@@ -334,10 +334,10 @@ export function TaxInvoiceSettingsPage() {
               <select
                 value={invoiceSettings.padding}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({
+                  { setInvoiceSettings((prev) => ({
                     ...prev,
                     padding: parseInt(e.target.value),
-                  }))
+                  })); }
                 }
                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -366,10 +366,10 @@ export function TaxInvoiceSettingsPage() {
               <select
                 value={invoiceSettings.dueDateDays}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({
+                  { setInvoiceSettings((prev) => ({
                     ...prev,
                     dueDateDays: parseInt(e.target.value),
-                  }))
+                  })); }
                 }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -388,7 +388,7 @@ export function TaxInvoiceSettingsPage() {
                 <Toggle
                   checked={invoiceSettings.lateFeesEnabled}
                   onChange={(v) =>
-                    setInvoiceSettings((prev) => ({ ...prev, lateFeesEnabled: v }))
+                    { setInvoiceSettings((prev) => ({ ...prev, lateFeesEnabled: v })); }
                   }
                 />
                 {invoiceSettings.lateFeesEnabled && (
@@ -397,10 +397,10 @@ export function TaxInvoiceSettingsPage() {
                       type="number"
                       value={invoiceSettings.lateFeesPercentage ?? 0}
                       onChange={(e) =>
-                        setInvoiceSettings((prev) => ({
+                        { setInvoiceSettings((prev) => ({
                           ...prev,
                           lateFeesPercentage: parseFloat(e.target.value) || 0,
-                        }))
+                        })); }
                       }
                       className="w-16"
                     />
@@ -418,7 +418,7 @@ export function TaxInvoiceSettingsPage() {
               <Toggle
                 checked={invoiceSettings.showBankDetails}
                 onChange={(v) =>
-                  setInvoiceSettings((prev) => ({ ...prev, showBankDetails: v }))
+                  { setInvoiceSettings((prev) => ({ ...prev, showBankDetails: v })); }
                 }
               />
             </SettingsRow>
@@ -428,7 +428,7 @@ export function TaxInvoiceSettingsPage() {
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.accountName}
-                    onChange={(e) => updateBankDetails("accountName", e.target.value)}
+                    onChange={(e) => { updateBankDetails("accountName", e.target.value); }}
                     className="w-64"
                   />
                 </SettingsRow>
@@ -436,7 +436,7 @@ export function TaxInvoiceSettingsPage() {
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.accountNumber}
-                    onChange={(e) => updateBankDetails("accountNumber", e.target.value)}
+                    onChange={(e) => { updateBankDetails("accountNumber", e.target.value); }}
                     className="w-48 font-mono"
                   />
                 </SettingsRow>
@@ -444,7 +444,7 @@ export function TaxInvoiceSettingsPage() {
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.bankName}
-                    onChange={(e) => updateBankDetails("bankName", e.target.value)}
+                    onChange={(e) => { updateBankDetails("bankName", e.target.value); }}
                     className="w-48"
                   />
                 </SettingsRow>
@@ -452,7 +452,7 @@ export function TaxInvoiceSettingsPage() {
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.routingNumber}
-                    onChange={(e) => updateBankDetails("routingNumber", e.target.value)}
+                    onChange={(e) => { updateBankDetails("routingNumber", e.target.value); }}
                     className="w-32 font-mono"
                   />
                 </SettingsRow>
@@ -460,7 +460,7 @@ export function TaxInvoiceSettingsPage() {
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.swiftCode ?? ""}
-                    onChange={(e) => updateBankDetails("swiftCode", e.target.value)}
+                    onChange={(e) => { updateBankDetails("swiftCode", e.target.value); }}
                     className="w-48 font-mono"
                     placeholder="CHASUS33"
                   />
@@ -471,7 +471,7 @@ export function TaxInvoiceSettingsPage() {
               <Toggle
                 checked={invoiceSettings.showPaymentQR}
                 onChange={(v) =>
-                  setInvoiceSettings((prev) => ({ ...prev, showPaymentQR: v }))
+                  { setInvoiceSettings((prev) => ({ ...prev, showPaymentQR: v })); }
                 }
               />
             </SettingsRow>
@@ -492,10 +492,10 @@ export function TaxInvoiceSettingsPage() {
               <textarea
                 value={invoiceSettings.termsAndConditions}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({
+                  { setInvoiceSettings((prev) => ({
                     ...prev,
                     termsAndConditions: e.target.value,
-                  }))
+                  })); }
                 }
                 rows={4}
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
@@ -509,7 +509,7 @@ export function TaxInvoiceSettingsPage() {
               <textarea
                 value={invoiceSettings.notes}
                 onChange={(e) =>
-                  setInvoiceSettings((prev) => ({ ...prev, notes: e.target.value }))
+                  { setInvoiceSettings((prev) => ({ ...prev, notes: e.target.value })); }
                 }
                 rows={2}
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"

@@ -56,12 +56,12 @@ export function InvoiceForm({
 }: InvoiceFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate !== undefined ? initialData.dueDate : "");
-  const [notes, setNotes] = useState(initialData?.notes || "");
-  const [terms, setTerms] = useState(initialData?.terms || "");
-  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent || 0);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
+  const [notes, setNotes] = useState(initialData?.notes ?? "");
+  const [terms, setTerms] = useState(initialData?.terms ?? "");
+  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -118,7 +118,7 @@ export function InvoiceForm({
             updated.itemName = selectedItem.name;
             updated.unit = selectedItem.unit;
             updated.unitPrice = selectedItem.salePrice;
-            updated.taxPercent = selectedItem.taxRate || 0;
+            updated.taxPercent = selectedItem.taxRate ?? 0;
           }
         }
 
@@ -247,7 +247,7 @@ export function InvoiceForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => { setDate(e.target.value); }}
                   />
                 </div>
 
@@ -259,7 +259,7 @@ export function InvoiceForm({
                   <Input
                     type="date"
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={(e) => { setDueDate(e.target.value); }}
                   />
                 </div>
               </div>
@@ -342,7 +342,7 @@ export function InvoiceForm({
                               options={itemOptions}
                               value={item.itemId}
                               onChange={(value) =>
-                                handleUpdateLineItem(item.id, "itemId", value)
+                                { handleUpdateLineItem(item.id, "itemId", value); }
                               }
                               size="sm"
                             />
@@ -353,11 +353,11 @@ export function InvoiceForm({
                               min="1"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -370,11 +370,11 @@ export function InvoiceForm({
                               step="0.01"
                               value={item.unitPrice}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -387,11 +387,11 @@ export function InvoiceForm({
                               max="100"
                               value={item.discountPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -404,11 +404,11 @@ export function InvoiceForm({
                               max="100"
                               value={item.taxPercent}
                               onChange={(e) =>
-                                handleUpdateLineItem(
+                                { handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                )
+                                ); }
                               }
                               size="sm"
                               className="text-right"
@@ -421,7 +421,7 @@ export function InvoiceForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveLineItem(item.id)}
+                              onClick={() => { handleRemoveLineItem(item.id); }}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -444,14 +444,14 @@ export function InvoiceForm({
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => { setNotes(e.target.value); }}
                 />
                 <Textarea
                   label="Terms & Conditions"
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
-                  onChange={(e) => setTerms(e.target.value)}
+                  onChange={(e) => { setTerms(e.target.value); }}
                 />
               </div>
             </CardBody>
@@ -475,7 +475,7 @@ export function InvoiceForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => { setDiscountPercent(parseFloat(e.target.value) || 0); }}
                   size="sm"
                   className="w-16 text-right"
                 />

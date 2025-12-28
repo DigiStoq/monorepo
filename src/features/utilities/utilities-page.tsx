@@ -133,7 +133,7 @@ export function UtilitiesPage() {
       description: "Import customers, items, or invoices from CSV/Excel files",
       icon: <Upload className="h-6 w-6" />,
       color: "bg-blue-500",
-      action: () => setIsImportOpen(true),
+      action: () => { setIsImportOpen(true); },
     },
     {
       id: "export",
@@ -141,7 +141,7 @@ export function UtilitiesPage() {
       description: "Export your data to CSV, Excel, or PDF formats",
       icon: <Download className="h-6 w-6" />,
       color: "bg-green-500",
-      action: () => setIsExportOpen(true),
+      action: () => { setIsExportOpen(true); },
     },
     {
       id: "bulk-update",
@@ -149,7 +149,7 @@ export function UtilitiesPage() {
       description: "Update prices, categories, or stock for multiple items at once",
       icon: <Layers className="h-6 w-6" />,
       color: "bg-purple-500",
-      action: () => setIsBulkUpdateOpen(true),
+      action: () => { setIsBulkUpdateOpen(true); },
     },
     {
       id: "backup",
@@ -157,7 +157,7 @@ export function UtilitiesPage() {
       description: "Create a backup of all your business data",
       icon: <HardDrive className="h-6 w-6" />,
       color: "bg-teal-500",
-      action: () => setIsBackupOpen(true),
+      action: () => { setIsBackupOpen(true); },
     },
     {
       id: "restore",
@@ -165,7 +165,7 @@ export function UtilitiesPage() {
       description: "Restore data from a previous backup",
       icon: <RefreshCw className="h-6 w-6" />,
       color: "bg-orange-500",
-      action: () => setIsRestoreOpen(true),
+      action: () => { setIsRestoreOpen(true); },
     },
     {
       id: "cleanup",
@@ -313,19 +313,19 @@ export function UtilitiesPage() {
       {/* Modals */}
       <ImportWizard
         isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
+        onClose={() => { setIsImportOpen(false); }}
         onImport={handleImport}
       />
 
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
+        onClose={() => { setIsExportOpen(false); }}
         onExport={handleExport}
       />
 
       <BulkUpdateModal
         isOpen={isBulkUpdateOpen}
-        onClose={() => setIsBulkUpdateOpen(false)}
+        onClose={() => { setIsBulkUpdateOpen(false); }}
         selectedItems={mockSelectedItems}
         categories={mockCategories}
         onUpdate={handleBulkUpdate}
@@ -333,14 +333,14 @@ export function UtilitiesPage() {
 
       <BackupModal
         isOpen={isBackupOpen}
-        onClose={() => setIsBackupOpen(false)}
+        onClose={() => { setIsBackupOpen(false); }}
         onBackup={handleBackup}
         lastBackup={mockLastBackup}
       />
 
       <RestoreWizard
         isOpen={isRestoreOpen}
-        onClose={() => setIsRestoreOpen(false)}
+        onClose={() => { setIsRestoreOpen(false); }}
         onRestore={handleRestore}
         availableBackups={mockCloudBackups}
       />

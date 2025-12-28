@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import {
   AppShell,
@@ -126,10 +126,21 @@ export function RootLayout() {
   // Auth Store
   const { user, signOut } = useAuthStore();
 
+  // User display name
+  const userDisplayName = useMemo((): string => {
+    if (user?.user_metadata.full_name) {
+      return user.user_metadata.full_name as string;
+    }
+    if (user?.email) {
+      return user.email.split("@")[0];
+    }
+    return "User";
+  }, [user]);
+
   // Handle logout
   const handleLogout = useCallback(async () => {
     await signOut();
-    navigate({ to: "/login" });
+    void navigate({ to: "/login" });
   }, [signOut, navigate]);
 
   // Determine active item from current path
@@ -154,7 +165,7 @@ export function RootLayout() {
   const handleNavigate = useCallback(
     (item: NavItem) => {
       if (item.href) {
-        navigate({ to: item.href });
+        void navigate({ to: item.href });
       }
     },
     [navigate]
@@ -181,7 +192,7 @@ export function RootLayout() {
                 name="DigiStoq"
                 tagline="Inventory Management"
                 isCollapsed={sidebarCollapsed}
-                onClick={() => navigate({ to: "/" })}
+                onClick={() => { void navigate({ to: "/" }); }}
               />
             }
             footer={
@@ -195,7 +206,7 @@ export function RootLayout() {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => handleNavigate(item)}
+                          onClick={() => { handleNavigate(item); }}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-sidebar-hover hover:text-white transition-colors"
                         >
                           {Icon && <Icon className="h-4 w-4" />}
@@ -206,7 +217,7 @@ export function RootLayout() {
                     {/* Logout Button */}
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={() => { void handleLogout(); }}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
@@ -217,10 +228,10 @@ export function RootLayout() {
 
                 {/* User Profile */}
                 <SidebarUser
-                  name={user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
+                  name={userDisplayName}
                   email={user?.email ?? ""}
                   isCollapsed={sidebarCollapsed}
-                  onClick={() => navigate({ to: "/settings/profile" })}
+                  onClick={() => { void navigate({ to: "/settings/profile" }); }}
                 />
               </div>
             }

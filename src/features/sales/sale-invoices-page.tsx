@@ -127,8 +127,8 @@ export function SaleInvoicesPage() {
           <InvoiceForm
             customers={customers}
             items={items}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsCreating(false)}
+            onSubmit={(data) => { void handleFormSubmit(data); }}
+            onCancel={() => { setIsCreating(false); }}
             isSubmitting={isSubmitting}
           />
         </div>
@@ -172,8 +172,8 @@ export function SaleInvoicesPage() {
           <InvoiceDetail
             invoice={currentSelectedInvoice}
             onEdit={handleEditInvoice}
-            onDelete={handleDeleteInvoice}
-            onSend={handleSendInvoice}
+            onDelete={() => { handleDeleteInvoice(); }}
+            onSend={() => { void handleSendInvoice(); }}
             onRecordPayment={handleRecordPayment}
           />
         </div>
@@ -210,7 +210,7 @@ export function SaleInvoicesPage() {
             >
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleConfirmDelete} isLoading={isSubmitting}>
+            <Button variant="danger" onClick={() => { void handleConfirmDelete(); }} isLoading={isSubmitting}>
               Delete
             </Button>
           </ModalFooter>

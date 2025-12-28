@@ -80,6 +80,7 @@ function requireAuth() {
   }
 
   if (!isAuthenticated) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router redirect pattern
     throw redirect({ to: "/login" });
   }
 }
@@ -93,6 +94,7 @@ function redirectIfAuthenticated() {
   }
 
   if (isAuthenticated) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router redirect pattern
     throw redirect({ to: "/" });
   }
 }

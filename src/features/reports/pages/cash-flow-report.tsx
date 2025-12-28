@@ -71,8 +71,8 @@ export function CashFlowReportPage() {
       title="Cash Flow Statement"
       subtitle="Summary of cash inflows and outflows"
       backPath="/reports"
-      onExport={() => console.log("Export cash flow")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export cash flow"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />

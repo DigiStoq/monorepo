@@ -1,6 +1,12 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import {
@@ -10,8 +16,14 @@ import {
   BankTransactionForm,
   type BankTransactionFormData,
 } from "./components";
-import { useBankAccounts, useBankAccountMutations } from "@/hooks/useBankAccounts";
-import { useBankTransactions, useBankTransactionMutations } from "@/hooks/useBankTransactions";
+import {
+  useBankAccounts,
+  useBankAccountMutations,
+} from "@/hooks/useBankAccounts";
+import {
+  useBankTransactions,
+  useBankTransactionMutations,
+} from "@/hooks/useBankTransactions";
 import type { BankAccount, BankAccountFormData } from "./types";
 
 export function BankAccountsPage() {
@@ -21,7 +33,9 @@ export function BankAccountsPage() {
   const { createTransaction } = useBankTransactionMutations();
 
   // State
-  const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(
+    null
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
 
@@ -33,7 +47,9 @@ export function BankAccountsPage() {
 
   // Get transactions for selected account
   const { transactions: accountTransactions } = useBankTransactions(
-    currentSelectedAccount ? { accountId: currentSelectedAccount.id } : undefined
+    currentSelectedAccount
+      ? { accountId: currentSelectedAccount.id }
+      : undefined
   );
 
   // Build account options for transfer (exclude current account)
@@ -131,7 +147,10 @@ export function BankAccountsPage() {
         title="Bank Accounts"
         description="Manage your bank accounts and track balances"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateAccount}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreateAccount}
+          >
             Add Account
           </Button>
         }
@@ -159,8 +178,12 @@ export function BankAccountsPage() {
               account={currentSelectedAccount}
               transactions={accountTransactions}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteAccount}
+              onEdit={() => {
+                setIsFormOpen(true);
+              }}
+              onDelete={() => {
+                void handleDeleteAccount();
+              }}
               onAddTransaction={handleOpenTransactionForm}
             />
           </div>
@@ -170,12 +193,12 @@ export function BankAccountsPage() {
       {/* Account Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>
-            Add Bank Account
-          </ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>Add Bank Account</ModalHeader>
           <ModalBody>
             <BankAccountForm
-              onSubmit={handleSubmitAccount}
+              onSubmit={(data) => {
+                void handleSubmitAccount(data);
+              }}
               onCancel={handleCloseForm}
             />
           </ModalBody>
@@ -183,7 +206,11 @@ export function BankAccountsPage() {
       </Modal>
 
       {/* Transaction Form Modal */}
-      <Modal isOpen={isTransactionFormOpen} onClose={handleCloseTransactionForm} size="lg">
+      <Modal
+        isOpen={isTransactionFormOpen}
+        onClose={handleCloseTransactionForm}
+        size="lg"
+      >
         <ModalContent>
           <ModalHeader onClose={handleCloseTransactionForm}>
             Add Transaction - {currentSelectedAccount?.name}
@@ -191,7 +218,9 @@ export function BankAccountsPage() {
           <ModalBody>
             <BankTransactionForm
               bankAccounts={transferAccountOptions}
-              onSubmit={handleSubmitTransaction}
+              onSubmit={(data) => {
+                void handleSubmitTransaction(data);
+              }}
               onCancel={handleCloseTransactionForm}
             />
           </ModalBody>

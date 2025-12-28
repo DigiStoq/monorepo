@@ -148,8 +148,8 @@ export function ItemsPage() {
           <ItemDetail
             item={currentSelectedItem}
             onEdit={handleEditItem}
-            onDelete={handleDeleteItem}
-            onAdjustStock={() => handleAdjustStock(0)} // TODO: Open adjustment modal
+            onDelete={() => { handleDeleteItem(); }}
+            onAdjustStock={() => { void handleAdjustStock(0); }} // TODO: Open adjustment modal
           />
         </div>
       </div>
@@ -163,7 +163,7 @@ export function ItemsPage() {
           setIsFormModalOpen(false);
           setEditingItem(null);
         }}
-        onSubmit={handleFormSubmit}
+        onSubmit={(data) => { void handleFormSubmit(data); }}
         isSubmitting={isSubmitting}
       />
 
@@ -196,7 +196,7 @@ export function ItemsPage() {
             >
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleConfirmDelete} isLoading={isSubmitting}>
+            <Button variant="danger" onClick={() => { void handleConfirmDelete(); }} isLoading={isSubmitting}>
               Delete
             </Button>
           </ModalFooter>

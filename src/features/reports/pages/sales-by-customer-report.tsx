@@ -50,7 +50,7 @@ export function SalesByCustomerReport() {
 
   // Filter and sort data
   const processedData = useMemo(() => {
-    let data = mockCustomerSales.filter((customer) =>
+    const data = mockCustomerSales.filter((customer) =>
       customer.partyName.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -125,8 +125,8 @@ export function SalesByCustomerReport() {
       title="Sales by Customer"
       subtitle="Customer-wise sales performance"
       backPath="/reports"
-      onExport={() => console.log("Export customer sales")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export customer sales"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -135,7 +135,7 @@ export function SalesByCustomerReport() {
               type="text"
               placeholder="Search customers..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -186,13 +186,13 @@ export function SalesByCustomerReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("invoices")}
+                      onClick={() => { handleSort("invoices"); }}
                     >
                       Invoices <SortIcon column="invoices" />
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("sales")}
+                      onClick={() => { handleSort("sales"); }}
                     >
                       Total Sales <SortIcon column="sales" />
                     </th>
@@ -201,7 +201,7 @@ export function SalesByCustomerReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => handleSort("due")}
+                      onClick={() => { handleSort("due"); }}
                     >
                       Due <SortIcon column="due" />
                     </th>

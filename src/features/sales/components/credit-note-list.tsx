@@ -255,7 +255,7 @@ export function CreditNoteList({
         <SearchInput
           placeholder="Search credit notes..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
           className="flex-1"
         />
 
@@ -264,7 +264,7 @@ export function CreditNoteList({
             options={reasonOptions}
             value={filters.reason}
             onChange={(value) =>
-              setFilters((f) => ({ ...f, reason: value as CreditNoteReason | "all" }))
+              { setFilters((f) => ({ ...f, reason: value as CreditNoteReason | "all" })); }
             }
             size="md"
           />

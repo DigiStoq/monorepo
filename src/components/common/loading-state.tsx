@@ -51,7 +51,9 @@ export const SkeletonText = forwardRef<HTMLDivElement, SkeletonTextProps>(
           <Skeleton
             key={i}
             className="h-4"
-            style={{ width: widths?.[i] || defaultWidths[i % defaultWidths.length] }}
+            style={{
+              width: widths?.[i] ?? defaultWidths[i % defaultWidths.length],
+            }}
           />
         ))}
       </div>
@@ -75,7 +77,10 @@ export interface CardSkeletonProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const CardSkeleton = forwardRef<HTMLDivElement, CardSkeletonProps>(
-  ({ hasHeader = true, hasFooter = false, bodyLines = 3, className, ...props }, ref) => {
+  (
+    { hasHeader = true, hasFooter = false, bodyLines = 3, className, ...props },
+    ref
+  ) => {
     return (
       <div
         ref={ref}
@@ -157,27 +162,25 @@ TableSkeleton.displayName = "TableSkeleton";
 // METRIC CARD SKELETON
 // ============================================================================
 
-export const MetricCardSkeleton = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "bg-slate-100 rounded-xl p-6 animate-pulse",
-          className
-        )}
-        {...props}
-      >
-        <Skeleton className="h-4 w-24 mb-3 bg-slate-200" />
-        <Skeleton className="h-8 w-32 mb-4 bg-slate-200" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-14 rounded-full bg-slate-200" />
-          <Skeleton className="h-3 w-20 bg-slate-200" />
-        </div>
+export const MetricCardSkeleton = forwardRef<
+  HTMLDivElement,
+  HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("bg-slate-100 rounded-xl p-6 animate-pulse", className)}
+      {...props}
+    >
+      <Skeleton className="h-4 w-24 mb-3 bg-slate-200" />
+      <Skeleton className="h-8 w-32 mb-4 bg-slate-200" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-14 rounded-full bg-slate-200" />
+        <Skeleton className="h-3 w-20 bg-slate-200" />
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 MetricCardSkeleton.displayName = "MetricCardSkeleton";
 

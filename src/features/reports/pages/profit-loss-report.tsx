@@ -71,9 +71,9 @@ export function ProfitLossReportPage() {
     <ReportLayout
       title="Profit & Loss Statement"
       subtitle="Income, expenses, and profitability analysis"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
+      onRefresh={() => { console.log("Refresh"); }}
+      onExport={() => { console.log("Export"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
       }

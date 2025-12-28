@@ -128,7 +128,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
       });
       return {
         sourceColumn: col,
-        targetField: match?.value || "",
+        targetField: match?.value ?? "",
       };
     });
     setMappings(autoMappings);
@@ -282,7 +282,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
               <Select
                 options={entityOptions}
                 value={entityType}
-                onChange={(v) => setEntityType(v as ImportEntityType)}
+                onChange={(v) => { setEntityType(v as ImportEntityType); }}
               />
             </div>
 
@@ -383,15 +383,20 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-700">{col}</p>
                       <p className="text-xs text-slate-400">
-                        Sample: {String(fileData[0]?.[col] || "—")}
+                        Sample: {(() => {
+                          const val = fileData[0]?.[col];
+                          if (val === undefined || val === null) return "—";
+                          if (typeof val === "object") return JSON.stringify(val);
+                          return String(val as string | number | boolean);
+                        })()}
                       </p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-slate-400" />
                     <div className="flex-1">
                       <Select
                         options={targetOptions}
-                        value={mapping?.targetField || ""}
-                        onChange={(v) => handleMappingChange(col, v)}
+                        value={mapping?.targetField ?? ""}
+                        onChange={(v) => { handleMappingChange(col, v); }}
                         className="w-full"
                       />
                     </div>
@@ -466,7 +471,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                         <tr>
                           {mappings.filter((m) => m.targetField).map((m) => (
                             <th key={m.targetField} className="px-4 py-2 text-left font-medium text-slate-600">
-                              {targetFields.find((f) => f.value === m.targetField)?.label || m.targetField}
+                              {targetFields.find((f) => f.value === m.targetField)?.label ?? m.targetField}
                             </th>
                           ))}
                         </tr>
@@ -476,7 +481,12 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                           <tr key={idx}>
                             {mappings.filter((m) => m.targetField).map((m) => (
                               <td key={m.targetField} className="px-4 py-2 text-slate-600">
-                                {String(row[m.sourceColumn] || "—")}
+                                {(() => {
+                                  const val = row[m.sourceColumn];
+                                  if (val === undefined || val === null) return "—";
+                                  if (typeof val === "object") return JSON.stringify(val);
+                                  return String(val as string | number | boolean);
+                                })()}
                               </td>
                             ))}
                           </tr>
@@ -568,7 +578,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
         setStep("preview");
         break;
       case "preview":
-        handleImport();
+        void handleImport();
         break;
     }
   };

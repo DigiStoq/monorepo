@@ -276,7 +276,7 @@ export function EstimateList({
         <SearchInput
           placeholder="Search estimates..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
           className="flex-1"
         />
 
@@ -285,7 +285,7 @@ export function EstimateList({
             options={statusOptions}
             value={filters.status}
             onChange={(value) =>
-              setFilters((f) => ({ ...f, status: value as EstimateStatus | "all" }))
+              { setFilters((f) => ({ ...f, status: value as EstimateStatus | "all" })); }
             }
             size="md"
           />

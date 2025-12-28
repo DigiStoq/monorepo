@@ -74,7 +74,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => { onChange(!checked); }}
       className={cn(
         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
         checked ? "bg-teal-600" : "bg-slate-200"
@@ -156,7 +156,7 @@ export function BackupSettingsPage() {
         <div className="flex gap-3">
           <Button
             variant="secondary"
-            onClick={handleBackupNow}
+            onClick={() => { void handleBackupNow(); }}
             disabled={isBackingUp}
             className="gap-2"
           >
@@ -167,7 +167,7 @@ export function BackupSettingsPage() {
             )}
             {isBackingUp ? "Backing up..." : "Backup Now"}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+          <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
             <Save className="h-4 w-4" />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
@@ -223,7 +223,7 @@ export function BackupSettingsPage() {
               <Toggle
                 checked={settings.autoBackupEnabled}
                 onChange={(v) =>
-                  setSettings((prev) => ({ ...prev, autoBackupEnabled: v }))
+                  { setSettings((prev) => ({ ...prev, autoBackupEnabled: v })); }
                 }
               />
             </SettingsRow>
@@ -234,10 +234,10 @@ export function BackupSettingsPage() {
                   <select
                     value={settings.backupFrequency}
                     onChange={(e) =>
-                      setSettings((prev) => ({
+                      { setSettings((prev) => ({
                         ...prev,
                         backupFrequency: e.target.value as "daily" | "weekly" | "monthly",
-                      }))
+                      })); }
                     }
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
@@ -251,10 +251,10 @@ export function BackupSettingsPage() {
                     type="time"
                     value={settings.backupTime}
                     onChange={(e) =>
-                      setSettings((prev) => ({
+                      { setSettings((prev) => ({
                         ...prev,
                         backupTime: e.target.value,
-                      }))
+                      })); }
                     }
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
@@ -266,10 +266,10 @@ export function BackupSettingsPage() {
                   <select
                     value={settings.retentionDays}
                     onChange={(e) =>
-                      setSettings((prev) => ({
+                      { setSettings((prev) => ({
                         ...prev,
                         retentionDays: parseInt(e.target.value),
-                      }))
+                      })); }
                     }
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
@@ -305,10 +305,10 @@ export function BackupSettingsPage() {
                   <button
                     key={option.value}
                     onClick={() =>
-                      setSettings((prev) => ({
+                      { setSettings((prev) => ({
                         ...prev,
                         backupDestination: option.value as "local" | "cloud" | "both",
-                      }))
+                      })); }
                     }
                     className={cn(
                       "p-4 rounded-lg border text-left transition-all",
@@ -345,10 +345,10 @@ export function BackupSettingsPage() {
                     <button
                       key={provider.value}
                       onClick={() =>
-                        setSettings((prev) => ({
+                        { setSettings((prev) => ({
                           ...prev,
                           cloudProvider: provider.value as "google-drive" | "dropbox" | "onedrive",
-                        }))
+                        })); }
                       }
                       className={cn(
                         "px-4 py-3 rounded-lg border text-sm font-medium transition-all",

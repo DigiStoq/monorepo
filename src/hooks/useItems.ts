@@ -31,11 +31,11 @@ function mapRowToItem(row: ItemRow): Item {
     description: row.description ?? undefined,
     category: row.category_id ?? undefined,
     unit: row.unit,
-    salePrice: row.sale_price ?? 0,
-    purchasePrice: row.purchase_price ?? 0,
+    salePrice: row.sale_price,
+    purchasePrice: row.purchase_price,
     taxRate: row.tax_rate ?? undefined,
-    stockQuantity: row.stock_quantity ?? 0,
-    lowStockAlert: row.low_stock_alert ?? 0,
+    stockQuantity: row.stock_quantity,
+    lowStockAlert: row.low_stock_alert,
     isActive: row.is_active === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -73,7 +73,7 @@ export function useItems(filters?: {
     searchFilter,
   ]);
 
-  const items = (data ?? []).map(mapRowToItem);
+  const items = data.map(mapRowToItem);
 
   return { items, isLoading, error };
 }
@@ -88,7 +88,7 @@ export function useItemById(id: string | null): {
     id ? [id] : []
   );
 
-  const item = data?.[0] ? mapRowToItem(data[0]) : null;
+  const item = data[0] ? mapRowToItem(data[0]) : null;
 
   return { item, isLoading, error };
 }
@@ -125,11 +125,11 @@ export function useItemMutations(): ItemMutations {
           id,
           data.name,
           data.sku ?? null,
-          data.type ?? "product",
+          data.type,
           data.description ?? null,
           data.categoryId ?? data.category ?? null,
-          data.unit ?? "pcs",
-          data.salePrice ?? 0,
+          data.unit,
+          data.salePrice,
           data.purchasePrice ?? 0,
           data.taxRate ?? 0,
           data.stockQuantity ?? data.openingStock ?? 0,
@@ -267,9 +267,9 @@ export function useItemStats(): ItemStats {
   );
 
   return {
-    totalItems: totalItems?.[0]?.count ?? 0,
-    lowStockItems: lowStockItems?.[0]?.count ?? 0,
-    outOfStock: outOfStock?.[0]?.count ?? 0,
-    totalValue: totalValue?.[0]?.sum ?? 0,
+    totalItems: totalItems[0]?.count ?? 0,
+    lowStockItems: lowStockItems[0]?.count ?? 0,
+    outOfStock: outOfStock[0]?.count ?? 0,
+    totalValue: totalValue[0]?.sum ?? 0,
   };
 }

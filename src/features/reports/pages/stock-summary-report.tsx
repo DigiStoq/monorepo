@@ -79,9 +79,9 @@ export function StockSummaryReport() {
     <ReportLayout
       title="Stock Summary"
       subtitle="Current inventory levels and valuations"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
+      onRefresh={() => { console.log("Refresh"); }}
+      onExport={() => { console.log("Export"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <div className="flex-1 max-w-xs">
@@ -89,7 +89,7 @@ export function StockSummaryReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -103,7 +103,7 @@ export function StockSummaryReport() {
             <input
               type="checkbox"
               checked={showLowStock}
-              onChange={(e) => setShowLowStock(e.target.checked)}
+              onChange={(e) => { setShowLowStock(e.target.checked); }}
               className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-slate-600">Low Stock Only</span>

@@ -269,7 +269,7 @@ export function useExpenseMutations(): ExpenseMutations {
 interface ExpenseStats {
   totalExpenses: number;
   thisMonthExpenses: number;
-  byCategory: Array<{ category: string; sum: number }>;
+  byCategory: { category: string; sum: number }[];
 }
 
 export function useExpenseStats(): ExpenseStats {

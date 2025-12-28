@@ -18,7 +18,12 @@
       "Bash(dir:*)",
       "Bash(taskkill:*)",
       "Bash(del \"d:\\\\Software-Dev\\\\GitHub\\\\monorepo\\\\src\\\\features\\\\reports\\\\pages\\\\party-statement-report.tsx\")",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(Select-String \"error\")",
+      "Bash(Measure-Object)",
+      "Bash(Select-Object -ExpandProperty Count)",
+      "Bash(grep:*)",
+      "Bash(npx jq:*)"
     ]
   }
 }

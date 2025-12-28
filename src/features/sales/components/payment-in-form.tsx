@@ -63,8 +63,8 @@ export function PaymentInForm({
 }: PaymentInFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
   const [amount, setAmount] = useState(initialData?.amount ?? 0);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(initialData?.paymentMode ?? "cash");
   const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
@@ -178,7 +178,7 @@ export function PaymentInForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => { setDate(e.target.value); }}
                   />
                 </div>
               </div>
@@ -209,7 +209,7 @@ export function PaymentInForm({
                     min="0"
                     step="0.01"
                     value={amount}
-                    onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => { setAmount(parseFloat(e.target.value) || 0); }}
                     placeholder="0.00"
                   />
                 </div>
@@ -222,7 +222,7 @@ export function PaymentInForm({
                   <Select
                     options={paymentModeOptions}
                     value={paymentMode}
-                    onChange={(value) => setPaymentMode(value as PaymentMode)}
+                    onChange={(value) => { setPaymentMode(value as PaymentMode); }}
                   />
                 </div>
 
@@ -234,7 +234,7 @@ export function PaymentInForm({
                   <Input
                     type="text"
                     value={referenceNumber}
-                    onChange={(e) => setReferenceNumber(e.target.value)}
+                    onChange={(e) => { setReferenceNumber(e.target.value); }}
                     placeholder="Transaction ID, Check #, etc."
                   />
                 </div>
@@ -286,7 +286,7 @@ export function PaymentInForm({
                 placeholder="Add any notes about this payment..."
                 rows={3}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => { setNotes(e.target.value); }}
               />
             </CardBody>
           </Card>
@@ -299,7 +299,7 @@ export function PaymentInForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Customer</span>
-                <span className="font-medium">{selectedCustomer?.name || "-"}</span>
+                <span className="font-medium">{selectedCustomer?.name ?? "-"}</span>
               </div>
 
               <div className="flex justify-between text-sm">

@@ -92,14 +92,14 @@ export function PaymentOutList({ payments, onPaymentClick, className }: PaymentO
             type="text"
             placeholder="Search payments..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); }}
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Select
           options={modeOptions}
           value={modeFilter}
-          onChange={(value) => setModeFilter(value as PaymentOutMode | "all")}
+          onChange={(value) => { setModeFilter(value as PaymentOutMode | "all"); }}
           className="w-48"
         />
       </div>
@@ -143,7 +143,7 @@ export function PaymentOutList({ payments, onPaymentClick, className }: PaymentO
               <Card
                 key={payment.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => onPaymentClick(payment)}
+                onClick={() => { onPaymentClick(payment); }}
               >
                 <CardBody className="py-3">
                   <div className="flex items-center justify-between">

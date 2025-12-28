@@ -118,14 +118,14 @@ export function ExpenseList({ expenses, onExpenseClick, className }: ExpenseList
             type="text"
             placeholder="Search expenses..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); }}
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Select
           options={categoryOptions}
           value={categoryFilter}
-          onChange={(value) => setCategoryFilter(value as ExpenseCategory | "all")}
+          onChange={(value) => { setCategoryFilter(value as ExpenseCategory | "all"); }}
           className="w-48"
         />
       </div>
@@ -180,7 +180,7 @@ export function ExpenseList({ expenses, onExpenseClick, className }: ExpenseList
               <Card
                 key={expense.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => onExpenseClick(expense)}
+                onClick={() => { onExpenseClick(expense); }}
               >
                 <CardBody className="py-3">
                   <div className="flex items-center justify-between">

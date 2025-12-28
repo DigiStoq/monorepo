@@ -90,8 +90,8 @@ export function ReceivablesReport() {
       title="Receivables Report"
       subtitle="Outstanding amounts from customers"
       backPath="/reports"
-      onExport={() => console.log("Export receivables")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export receivables"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -100,7 +100,7 @@ export function ReceivablesReport() {
               type="text"
               placeholder="Search customers..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -108,7 +108,7 @@ export function ReceivablesReport() {
             <input
               type="checkbox"
               checked={showOnlyDue}
-              onChange={(e) => setShowOnlyDue(e.target.checked)}
+              onChange={(e) => { setShowOnlyDue(e.target.checked); }}
               className="rounded border-slate-300"
             />
             Show only with balance due

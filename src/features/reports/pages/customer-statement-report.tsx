@@ -119,9 +119,9 @@ export function CustomerStatementReport() {
     <ReportLayout
       title="Customer Statement"
       subtitle="Detailed ledger for customer or supplier"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
+      onRefresh={() => { console.log("Refresh"); }}
+      onExport={() => { console.log("Export"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">

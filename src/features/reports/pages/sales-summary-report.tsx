@@ -61,8 +61,9 @@ export function SalesSummaryReport() {
 
   const data = mockSalesData;
 
-  // Calculate growth (mock)
-  const growth = 12.5;
+  // Calculate growth (mock data - will be dynamic later)
+  const growth = 12.5 as number;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- mock data comparison
   const isPositiveGrowth = growth >= 0;
 
   // Format currency
@@ -82,9 +83,9 @@ export function SalesSummaryReport() {
     <ReportLayout
       title="Sales Summary"
       subtitle="Overview of sales performance"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
+      onRefresh={() => { console.log("Refresh"); }}
+      onExport={() => { console.log("Export"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
       }

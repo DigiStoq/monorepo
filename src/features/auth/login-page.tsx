@@ -31,15 +31,23 @@ export function LoginPage(): ReactNode {
     const { error } = await signIn(email, password);
 
     if (!error) {
-      navigate({ to: "/" });
+      void navigate({ to: "/" });
     }
   };
 
   const displayError = formError ?? error?.message;
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your DigiStoq account">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your DigiStoq account"
+    >
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+        className="space-y-5"
+      >
         {/* Error Message */}
         {displayError && (
           <div className="bg-error-light text-error text-sm p-3 rounded-lg">
@@ -53,7 +61,9 @@ export function LoginPage(): ReactNode {
           label="Email address"
           placeholder="you@example.com"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
           leftIcon={<Mail size={18} className="text-slate-400" />}
           autoComplete="email"
           disabled={isLoading}
@@ -65,7 +75,9 @@ export function LoginPage(): ReactNode {
           label="Password"
           placeholder="Enter your password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+          }}
           leftIcon={<Lock size={18} className="text-slate-400" />}
           showPasswordToggle
           autoComplete="current-password"
@@ -83,18 +95,13 @@ export function LoginPage(): ReactNode {
         </div>
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={isLoading}
-          size="lg"
-        >
+        <Button type="submit" fullWidth isLoading={isLoading} size="lg">
           Sign in
         </Button>
 
         {/* Signup Link */}
         <p className="text-center text-sm text-slate-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             to="/signup"
             className="text-primary-600 hover:text-primary-700 font-medium"

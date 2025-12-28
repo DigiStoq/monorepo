@@ -1,11 +1,5 @@
 import { cn } from "@/lib/cn";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  Button,
-  Badge,
-} from "@/components/ui";
+import { Card, CardHeader, CardBody, Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import {
   Package,
@@ -49,12 +43,12 @@ function InfoItem({ icon, label, value, valueColor }: InfoItemProps) {
 
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-slate-100 rounded-lg shrink-0">
-        {icon}
-      </div>
+      <div className="p-2 bg-slate-100 rounded-lg shrink-0">{icon}</div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
-        <p className={cn("text-sm font-medium", valueColor || "text-slate-900")}>
+        <p
+          className={cn("text-sm font-medium", valueColor ?? "text-slate-900")}
+        >
           {value}
         </p>
       </div>
@@ -100,11 +94,13 @@ export function ItemDetail({
     );
   }
 
-  const isLowStock = item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
+  const isLowStock =
+    item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;
-  const profitMargin = item.purchasePrice > 0
-    ? ((item.salePrice - item.purchasePrice) / item.salePrice) * 100
-    : null;
+  const profitMargin =
+    item.purchasePrice > 0
+      ? ((item.salePrice - item.purchasePrice) / item.salePrice) * 100
+      : null;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -126,7 +122,9 @@ export function ItemDetail({
                 )}
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">{item.name}</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {item.name}
+                </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={item.type === "service" ? "info" : "primary"}>
                     {item.type === "service" ? "Service" : "Product"}
@@ -233,8 +231,8 @@ export function ItemDetail({
                       isOutOfStock
                         ? "text-error"
                         : isLowStock
-                        ? "text-warning"
-                        : "text-slate-900"
+                          ? "text-warning"
+                          : "text-slate-900"
                     )}
                   >
                     {item.stockQuantity} {item.unit}

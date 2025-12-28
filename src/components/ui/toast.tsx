@@ -96,7 +96,10 @@ export function useToast() {
 // STYLES & ICONS
 // ============================================================================
 
-const typeStyles: Record<ToastType, { bg: string; icon: LucideIcon; iconColor: string }> = {
+const typeStyles: Record<
+  ToastType,
+  { bg: string; icon: LucideIcon; iconColor: string }
+> = {
   success: {
     bg: "bg-success-light border-success/30",
     icon: CheckCircle2,
@@ -158,9 +161,21 @@ const toastVariants = {
 // TOAST ITEM COMPONENT
 // ============================================================================
 
-const ToastItem = forwardRef<HTMLDivElement, ToastProps & { position: ToastPosition }>(
+const ToastItem = forwardRef<
+  HTMLDivElement,
+  ToastProps & { position: ToastPosition }
+>(
   (
-    { type, title, description, duration = 5000, action, onDismiss, onClose, position },
+    {
+      type,
+      title,
+      description,
+      duration = 5000,
+      action,
+      onDismiss,
+      onClose,
+      position,
+    },
     ref
   ) => {
     const { bg, icon: Icon, iconColor } = typeStyles[type];
@@ -172,7 +187,9 @@ const ToastItem = forwardRef<HTMLDivElement, ToastProps & { position: ToastPosit
           onClose();
           onDismiss?.();
         }, duration);
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+        };
       }
       return undefined;
     }, [duration, onClose, onDismiss]);
@@ -267,7 +284,9 @@ function ToastContainer({
               key={toast.id}
               {...toast}
               position={position}
-              onClose={() => onClose(toast.id)}
+              onClose={() => {
+                onClose(toast.id);
+              }}
             />
           ))}
         </AnimatePresence>
@@ -360,7 +379,16 @@ export function ToastProvider({
 
   return (
     <ToastContext.Provider
-      value={{ toasts, toast, success, error, warning, info, dismiss, dismissAll }}
+      value={{
+        toasts,
+        toast,
+        success,
+        error,
+        warning,
+        info,
+        dismiss,
+        dismissAll,
+      }}
     >
       {children}
       <ToastContainer toasts={toasts} position={position} onClose={dismiss} />

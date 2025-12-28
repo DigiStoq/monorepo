@@ -89,14 +89,14 @@ export function AgingReport() {
       title="Aging Report"
       subtitle="Outstanding amounts by age"
       backPath="/reports"
-      onExport={() => console.log("Export aging report")}
-      onPrint={() => window.print()}
+      onExport={() => { console.log("Export aging report"); }}
+      onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <Select
             options={typeOptions}
             value={reportType}
-            onChange={(value) => setReportType(value as "receivable" | "payable")}
+            onChange={(value) => { setReportType(value as "receivable" | "payable"); }}
             className="w-56"
           />
           <div className="flex-1 min-w-[200px]">
@@ -104,7 +104,7 @@ export function AgingReport() {
               type="text"
               placeholder={`Search ${reportType === "receivable" ? "customers" : "suppliers"}...`}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>

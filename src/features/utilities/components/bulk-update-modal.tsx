@@ -28,8 +28,8 @@ import type { BulkUpdateType, BulkPriceUpdate, BulkUpdateResult } from "../types
 interface BulkUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedItems: Array<{ id: string; name: string; salePrice?: number; purchasePrice?: number }>;
-  categories: Array<{ id: string; name: string }>;
+  selectedItems: { id: string; name: string; salePrice?: number; purchasePrice?: number }[];
+  categories: { id: string; name: string }[];
   onUpdate: (type: BulkUpdateType, config: unknown) => Promise<BulkUpdateResult>;
 }
 
@@ -37,7 +37,7 @@ interface BulkUpdateModalProps {
 // CONSTANTS
 // ============================================================================
 
-const updateTypeOptions: Array<{ value: BulkUpdateType; label: string; icon: React.ReactNode; description: string }> = [
+const updateTypeOptions: { value: BulkUpdateType; label: string; icon: React.ReactNode; description: string }[] = [
   {
     value: "price",
     label: "Update Prices",
@@ -139,7 +139,7 @@ export function BulkUpdateModal({
         case "category":
           config = {
             categoryId,
-            categoryName: categories.find((c) => c.id === categoryId)?.name || "",
+            categoryName: categories.find((c) => c.id === categoryId)?.name ?? "",
           };
           break;
         case "status":
@@ -171,7 +171,7 @@ export function BulkUpdateModal({
 
   const getPreviewText = () => {
     switch (updateType) {
-      case "price":
+      case "price": {
         if (priceValue === 0) return null;
         const changeText = priceValue > 0 ? "increase" : "decrease";
         const valueText = priceType === "percentage"
@@ -179,9 +179,11 @@ export function BulkUpdateModal({
           : `$${Math.abs(priceValue).toFixed(2)}`;
         const applyText = priceApplyTo === "both" ? "both prices" : `${priceApplyTo} price`;
         return `Will ${changeText} ${applyText} by ${valueText}`;
-      case "category":
+      }
+      case "category": {
         const cat = categories.find((c) => c.id === categoryId);
         return cat ? `Will move items to "${cat.name}"` : null;
+      }
       case "status":
         return `Will ${isActive === "true" ? "activate" : "deactivate"} all selected items`;
       case "stock":
@@ -275,7 +277,7 @@ export function BulkUpdateModal({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setUpdateType(opt.value)}
+                onClick={() => { setUpdateType(opt.value); }}
                 className={cn(
                   "p-3 rounded-xl border-2 text-left transition-all",
                   updateType === opt.value
@@ -310,7 +312,7 @@ export function BulkUpdateModal({
                   <Select
                     options={priceTypeOptions}
                     value={priceType}
-                    onChange={(v) => setPriceType(v as "percentage" | "fixed")}
+                    onChange={(v) => { setPriceType(v as "percentage" | "fixed"); }}
                   />
                 </div>
                 <div>
@@ -320,7 +322,7 @@ export function BulkUpdateModal({
                   <Input
                     type="number"
                     value={priceValue}
-                    onChange={(e) => setPriceValue(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => { setPriceValue(parseFloat(e.target.value) || 0); }}
                     placeholder={priceType === "percentage" ? "e.g., 10 or -10" : "e.g., 5.00 or -5.00"}
                   />
                 </div>
@@ -333,7 +335,7 @@ export function BulkUpdateModal({
                   <Select
                     options={priceApplyOptions}
                     value={priceApplyTo}
-                    onChange={(v) => setPriceApplyTo(v as "sale" | "purchase" | "both")}
+                    onChange={(v) => { setPriceApplyTo(v as "sale" | "purchase" | "both"); }}
                   />
                 </div>
                 <div>
@@ -343,7 +345,7 @@ export function BulkUpdateModal({
                   <Input
                     type="number"
                     value={roundTo}
-                    onChange={(e) => setRoundTo(parseInt(e.target.value) || 0)}
+                    onChange={(e) => { setRoundTo(parseInt(e.target.value) || 0); }}
                     min={0}
                     max={4}
                   />
@@ -388,7 +390,7 @@ export function BulkUpdateModal({
                 <Select
                   options={stockTypeOptions}
                   value={stockType}
-                  onChange={(v) => setStockType(v as "set" | "add" | "subtract")}
+                  onChange={(v) => { setStockType(v as "set" | "add" | "subtract"); }}
                 />
               </div>
               <div>
@@ -398,7 +400,7 @@ export function BulkUpdateModal({
                 <Input
                   type="number"
                   value={stockValue}
-                  onChange={(e) => setStockValue(parseInt(e.target.value) || 0)}
+                  onChange={(e) => { setStockValue(parseInt(e.target.value) || 0); }}
                   min={0}
                 />
               </div>
@@ -425,7 +427,7 @@ export function BulkUpdateModal({
           Cancel
         </Button>
         <Button
-          onClick={handleUpdate}
+          onClick={() => { void handleUpdate(); }}
           disabled={!canUpdate() || isProcessing}
           leftIcon={
             isProcessing ? (

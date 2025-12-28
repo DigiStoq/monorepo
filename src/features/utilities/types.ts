@@ -89,7 +89,7 @@ export interface BulkUpdateResult {
   success: boolean;
   updated: number;
   failed: number;
-  errors: Array<{ id: string; message: string }>;
+  errors: { id: string; message: string }[];
 }
 
 // ============================================================================

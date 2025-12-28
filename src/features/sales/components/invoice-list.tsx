@@ -258,7 +258,7 @@ export function InvoiceList({
         <SearchInput
           placeholder="Search invoices..."
           value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
           className="flex-1"
         />
 
@@ -267,7 +267,7 @@ export function InvoiceList({
             options={statusOptions}
             value={filters.status}
             onChange={(value) =>
-              setFilters((f) => ({ ...f, status: value as InvoiceStatus | "all" }))
+              { setFilters((f) => ({ ...f, status: value as InvoiceStatus | "all" })); }
             }
             size="md"
           />

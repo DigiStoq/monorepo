@@ -113,9 +113,9 @@ export function ExpensesPage() {
             <ExpenseDetail
               expense={currentSelectedExpense}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteExpense}
-              onPrint={() => console.log("Print expense")}
+              onEdit={() => { setIsFormOpen(true); }}
+              onDelete={() => { void handleDeleteExpense(); }}
+              onPrint={() => { console.log("Print expense"); }}
             />
           </div>
         )}
@@ -130,7 +130,7 @@ export function ExpensesPage() {
           <ModalBody className="p-0">
             <ExpenseForm
               customers={customers}
-              onSubmit={handleSubmitExpense}
+              onSubmit={(data) => { void handleSubmitExpense(data); }}
               onCancel={handleCloseForm}
               isSubmitting={isSubmitting}
               className="p-6"
