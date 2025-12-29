@@ -66,21 +66,19 @@ export function PurchaseInvoiceForm({
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-  // Customer options (suppliers only)
+  // Customer options (suppliers) - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a supplier..." },
-      ...customers
-        .filter((c) => c.type === "supplier" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
-  // Item options
+  // Item options - hook already filters by isActive
   const itemOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select an item..." },
-      ...items.filter((i) => i.isActive).map((i) => ({
+      ...items.map((i) => ({
         value: i.id,
         label: `${i.name} - $${i.purchasePrice.toFixed(2)}`,
       })),
@@ -294,6 +292,7 @@ export function PurchaseInvoiceForm({
           <Card>
             <CardHeader
               title="Items"
+              className="pb-4"
               action={
                 <Button
                   variant="outline"

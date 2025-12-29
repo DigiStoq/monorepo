@@ -76,13 +76,11 @@ export function ExpenseForm({
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
-  // Customer options (suppliers)
+  // Customer options - hook already filters by type (suppliers)
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "No vendor (internal expense)" },
-      ...customers
-        .filter((c) => c.type === "supplier" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 

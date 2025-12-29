@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { BankTransaction } from "@/features/cash-bank/types";
 
@@ -44,22 +44,40 @@ export function useBankTransactions(filters?: {
   dateFrom?: string;
   dateTo?: string;
 }): { transactions: BankTransaction[]; isLoading: boolean; error: Error | undefined } {
-  const accountFilter = filters?.accountId ?? null;
-  const typeFilter = filters?.type ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
 
-  const { data, isLoading, error } = useQuery<BankTransactionRow>(
-    `SELECT * FROM bank_transactions
-     WHERE ($1 IS NULL OR account_id = $1)
-     AND ($2 IS NULL OR type = $2)
-     AND ($3 IS NULL OR date >= $3)
-     AND ($4 IS NULL OR date <= $4)
-     ORDER BY date DESC, created_at DESC`,
-    [accountFilter, typeFilter, dateFromFilter, dateToFilter]
-  );
+    if (filters?.accountId) {
+      conditions.push("account_id = ?");
+      params.push(filters.accountId);
+    }
 
-  const transactions = data.map(mapRowToTransaction);
+    if (filters?.type) {
+      conditions.push("type = ?");
+      params.push(filters.type);
+    }
+
+    if (filters?.dateFrom) {
+      conditions.push("date >= ?");
+      params.push(filters.dateFrom);
+    }
+
+    if (filters?.dateTo) {
+      conditions.push("date <= ?");
+      params.push(filters.dateTo);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM bank_transactions ${whereClause} ORDER BY date DESC, created_at DESC`,
+      params,
+    };
+  }, [filters?.accountId, filters?.type, filters?.dateFrom, filters?.dateTo]);
+
+  const { data, isLoading, error } = useQuery<BankTransactionRow>(query, params);
+
+  const transactions = useMemo(() => data.map(mapRowToTransaction), [data]);
 
   return { transactions, isLoading, error };
 }

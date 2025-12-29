@@ -1,4 +1,5 @@
 import { useQuery } from "@powersync/react";
+import { useMemo } from "react";
 
 export interface DashboardMetrics {
   totalReceivable: number;
@@ -14,7 +15,7 @@ export interface DashboardMetrics {
 export interface DashboardTransaction {
   id: string;
   type: "sale" | "purchase" | "payment-in" | "payment-out";
-  partyName: string;
+  name: string;
   amount: number;
   date: string;
   invoiceNumber?: string;
@@ -118,7 +119,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'sale' as type,
-       customer_name as partyName,
+       customer_name as name,
        total as amount,
        date,
        invoice_number as invoiceNumber
@@ -133,7 +134,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'purchase' as type,
-       customer_name as partyName,
+       customer_name as name,
        total as amount,
        date,
        invoice_number as invoiceNumber
@@ -148,7 +149,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'payment-in' as type,
-       customer_name as partyName,
+       customer_name as name,
        amount,
        date,
        receipt_number as invoiceNumber
@@ -162,7 +163,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'payment-out' as type,
-       customer_name as partyName,
+       customer_name as name,
        amount,
        date,
        payment_number as invoiceNumber
@@ -218,7 +219,7 @@ export function useSalesChartData(days = 7): {
   chartData: ChartDataPoint[];
   isLoading: boolean;
 } {
-  const { data, isLoading } = useQuery<{ date: string; total: number }>(
+  const { data: salesData, isLoading: salesLoading } = useQuery<{ date: string; total: number }>(
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM sale_invoices
      WHERE date >= date('now', '-${days} days')
@@ -227,22 +228,35 @@ export function useSalesChartData(days = 7): {
      ORDER BY date ASC`
   );
 
-  // Fill in missing dates with 0
-  const chartData: ChartDataPoint[] = [];
-  const today = new Date();
+  const { data: purchaseData, isLoading: purchaseLoading } = useQuery<{ date: string; total: number }>(
+    `SELECT date, COALESCE(SUM(total), 0) as total
+     FROM purchase_invoices
+     WHERE date >= date('now', '-${days} days')
+     AND status != 'cancelled'
+     GROUP BY date
+     ORDER BY date ASC`
+  );
 
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
+  const chartData = useMemo(() => {
+    const result: ChartDataPoint[] = [];
+    const today = new Date();
 
-    const dayData = data.find((d) => d.date === dateStr);
-    chartData.push({
-      date: date.toLocaleDateString("en-US", { weekday: "short" }),
-      sales: dayData?.total ?? 0,
-      purchases: 0, // TODO: Add purchase data
-    });
-  }
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
 
-  return { chartData, isLoading };
+      const daySales = salesData.find((d) => d.date === dateStr);
+      const dayPurchases = purchaseData.find((d) => d.date === dateStr);
+      result.push({
+        date: date.toLocaleDateString("en-US", { weekday: "short" }),
+        sales: daySales?.total ?? 0,
+        purchases: dayPurchases?.total ?? 0,
+      });
+    }
+
+    return result;
+  }, [salesData, purchaseData, days]);
+
+  return { chartData, isLoading: salesLoading || purchaseLoading };
 }

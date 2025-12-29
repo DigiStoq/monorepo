@@ -1,44 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardHeader, CardBody } from "@/components/ui";
 import { ReportLayout, DateRangeFilter } from "../components";
 import { TrendingUp, TrendingDown, DollarSign, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { DateRange, ProfitLossReport } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockProfitLossData: ProfitLossReport = {
-  period: { from: "2024-01-01", to: "2024-01-31" },
-  revenue: {
-    sales: 125000,
-    otherIncome: 2500,
-    total: 127500,
-  },
-  expenses: {
-    costOfGoodsSold: 75000,
-    operatingExpenses: 18500,
-    otherExpenses: 3200,
-    total: 96700,
-  },
-  grossProfit: 50000,
-  netProfit: 30800,
-  profitMargin: 24.16,
-};
-
-const expenseBreakdown = [
-  { category: "Cost of Goods Sold", amount: 75000, percentage: 77.6 },
-  { category: "Salaries & Wages", amount: 8500, percentage: 8.8 },
-  { category: "Rent", amount: 2500, percentage: 2.6 },
-  { category: "Utilities", amount: 850, percentage: 0.9 },
-  { category: "Marketing", amount: 3200, percentage: 3.3 },
-  { category: "Office Supplies", amount: 1200, percentage: 1.2 },
-  { category: "Insurance", amount: 890, percentage: 0.9 },
-  { category: "Maintenance", amount: 560, percentage: 0.6 },
-  { category: "Travel", amount: 1500, percentage: 1.6 },
-  { category: "Miscellaneous", amount: 2500, percentage: 2.6 },
-];
+import type { DateRange } from "../types";
+import { useProfitLossReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -53,7 +19,20 @@ export function ProfitLossReportPage() {
     to: today.toISOString().slice(0, 10),
   });
 
-  const data = mockProfitLossData;
+  // Fetch data from PowerSync
+  const { report, isLoading } = useProfitLossReport(dateRange);
+
+  // Calculate expense breakdown percentages
+  const expenseBreakdown = useMemo(() => {
+    if (!report) return [];
+    const total = report.expenses.total;
+    if (total === 0) return [];
+    return [
+      { category: "Cost of Goods Sold", amount: report.expenses.costOfGoodsSold, percentage: (report.expenses.costOfGoodsSold / total) * 100 },
+      { category: "Operating Expenses", amount: report.expenses.operatingExpenses, percentage: (report.expenses.operatingExpenses / total) * 100 },
+      { category: "Other Expenses", amount: report.expenses.otherExpenses, percentage: (report.expenses.otherExpenses / total) * 100 },
+    ].filter(e => e.amount > 0);
+  }, [report]);
 
   // Format currency
   const formatCurrency = (value: number) =>
@@ -63,16 +42,33 @@ export function ProfitLossReportPage() {
       maximumFractionDigits: 0,
     }).format(value);
 
+  // Loading state
+  if (isLoading || !report) {
+    return (
+      <ReportLayout
+        title="Profit & Loss Statement"
+        subtitle="Income, expenses, and profitability analysis"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
+  const data = report;
+
   // Calculate percentages
-  const grossMargin = ((data.grossProfit / data.revenue.total) * 100).toFixed(1);
+  const grossMargin = data.revenue.total > 0 ? ((data.grossProfit / data.revenue.total) * 100).toFixed(1) : "0.0";
   const netMargin = data.profitMargin.toFixed(1);
 
   return (
     <ReportLayout
       title="Profit & Loss Statement"
       subtitle="Income, expenses, and profitability analysis"
-      onRefresh={() => { console.log("Refresh"); }}
-      onExport={() => { console.log("Export"); }}
+      onRefresh={() => { /* TODO: Implement refresh */ }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <DateRangeFilter value={dateRange} onChange={setDateRange} />

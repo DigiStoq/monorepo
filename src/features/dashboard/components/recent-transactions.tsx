@@ -16,7 +16,7 @@ export type TransactionType =
 export interface Transaction {
   id: string;
   type: TransactionType;
-  partyName: string;
+  name: string;
   amount: number;
   date: string;
   invoiceNumber?: string;
@@ -126,7 +126,7 @@ export function RecentTransactions({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-slate-900 truncate">
-                        {transaction.partyName}
+                        {transaction.name}
                       </span>
                       <Badge variant={config.color} size="sm">
                         {config.label}

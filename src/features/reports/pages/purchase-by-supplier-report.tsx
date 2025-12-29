@@ -4,35 +4,7 @@ import { Search, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface SupplierPurchaseData {
-  partyId: string;
-  partyName: string;
-  invoiceCount: number;
-  totalPurchases: number;
-  totalPaid: number;
-  totalDue: number;
-  averageOrderValue: number;
-  lastPurchaseDate: string;
-}
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockSupplierPurchases: SupplierPurchaseData[] = [
-  { partyId: "1", partyName: "Alpha Distributors", invoiceCount: 18, totalPurchases: 52000, totalPaid: 48000, totalDue: 4000, averageOrderValue: 2888.89, lastPurchaseDate: "2024-01-25" },
-  { partyId: "2", partyName: "Premier Wholesale", invoiceCount: 12, totalPurchases: 38500, totalPaid: 35000, totalDue: 3500, averageOrderValue: 3208.33, lastPurchaseDate: "2024-01-22" },
-  { partyId: "3", partyName: "National Supplies", invoiceCount: 8, totalPurchases: 28000, totalPaid: 28000, totalDue: 0, averageOrderValue: 3500, lastPurchaseDate: "2024-01-20" },
-  { partyId: "4", partyName: "Metro Traders", invoiceCount: 10, totalPurchases: 24500, totalPaid: 22000, totalDue: 2500, averageOrderValue: 2450, lastPurchaseDate: "2024-01-24" },
-  { partyId: "5", partyName: "Eastern Imports", invoiceCount: 6, totalPurchases: 18500, totalPaid: 15000, totalDue: 3500, averageOrderValue: 3083.33, lastPurchaseDate: "2024-01-18" },
-  { partyId: "6", partyName: "Western Distributors", invoiceCount: 5, totalPurchases: 14200, totalPaid: 14200, totalDue: 0, averageOrderValue: 2840, lastPurchaseDate: "2024-01-15" },
-  { partyId: "7", partyName: "Central Supplies Co", invoiceCount: 7, totalPurchases: 19800, totalPaid: 16000, totalDue: 3800, averageOrderValue: 2828.57, lastPurchaseDate: "2024-01-23" },
-];
+import { usePurchaseBySupplierReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -47,11 +19,24 @@ export function PurchaseBySupplierReport() {
   const [sortBy, setSortBy] = useState<"purchases" | "invoices" | "due">("purchases");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Fetch data from PowerSync
+  const { data: supplierData, isLoading } = usePurchaseBySupplierReport(dateRange);
+
   // Filter and sort data
   const processedData = useMemo(() => {
-    const data = mockSupplierPurchases.filter((supplier) =>
-      supplier.partyName.toLowerCase().includes(search.toLowerCase())
-    );
+    const data = supplierData
+      .map((s) => ({
+        supplierId: s.supplierId,
+        supplierName: s.supplierName,
+        invoiceCount: s.invoiceCount,
+        totalPurchases: s.totalAmount,
+        totalPaid: s.paidAmount,
+        totalDue: s.dueAmount,
+        averageOrderValue: s.invoiceCount > 0 ? s.totalAmount / s.invoiceCount : 0,
+      }))
+      .filter((supplier) =>
+        supplier.supplierName.toLowerCase().includes(search.toLowerCase())
+      );
 
     data.sort((a, b) => {
       const multiplier = sortOrder === "desc" ? -1 : 1;
@@ -68,7 +53,7 @@ export function PurchaseBySupplierReport() {
     });
 
     return data;
-  }, [search, sortBy, sortOrder]);
+  }, [supplierData, search, sortBy, sortOrder]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -90,14 +75,6 @@ export function PurchaseBySupplierReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
   const handleSort = (column: "purchases" | "invoices" | "due") => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
@@ -117,14 +94,30 @@ export function PurchaseBySupplierReport() {
   };
 
   // Calculate percentage of total for bar visualization
-  const maxPurchases = Math.max(...processedData.map((s) => s.totalPurchases));
+  const maxPurchases = Math.max(...processedData.map((s) => s.totalPurchases), 1);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Purchases by Supplier"
+        subtitle="Supplier-wise purchase analysis"
+        backPath="/reports"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   return (
     <ReportLayout
       title="Purchases by Supplier"
       subtitle="Supplier-wise purchase analysis"
       backPath="/reports"
-      onExport={() => { console.log("Export supplier purchases"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
@@ -201,14 +194,13 @@ export function PurchaseBySupplierReport() {
                       Due <SortIcon column="due" />
                     </th>
                     <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Avg Order</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Last Purchase</th>
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 w-32">Share</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {processedData.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center">
+                      <td colSpan={7} className="px-4 py-12 text-center">
                         <Users className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500">No suppliers found</p>
                       </td>
@@ -217,14 +209,13 @@ export function PurchaseBySupplierReport() {
                     processedData.map((supplier) => {
                       const purchasePercentage = (supplier.totalPurchases / maxPurchases) * 100;
                       return (
-                        <tr key={supplier.partyId} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-900">{supplier.partyName}</td>
+                        <tr key={supplier.supplierId} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-900">{supplier.supplierName}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{supplier.invoiceCount}</td>
                           <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(supplier.totalPurchases)}</td>
                           <td className="px-4 py-3 text-right text-success">{formatCurrency(supplier.totalPaid)}</td>
                           <td className="px-4 py-3 text-right text-error">{formatCurrency(supplier.totalDue)}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(supplier.averageOrderValue)}</td>
-                          <td className="px-4 py-3 text-right text-slate-500">{formatDate(supplier.lastPurchaseDate)}</td>
                           <td className="px-4 py-3">
                             <div className="w-full bg-slate-100 rounded-full h-2">
                               <div
@@ -249,7 +240,7 @@ export function PurchaseBySupplierReport() {
                       <td className="px-4 py-3 text-right text-slate-600">
                         {formatCurrency(totals.invoices > 0 ? totals.purchases / totals.invoices : 0)}
                       </td>
-                      <td colSpan={2} className="px-4 py-3"></td>
+                      <td className="px-4 py-3"></td>
                     </tr>
                   </tfoot>
                 )}

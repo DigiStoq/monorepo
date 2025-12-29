@@ -3,84 +3,8 @@ import { Card, CardBody, Input, Select, type SelectOption, Badge } from "@/compo
 import { Search, FileText, Calendar } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, SalesRegisterEntry } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockSalesRegister: SalesRegisterEntry[] = [
-  {
-    id: "1",
-    invoiceNumber: "INV-2024-001",
-    date: "2024-01-15",
-    customerName: "Acme Corporation",
-    itemCount: 5,
-    subtotal: 2500,
-    tax: 200,
-    discount: 100,
-    total: 2600,
-    paid: 2600,
-    due: 0,
-    status: "paid",
-  },
-  {
-    id: "2",
-    invoiceNumber: "INV-2024-002",
-    date: "2024-01-18",
-    customerName: "Tech Solutions Inc",
-    itemCount: 3,
-    subtotal: 1800,
-    tax: 144,
-    discount: 0,
-    total: 1944,
-    paid: 1000,
-    due: 944,
-    status: "partial",
-  },
-  {
-    id: "3",
-    invoiceNumber: "INV-2024-003",
-    date: "2024-01-20",
-    customerName: "Global Traders",
-    itemCount: 8,
-    subtotal: 4200,
-    tax: 336,
-    discount: 200,
-    total: 4336,
-    paid: 0,
-    due: 4336,
-    status: "unpaid",
-  },
-  {
-    id: "4",
-    invoiceNumber: "INV-2024-004",
-    date: "2024-01-22",
-    customerName: "Metro Retail",
-    itemCount: 2,
-    subtotal: 950,
-    tax: 76,
-    discount: 50,
-    total: 976,
-    paid: 976,
-    due: 0,
-    status: "paid",
-  },
-  {
-    id: "5",
-    invoiceNumber: "INV-2024-005",
-    date: "2024-01-25",
-    customerName: "City Electronics",
-    itemCount: 6,
-    subtotal: 3100,
-    tax: 248,
-    discount: 0,
-    total: 3348,
-    paid: 1500,
-    due: 1848,
-    status: "partial",
-  },
-];
+import type { DateRange } from "../types";
+import { useSalesRegisterReport } from "@/hooks/useReports";
 
 // ============================================================================
 // HELPERS
@@ -111,17 +35,19 @@ export function SalesRegisterReport() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Fetch data from PowerSync
+  const { entries, isLoading } = useSalesRegisterReport(dateRange);
+
   // Filter data
   const filteredData = useMemo(() => {
-    return mockSalesRegister.filter((entry) => {
+    return entries.filter((entry) => {
       const matchesSearch =
         entry.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
         entry.customerName.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || entry.status === statusFilter;
-      const matchesDate = entry.date >= dateRange.from && entry.date <= dateRange.to;
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter, dateRange]);
+  }, [entries, search, statusFilter]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -154,12 +80,32 @@ export function SalesRegisterReport() {
     }).format(date);
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Sales Register"
+        subtitle="Detailed list of all sales invoices"
+        backPath="/reports"
+        filters={
+          <div className="flex flex-wrap items-center gap-4">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading register data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Sales Register"
       subtitle="Detailed list of all sales invoices"
       backPath="/reports"
-      onExport={() => { console.log("Export sales register"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">

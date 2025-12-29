@@ -67,12 +67,15 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
   private async applyOperation(operation: CrudEntry): Promise<void> {
     const { op, table, opData, id } = operation;
 
+    // Transform data to handle null values for required fields
+    const transformedData = this.transformData(table, opData);
+
     switch (op) {
       case UpdateType.PUT: {
         // Insert or update
         const { error } = await this.supabase
           .from(table)
-          .upsert({ id, ...opData });
+          .upsert({ id, ...transformedData });
 
         if (error) {
           throw error;
@@ -84,7 +87,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
         // Update existing record
         const { error } = await this.supabase
           .from(table)
-          .update(opData ?? {})
+          .update(transformedData ?? {})
           .eq("id", id);
 
         if (error) {
@@ -111,5 +114,77 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
   // Get the Supabase client for direct queries if needed
   getSupabaseClient(): typeof this.supabase {
     return this.supabase;
+  }
+
+  // Transform data to provide default values for required fields that might be null/undefined/empty
+  private transformData(table: string, data: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+    if (!data) return data;
+
+    const transformed = { ...data };
+
+    // Helper to check if a value is missing (null, undefined, or empty string)
+    const isMissing = (value: unknown): boolean =>
+      value === null || value === undefined || value === "";
+
+    // Helper to convert empty strings to null for UUID fields
+    const emptyToNull = (value: unknown): unknown =>
+      value === "" ? null : value;
+
+    // Handle sale_invoices table - due_date is required
+    if (table === "sale_invoices") {
+      if (isMissing(transformed.due_date)) {
+        // Default to 30 days from the invoice date, or current date if no date
+        const invoiceDate = transformed.date as string | null;
+        const baseDate = invoiceDate ? new Date(invoiceDate) : new Date();
+        const dueDate = new Date(baseDate);
+        dueDate.setDate(dueDate.getDate() + 30);
+        transformed.due_date = dueDate.toISOString().slice(0, 10);
+      }
+    }
+
+    // Handle purchase_invoices table - due_date is required
+    if (table === "purchase_invoices") {
+      if (isMissing(transformed.due_date)) {
+        const invoiceDate = transformed.date as string | null;
+        const baseDate = invoiceDate ? new Date(invoiceDate) : new Date();
+        const dueDate = new Date(baseDate);
+        dueDate.setDate(dueDate.getDate() + 30);
+        transformed.due_date = dueDate.toISOString().slice(0, 10);
+      }
+    }
+
+    // Handle bank_transactions - UUID fields should be null not empty string
+    if (table === "bank_transactions") {
+      transformed.related_customer_id = emptyToNull(transformed.related_customer_id);
+      transformed.related_invoice_id = emptyToNull(transformed.related_invoice_id);
+    }
+
+    // Handle cash_transactions - UUID fields should be null not empty string
+    if (table === "cash_transactions") {
+      transformed.related_customer_id = emptyToNull(transformed.related_customer_id);
+      transformed.related_invoice_id = emptyToNull(transformed.related_invoice_id);
+    }
+
+    // Handle cheques - UUID fields should be null not empty string
+    if (table === "cheques") {
+      transformed.related_invoice_id = emptyToNull(transformed.related_invoice_id);
+    }
+
+    // Handle payment_ins - UUID fields should be null not empty string
+    if (table === "payment_ins") {
+      transformed.invoice_id = emptyToNull(transformed.invoice_id);
+    }
+
+    // Handle payment_outs - UUID fields should be null not empty string
+    if (table === "payment_outs") {
+      transformed.invoice_id = emptyToNull(transformed.invoice_id);
+    }
+
+    // Handle expenses - UUID fields should be null not empty string
+    if (table === "expenses") {
+      transformed.customer_id = emptyToNull(transformed.customer_id);
+    }
+
+    return transformed;
   }
 }

@@ -45,6 +45,16 @@ const items = new Table({
   stock_quantity: column.real,
   low_stock_alert: column.real,
   is_active: column.integer,
+  // Optional additional fields
+  batch_number: column.text,
+  expiry_date: column.text,
+  manufacture_date: column.text,
+  barcode: column.text,
+  hsn_code: column.text,
+  warranty_days: column.integer,
+  brand: column.text,
+  model_number: column.text,
+  location: column.text,
   created_at: column.text,
   updated_at: column.text,
 });
@@ -157,6 +167,19 @@ const credit_note_items = new Table({
   unit_price: column.real,
   tax_percent: column.real,
   amount: column.real,
+});
+
+// Invoice history for audit trail
+const invoice_history = new Table({
+  invoice_id: column.text,
+  invoice_type: column.text, // 'sale' | 'purchase'
+  action: column.text, // 'created' | 'updated' | 'status_changed' | 'payment_recorded' | 'deleted'
+  description: column.text,
+  old_values: column.text, // JSON string of changed fields
+  new_values: column.text, // JSON string of new values
+  user_id: column.text,
+  user_name: column.text,
+  created_at: column.text,
 });
 
 // ============================================================================
@@ -379,6 +402,7 @@ const invoice_settings = new Table({
   bank_routing_number: column.text,
   bank_branch_name: column.text,
   bank_swift_code: column.text,
+  pdf_template: column.text, // 'classic' | 'modern' | 'minimal'
   created_at: column.text,
   updated_at: column.text,
 });
@@ -392,6 +416,85 @@ const sequence_counters = new Table(
   },
   { indexes: {} }
 );
+
+// ============================================================================
+// USER SETTINGS TABLES
+// ============================================================================
+
+const user_profiles = new Table({
+  user_id: column.text,
+  first_name: column.text,
+  last_name: column.text,
+  phone: column.text,
+  avatar_url: column.text,
+  role: column.text, // 'admin' | 'manager' | 'staff' | 'accountant'
+  language: column.text,
+  notification_email: column.integer, // boolean as 0/1
+  notification_push: column.integer,
+  notification_sms: column.integer,
+  created_at: column.text,
+  updated_at: column.text,
+});
+
+const user_preferences = new Table({
+  user_id: column.text,
+  theme: column.text, // 'light' | 'dark' | 'system'
+  date_format: column.text,
+  decimal_separator: column.text,
+  thousands_separator: column.text,
+  decimal_places: column.integer,
+  compact_mode: column.integer,
+  auto_save: column.integer,
+  dashboard_widgets: column.text, // JSON string
+  print_settings: column.text, // JSON string
+  created_at: column.text,
+  updated_at: column.text,
+});
+
+const security_settings = new Table({
+  user_id: column.text,
+  two_factor_enabled: column.integer,
+  two_factor_method: column.text, // 'app' | 'sms' | 'email' | null
+  session_timeout: column.integer,
+  require_password_change: column.integer,
+  password_change_days: column.integer,
+  allowed_ips: column.text, // JSON array string
+  created_at: column.text,
+  updated_at: column.text,
+});
+
+const login_history = new Table({
+  user_id: column.text,
+  timestamp: column.text,
+  ip_address: column.text,
+  user_agent: column.text,
+  location: column.text,
+  success: column.integer,
+});
+
+const backup_settings = new Table({
+  user_id: column.text,
+  auto_backup_enabled: column.integer,
+  backup_frequency: column.text, // 'daily' | 'weekly' | 'monthly'
+  backup_time: column.text,
+  retention_days: column.integer,
+  backup_destination: column.text, // 'local' | 'cloud'
+  cloud_provider: column.text, // 'google_drive' | 'dropbox' | 'onedrive' | null
+  last_backup: column.text,
+  created_at: column.text,
+  updated_at: column.text,
+});
+
+const backup_history = new Table({
+  user_id: column.text,
+  timestamp: column.text,
+  type: column.text, // 'manual' | 'automatic'
+  destination: column.text,
+  file_size: column.integer,
+  status: column.text, // 'success' | 'failed' | 'in_progress'
+  error_message: column.text,
+  file_path: column.text,
+});
 
 // ============================================================================
 // SCHEMA EXPORT
@@ -410,6 +513,7 @@ export const AppSchema = new Schema({
   estimate_items,
   credit_notes,
   credit_note_items,
+  invoice_history,
   // Purchases
   purchase_invoices,
   purchase_invoice_items,
@@ -422,11 +526,18 @@ export const AppSchema = new Schema({
   cheques,
   loans,
   loan_payments,
-  // Settings
+  // Company Settings
   company_settings,
   tax_rates,
   invoice_settings,
   sequence_counters,
+  // User Settings
+  user_profiles,
+  user_preferences,
+  security_settings,
+  login_history,
+  backup_settings,
+  backup_history,
 });
 
 // ============================================================================
@@ -448,6 +559,7 @@ export type EstimateRecord = Database["estimates"];
 export type EstimateItemRecord = Database["estimate_items"];
 export type CreditNoteRecord = Database["credit_notes"];
 export type CreditNoteItemRecord = Database["credit_note_items"];
+export type InvoiceHistoryRecord = Database["invoice_history"];
 
 // Purchase types
 export type PurchaseInvoiceRecord = Database["purchase_invoices"];
@@ -463,11 +575,19 @@ export type ChequeRecord = Database["cheques"];
 export type LoanRecord = Database["loans"];
 export type LoanPaymentRecord = Database["loan_payments"];
 
-// Settings types
+// Company Settings types
 export type CompanySettingsRecord = Database["company_settings"];
 export type TaxRateRecord = Database["tax_rates"];
 export type InvoiceSettingsRecord = Database["invoice_settings"];
 export type SequenceCounterRecord = Database["sequence_counters"];
+
+// User Settings types
+export type UserProfileRecord = Database["user_profiles"];
+export type UserPreferencesRecord = Database["user_preferences"];
+export type SecuritySettingsRecord = Database["security_settings"];
+export type LoginHistoryRecord = Database["login_history"];
+export type BackupSettingsRecord = Database["backup_settings"];
+export type BackupHistoryRecord = Database["backup_history"];
 
 // ============================================================================
 // DATABASE INSTANCE

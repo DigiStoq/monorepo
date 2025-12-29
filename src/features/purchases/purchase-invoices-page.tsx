@@ -7,6 +7,7 @@ import { PurchaseInvoiceList, PurchaseInvoiceDetail, PurchaseInvoiceForm } from 
 import { usePurchaseInvoices, usePurchaseInvoiceMutations } from "@/hooks/usePurchaseInvoices";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems } from "@/hooks/useItems";
+import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { PurchaseInvoice, PurchaseInvoiceFormData } from "./types";
 
 export function PurchaseInvoicesPage() {
@@ -15,6 +16,9 @@ export function PurchaseInvoicesPage() {
   const { customers } = useCustomers({ type: "supplier" });
   const { items } = useItems({ isActive: true });
   const { createInvoice, deleteInvoice } = usePurchaseInvoiceMutations();
+
+  // PDF Generator
+  const { printPurchaseInvoice, isReady: pdfReady } = usePDFGenerator();
 
   // State
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseInvoice | null>(null);
@@ -47,19 +51,53 @@ export function PurchaseInvoicesPage() {
   const handleSubmitPurchase = async (data: PurchaseInvoiceFormData) => {
     setIsSubmitting(true);
     try {
+      // Generate invoice number
+      const invoiceNumber = `PUR-${Date.now()}`;
+
+      // Lookup supplier name from customerId (suppliers are stored in customers table)
+      const supplier = customers.find((c) => c.id === data.customerId);
+      const supplierName = supplier?.name ?? "Unknown";
+
+      // Transform form items to include itemName, unit, and amount
+      const purchaseItems = data.items.map((formItem) => {
+        const item = items.find((i) => i.id === formItem.itemId);
+        const subtotal = formItem.quantity * formItem.unitPrice;
+        const discountPct = formItem.discountPercent ?? 0;
+        const taxPct = formItem.taxPercent ?? 0;
+        const discountAmt = subtotal * (discountPct / 100);
+        const taxableAmount = subtotal - discountAmt;
+        const taxAmt = taxableAmount * (taxPct / 100);
+        const amount = taxableAmount + taxAmt;
+
+        return {
+          itemId: formItem.itemId,
+          itemName: item?.name ?? "Unknown Item",
+          quantity: formItem.quantity,
+          unit: item?.unit ?? "pcs",
+          unitPrice: formItem.unitPrice,
+          discountPercent: discountPct,
+          taxPercent: taxPct,
+          amount,
+        };
+      });
+
+      // Calculate discount amount from percentage
+      const subtotal = purchaseItems.reduce((sum, item) => sum + item.amount, 0);
+      const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
+
       await createInvoice(
         {
-          invoiceNumber: data.invoiceNumber,
-          supplierInvoiceNumber: data.supplierInvoiceNumber,
-          customerId: data.customerId,
-          customerName: data.customerName,
+          invoiceNumber,
+          ...(data.supplierInvoiceNumber && { supplierInvoiceNumber: data.supplierInvoiceNumber }),
+          supplierId: data.customerId,
+          supplierName,
           date: data.date,
-          dueDate: data.dueDate,
-          status: data.status,
-          discountAmount: data.discountAmount,
-          notes: data.notes,
+          dueDate: data.dueDate ?? data.date, // Default to invoice date if not provided
+          status: "unpaid",
+          discountAmount,
+          ...(data.notes && { notes: data.notes }),
         },
-        data.items
+        purchaseItems
       );
       setIsFormOpen(false);
     } catch (err) {
@@ -84,8 +122,16 @@ export function PurchaseInvoicesPage() {
   };
 
   const handleRecordPayment = () => {
-    console.log("Record payment for:", currentSelectedPurchase?.id);
     // TODO: Navigate to payment-out page or open payment modal
+  };
+
+  // PDF handlers
+  const handlePrintPurchase = () => {
+    if (currentSelectedPurchase && pdfReady) {
+      // Note: suppliers are stored in customers table with customerId
+      const supplier = customers.find((c) => c.id === currentSelectedPurchase.customerId);
+      printPurchaseInvoice(currentSelectedPurchase, supplier);
+    }
   };
 
   if (error) {
@@ -135,7 +181,7 @@ export function PurchaseInvoicesPage() {
               onClose={handleCloseDetail}
               onEdit={() => { setIsFormOpen(true); }}
               onDelete={() => { void handleDeletePurchase(); }}
-              onPrint={() => { console.log("Print invoice"); }}
+              onPrint={handlePrintPurchase}
               onRecordPayment={handleRecordPayment}
             />
           </div>

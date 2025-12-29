@@ -3,22 +3,8 @@ import { Card, CardBody, CardHeader, Input } from "@/components/ui";
 import { Search, Package, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, StockMovement } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockStockMovement: StockMovement[] = [
-  { itemId: "1", itemName: "Wireless Mouse", openingStock: 100, purchased: 500, sold: 150, adjusted: -5, closingStock: 445 },
-  { itemId: "2", itemName: "USB-C Cable", openingStock: 200, purchased: 800, sold: 320, adjusted: 0, closingStock: 680 },
-  { itemId: "3", itemName: "Laptop Stand", openingStock: 50, purchased: 200, sold: 85, adjusted: -2, closingStock: 163 },
-  { itemId: "4", itemName: "Webcam HD", openingStock: 30, purchased: 150, sold: 62, adjusted: 0, closingStock: 118 },
-  { itemId: "5", itemName: "Keyboard Mechanical", openingStock: 25, purchased: 100, sold: 48, adjusted: -1, closingStock: 76 },
-  { itemId: "6", itemName: "Monitor Arm", openingStock: 20, purchased: 80, sold: 35, adjusted: 0, closingStock: 65 },
-  { itemId: "7", itemName: "Desk Organizer", openingStock: 40, purchased: 150, sold: 95, adjusted: 0, closingStock: 95 },
-  { itemId: "8", itemName: "HDMI Cable", openingStock: 150, purchased: 300, sold: 200, adjusted: -5, closingStock: 245 },
-];
+import type { DateRange } from "../types";
+import { useStockMovementReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -31,12 +17,15 @@ export function StockMovementReport() {
   });
   const [search, setSearch] = useState("");
 
+  // Fetch data from PowerSync
+  const { data: movementData, isLoading } = useStockMovementReport(dateRange);
+
   // Filter data
   const filteredData = useMemo(() => {
-    return mockStockMovement.filter((item) =>
+    return movementData.filter((item) =>
       item.itemName.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [movementData, search]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -52,12 +41,27 @@ export function StockMovementReport() {
     );
   }, [filteredData]);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Stock Movement Report"
+        subtitle="Item-wise stock inflows and outflows"
+        backPath="/reports"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Stock Movement Report"
       subtitle="Item-wise stock inflows and outflows"
       backPath="/reports"
-      onExport={() => { console.log("Export stock movement"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">

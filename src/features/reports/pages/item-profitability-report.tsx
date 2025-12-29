@@ -4,24 +4,8 @@ import { Card, CardBody, CardHeader, Input } from "@/components/ui";
 import { Search, Package, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, ItemProfitability } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockItemProfitability: ItemProfitability[] = [
-  { itemId: "1", itemName: "Wireless Mouse", unitsSold: 150, revenue: 4498.50, cost: 2250, profit: 2248.50, margin: 50 },
-  { itemId: "2", itemName: "USB-C Cable", unitsSold: 320, revenue: 4156.80, cost: 1600, profit: 2556.80, margin: 61.5 },
-  { itemId: "3", itemName: "Laptop Stand", unitsSold: 85, revenue: 4249.15, cost: 2125, profit: 2124.15, margin: 50 },
-  { itemId: "4", itemName: "Webcam HD", unitsSold: 62, revenue: 4959.38, cost: 2480, profit: 2479.38, margin: 50 },
-  { itemId: "5", itemName: "Keyboard Mechanical", unitsSold: 48, revenue: 6239.52, cost: 2880, profit: 3359.52, margin: 53.8 },
-  { itemId: "6", itemName: "Monitor Arm", unitsSold: 35, revenue: 3149.65, cost: 1400, profit: 1749.65, margin: 55.5 },
-  { itemId: "7", itemName: "Desk Organizer", unitsSold: 95, revenue: 2374.05, cost: 950, profit: 1424.05, margin: 60 },
-  { itemId: "8", itemName: "HDMI Cable", unitsSold: 200, revenue: 2998, cost: 1000, profit: 1998, margin: 66.6 },
-  { itemId: "9", itemName: "USB Hub", unitsSold: 45, revenue: 1124.55, cost: 675, profit: 449.55, margin: 40 },
-  { itemId: "10", itemName: "Screen Protector", unitsSold: 180, revenue: 1798.20, cost: 900, profit: 898.20, margin: 49.9 },
-];
+import type { DateRange } from "../types";
+import { useItemProfitabilityReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -36,9 +20,12 @@ export function ItemProfitabilityReport() {
   const [sortBy, setSortBy] = useState<"profit" | "margin" | "revenue">("profit");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Fetch data from PowerSync
+  const { data: profitabilityData, isLoading } = useItemProfitabilityReport(dateRange);
+
   // Filter and sort data
   const processedData = useMemo(() => {
-    const data = mockItemProfitability.filter((item) =>
+    const data = profitabilityData.filter((item) =>
       item.itemName.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -57,7 +44,7 @@ export function ItemProfitabilityReport() {
     });
 
     return data;
-  }, [search, sortBy, sortOrder]);
+  }, [profitabilityData, search, sortBy, sortOrder]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -102,14 +89,29 @@ export function ItemProfitabilityReport() {
   };
 
   // Calculate max profit for bar visualization
-  const maxProfit = Math.max(...processedData.map((i) => i.profit));
+  const maxProfit = Math.max(...processedData.map((i) => i.profit), 1);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Item Profitability"
+        subtitle="Profit margin analysis by item"
+        backPath="/reports"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   return (
     <ReportLayout
       title="Item Profitability"
       subtitle="Profit margin analysis by item"
       backPath="/reports"
-      onExport={() => { console.log("Export profitability report"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">

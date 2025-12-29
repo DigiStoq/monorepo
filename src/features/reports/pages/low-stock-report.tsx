@@ -4,21 +4,7 @@ import { Card, CardBody, CardHeader, Input, Badge } from "@/components/ui";
 import { Search, Package, AlertTriangle, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import type { StockSummaryItem } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockLowStockItems: StockSummaryItem[] = [
-  { itemId: "1", itemName: "Wireless Mouse", sku: "WM-001", category: "Electronics", unit: "pcs", stockQuantity: 8, purchasePrice: 15, salePrice: 29.99, stockValue: 120, lowStockAlert: 20, isLowStock: true },
-  { itemId: "2", itemName: "USB-C Hub", sku: "UH-001", category: "Accessories", unit: "pcs", stockQuantity: 3, purchasePrice: 25, salePrice: 49.99, stockValue: 75, lowStockAlert: 10, isLowStock: true },
-  { itemId: "3", itemName: "Webcam HD", sku: "WC-004", category: "Electronics", unit: "pcs", stockQuantity: 5, purchasePrice: 40, salePrice: 79.99, stockValue: 200, lowStockAlert: 15, isLowStock: true },
-  { itemId: "4", itemName: "Laptop Stand", sku: "LS-003", category: "Office", unit: "pcs", stockQuantity: 12, purchasePrice: 25, salePrice: 49.99, stockValue: 300, lowStockAlert: 15, isLowStock: true },
-  { itemId: "5", itemName: "Monitor Arm", sku: "MA-006", category: "Office", unit: "pcs", stockQuantity: 0, purchasePrice: 40, salePrice: 89.99, stockValue: 0, lowStockAlert: 10, isLowStock: true },
-  { itemId: "6", itemName: "Keyboard Mechanical", sku: "KM-005", category: "Electronics", unit: "pcs", stockQuantity: 7, purchasePrice: 60, salePrice: 129.99, stockValue: 420, lowStockAlert: 10, isLowStock: true },
-  { itemId: "7", itemName: "Mouse Pad XL", sku: "MP-001", category: "Accessories", unit: "pcs", stockQuantity: 15, purchasePrice: 8, salePrice: 19.99, stockValue: 120, lowStockAlert: 25, isLowStock: true },
-  { itemId: "8", itemName: "Cable Management Kit", sku: "CM-001", category: "Accessories", unit: "set", stockQuantity: 4, purchasePrice: 12, salePrice: 24.99, stockValue: 48, lowStockAlert: 10, isLowStock: true },
-];
+import { useLowStockReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -28,16 +14,19 @@ export function LowStockReport() {
   const [search, setSearch] = useState("");
   const [showOutOfStock, setShowOutOfStock] = useState(false);
 
+  // Fetch data from PowerSync
+  const { data: lowStockData, isLoading } = useLowStockReport();
+
   // Filter data
   const filteredData = useMemo(() => {
-    return mockLowStockItems.filter((item) => {
+    return lowStockData.filter((item) => {
       const matchesSearch =
         item.itemName.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase());
       const matchesOutOfStock = !showOutOfStock || item.stockQuantity === 0;
       return matchesSearch && matchesOutOfStock;
     });
-  }, [search, showOutOfStock]);
+  }, [lowStockData, search, showOutOfStock]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -60,12 +49,27 @@ export function LowStockReport() {
     return { label: "Low Stock", variant: "warning" as const, color: "text-amber-600" };
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Low Stock Alert"
+        subtitle="Items below minimum stock levels"
+        backPath="/reports"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Low Stock Alert"
       subtitle="Items below minimum stock levels"
       backPath="/reports"
-      onExport={() => { console.log("Export low stock report"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">

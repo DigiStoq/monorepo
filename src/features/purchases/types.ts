@@ -64,7 +64,7 @@ export interface PurchaseFilters {
     from: string | null;
     to: string | null;
   };
-  sortBy: "date" | "number" | "amount" | "party";
+  sortBy: "date" | "number" | "amount" | "supplier";
   sortOrder: "asc" | "desc";
 }
 

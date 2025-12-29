@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Expense } from "@/features/purchases/types";
 
@@ -60,12 +60,15 @@ export function useExpenses(filters?: {
   dateTo?: string;
   search?: string;
 }): { expenses: Expense[]; isLoading: boolean; error: Error | undefined } {
-  const categoryFilter = filters?.category ?? null;
-  const supplierFilter = filters?.supplierId ?? null;
-  const modeFilter = filters?.paymentMode ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const params = useMemo(() => {
+    const categoryFilter = filters?.category ?? null;
+    const supplierFilter = filters?.supplierId ?? null;
+    const modeFilter = filters?.paymentMode ?? null;
+    const dateFromFilter = filters?.dateFrom ?? null;
+    const dateToFilter = filters?.dateTo ?? null;
+    const searchFilter = filters?.search ? `%${filters.search}%` : null;
+    return [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter];
+  }, [filters?.category, filters?.supplierId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
 
   const { data, isLoading, error } = useQuery<ExpenseRow>(
     `SELECT * FROM expenses
@@ -76,10 +79,10 @@ export function useExpenses(filters?: {
      AND ($5 IS NULL OR date <= $5)
      AND ($6 IS NULL OR expense_number LIKE $6 OR description LIKE $6)
      ORDER BY date DESC, created_at DESC`,
-    [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
+    params
   );
 
-  const expenses = data.map(mapRowToExpense);
+  const expenses = useMemo(() => data.map(mapRowToExpense), [data]);
 
   return { expenses, isLoading, error };
 }

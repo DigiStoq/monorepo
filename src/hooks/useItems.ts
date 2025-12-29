@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Item, ItemFormData, ItemType } from "@/features/inventory/types";
 
@@ -18,28 +18,51 @@ interface ItemRow {
   stock_quantity: number;
   low_stock_alert: number;
   is_active: number;
+  // Optional additional fields
+  batch_number: string | null;
+  expiry_date: string | null;
+  manufacture_date: string | null;
+  barcode: string | null;
+  hsn_code: string | null;
+  warranty_days: number | null;
+  brand: string | null;
+  model_number: string | null;
+  location: string | null;
   created_at: string;
   updated_at: string;
 }
 
 function mapRowToItem(row: ItemRow): Item {
-  return {
+  const item: Item = {
     id: row.id,
     name: row.name,
     sku: row.sku,
     type: row.type,
-    description: row.description ?? undefined,
-    category: row.category_id ?? undefined,
     unit: row.unit,
     salePrice: row.sale_price,
     purchasePrice: row.purchase_price,
-    taxRate: row.tax_rate ?? undefined,
     stockQuantity: row.stock_quantity,
     lowStockAlert: row.low_stock_alert,
     isActive: row.is_active === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+
+  // Add optional fields only if they have values
+  if (row.description) item.description = row.description;
+  if (row.category_id) item.category = row.category_id;
+  if (row.tax_rate !== null) item.taxRate = row.tax_rate;
+  if (row.batch_number) item.batchNumber = row.batch_number;
+  if (row.expiry_date) item.expiryDate = row.expiry_date;
+  if (row.manufacture_date) item.manufactureDate = row.manufacture_date;
+  if (row.barcode) item.barcode = row.barcode;
+  if (row.hsn_code) item.hsnCode = row.hsn_code;
+  if (row.warranty_days !== null) item.warrantyDays = row.warranty_days;
+  if (row.brand) item.brand = row.brand;
+  if (row.model_number) item.modelNumber = row.model_number;
+  if (row.location) item.location = row.location;
+
+  return item;
 }
 
 export function useItems(filters?: {
@@ -49,31 +72,51 @@ export function useItems(filters?: {
   lowStock?: boolean;
   search?: string;
 }): { items: Item[]; isLoading: boolean; error: Error | undefined } {
-  const categoryFilter = filters?.categoryId ?? null;
-  const typeFilter = filters?.type ?? null;
-  const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  // Memoize query and params to ensure stable references for PowerSync reactivity
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
 
-  let query = `SELECT * FROM items
-     WHERE ($1 IS NULL OR category_id = $1)
-     AND ($2 IS NULL OR type = $2)
-     AND ($3 IS NULL OR is_active = $3)
-     AND ($4 IS NULL OR name LIKE $4 OR sku LIKE $4)`;
+    // Category filter
+    if (filters?.categoryId) {
+      conditions.push("category_id = ?");
+      params.push(filters.categoryId);
+    }
 
-  if (filters?.lowStock) {
-    query += ` AND stock_quantity <= low_stock_alert`;
-  }
+    // Type filter
+    if (filters?.type) {
+      conditions.push("type = ?");
+      params.push(filters.type);
+    }
 
-  query += ` ORDER BY name`;
+    // Active filter
+    if (filters?.isActive !== undefined) {
+      conditions.push("is_active = ?");
+      params.push(filters.isActive ? 1 : 0);
+    }
 
-  const { data, isLoading, error } = useQuery<ItemRow>(query, [
-    categoryFilter,
-    typeFilter,
-    activeFilter,
-    searchFilter,
-  ]);
+    // Low stock filter
+    if (filters?.lowStock) {
+      conditions.push("stock_quantity <= low_stock_alert");
+    }
 
-  const items = data.map(mapRowToItem);
+    // Search filter
+    if (filters?.search) {
+      conditions.push("(name LIKE ? OR sku LIKE ?)");
+      const searchPattern = `%${filters.search}%`;
+      params.push(searchPattern, searchPattern);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM items ${whereClause} ORDER BY name`,
+      params,
+    };
+  }, [filters?.categoryId, filters?.type, filters?.isActive, filters?.lowStock, filters?.search]);
+
+  const { data, isLoading, error } = useQuery<ItemRow>(query, params);
+
+  const items = useMemo(() => data.map(mapRowToItem), [data]);
 
   return { items, isLoading, error };
 }
@@ -97,6 +140,7 @@ export function useItemById(id: string | null): {
 interface ItemMutationData extends ItemFormData {
   categoryId?: string;
   stockQuantity?: number;
+  // Optional additional fields are inherited from ItemFormData
 }
 
 interface ItemMutations {
@@ -119,8 +163,10 @@ export function useItemMutations(): ItemMutations {
         `INSERT INTO items (
           id, name, sku, type, description, category_id, unit,
           sale_price, purchase_price, tax_rate, stock_quantity, low_stock_alert,
+          batch_number, expiry_date, manufacture_date, barcode, hsn_code,
+          warranty_days, brand, model_number, location,
           is_active, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -134,6 +180,16 @@ export function useItemMutations(): ItemMutations {
           data.taxRate ?? 0,
           data.stockQuantity ?? data.openingStock ?? 0,
           data.lowStockAlert ?? 0,
+          // Optional additional fields
+          data.batchNumber ?? null,
+          data.expiryDate ?? null,
+          data.manufactureDate ?? null,
+          data.barcode ?? null,
+          data.hsnCode ?? null,
+          data.warrantyDays ?? null,
+          data.brand ?? null,
+          data.modelNumber ?? null,
+          data.location ?? null,
           1, // is_active
           now,
           now,
@@ -190,6 +246,43 @@ export function useItemMutations(): ItemMutations {
       if (data.lowStockAlert !== undefined) {
         fields.push("low_stock_alert = ?");
         values.push(data.lowStockAlert ?? null);
+      }
+      // Optional additional fields
+      if (data.batchNumber !== undefined) {
+        fields.push("batch_number = ?");
+        values.push(data.batchNumber ?? null);
+      }
+      if (data.expiryDate !== undefined) {
+        fields.push("expiry_date = ?");
+        values.push(data.expiryDate ?? null);
+      }
+      if (data.manufactureDate !== undefined) {
+        fields.push("manufacture_date = ?");
+        values.push(data.manufactureDate ?? null);
+      }
+      if (data.barcode !== undefined) {
+        fields.push("barcode = ?");
+        values.push(data.barcode ?? null);
+      }
+      if (data.hsnCode !== undefined) {
+        fields.push("hsn_code = ?");
+        values.push(data.hsnCode ?? null);
+      }
+      if (data.warrantyDays !== undefined) {
+        fields.push("warranty_days = ?");
+        values.push(data.warrantyDays ?? null);
+      }
+      if (data.brand !== undefined) {
+        fields.push("brand = ?");
+        values.push(data.brand ?? null);
+      }
+      if (data.modelNumber !== undefined) {
+        fields.push("model_number = ?");
+        values.push(data.modelNumber ?? null);
+      }
+      if (data.location !== undefined) {
+        fields.push("location = ?");
+        values.push(data.location ?? null);
       }
 
       fields.push("updated_at = ?");

@@ -45,8 +45,8 @@ const defaultActions: Omit<QuickAction, "onClick">[] = [
     color: "bg-info hover:bg-info-dark",
   },
   {
-    id: "add-party",
-    label: "Add Party",
+    id: "add-customer",
+    label: "Add Customer",
     icon: Users,
     color: "bg-success hover:bg-success-dark",
   },

@@ -24,6 +24,8 @@ export interface InvoiceFormProps {
   items: Item[];
   initialData?: Partial<SaleInvoiceFormData>;
   isLoading?: boolean;
+  isSubmitting?: boolean;
+  isEditing?: boolean;
   onSubmit: (data: SaleInvoiceFormData) => void;
   onCancel: () => void;
   className?: string;
@@ -50,10 +52,13 @@ export function InvoiceForm({
   items,
   initialData,
   isLoading,
+  isSubmitting,
+  isEditing,
   onSubmit,
   onCancel,
   className,
 }: InvoiceFormProps) {
+  const formLoading = isLoading ?? isSubmitting;
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
@@ -63,29 +68,51 @@ export function InvoiceForm({
   const [terms, setTerms] = useState(initialData?.terms ?? "");
   const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
 
-  // Line items state
-  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  // Initialize line items from initialData if editing
+  const getInitialLineItems = (): LineItem[] => {
+    if (!initialData?.items || initialData.items.length === 0) return [];
 
-  // Customer options
-  const customerOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select a customer..." },
-      ...customers
-        .filter((c) => c.type === "customer" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
-    ];
-  }, [customers]);
+    return initialData.items.map((formItem, index) => {
+      const selectedItem = items.find((i) => i.id === formItem.itemId);
+      const subtotal = formItem.quantity * formItem.unitPrice;
+      const discountPct = formItem.discountPercent ?? 0;
+      const taxPct = formItem.taxPercent ?? 0;
+      const discountAmount = subtotal * (discountPct / 100);
+      const taxableAmount = subtotal - discountAmount;
+      const taxAmount = taxableAmount * (taxPct / 100);
+      const amount = taxableAmount + taxAmount;
 
-  // Item options
-  const itemOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select an item..." },
-      ...items.filter((i) => i.isActive).map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.salePrice.toFixed(2)}`,
-      })),
-    ];
-  }, [items]);
+      return {
+        id: `line-${Date.now()}-${index}`,
+        itemId: formItem.itemId,
+        itemName: selectedItem?.name ?? "Unknown",
+        quantity: formItem.quantity,
+        unit: selectedItem?.unit ?? "pcs",
+        unitPrice: formItem.unitPrice,
+        discountPercent: discountPct,
+        taxPercent: taxPct,
+        amount,
+      };
+    });
+  };
+
+  // Line items state - initialize from initialData if editing
+  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems);
+
+  // Customer options - hook already filters by type, no need to filter again
+  const customerOptions: SelectOption[] = useMemo(() => [
+    { value: "", label: "Select a customer..." },
+    ...customers.map((c) => ({ value: c.id, label: c.name })),
+  ], [customers]);
+
+  // Item options - hook already filters by isActive, no need to filter again
+  const itemOptions: SelectOption[] = useMemo(() => [
+    { value: "", label: "Select an item..." },
+    ...items.map((i) => ({
+      value: i.id,
+      label: `${i.name} - $${i.salePrice.toFixed(2)}`,
+    })),
+  ], [items]);
 
   // Add line item
   const handleAddItem = () => {
@@ -202,19 +229,23 @@ export function InvoiceForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">New Sale Invoice</h1>
-          <p className="text-slate-500">Create a new invoice for your customer</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isEditing ? "Edit Sale Invoice" : "New Sale Invoice"}
+          </h1>
+          <p className="text-slate-500">
+            {isEditing ? "Update invoice details" : "Create a new invoice for your customer"}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
+          <Button variant="ghost" onClick={onCancel} disabled={formLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!customerId || lineItems.length === 0}
-            isLoading={isLoading}
+            isLoading={formLoading}
           >
-            Create Invoice
+            {isEditing ? "Save Changes" : "Create Invoice"}
           </Button>
         </div>
       </div>
@@ -282,6 +313,7 @@ export function InvoiceForm({
           <Card>
             <CardHeader
               title="Items"
+              className="pb-4"
               action={
                 <Button
                   variant="outline"
@@ -504,16 +536,18 @@ export function InvoiceForm({
           {/* Quick Actions */}
           <Card>
             <CardBody className="space-y-2">
-              <Button variant="outline" fullWidth disabled>
-                Save as Draft
-              </Button>
+              {!isEditing && (
+                <Button variant="outline" fullWidth disabled>
+                  Save as Draft
+                </Button>
+              )}
               <Button
                 fullWidth
                 disabled={!customerId || lineItems.length === 0}
                 onClick={handleSubmit}
-                isLoading={isLoading}
+                isLoading={formLoading}
               >
-                Create & Send
+                {isEditing ? "Save Changes" : "Create & Send"}
               </Button>
             </CardBody>
           </Card>

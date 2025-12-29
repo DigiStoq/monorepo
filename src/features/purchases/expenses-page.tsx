@@ -115,7 +115,7 @@ export function ExpensesPage() {
               onClose={handleCloseDetail}
               onEdit={() => { setIsFormOpen(true); }}
               onDelete={() => { void handleDeleteExpense(); }}
-              onPrint={() => { console.log("Print expense"); }}
+              onPrint={() => { /* TODO: Implement print */ }}
             />
           </div>
         )}

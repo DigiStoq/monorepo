@@ -119,12 +119,8 @@ export function PaymentInPage() {
                 setIsFormOpen(true);
               }}
               onDelete={() => { void handleDeletePayment(); }}
-              onPrint={() => {
-                console.log("Print payment:", currentSelectedPayment.id);
-              }}
-              onShare={() => {
-                console.log("Share payment:", currentSelectedPayment.id);
-              }}
+              onPrint={() => { /* TODO: Implement print */ }}
+              onShare={() => { /* TODO: Implement share */ }}
             />
           </div>
         )}

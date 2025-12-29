@@ -184,9 +184,9 @@ export function PurchaseInvoiceList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesNumber = invoice.invoiceNumber.toLowerCase().includes(searchLower);
-          const matchesParty = invoice.customerName.toLowerCase().includes(searchLower);
+          const matchesSupplier = invoice.customerName.toLowerCase().includes(searchLower);
           const matchesSupplierRef = invoice.supplierInvoiceNumber?.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty && !matchesSupplierRef) return false;
+          if (!matchesNumber && !matchesSupplier && !matchesSupplierRef) return false;
         }
 
         // Status filter
@@ -209,7 +209,7 @@ export function PurchaseInvoiceList({
           case "amount":
             comparison = b.total - a.total;
             break;
-          case "party":
+          case "supplier":
             comparison = a.customerName.localeCompare(b.customerName);
             break;
         }
@@ -278,10 +278,6 @@ export function PurchaseInvoiceList({
             }
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateInvoice}>
-            New Purchase
-          </Button>
         </div>
       </div>
 

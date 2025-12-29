@@ -3,24 +3,7 @@ import { Card, CardBody, Input, Select, Badge, type SelectOption } from "@/compo
 import { ReportLayout } from "../components";
 import { Search, Package, AlertTriangle, DollarSign, Boxes, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { StockSummaryItem } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockStockData: StockSummaryItem[] = [
-  { itemId: "1", itemName: "Laptop Pro 15", sku: "LP-15", category: "Electronics", unit: "pcs", stockQuantity: 25, purchasePrice: 900, salePrice: 1200, stockValue: 22500, lowStockAlert: 5, isLowStock: false },
-  { itemId: "2", itemName: "Wireless Mouse", sku: "WM-01", category: "Electronics", unit: "pcs", stockQuantity: 150, purchasePrice: 15, salePrice: 25, stockValue: 2250, lowStockAlert: 20, isLowStock: false },
-  { itemId: "3", itemName: "Office Chair Deluxe", sku: "OCD-01", category: "Furniture", unit: "pcs", stockQuantity: 8, purchasePrice: 250, salePrice: 350, stockValue: 2000, lowStockAlert: 10, isLowStock: true },
-  { itemId: "4", itemName: "Desk Lamp LED", sku: "DL-LED", category: "Electronics", unit: "pcs", stockQuantity: 200, purchasePrice: 28, salePrice: 45, stockValue: 5600, lowStockAlert: 30, isLowStock: false },
-  { itemId: "5", itemName: "Tool Kit Professional", sku: "TKP-01", category: "Tools", unit: "sets", stockQuantity: 3, purchasePrice: 120, salePrice: 180, stockValue: 360, lowStockAlert: 5, isLowStock: true },
-  { itemId: "6", itemName: "Storage Bins Large", sku: "SBL-01", category: "Storage", unit: "pcs", stockQuantity: 500, purchasePrice: 8, salePrice: 15, stockValue: 4000, lowStockAlert: 50, isLowStock: false },
-  { itemId: "7", itemName: "Shelving Unit", sku: "SU-01", category: "Furniture", unit: "pcs", stockQuantity: 12, purchasePrice: 150, salePrice: 200, stockValue: 1800, lowStockAlert: 5, isLowStock: false },
-  { itemId: "8", itemName: "USB-C Hub", sku: "UCH-01", category: "Electronics", unit: "pcs", stockQuantity: 45, purchasePrice: 35, salePrice: 55, stockValue: 1575, lowStockAlert: 15, isLowStock: false },
-  { itemId: "9", itemName: "Monitor Stand", sku: "MS-01", category: "Accessories", unit: "pcs", stockQuantity: 4, purchasePrice: 45, salePrice: 75, stockValue: 180, lowStockAlert: 10, isLowStock: true },
-  { itemId: "10", itemName: "Keyboard Wireless", sku: "KW-01", category: "Electronics", unit: "pcs", stockQuantity: 80, purchasePrice: 40, salePrice: 65, stockValue: 3200, lowStockAlert: 20, isLowStock: false },
-];
+import { useStockSummaryReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -31,11 +14,14 @@ export function StockSummaryReport() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showLowStock, setShowLowStock] = useState(false);
 
+  // Fetch data from PowerSync
+  const { data: stockData, isLoading } = useStockSummaryReport();
+
   // Get unique categories
   const categories = useMemo(() => {
-    const cats = [...new Set(mockStockData.map((item) => item.category).filter(Boolean))];
+    const cats = [...new Set(stockData.map((item) => item.category).filter(Boolean))];
     return cats as string[];
-  }, []);
+  }, [stockData]);
 
   const categoryOptions: SelectOption[] = useMemo(() => [
     { value: "all", label: "All Categories" },
@@ -44,7 +30,7 @@ export function StockSummaryReport() {
 
   // Filter items
   const filteredItems = useMemo(() => {
-    return mockStockData.filter((item) => {
+    return stockData.filter((item) => {
       const matchesSearch =
         item.itemName.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase());
@@ -54,7 +40,7 @@ export function StockSummaryReport() {
 
       return matchesSearch && matchesCategory && matchesLowStock;
     });
-  }, [search, categoryFilter, showLowStock]);
+  }, [stockData, search, categoryFilter, showLowStock]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -75,12 +61,26 @@ export function StockSummaryReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Stock Summary"
+        subtitle="Current inventory levels and valuations"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Stock Summary"
       subtitle="Current inventory levels and valuations"
-      onRefresh={() => { console.log("Refresh"); }}
-      onExport={() => { console.log("Export"); }}
+      onRefresh={() => { /* TODO: Implement refresh */ }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">

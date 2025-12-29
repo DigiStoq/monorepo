@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { CreditNote, CreditNoteItem } from "@/features/sales/types";
 
@@ -75,11 +75,14 @@ export function useCreditNotes(filters?: {
   dateTo?: string;
   search?: string;
 }): { creditNotes: CreditNote[]; isLoading: boolean; error: Error | undefined } {
-  const customerFilter = filters?.customerId ?? null;
-  const reasonFilter = filters?.reason ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const params = useMemo(() => {
+    const customerFilter = filters?.customerId ?? null;
+    const reasonFilter = filters?.reason ?? null;
+    const dateFromFilter = filters?.dateFrom ?? null;
+    const dateToFilter = filters?.dateTo ?? null;
+    const searchFilter = filters?.search ? `%${filters.search}%` : null;
+    return [customerFilter, reasonFilter, dateFromFilter, dateToFilter, searchFilter];
+  }, [filters?.customerId, filters?.reason, filters?.dateFrom, filters?.dateTo, filters?.search]);
 
   const { data, isLoading, error } = useQuery<CreditNoteRow>(
     `SELECT * FROM credit_notes
@@ -89,10 +92,10 @@ export function useCreditNotes(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR credit_note_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    [customerFilter, reasonFilter, dateFromFilter, dateToFilter, searchFilter]
+    params
   );
 
-  const creditNotes = data.map(mapRowToCreditNote);
+  const creditNotes = useMemo(() => data.map(mapRowToCreditNote), [data]);
 
   return { creditNotes, isLoading, error };
 }

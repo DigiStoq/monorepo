@@ -117,8 +117,8 @@ export function PaymentOutPage() {
               onClose={handleCloseDetail}
               onEdit={() => { setIsFormOpen(true); }}
               onDelete={() => { void handleDeletePayment(); }}
-              onPrint={() => { console.log("Print payment"); }}
-              onShare={() => { console.log("Share payment"); }}
+              onPrint={() => { /* TODO: Implement print */ }}
+              onShare={() => { /* TODO: Implement share */ }}
             />
           </div>
         )}

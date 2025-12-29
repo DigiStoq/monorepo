@@ -1,30 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button, Input } from "@/components/ui";
 import { Building2, MapPin, Phone, Globe, FileText, Save, Upload } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
 import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import { useCompanySettings, useCompanySettingsMutations } from "@/hooks/useSettings";
 import type { CompanySettings } from "../types";
 
-// Mock data - would come from store/API
-const mockCompanySettings: CompanySettings = {
-  id: "1",
-  name: "Acme Corporation",
-  legalName: "Acme Corporation Inc.",
+// Flat type matching what the database returns
+interface FlatCompanySettings {
+  id: string;
+  name: string;
+  legalName?: string;
+  logoUrl?: string;
+  addressStreet?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressPostalCode?: string;
+  addressCountry?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactWebsite?: string;
+  taxId?: string;
+  ein?: string;
+  financialYearStartMonth: number;
+  financialYearStartDay: number;
+  currency: string;
+  locale: string;
+  timezone: string;
+}
+
+// Default settings for new companies
+const defaultSettings: CompanySettings = {
+  id: "",
+  name: "Your Company Name",
+  legalName: "",
   address: {
-    street: "123 Business Park",
-    city: "New York",
-    state: "NY",
-    postalCode: "10001",
-    country: "USA",
+    street: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "",
   },
   contact: {
-    phone: "+1 212 555 1234",
-    email: "contact@acmecorp.com",
-    website: "https://acmecorp.com",
+    phone: "",
+    email: "",
+    website: "",
   },
   registration: {
-    taxId: "12-3456789",
-    ein: "12-3456789",
+    taxId: "",
+    ein: "",
   },
   financialYear: {
     startMonth: 1,
@@ -35,14 +59,91 @@ const mockCompanySettings: CompanySettings = {
   timezone: "America/New_York",
 };
 
+// Convert flat DB structure to nested UI structure
+function flatToNested(flat: FlatCompanySettings): CompanySettings {
+  const result: CompanySettings = {
+    id: flat.id,
+    name: flat.name,
+    address: {
+      street: flat.addressStreet ?? "",
+      city: flat.addressCity ?? "",
+      state: flat.addressState ?? "",
+      postalCode: flat.addressPostalCode ?? "",
+      country: flat.addressCountry ?? "",
+    },
+    contact: {
+      phone: flat.contactPhone ?? "",
+      email: flat.contactEmail ?? "",
+    },
+    registration: {},
+    financialYear: {
+      startMonth: flat.financialYearStartMonth,
+      startDay: flat.financialYearStartDay,
+    },
+    currency: flat.currency,
+    locale: flat.locale,
+    timezone: flat.timezone,
+  };
+  if (flat.legalName) result.legalName = flat.legalName;
+  if (flat.logoUrl) result.logo = flat.logoUrl;
+  if (flat.contactWebsite) result.contact.website = flat.contactWebsite;
+  if (flat.taxId) result.registration.taxId = flat.taxId;
+  if (flat.ein) result.registration.ein = flat.ein;
+  return result;
+}
+
+// Convert nested UI structure to flat DB structure for updates
+function nestedToFlatUpdate(nested: CompanySettings): Record<string, string | number | undefined> {
+  return {
+    name: nested.name,
+    legalName: nested.legalName || undefined,
+    logoUrl: nested.logo || undefined,
+    addressStreet: nested.address.street || undefined,
+    addressCity: nested.address.city || undefined,
+    addressState: nested.address.state || undefined,
+    addressPostalCode: nested.address.postalCode || undefined,
+    addressCountry: nested.address.country || undefined,
+    contactPhone: nested.contact.phone || undefined,
+    contactEmail: nested.contact.email || undefined,
+    contactWebsite: nested.contact.website || undefined,
+    taxId: nested.registration.taxId || undefined,
+    ein: nested.registration.ein || undefined,
+    financialYearStartMonth: nested.financialYear.startMonth,
+    financialYearStartDay: nested.financialYear.startDay,
+    currency: nested.currency,
+    locale: nested.locale,
+    timezone: nested.timezone,
+  };
+}
+
 export function CompanySettingsPage() {
-  const [settings, setSettings] = useState<CompanySettings>(mockCompanySettings);
+  // Fetch from database
+  const { settings: dbSettings, isLoading } = useCompanySettings();
+  const { updateCompanySettings } = useCompanySettingsMutations();
+
+  // Local state for editing
+  const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
   const [isSaving, setIsSaving] = useState(false);
+  const hasInitialized = useRef(false);
+
+  // Sync database settings to local state only on initial load
+  useEffect(() => {
+    if (dbSettings && !hasInitialized.current) {
+      // Cast to flat type (the actual shape returned by hooks)
+      const flat = dbSettings as unknown as FlatCompanySettings;
+      setSettings(flatToNested(flat));
+      hasInitialized.current = true;
+    }
+  }, [dbSettings]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const flatData = nestedToFlatUpdate(settings);
+      await updateCompanySettings(flatData);
+    } catch (error) {
+      console.error("Failed to save company settings:", error);
+    }
     setIsSaving(false);
   };
 
@@ -76,6 +177,19 @@ export function CompanySettingsPage() {
       registration: { ...prev.registration, [field]: value },
     }));
   };
+
+  if (isLoading) {
+    return (
+      <SettingsLayout
+        title="Company Settings"
+        description="Manage your business profile and registration details"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading...</div>
+        </div>
+      </SettingsLayout>
+    );
+  }
 
   return (
     <SettingsLayout

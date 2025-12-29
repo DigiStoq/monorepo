@@ -102,7 +102,7 @@ export function PaymentOutDetail({
           </CardBody>
         </Card>
 
-        {/* Party Info */}
+        {/* Supplier Info */}
         <Card>
           <CardBody className="space-y-3">
             <div className="flex items-start gap-3">

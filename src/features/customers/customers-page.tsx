@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
@@ -11,10 +12,12 @@ import {
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { CustomerList, CustomerDetail, CustomerFormModal } from "./components";
-import { useCustomers, useCustomerMutations } from "@/hooks/useCustomers";
-import type { Customer, CustomerTransaction, CustomerFormData } from "./types";
+import { useCustomers, useCustomerMutations, useCustomerTransactions } from "@/hooks/useCustomers";
+import type { Customer, CustomerFormData } from "./types";
 
 export function CustomersPage() {
+  const navigate = useNavigate();
+
   // Data from PowerSync
   const { customers, isLoading, error } = useCustomers();
   const { createCustomer, updateCustomer, deleteCustomer } =
@@ -38,12 +41,10 @@ export function CustomersPage() {
     return customers.find((c) => c.id === selectedCustomer.id) ?? null;
   }, [customers, selectedCustomer]);
 
-  // TODO: Fetch transactions for selected customer from PowerSync
-  // For now, return empty array until transactions hook is connected
-  const selectedCustomerTransactions: CustomerTransaction[] = useMemo(() => {
-    // This will be replaced with a useCustomerTransactions hook
-    return [];
-  }, [currentSelectedCustomer]);
+  // Fetch transactions for selected customer from PowerSync
+  const { transactions: selectedCustomerTransactions } = useCustomerTransactions(
+    currentSelectedCustomer?.id ?? null
+  );
 
   // Handlers
   const handleAddCustomer = () => {
@@ -99,13 +100,12 @@ export function CustomersPage() {
   };
 
   const handleAddTransaction = (type: "payment-in" | "payment-out") => {
-    // TODO: Open transaction modal - will navigate to payment forms
-    console.log(
-      "Add transaction:",
-      type,
-      "for customer:",
-      currentSelectedCustomer?.id
-    );
+    // Navigate to payment forms
+    if (type === "payment-in") {
+      void navigate({ to: "/sale/payment-in" });
+    } else {
+      void navigate({ to: "/purchase/payment-out" });
+    }
   };
 
   if (error) {

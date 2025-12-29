@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Estimate, EstimateItem } from "@/features/sales/types";
 
@@ -81,11 +81,14 @@ export function useEstimates(filters?: {
   dateTo?: string;
   search?: string;
 }): { estimates: Estimate[]; isLoading: boolean; error: Error | undefined } {
-  const statusFilter = filters?.status ?? null;
-  const customerFilter = filters?.customerId ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const params = useMemo(() => {
+    const statusFilter = filters?.status ?? null;
+    const customerFilter = filters?.customerId ?? null;
+    const dateFromFilter = filters?.dateFrom ?? null;
+    const dateToFilter = filters?.dateTo ?? null;
+    const searchFilter = filters?.search ? `%${filters.search}%` : null;
+    return [statusFilter, customerFilter, dateFromFilter, dateToFilter, searchFilter];
+  }, [filters?.status, filters?.customerId, filters?.dateFrom, filters?.dateTo, filters?.search]);
 
   const { data, isLoading, error } = useQuery<EstimateRow>(
     `SELECT * FROM estimates
@@ -95,10 +98,10 @@ export function useEstimates(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR estimate_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    [statusFilter, customerFilter, dateFromFilter, dateToFilter, searchFilter]
+    params
   );
 
-  const estimates = data.map(mapRowToEstimate);
+  const estimates = useMemo(() => data.map(mapRowToEstimate), [data]);
 
   return { estimates, isLoading, error };
 }

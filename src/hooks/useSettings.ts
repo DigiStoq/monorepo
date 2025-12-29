@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { CompanySettings, InvoiceSettings, TaxRate } from "@/features/settings/types";
+import type { FlatCompanySettings, InvoiceSettings, TaxRate } from "@/features/settings/types";
 
 // Database row types (snake_case columns from SQLite)
 interface CompanySettingsRow {
@@ -46,6 +46,7 @@ interface InvoiceSettingsRow {
   bank_routing_number: string | null;
   bank_branch_name: string | null;
   bank_swift_code: string | null;
+  pdf_template: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,67 +62,70 @@ interface TaxRateRow {
   created_at: string;
 }
 
-function mapRowToCompanySettings(row: CompanySettingsRow): CompanySettings {
-  return {
+function mapRowToCompanySettings(row: CompanySettingsRow): FlatCompanySettings {
+  const result: FlatCompanySettings = {
     id: row.id,
     name: row.name,
-    legalName: row.legal_name ?? undefined,
-    logoUrl: row.logo_url ?? undefined,
-    addressStreet: row.address_street ?? undefined,
-    addressCity: row.address_city ?? undefined,
-    addressState: row.address_state ?? undefined,
-    addressPostalCode: row.address_postal_code ?? undefined,
-    addressCountry: row.address_country ?? undefined,
-    contactPhone: row.contact_phone ?? undefined,
-    contactEmail: row.contact_email ?? undefined,
-    contactWebsite: row.contact_website ?? undefined,
-    taxId: row.tax_id ?? undefined,
-    ein: row.ein ?? undefined,
     financialYearStartMonth: row.financial_year_start_month,
     financialYearStartDay: row.financial_year_start_day,
     currency: row.currency,
     locale: row.locale,
     timezone: row.timezone,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
   };
+  if (row.legal_name) result.legalName = row.legal_name;
+  if (row.logo_url) result.logoUrl = row.logo_url;
+  if (row.address_street) result.addressStreet = row.address_street;
+  if (row.address_city) result.addressCity = row.address_city;
+  if (row.address_state) result.addressState = row.address_state;
+  if (row.address_postal_code) result.addressPostalCode = row.address_postal_code;
+  if (row.address_country) result.addressCountry = row.address_country;
+  if (row.contact_phone) result.contactPhone = row.contact_phone;
+  if (row.contact_email) result.contactEmail = row.contact_email;
+  if (row.contact_website) result.contactWebsite = row.contact_website;
+  if (row.tax_id) result.taxId = row.tax_id;
+  if (row.ein) result.ein = row.ein;
+  if (row.created_at) result.createdAt = row.created_at;
+  if (row.updated_at) result.updatedAt = row.updated_at;
+  return result;
 }
 
 function mapRowToInvoiceSettings(row: InvoiceSettingsRow): InvoiceSettings {
-  return {
+  const result: InvoiceSettings = {
     id: row.id,
     prefix: row.prefix,
     nextNumber: row.next_number,
     padding: row.padding,
-    termsAndConditions: row.terms_and_conditions ?? undefined,
-    notes: row.notes ?? undefined,
-    showPaymentQr: row.show_payment_qr === 1,
     showBankDetails: row.show_bank_details === 1,
     dueDateDays: row.due_date_days,
     lateFeesEnabled: row.late_fees_enabled === 1,
-    lateFeesPercentage: row.late_fees_percentage,
-    bankAccountName: row.bank_account_name ?? undefined,
-    bankAccountNumber: row.bank_account_number ?? undefined,
-    bankName: row.bank_name ?? undefined,
-    bankRoutingNumber: row.bank_routing_number ?? undefined,
-    bankBranchName: row.bank_branch_name ?? undefined,
-    bankSwiftCode: row.bank_swift_code ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    pdfTemplate: (row.pdf_template as "classic" | "modern" | "minimal") ?? "classic",
   };
+  if (row.terms_and_conditions) result.termsAndConditions = row.terms_and_conditions;
+  if (row.notes) result.notes = row.notes;
+  if (row.show_payment_qr === 1) result.showPaymentQr = true;
+  if (row.late_fees_percentage !== null) result.lateFeesPercentage = row.late_fees_percentage;
+  if (row.bank_account_name) result.bankAccountName = row.bank_account_name;
+  if (row.bank_account_number) result.bankAccountNumber = row.bank_account_number;
+  if (row.bank_name) result.bankName = row.bank_name;
+  if (row.bank_routing_number) result.bankRoutingNumber = row.bank_routing_number;
+  if (row.bank_branch_name) result.bankBranchName = row.bank_branch_name;
+  if (row.bank_swift_code) result.bankSwiftCode = row.bank_swift_code;
+  if (row.created_at) result.createdAt = row.created_at;
+  if (row.updated_at) result.updatedAt = row.updated_at;
+  return result;
 }
 
 function mapRowToTaxRate(row: TaxRateRow): TaxRate {
-  return {
+  const result: TaxRate = {
     id: row.id,
     name: row.name,
     rate: row.rate,
-    type: row.type,
-    description: row.description ?? undefined,
+    type: row.type as "percentage" | "fixed",
     isDefault: row.is_default === 1,
     isActive: row.is_active === 1,
-    createdAt: row.created_at,
   };
+  if (row.description) result.description = row.description;
+  return result;
 }
 
 // ============================================================================
@@ -129,7 +133,7 @@ function mapRowToTaxRate(row: TaxRateRow): TaxRate {
 // ============================================================================
 
 export function useCompanySettings(): {
-  settings: CompanySettings | null;
+  settings: FlatCompanySettings | null;
   isLoading: boolean;
   error: Error | undefined;
 } {
@@ -137,20 +141,23 @@ export function useCompanySettings(): {
     `SELECT * FROM company_settings LIMIT 1`
   );
 
-  const settings = data[0] ? mapRowToCompanySettings(data[0]) : null;
+  // Memoize based on the row id and updated_at to prevent unnecessary re-renders
+  const settings = useMemo(() => {
+    return data[0] ? mapRowToCompanySettings(data[0]) : null;
+  }, [data[0]?.id, data[0]?.updated_at]);
 
   return { settings, isLoading, error };
 }
 
 interface CompanySettingsMutations {
-  updateCompanySettings: (data: Partial<CompanySettings>) => Promise<void>;
+  updateCompanySettings: (data: Partial<FlatCompanySettings>) => Promise<void>;
 }
 
 export function useCompanySettingsMutations(): CompanySettingsMutations {
   const db = getPowerSyncDatabase();
 
   const updateCompanySettings = useCallback(
-    async (data: Partial<CompanySettings>): Promise<void> => {
+    async (data: Partial<FlatCompanySettings>): Promise<void> => {
       const now = new Date().toISOString();
       const fields: string[] = [];
       const values: (string | number | null)[] = [];
@@ -254,7 +261,10 @@ export function useInvoiceSettings(): {
     `SELECT * FROM invoice_settings LIMIT 1`
   );
 
-  const settings = data[0] ? mapRowToInvoiceSettings(data[0]) : null;
+  // Memoize based on the row id and updated_at to prevent unnecessary re-renders
+  const settings = useMemo(() => {
+    return data[0] ? mapRowToInvoiceSettings(data[0]) : null;
+  }, [data[0]?.id, data[0]?.updated_at]);
 
   return { settings, isLoading, error };
 }
@@ -336,6 +346,10 @@ export function useInvoiceSettingsMutations(): InvoiceSettingsMutations {
         fields.push("bank_swift_code = ?");
         values.push(data.bankSwiftCode ?? null);
       }
+      if (data.pdfTemplate !== undefined) {
+        fields.push("pdf_template = ?");
+        values.push(data.pdfTemplate);
+      }
 
       fields.push("updated_at = ?");
       values.push(now);
@@ -359,16 +373,19 @@ export function useTaxRates(filters?: { isActive?: boolean }): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
+  const params = useMemo(() => {
+    const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
+    return [activeFilter];
+  }, [filters?.isActive]);
 
   const { data, isLoading, error } = useQuery<TaxRateRow>(
     `SELECT * FROM tax_rates
      WHERE ($1 IS NULL OR is_active = $1)
      ORDER BY rate ASC`,
-    [activeFilter]
+    params
   );
 
-  const taxRates = data.map(mapRowToTaxRate);
+  const taxRates = useMemo(() => data.map(mapRowToTaxRate), [data]);
 
   return { taxRates, isLoading, error };
 }

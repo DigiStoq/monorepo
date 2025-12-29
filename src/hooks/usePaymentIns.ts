@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { PaymentIn, PaymentFormData } from "@/features/sales/types";
 
@@ -51,24 +51,46 @@ export function usePaymentIns(filters?: {
   dateTo?: string;
   search?: string;
 }): { payments: PaymentIn[]; isLoading: boolean; error: Error | undefined } {
-  const customerFilter = filters?.customerId ?? null;
-  const modeFilter = filters?.paymentMode ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: string[] = [];
 
-  const { data, isLoading, error } = useQuery<PaymentInRow>(
-    `SELECT * FROM payment_ins
-     WHERE ($1 IS NULL OR customer_id = $1)
-     AND ($2 IS NULL OR payment_mode = $2)
-     AND ($3 IS NULL OR date >= $3)
-     AND ($4 IS NULL OR date <= $4)
-     AND ($5 IS NULL OR receipt_number LIKE $5 OR customer_name LIKE $5)
-     ORDER BY date DESC, created_at DESC`,
-    [customerFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
-  );
+    if (filters?.customerId) {
+      conditions.push("customer_id = ?");
+      params.push(filters.customerId);
+    }
 
-  const payments = data.map(mapRowToPaymentIn);
+    if (filters?.paymentMode) {
+      conditions.push("payment_mode = ?");
+      params.push(filters.paymentMode);
+    }
+
+    if (filters?.dateFrom) {
+      conditions.push("date >= ?");
+      params.push(filters.dateFrom);
+    }
+
+    if (filters?.dateTo) {
+      conditions.push("date <= ?");
+      params.push(filters.dateTo);
+    }
+
+    if (filters?.search) {
+      conditions.push("(receipt_number LIKE ? OR customer_name LIKE ?)");
+      const searchPattern = `%${filters.search}%`;
+      params.push(searchPattern, searchPattern);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM payment_ins ${whereClause} ORDER BY date DESC, created_at DESC`,
+      params,
+    };
+  }, [filters?.customerId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
+
+  const { data, isLoading, error } = useQuery<PaymentInRow>(query, params);
+
+  const payments = useMemo(() => data.map(mapRowToPaymentIn), [data]);
 
   return { payments, isLoading, error };
 }

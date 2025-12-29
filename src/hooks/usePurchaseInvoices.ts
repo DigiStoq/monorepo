@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { PurchaseInvoice, PurchaseInvoiceItem } from "@/features/purchases/types";
 
@@ -83,11 +83,14 @@ export function usePurchaseInvoices(filters?: {
   dateTo?: string;
   search?: string;
 }): { invoices: PurchaseInvoice[]; isLoading: boolean; error: Error | undefined } {
-  const statusFilter = filters?.status ?? null;
-  const supplierFilter = filters?.supplierId ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const params = useMemo(() => {
+    const statusFilter = filters?.status ?? null;
+    const supplierFilter = filters?.supplierId ?? null;
+    const dateFromFilter = filters?.dateFrom ?? null;
+    const dateToFilter = filters?.dateTo ?? null;
+    const searchFilter = filters?.search ? `%${filters.search}%` : null;
+    return [statusFilter, supplierFilter, dateFromFilter, dateToFilter, searchFilter];
+  }, [filters?.status, filters?.supplierId, filters?.dateFrom, filters?.dateTo, filters?.search]);
 
   const { data, isLoading, error } = useQuery<PurchaseInvoiceRow>(
     `SELECT * FROM purchase_invoices
@@ -97,10 +100,10 @@ export function usePurchaseInvoices(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR invoice_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    [statusFilter, supplierFilter, dateFromFilter, dateToFilter, searchFilter]
+    params
   );
 
-  const invoices = data.map(mapRowToPurchaseInvoice);
+  const invoices = useMemo(() => data.map(mapRowToPurchaseInvoice), [data]);
 
   return { invoices, isLoading, error };
 }

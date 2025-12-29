@@ -71,13 +71,11 @@ export function PaymentInForm({
   const [invoiceId, setInvoiceId] = useState(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
-  // Customer options
+  // Customer options - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a customer..." },
-      ...customers
-        .filter((c) => c.type === "customer" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 

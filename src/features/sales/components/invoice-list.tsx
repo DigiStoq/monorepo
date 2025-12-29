@@ -18,8 +18,7 @@ import {
   DollarSign,
   Clock,
   CheckCircle,
-  XCircle,
-  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import type { SaleInvoice, InvoiceStatus, SaleFilters } from "../types";
 
@@ -42,11 +41,9 @@ export interface InvoiceListProps {
 const statusOptions: SelectOption[] = [
   { value: "all", label: "All Status" },
   { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
+  { value: "unpaid", label: "Unpaid" },
   { value: "paid", label: "Paid" },
-  { value: "partial", label: "Partial" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "returned", label: "Returned" },
 ];
 
 // ============================================================================
@@ -55,11 +52,9 @@ const statusOptions: SelectOption[] = [
 
 const statusConfig: Record<InvoiceStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
-  sent: { label: "Sent", variant: "info", icon: Clock },
+  unpaid: { label: "Unpaid", variant: "warning", icon: Clock },
   paid: { label: "Paid", variant: "success", icon: CheckCircle },
-  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
-  overdue: { label: "Overdue", variant: "error", icon: AlertCircle },
-  cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
+  returned: { label: "Returned", variant: "error", icon: RotateCcw },
 };
 
 // ============================================================================
@@ -123,7 +118,7 @@ function InvoiceCard({ invoice, onClick }: InvoiceCardProps) {
               <Calendar className="h-3 w-3" />
               {formatDate(invoice.date)}
             </span>
-            {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            {invoice.status !== "paid" && invoice.status !== "returned" && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 Due: {formatDate(invoice.dueDate)}
@@ -178,8 +173,8 @@ export function InvoiceList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesNumber = invoice.invoiceNumber.toLowerCase().includes(searchLower);
-          const matchesParty = invoice.customerName.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty) return false;
+          const matchesCustomer = invoice.customerName.toLowerCase().includes(searchLower);
+          if (!matchesNumber && !matchesCustomer) return false;
         }
 
         // Status filter
@@ -202,7 +197,7 @@ export function InvoiceList({
           case "amount":
             comparison = b.total - a.total;
             break;
-          case "party":
+          case "customer":
             comparison = a.customerName.localeCompare(b.customerName);
             break;
         }
@@ -213,20 +208,20 @@ export function InvoiceList({
 
   // Calculate totals
   const totals = useMemo(() => {
-    if (!filteredInvoices.length) return { total: 0, paid: 0, pending: 0, overdue: 0 };
+    if (!filteredInvoices.length) return { total: 0, paid: 0, unpaid: 0, returned: 0 };
 
     return filteredInvoices.reduce(
       (acc, inv) => {
         acc.total += inv.total;
         acc.paid += inv.amountPaid;
-        if (inv.status === "overdue") {
-          acc.overdue += inv.amountDue;
-        } else if (inv.amountDue > 0) {
-          acc.pending += inv.amountDue;
+        if (inv.status === "returned") {
+          acc.returned += inv.total;
+        } else if (inv.status === "unpaid" || inv.amountDue > 0) {
+          acc.unpaid += inv.amountDue;
         }
         return acc;
       },
-      { total: 0, paid: 0, pending: 0, overdue: 0 }
+      { total: 0, paid: 0, unpaid: 0, returned: 0 }
     );
   }, [filteredInvoices]);
 
@@ -271,10 +266,6 @@ export function InvoiceList({
             }
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateInvoice}>
-            New Invoice
-          </Button>
         </div>
       </div>
 
@@ -304,19 +295,19 @@ export function InvoiceList({
           <CardBody className="py-3">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-warning" />
-              <p className="text-xs text-warning-dark font-medium">Pending</p>
+              <p className="text-xs text-warning-dark font-medium">Unpaid</p>
             </div>
-            <p className="text-lg font-bold text-warning-dark">{formatCurrency(totals.pending)}</p>
+            <p className="text-lg font-bold text-warning-dark">{formatCurrency(totals.unpaid)}</p>
           </CardBody>
         </Card>
 
         <Card className="bg-error-light">
           <CardBody className="py-3">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-error" />
-              <p className="text-xs text-error-dark font-medium">Overdue</p>
+              <RotateCcw className="h-4 w-4 text-error" />
+              <p className="text-xs text-error-dark font-medium">Returned</p>
             </div>
-            <p className="text-lg font-bold text-error">{formatCurrency(totals.overdue)}</p>
+            <p className="text-lg font-bold text-error">{formatCurrency(totals.returned)}</p>
           </CardBody>
         </Card>
       </div>

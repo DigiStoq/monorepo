@@ -270,6 +270,7 @@ export interface SearchInputProps extends Omit<
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   ({ onClear, showClearButton = true, value, className, ...props }, ref) => {
     const hasValue = value !== undefined && value !== "";
+    const showClear = hasValue && showClearButton && !!onClear;
 
     return (
       <div className="relative">
@@ -278,10 +279,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           type="search"
           leftIcon={<Search size={16} />}
           value={value}
-          className={cn(hasValue && showClearButton && "pr-10", className)}
+          className={cn(showClear && "pr-10", className)}
           {...props}
         />
-        {hasValue && showClearButton && onClear && (
+        {showClear && (
           <button
             type="button"
             onClick={onClear}

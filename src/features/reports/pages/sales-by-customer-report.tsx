@@ -4,36 +4,7 @@ import { Search, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CustomerSalesData {
-  partyId: string;
-  partyName: string;
-  invoiceCount: number;
-  totalSales: number;
-  totalPaid: number;
-  totalDue: number;
-  averageOrderValue: number;
-  lastPurchaseDate: string;
-}
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockCustomerSales: CustomerSalesData[] = [
-  { partyId: "1", partyName: "Acme Corporation", invoiceCount: 12, totalSales: 45800, totalPaid: 42500, totalDue: 3300, averageOrderValue: 3816.67, lastPurchaseDate: "2024-01-25" },
-  { partyId: "2", partyName: "Tech Solutions Inc", invoiceCount: 8, totalSales: 32400, totalPaid: 28000, totalDue: 4400, averageOrderValue: 4050, lastPurchaseDate: "2024-01-22" },
-  { partyId: "3", partyName: "Global Traders", invoiceCount: 15, totalSales: 28900, totalPaid: 28900, totalDue: 0, averageOrderValue: 1926.67, lastPurchaseDate: "2024-01-20" },
-  { partyId: "4", partyName: "Metro Retail", invoiceCount: 6, totalSales: 18500, totalPaid: 15000, totalDue: 3500, averageOrderValue: 3083.33, lastPurchaseDate: "2024-01-18" },
-  { partyId: "5", partyName: "City Electronics", invoiceCount: 10, totalSales: 52000, totalPaid: 48000, totalDue: 4000, averageOrderValue: 5200, lastPurchaseDate: "2024-01-25" },
-  { partyId: "6", partyName: "Premier Supplies", invoiceCount: 4, totalSales: 12800, totalPaid: 12800, totalDue: 0, averageOrderValue: 3200, lastPurchaseDate: "2024-01-15" },
-  { partyId: "7", partyName: "Eastside Hardware", invoiceCount: 7, totalSales: 21500, totalPaid: 18000, totalDue: 3500, averageOrderValue: 3071.43, lastPurchaseDate: "2024-01-23" },
-  { partyId: "8", partyName: "Northern Distributors", invoiceCount: 9, totalSales: 38200, totalPaid: 35000, totalDue: 3200, averageOrderValue: 4244.44, lastPurchaseDate: "2024-01-24" },
-];
+import { useSalesByCustomerReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -48,11 +19,24 @@ export function SalesByCustomerReport() {
   const [sortBy, setSortBy] = useState<"sales" | "invoices" | "due">("sales");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Fetch data from PowerSync
+  const { data: customerSalesData, isLoading } = useSalesByCustomerReport(dateRange);
+
   // Filter and sort data
   const processedData = useMemo(() => {
-    const data = mockCustomerSales.filter((customer) =>
-      customer.partyName.toLowerCase().includes(search.toLowerCase())
-    );
+    const data = customerSalesData
+      .map((c) => ({
+        customerId: c.customerId,
+        customerName: c.customerName,
+        invoiceCount: c.invoiceCount,
+        totalSales: c.totalAmount,
+        totalPaid: c.paidAmount,
+        totalDue: c.dueAmount,
+        averageOrderValue: c.invoiceCount > 0 ? c.totalAmount / c.invoiceCount : 0,
+      }))
+      .filter((customer) =>
+        customer.customerName.toLowerCase().includes(search.toLowerCase())
+      );
 
     data.sort((a, b) => {
       const multiplier = sortOrder === "desc" ? -1 : 1;
@@ -69,7 +53,7 @@ export function SalesByCustomerReport() {
     });
 
     return data;
-  }, [search, sortBy, sortOrder]);
+  }, [customerSalesData, search, sortBy, sortOrder]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -91,14 +75,6 @@ export function SalesByCustomerReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
   const handleSort = (column: "sales" | "invoices" | "due") => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
@@ -118,14 +94,30 @@ export function SalesByCustomerReport() {
   };
 
   // Calculate percentage of total for bar visualization
-  const maxSales = Math.max(...processedData.map((c) => c.totalSales));
+  const maxSales = Math.max(...processedData.map((c) => c.totalSales), 1);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Sales by Customer"
+        subtitle="Customer-wise sales performance"
+        backPath="/reports"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   return (
     <ReportLayout
       title="Sales by Customer"
       subtitle="Customer-wise sales performance"
       backPath="/reports"
-      onExport={() => { console.log("Export customer sales"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
@@ -208,9 +200,6 @@ export function SalesByCustomerReport() {
                     <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Avg Order
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                      Last Purchase
-                    </th>
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 w-32">
                       Sales Share
                     </th>
@@ -219,7 +208,7 @@ export function SalesByCustomerReport() {
                 <tbody className="divide-y divide-slate-100">
                   {processedData.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center">
+                      <td colSpan={7} className="px-4 py-12 text-center">
                         <Users className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500">No customers found</p>
                       </td>
@@ -228,14 +217,13 @@ export function SalesByCustomerReport() {
                     processedData.map((customer) => {
                       const salesPercentage = (customer.totalSales / maxSales) * 100;
                       return (
-                        <tr key={customer.partyId} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-900">{customer.partyName}</td>
+                        <tr key={customer.customerId} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-900">{customer.customerName}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{customer.invoiceCount}</td>
                           <td className="px-4 py-3 text-right font-medium text-teal-600">{formatCurrency(customer.totalSales)}</td>
                           <td className="px-4 py-3 text-right text-success">{formatCurrency(customer.totalPaid)}</td>
                           <td className="px-4 py-3 text-right text-error">{formatCurrency(customer.totalDue)}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(customer.averageOrderValue)}</td>
-                          <td className="px-4 py-3 text-right text-slate-500">{formatDate(customer.lastPurchaseDate)}</td>
                           <td className="px-4 py-3">
                             <div className="w-full bg-slate-100 rounded-full h-2">
                               <div
@@ -260,7 +248,7 @@ export function SalesByCustomerReport() {
                       <td className="px-4 py-3 text-right text-slate-600">
                         {formatCurrency(totals.invoices > 0 ? totals.sales / totals.invoices : 0)}
                       </td>
-                      <td colSpan={2} className="px-4 py-3"></td>
+                      <td className="px-4 py-3"></td>
                     </tr>
                   </tfoot>
                 )}

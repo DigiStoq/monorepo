@@ -5,12 +5,18 @@ import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { CreditNoteList, CreditNoteDetail } from "./components";
 import { useCreditNotes, useCreditNoteMutations } from "@/hooks/useCreditNotes";
+import { useCustomers } from "@/hooks/useCustomers";
+import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { CreditNote } from "./types";
 
 export function CreditNotesPage() {
   // Data from PowerSync
   const { creditNotes, isLoading, error } = useCreditNotes();
   const { deleteCreditNote } = useCreditNoteMutations();
+  const { customers } = useCustomers({ type: "customer" });
+
+  // PDF Generator
+  const { downloadCreditNote, printCreditNote, isReady: pdfReady } = usePDFGenerator();
 
   // State
   const [selectedCreditNote, setSelectedCreditNote] = useState<CreditNote | null>(null);
@@ -47,6 +53,21 @@ export function CreditNotesPage() {
       } catch (err) {
         console.error("Failed to delete credit note:", err);
       }
+    }
+  };
+
+  // PDF handlers
+  const handlePrintCreditNote = () => {
+    if (currentSelectedCreditNote && pdfReady) {
+      const customer = customers.find((c) => c.id === currentSelectedCreditNote.customerId);
+      printCreditNote(currentSelectedCreditNote, customer);
+    }
+  };
+
+  const handleDownloadCreditNote = () => {
+    if (currentSelectedCreditNote && pdfReady) {
+      const customer = customers.find((c) => c.id === currentSelectedCreditNote.customerId);
+      downloadCreditNote(currentSelectedCreditNote, customer);
     }
   };
 
@@ -96,8 +117,8 @@ export function CreditNotesPage() {
               onClose={handleCloseDetail}
               onEdit={() => { setIsFormOpen(true); }}
               onDelete={() => { void handleDeleteCreditNote(); }}
-              onPrint={() => { console.log("Print credit note"); }}
-              onShare={() => { console.log("Share credit note"); }}
+              onPrint={handlePrintCreditNote}
+              onShare={handleDownloadCreditNote}
             />
           </div>
         )}

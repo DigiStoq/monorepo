@@ -4,36 +4,7 @@ import { Search, Package, TrendingUp, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface ItemPurchaseData {
-  itemId: string;
-  itemName: string;
-  sku: string;
-  category: string;
-  quantityPurchased: number;
-  avgPurchasePrice: number;
-  totalAmount: number;
-  supplierCount: number;
-}
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockItemPurchases: ItemPurchaseData[] = [
-  { itemId: "1", itemName: "Wireless Mouse", sku: "WM-001", category: "Electronics", quantityPurchased: 500, avgPurchasePrice: 15, totalAmount: 7500, supplierCount: 2 },
-  { itemId: "2", itemName: "USB-C Cable", sku: "UC-002", category: "Accessories", quantityPurchased: 800, avgPurchasePrice: 5, totalAmount: 4000, supplierCount: 3 },
-  { itemId: "3", itemName: "Laptop Stand", sku: "LS-003", category: "Office", quantityPurchased: 200, avgPurchasePrice: 25, totalAmount: 5000, supplierCount: 1 },
-  { itemId: "4", itemName: "Webcam HD", sku: "WC-004", category: "Electronics", quantityPurchased: 150, avgPurchasePrice: 40, totalAmount: 6000, supplierCount: 2 },
-  { itemId: "5", itemName: "Keyboard Mechanical", sku: "KM-005", category: "Electronics", quantityPurchased: 100, avgPurchasePrice: 60, totalAmount: 6000, supplierCount: 1 },
-  { itemId: "6", itemName: "Monitor Arm", sku: "MA-006", category: "Office", quantityPurchased: 80, avgPurchasePrice: 40, totalAmount: 3200, supplierCount: 2 },
-  { itemId: "7", itemName: "Desk Organizer", sku: "DO-007", category: "Office", quantityPurchased: 150, avgPurchasePrice: 10, totalAmount: 1500, supplierCount: 1 },
-  { itemId: "8", itemName: "HDMI Cable", sku: "HC-008", category: "Accessories", quantityPurchased: 300, avgPurchasePrice: 5, totalAmount: 1500, supplierCount: 2 },
-];
+import { usePurchaseByItemReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -48,19 +19,20 @@ export function PurchaseByItemReport() {
   const [sortBy, setSortBy] = useState<"amount" | "quantity">("amount");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Fetch data from PowerSync
+  const { data: itemData, isLoading } = usePurchaseByItemReport(dateRange);
+
   // Filter and sort data
   const processedData = useMemo(() => {
-    const data = mockItemPurchases.filter((item) =>
-      item.itemName.toLowerCase().includes(search.toLowerCase()) ||
-      item.sku.toLowerCase().includes(search.toLowerCase()) ||
-      item.category.toLowerCase().includes(search.toLowerCase())
+    const data = itemData.filter((item) =>
+      item.itemName.toLowerCase().includes(search.toLowerCase())
     );
 
     data.sort((a, b) => {
       const multiplier = sortOrder === "desc" ? -1 : 1;
       switch (sortBy) {
         case "amount":
-          return (a.totalAmount - b.totalAmount) * multiplier;
+          return (a.totalCost - b.totalCost) * multiplier;
         case "quantity":
           return (a.quantityPurchased - b.quantityPurchased) * multiplier;
         default:
@@ -69,14 +41,14 @@ export function PurchaseByItemReport() {
     });
 
     return data;
-  }, [search, sortBy, sortOrder]);
+  }, [itemData, search, sortBy, sortOrder]);
 
   // Calculate totals
   const totals = useMemo(() => {
     return processedData.reduce(
       (acc, item) => ({
         quantity: acc.quantity + item.quantityPurchased,
-        amount: acc.amount + item.totalAmount,
+        amount: acc.amount + item.totalCost,
       }),
       { quantity: 0, amount: 0 }
     );
@@ -107,12 +79,28 @@ export function PurchaseByItemReport() {
     );
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Purchases by Item"
+        subtitle="Item-wise purchase analysis"
+        backPath="/reports"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Purchases by Item"
       subtitle="Item-wise purchase analysis"
       backPath="/reports"
-      onExport={() => { console.log("Export item purchases"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
@@ -163,8 +151,6 @@ export function PurchaseByItemReport() {
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Item</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">SKU</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Category</th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
                       onClick={() => { handleSort("quantity"); }}
@@ -178,13 +164,12 @@ export function PurchaseByItemReport() {
                     >
                       Total Amount <SortIcon column="amount" />
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Suppliers</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {processedData.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center">
+                      <td colSpan={4} className="px-4 py-12 text-center">
                         <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500">No items found</p>
                       </td>
@@ -193,12 +178,9 @@ export function PurchaseByItemReport() {
                     processedData.map((item) => (
                       <tr key={item.itemId} className="hover:bg-slate-50">
                         <td className="px-4 py-3 font-medium text-slate-900">{item.itemName}</td>
-                        <td className="px-4 py-3 text-slate-600">{item.sku}</td>
-                        <td className="px-4 py-3 text-slate-600">{item.category}</td>
                         <td className="px-4 py-3 text-right text-slate-900">{item.quantityPurchased}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.avgPurchasePrice)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(item.totalAmount)}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{item.supplierCount}</td>
+                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.averagePrice)}</td>
+                        <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(item.totalCost)}</td>
                       </tr>
                     ))
                   )}
@@ -206,11 +188,10 @@ export function PurchaseByItemReport() {
                 {processedData.length > 0 && (
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
-                      <td colSpan={3} className="px-4 py-3 text-slate-900">Total</td>
+                      <td className="px-4 py-3 text-slate-900">Total</td>
                       <td className="px-4 py-3 text-right text-slate-900">{totals.quantity}</td>
                       <td className="px-4 py-3"></td>
                       <td className="px-4 py-3 text-right text-orange-600">{formatCurrency(totals.amount)}</td>
-                      <td className="px-4 py-3"></td>
                     </tr>
                   </tfoot>
                 )}

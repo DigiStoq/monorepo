@@ -4,37 +4,7 @@ import { Search, FileText, Calendar } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface PurchaseRegisterEntry {
-  id: string;
-  invoiceNumber: string;
-  date: string;
-  partyName: string;
-  itemCount: number;
-  subtotal: number;
-  tax: number;
-  total: number;
-  paid: number;
-  due: number;
-  status: string;
-}
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockPurchaseRegister: PurchaseRegisterEntry[] = [
-  { id: "1", invoiceNumber: "PO-2024-001", date: "2024-01-12", partyName: "Alpha Distributors", itemCount: 10, subtotal: 5200, tax: 416, total: 5616, paid: 5616, due: 0, status: "paid" },
-  { id: "2", invoiceNumber: "PO-2024-002", date: "2024-01-15", partyName: "Premier Wholesale", itemCount: 6, subtotal: 3800, tax: 304, total: 4104, paid: 2000, due: 2104, status: "partial" },
-  { id: "3", invoiceNumber: "PO-2024-003", date: "2024-01-18", partyName: "National Supplies", itemCount: 15, subtotal: 7500, tax: 600, total: 8100, paid: 0, due: 8100, status: "unpaid" },
-  { id: "4", invoiceNumber: "PO-2024-004", date: "2024-01-20", partyName: "Metro Traders", itemCount: 4, subtotal: 2100, tax: 168, total: 2268, paid: 2268, due: 0, status: "paid" },
-  { id: "5", invoiceNumber: "PO-2024-005", date: "2024-01-22", partyName: "Eastern Imports", itemCount: 8, subtotal: 4600, tax: 368, total: 4968, paid: 2500, due: 2468, status: "partial" },
-  { id: "6", invoiceNumber: "PO-2024-006", date: "2024-01-24", partyName: "Alpha Distributors", itemCount: 12, subtotal: 6200, tax: 496, total: 6696, paid: 6696, due: 0, status: "paid" },
-];
+import { usePurchaseRegisterReport } from "@/hooks/useReports";
 
 // ============================================================================
 // HELPERS
@@ -65,17 +35,19 @@ export function PurchaseRegisterReport() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Fetch data from PowerSync
+  const { entries, isLoading } = usePurchaseRegisterReport(dateRange);
+
   // Filter data
   const filteredData = useMemo(() => {
-    return mockPurchaseRegister.filter((entry) => {
+    return entries.filter((entry) => {
       const matchesSearch =
         entry.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-        entry.partyName.toLowerCase().includes(search.toLowerCase());
+        entry.customerName.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || entry.status === statusFilter;
-      const matchesDate = entry.date >= dateRange.from && entry.date <= dateRange.to;
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter, dateRange]);
+  }, [entries, search, statusFilter]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -83,11 +55,12 @@ export function PurchaseRegisterReport() {
       (acc, entry) => ({
         subtotal: acc.subtotal + entry.subtotal,
         tax: acc.tax + entry.tax,
+        discount: acc.discount + entry.discount,
         total: acc.total + entry.total,
         paid: acc.paid + entry.paid,
         due: acc.due + entry.due,
       }),
-      { subtotal: 0, tax: 0, total: 0, paid: 0, due: 0 }
+      { subtotal: 0, tax: 0, discount: 0, total: 0, paid: 0, due: 0 }
     );
   }, [filteredData]);
 
@@ -107,12 +80,32 @@ export function PurchaseRegisterReport() {
     }).format(date);
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Purchase Register"
+        subtitle="Detailed list of all purchase invoices"
+        backPath="/reports"
+        filters={
+          <div className="flex flex-wrap items-center gap-4">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading register data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   return (
     <ReportLayout
       title="Purchase Register"
       subtitle="Detailed list of all purchase invoices"
       backPath="/reports"
-      onExport={() => { console.log("Export purchase register"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
@@ -203,7 +196,7 @@ export function PurchaseRegisterReport() {
                               {formatDate(entry.date)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-slate-900">{entry.partyName}</td>
+                          <td className="px-4 py-3 text-slate-900">{entry.customerName}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{entry.itemCount}</td>
                           <td className="px-4 py-3 text-right text-slate-900">{formatCurrency(entry.subtotal)}</td>
                           <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(entry.tax)}</td>

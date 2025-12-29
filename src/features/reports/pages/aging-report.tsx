@@ -3,27 +3,7 @@ import { cn } from "@/lib/cn";
 import { Card, CardBody, CardHeader, Input, Select, type SelectOption } from "@/components/ui";
 import { Search, Users, AlertTriangle } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
-import type { CustomerAging } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockReceivableAging: CustomerAging[] = [
-  { customerId: "1", customerName: "Acme Corporation", current: 3500, days30: 2000, days60: 800, days90: 200, over90: 0, total: 6500 },
-  { customerId: "2", customerName: "Tech Solutions Inc", current: 4200, days30: 2000, days60: 0, days90: 0, over90: 0, total: 6200 },
-  { customerId: "4", customerName: "Metro Retail", current: 0, days30: 0, days60: 2500, days90: 1500, over90: 500, total: 4500 },
-  { customerId: "5", customerName: "City Electronics", current: 4000, days30: 2000, days60: 800, days90: 200, over90: 0, total: 7000 },
-  { customerId: "7", customerName: "Eastside Hardware", current: 2800, days30: 1500, days60: 1000, days90: 500, over90: 0, total: 5800 },
-];
-
-const mockPayableAging: CustomerAging[] = [
-  { customerId: "1", customerName: "Alpha Distributors", current: 2500, days30: 1500, days60: 0, days90: 0, over90: 0, total: 4000 },
-  { customerId: "2", customerName: "Premier Wholesale", current: 2000, days30: 1500, days60: 800, days90: 200, over90: 0, total: 4500 },
-  { customerId: "4", customerName: "Metro Traders", current: 2000, days30: 1500, days60: 1500, days90: 1000, over90: 500, total: 6500 },
-  { customerId: "5", customerName: "Eastern Imports", current: 2200, days30: 1000, days60: 0, days90: 0, over90: 0, total: 3200 },
-  { customerId: "7", customerName: "Central Supplies Co", current: 2000, days30: 1500, days60: 600, days90: 300, over90: 0, total: 4400 },
-];
+import { useAgingReport } from "@/hooks/useReports";
 
 // ============================================================================
 // HELPERS
@@ -42,14 +22,15 @@ export function AgingReport() {
   const [reportType, setReportType] = useState<"receivable" | "payable">("receivable");
   const [search, setSearch] = useState("");
 
-  const data = reportType === "receivable" ? mockReceivableAging : mockPayableAging;
+  // Fetch data from PowerSync
+  const { data: agingData, isLoading } = useAgingReport(reportType);
 
   // Filter data
   const filteredData = useMemo(() => {
-    return data.filter((entry) =>
+    return agingData.filter((entry) =>
       entry.customerName.toLowerCase().includes(search.toLowerCase())
     );
-  }, [data, search]);
+  }, [agingData, search]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -82,14 +63,37 @@ export function AgingReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  const maxBucket = Math.max(...agingBuckets.map((b) => b.amount));
+  const maxBucket = Math.max(...agingBuckets.map((b) => b.amount), 1);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Aging Report"
+        subtitle="Outstanding amounts by age"
+        backPath="/reports"
+        filters={
+          <Select
+            options={typeOptions}
+            value={reportType}
+            onChange={(value) => { setReportType(value as "receivable" | "payable"); }}
+            className="w-56"
+          />
+        }
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   return (
     <ReportLayout
       title="Aging Report"
       subtitle="Outstanding amounts by age"
       backPath="/reports"
-      onExport={() => { console.log("Export aging report"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex flex-wrap items-center gap-4">

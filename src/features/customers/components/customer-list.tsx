@@ -295,13 +295,6 @@ export function CustomerList({
             }}
             size="md"
           />
-
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={onAddCustomer}
-          >
-            Add Customer
-          </Button>
         </div>
       </div>
 

@@ -3,41 +3,8 @@ import { Card, CardBody, CardHeader } from "@/components/ui";
 import { ShoppingCart, TrendingUp, Users, Package } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, PurchaseSummary } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockPurchaseSummary: PurchaseSummary = {
-  totalPurchases: 187500,
-  totalInvoices: 68,
-  totalPaid: 165000,
-  totalDue: 22500,
-  averageOrderValue: 2757.35,
-  topSuppliers: [
-    { supplierId: "1", supplierName: "Alpha Distributors", amount: 42000 },
-    { supplierId: "2", supplierName: "Premier Wholesale", amount: 35500 },
-    { supplierId: "3", supplierName: "National Supplies", amount: 28000 },
-    { supplierId: "4", supplierName: "Metro Traders", amount: 24500 },
-    { supplierId: "5", supplierName: "Eastern Imports", amount: 18500 },
-  ],
-  topItems: [
-    { itemId: "1", itemName: "Wireless Mouse", quantity: 500, amount: 12500 },
-    { itemId: "2", itemName: "USB-C Cable", quantity: 800, amount: 8000 },
-    { itemId: "3", itemName: "Laptop Stand", quantity: 200, amount: 10000 },
-    { itemId: "4", itemName: "Webcam HD", quantity: 150, amount: 9000 },
-    { itemId: "5", itemName: "Keyboard Mechanical", quantity: 100, amount: 8000 },
-  ],
-  purchasesByMonth: [
-    { month: "Aug", amount: 22000 },
-    { month: "Sep", amount: 28500 },
-    { month: "Oct", amount: 32000 },
-    { month: "Nov", amount: 35000 },
-    { month: "Dec", amount: 38000 },
-    { month: "Jan", amount: 32000 },
-  ],
-};
+import type { DateRange } from "../types";
+import { usePurchaseSummaryReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -49,7 +16,7 @@ export function PurchaseSummaryReport() {
     to: new Date().toISOString().slice(0, 10),
   });
 
-  const data = mockPurchaseSummary;
+  const { summary: data, isLoading } = usePurchaseSummaryReport(dateRange);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
@@ -58,9 +25,41 @@ export function PurchaseSummaryReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Purchase Summary"
+        subtitle="Overview of purchase performance"
+        backPath="/reports"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
+  // Empty state
+  if (!data) {
+    return (
+      <ReportLayout
+        title="Purchase Summary"
+        subtitle="Overview of purchase performance"
+        backPath="/reports"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">No purchase data found for the selected period.</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   // Calculate max for bar chart scaling
   const maxMonthlyPurchase = useMemo(() => {
-    return Math.max(...data.purchasesByMonth.map((m) => m.amount));
+    return data.purchasesByMonth.length > 0 ? Math.max(...data.purchasesByMonth.map((m) => m.amount)) : 1;
   }, [data.purchasesByMonth]);
 
   return (
@@ -68,7 +67,7 @@ export function PurchaseSummaryReport() {
       title="Purchase Summary"
       subtitle="Overview of purchase performance"
       backPath="/reports"
-      onExport={() => { console.log("Export purchase summary"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">

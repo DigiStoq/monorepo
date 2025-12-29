@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
-import { ItemList, ItemDetail, ItemFormModal } from "./components";
+import { ItemList, ItemDetail, ItemFormModal, StockAdjustmentModal } from "./components";
 import { useItems, useItemMutations } from "@/hooks/useItems";
 import { useCategories } from "@/hooks/useCategories";
 import type { Item, ItemFormData } from "./types";
@@ -27,6 +27,7 @@ export function ItemsPage() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
+  const [isAdjustStockModalOpen, setIsAdjustStockModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update selected item when data changes
@@ -88,12 +89,22 @@ export function ItemsPage() {
     }
   };
 
+  const handleOpenAdjustStock = () => {
+    if (currentSelectedItem) {
+      setIsAdjustStockModalOpen(true);
+    }
+  };
+
   const handleAdjustStock = async (quantity: number) => {
     if (currentSelectedItem) {
+      setIsSubmitting(true);
       try {
         await adjustStock(currentSelectedItem.id, quantity);
+        setIsAdjustStockModalOpen(false);
       } catch (err) {
         console.error("Failed to adjust stock:", err);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -149,7 +160,7 @@ export function ItemsPage() {
             item={currentSelectedItem}
             onEdit={handleEditItem}
             onDelete={() => { handleDeleteItem(); }}
-            onAdjustStock={() => { void handleAdjustStock(0); }} // TODO: Open adjustment modal
+            onAdjustStock={handleOpenAdjustStock}
           />
         </div>
       </div>
@@ -164,7 +175,7 @@ export function ItemsPage() {
           setEditingItem(null);
         }}
         onSubmit={(data) => { void handleFormSubmit(data); }}
-        isSubmitting={isSubmitting}
+        isLoading={isSubmitting}
       />
 
       {/* Delete Confirmation Modal */}
@@ -202,6 +213,15 @@ export function ItemsPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Stock Adjustment Modal */}
+      <StockAdjustmentModal
+        isOpen={isAdjustStockModalOpen}
+        onClose={() => { setIsAdjustStockModalOpen(false); }}
+        onSubmit={handleAdjustStock}
+        item={currentSelectedItem}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

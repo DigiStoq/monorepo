@@ -1,27 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button, Input } from "@/components/ui";
-import { Receipt, Percent, FileText, CreditCard, Plus, Trash2, Save, Edit2 } from "lucide-react";
+import { Receipt, Percent, FileText, CreditCard, Plus, Trash2, Save, Edit2, Palette, Check } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
 import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
 import { cn } from "@/lib/cn";
-import type { TaxSettings, TaxRate, InvoiceSettings, BankDetails } from "../types";
+import type { TaxSettings, TaxRate, InvoiceSettings, BankDetails, PDFTemplateId } from "../types";
+import { PDF_TEMPLATES } from "@/lib/pdf";
+import { useInvoiceSettings, useInvoiceSettingsMutations, useTaxRates, useTaxRateMutations } from "@/hooks/useSettings";
 
-// Mock data
-const mockTaxSettings: TaxSettings = {
-  taxEnabled: true,
-  defaultTaxRate: 8,
-  taxRates: [
-    { id: "1", name: "Sales Tax 6%", rate: 6, type: "percentage", description: "Reduced rate", isDefault: false, isActive: true },
-    { id: "2", name: "Sales Tax 7%", rate: 7, type: "percentage", description: "Standard rate", isDefault: false, isActive: true },
-    { id: "3", name: "Sales Tax 8%", rate: 8, type: "percentage", description: "Default rate", isDefault: true, isActive: true },
-    { id: "4", name: "Sales Tax 10%", rate: 10, type: "percentage", description: "Higher rate", isDefault: false, isActive: true },
-    { id: "5", name: "Exempt", rate: 0, type: "percentage", description: "No tax", isDefault: false, isActive: true },
-  ],
-  taxInclusive: false,
-  roundTax: true,
-};
+// Flat type matching what the database returns
+interface FlatInvoiceSettings {
+  id?: string;
+  prefix: string;
+  nextNumber: number;
+  padding: number;
+  termsAndConditions?: string;
+  notes?: string;
+  showPaymentQr?: boolean;
+  showBankDetails: boolean;
+  dueDateDays: number;
+  lateFeesEnabled: boolean;
+  lateFeesPercentage?: number;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  bankRoutingNumber?: string;
+  bankBranchName?: string;
+  bankSwiftCode?: string;
+  pdfTemplate?: PDFTemplateId;
+}
 
-const mockInvoiceSettings: InvoiceSettings = {
+// Convert flat DB structure to nested UI structure
+function flatToNested(flat: FlatInvoiceSettings): InvoiceSettings {
+  // Build bankDetails with conditional optional fields
+  const bankDetails: BankDetails = {
+    accountName: flat.bankAccountName ?? "",
+    accountNumber: flat.bankAccountNumber ?? "",
+    bankName: flat.bankName ?? "",
+    routingNumber: flat.bankRoutingNumber ?? "",
+  };
+  if (flat.bankBranchName) bankDetails.branchName = flat.bankBranchName;
+  if (flat.bankSwiftCode) bankDetails.swiftCode = flat.bankSwiftCode;
+
+  const result: InvoiceSettings = {
+    prefix: flat.prefix,
+    nextNumber: flat.nextNumber,
+    padding: flat.padding,
+    showBankDetails: flat.showBankDetails,
+    bankDetails,
+    dueDateDays: flat.dueDateDays,
+    lateFeesEnabled: flat.lateFeesEnabled,
+    pdfTemplate: flat.pdfTemplate ?? "classic",
+  };
+
+  if (flat.id) result.id = flat.id;
+  if (flat.termsAndConditions) result.termsAndConditions = flat.termsAndConditions;
+  if (flat.notes) result.notes = flat.notes;
+  if (flat.showPaymentQr !== undefined) result.showPaymentQR = flat.showPaymentQr;
+  if (flat.lateFeesPercentage !== undefined) result.lateFeesPercentage = flat.lateFeesPercentage;
+
+  return result;
+}
+
+// Convert nested UI structure to flat DB structure for updates
+function nestedToFlatUpdate(nested: InvoiceSettings): Record<string, string | number | boolean | undefined> {
+  return {
+    prefix: nested.prefix,
+    nextNumber: nested.nextNumber,
+    padding: nested.padding,
+    termsAndConditions: nested.termsAndConditions || undefined,
+    notes: nested.notes || undefined,
+    showPaymentQr: nested.showPaymentQR,
+    showBankDetails: nested.showBankDetails,
+    dueDateDays: nested.dueDateDays,
+    lateFeesEnabled: nested.lateFeesEnabled,
+    lateFeesPercentage: nested.lateFeesPercentage,
+    bankAccountName: nested.bankDetails?.accountName || undefined,
+    bankAccountNumber: nested.bankDetails?.accountNumber || undefined,
+    bankName: nested.bankDetails?.bankName || undefined,
+    bankRoutingNumber: nested.bankDetails?.routingNumber || undefined,
+    bankBranchName: nested.bankDetails?.branchName || undefined,
+    bankSwiftCode: nested.bankDetails?.swiftCode || undefined,
+    pdfTemplate: nested.pdfTemplate,
+  };
+}
+
+// Default invoice settings for when no data exists
+const defaultInvoiceSettings: InvoiceSettings = {
   prefix: "INV",
   nextNumber: 1001,
   padding: 4,
@@ -30,16 +95,25 @@ const mockInvoiceSettings: InvoiceSettings = {
   showPaymentQR: false,
   showBankDetails: true,
   bankDetails: {
-    accountName: "Acme Corporation Inc.",
-    accountNumber: "1234567890",
-    bankName: "Chase Bank",
-    routingNumber: "021000021",
-    branchName: "New York Branch",
-    swiftCode: "CHASUS33",
+    accountName: "",
+    accountNumber: "",
+    bankName: "",
+    routingNumber: "",
+    branchName: "",
+    swiftCode: "",
   },
   dueDateDays: 30,
   lateFeesEnabled: false,
   lateFeesPercentage: 2,
+  pdfTemplate: "classic",
+};
+
+const defaultTaxSettings: TaxSettings = {
+  taxEnabled: true,
+  defaultTaxRate: 8,
+  taxRates: [],
+  taxInclusive: false,
+  roundTax: true,
 };
 
 function Toggle({
@@ -69,16 +143,74 @@ function Toggle({
 }
 
 export function TaxInvoiceSettingsPage() {
-  const [taxSettings, setTaxSettings] = useState<TaxSettings>(mockTaxSettings);
-  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(mockInvoiceSettings);
+  // Fetch settings from PowerSync database
+  const { settings: dbInvoiceSettings, isLoading: isLoadingInvoice } = useInvoiceSettings();
+  const { updateInvoiceSettings } = useInvoiceSettingsMutations();
+  const { taxRates: dbTaxRates, isLoading: isLoadingTax } = useTaxRates();
+  const { createTaxRate, updateTaxRate: updateTaxRateDb, deleteTaxRate: deleteTaxRateDb } = useTaxRateMutations();
+
+  // Local state for editing
+  const [taxSettings, setTaxSettings] = useState<TaxSettings>(defaultTaxSettings);
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultInvoiceSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [editingRate, setEditingRate] = useState<string | null>(null);
+  const hasInitializedInvoice = useRef(false);
+  const hasInitializedTax = useRef(false);
+
+  // Sync database settings to local state only on initial load
+  useEffect(() => {
+    if (dbInvoiceSettings && !hasInitializedInvoice.current) {
+      const flat = dbInvoiceSettings as unknown as FlatInvoiceSettings;
+      setInvoiceSettings(flatToNested(flat));
+      hasInitializedInvoice.current = true;
+    }
+  }, [dbInvoiceSettings]);
+
+  // Sync tax rates from database only on initial load
+  useEffect(() => {
+    if (dbTaxRates && dbTaxRates.length > 0 && !hasInitializedTax.current) {
+      setTaxSettings((prev) => ({
+        ...prev,
+        taxRates: dbTaxRates.map((r) => ({
+          ...r,
+          type: r.type as "percentage" | "fixed",
+        })),
+      }));
+      hasInitializedTax.current = true;
+    }
+  }, [dbTaxRates]);
+
+  // Helper to update template selection
+  const handleTemplateChange = (templateId: PDFTemplateId) => {
+    setInvoiceSettings((prev) => ({ ...prev, pdfTemplate: templateId }));
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Save invoice settings to database
+      const flatData = nestedToFlatUpdate(invoiceSettings);
+      await updateInvoiceSettings(flatData);
+    } catch (error) {
+      console.error("Failed to save invoice settings:", error);
+    }
     setIsSaving(false);
   };
+
+  const isLoading = isLoadingInvoice || isLoadingTax;
+
+  if (isLoading) {
+    return (
+      <SettingsLayout
+        title="Tax & Invoice Settings"
+        description="Configure tax rates and invoice preferences"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading...</div>
+        </div>
+      </SettingsLayout>
+    );
+  }
 
   const formatInvoiceNumber = () => {
     const paddedNumber = String(invoiceSettings.nextNumber).padStart(
@@ -89,15 +221,19 @@ export function TaxInvoiceSettingsPage() {
   };
 
   const updateTaxRate = (id: string, updates: Partial<TaxRate>) => {
+    // Update local state for immediate UI feedback
     setTaxSettings((prev) => ({
       ...prev,
       taxRates: prev.taxRates.map((rate) =>
         rate.id === id ? { ...rate, ...updates } : rate
       ),
     }));
+    // Persist to database
+    void updateTaxRateDb(id, updates);
   };
 
   const setDefaultRate = (id: string) => {
+    // Update local state for immediate UI feedback
     setTaxSettings((prev) => ({
       ...prev,
       taxRates: prev.taxRates.map((rate) => ({
@@ -105,29 +241,44 @@ export function TaxInvoiceSettingsPage() {
         isDefault: rate.id === id,
       })),
     }));
+    // Persist to database
+    void updateTaxRateDb(id, { isDefault: true });
   };
 
   const deleteRate = (id: string) => {
+    // Update local state for immediate UI feedback
     setTaxSettings((prev) => ({
       ...prev,
       taxRates: prev.taxRates.filter((rate) => rate.id !== id),
     }));
+    // Delete from database
+    void deleteTaxRateDb(id);
   };
 
-  const addNewRate = () => {
-    const newRate: TaxRate = {
-      id: Date.now().toString(),
-      name: "New Tax",
-      rate: 0,
-      type: "percentage",
-      isDefault: false,
-      isActive: true,
-    };
-    setTaxSettings((prev) => ({
-      ...prev,
-      taxRates: [...prev.taxRates, newRate],
-    }));
-    setEditingRate(newRate.id);
+  const addNewRate = async () => {
+    try {
+      const newId = await createTaxRate({
+        name: "New Tax",
+        rate: 0,
+        type: "percentage",
+        isDefault: false,
+      });
+      const newRate: TaxRate = {
+        id: newId,
+        name: "New Tax",
+        rate: 0,
+        type: "percentage",
+        isDefault: false,
+        isActive: true,
+      };
+      setTaxSettings((prev) => ({
+        ...prev,
+        taxRates: [...prev.taxRates, newRate],
+      }));
+      setEditingRate(newId);
+    } catch (error) {
+      console.error("Failed to create tax rate:", error);
+    }
   };
 
   const updateBankDetails = (field: keyof BankDetails, value: string) => {
@@ -195,7 +346,7 @@ export function TaxInvoiceSettingsPage() {
           description="Manage available tax rates"
           icon={Receipt}
           actions={
-            <Button variant="secondary" size="sm" className="gap-2" onClick={addNewRate}>
+            <Button variant="secondary" size="sm" className="gap-2" onClick={() => { void addNewRate(); }}>
               <Plus className="h-4 w-4" />
               Add Rate
             </Button>
@@ -355,6 +506,71 @@ export function TaxInvoiceSettingsPage() {
           </SettingsGroup>
         </SettingsCard>
 
+        {/* PDF Template */}
+        <SettingsCard
+          title="PDF Template"
+          description="Choose the visual style for your invoices and documents"
+          icon={Palette}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {PDF_TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => { handleTemplateChange(template.id); }}
+                className={cn(
+                  "relative p-4 rounded-lg border-2 text-left transition-all",
+                  invoiceSettings.pdfTemplate === template.id
+                    ? "border-teal-500 bg-teal-50"
+                    : "border-slate-200 hover:border-slate-300 bg-white"
+                )}
+              >
+                {invoiceSettings.pdfTemplate === template.id && (
+                  <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                )}
+
+                {/* Template Preview Placeholder */}
+                <div className={cn(
+                  "h-24 mb-3 rounded border flex items-center justify-center",
+                  template.id === "classic" && "bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200",
+                  template.id === "modern" && "bg-gradient-to-br from-blue-100 to-slate-50 border-blue-200",
+                  template.id === "minimal" && "bg-gradient-to-br from-slate-50 to-white border-slate-200"
+                )}>
+                  <div className="text-center">
+                    <div className={cn(
+                      "text-xs font-bold mb-1",
+                      template.id === "classic" && "text-purple-600",
+                      template.id === "modern" && "text-blue-600",
+                      template.id === "minimal" && "text-slate-600"
+                    )}>
+                      INVOICE
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <div className={cn(
+                        "h-1 w-16 rounded",
+                        template.id === "classic" && "bg-purple-300",
+                        template.id === "modern" && "bg-blue-300",
+                        template.id === "minimal" && "bg-slate-300"
+                      )} />
+                      <div className={cn(
+                        "h-1 w-12 rounded mx-auto",
+                        template.id === "classic" && "bg-purple-200",
+                        template.id === "modern" && "bg-blue-200",
+                        template.id === "minimal" && "bg-slate-200"
+                      )} />
+                    </div>
+                  </div>
+                </div>
+
+                <h4 className="font-semibold text-slate-900">{template.name}</h4>
+                <p className="text-xs text-slate-500 mt-1">{template.description}</p>
+              </button>
+            ))}
+          </div>
+        </SettingsCard>
+
         {/* Payment Terms */}
         <SettingsCard
           title="Payment Terms"
@@ -469,7 +685,7 @@ export function TaxInvoiceSettingsPage() {
             )}
             <SettingsRow label="Show Payment QR" description="Generate payment QR code">
               <Toggle
-                checked={invoiceSettings.showPaymentQR}
+                checked={invoiceSettings.showPaymentQR ?? false}
                 onChange={(v) =>
                   { setInvoiceSettings((prev) => ({ ...prev, showPaymentQR: v })); }
                 }

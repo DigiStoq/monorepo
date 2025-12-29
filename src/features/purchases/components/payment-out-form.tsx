@@ -64,13 +64,11 @@ export function PaymentOutForm({
   const [invoiceId, setInvoiceId] = useState<string>(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
-  // Customer options (suppliers only)
+  // Customer options - hook already filters by type (suppliers)
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a supplier..." },
-      ...customers
-        .filter((c) => c.type === "supplier" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 

@@ -37,7 +37,7 @@ export interface CreditNoteListProps {
 interface CreditNoteFilters {
   search: string;
   reason: CreditNoteReason | "all";
-  sortBy: "date" | "amount" | "party";
+  sortBy: "date" | "amount" | "customer";
   sortOrder: "asc" | "desc";
 }
 
@@ -176,9 +176,9 @@ export function CreditNoteList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesNumber = cn.creditNoteNumber.toLowerCase().includes(searchLower);
-          const matchesParty = cn.customerName.toLowerCase().includes(searchLower);
+          const matchesCustomer = cn.customerName.toLowerCase().includes(searchLower);
           const matchesInvoice = cn.invoiceNumber?.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty && !matchesInvoice) return false;
+          if (!matchesNumber && !matchesCustomer && !matchesInvoice) return false;
         }
 
         // Reason filter
@@ -198,7 +198,7 @@ export function CreditNoteList({
           case "amount":
             comparison = b.total - a.total;
             break;
-          case "party":
+          case "customer":
             comparison = a.customerName.localeCompare(b.customerName);
             break;
         }
@@ -268,10 +268,6 @@ export function CreditNoteList({
             }
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateCreditNote}>
-            New Credit Note
-          </Button>
         </div>
       </div>
 

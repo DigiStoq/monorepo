@@ -4,9 +4,11 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useLayoutEffect,
   type ReactNode,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { ChevronDown, Check, Search, X } from "lucide-react";
@@ -151,12 +153,27 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find((opt) => opt.value === value);
     const styles = sizeStyles[size];
+
+    // Calculate dropdown position when opening
+    useLayoutEffect(() => {
+      if (isOpen && triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
+      }
+    }, [isOpen]);
 
     // Filter options based on search
     const filteredOptions = searchable
@@ -165,13 +182,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         )
       : options;
 
-    // Close on outside click
+    // Close on outside click (check both container and portal dropdown)
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(event.target as Node)
-        ) {
+        const target = event.target as Node;
+        const isInsideContainer = containerRef.current?.contains(target);
+        const isInsideDropdown = dropdownRef.current?.contains(target);
+
+        if (!isInsideContainer && !isInsideDropdown) {
           setIsOpen(false);
           setSearchQuery("");
         }
@@ -285,7 +303,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
         {/* Trigger Button */}
         <button
-          ref={ref}
+          ref={(node) => {
+            // Handle both refs
+            triggerRef.current = node;
+            if (typeof ref === "function") ref(node);
+            else if (ref) ref.current = node;
+          }}
           id={id}
           type="button"
           disabled={disabled}
@@ -347,98 +370,109 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           </div>
         </button>
 
-        {/* Dropdown */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              variants={dropdownVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className={cn(
-                "absolute z-dropdown mt-1 w-full",
-                "bg-white rounded-lg shadow-elevated border border-slate-200",
-                "overflow-hidden"
-              )}
-            >
-              {/* Search Input */}
-              {searchable && (
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                      }}
-                      onKeyDown={handleKeyDown}
-                      placeholder={searchPlaceholder}
-                      className={cn(
-                        "w-full pl-8 pr-3 py-1.5 text-sm",
-                        "bg-slate-50 border border-slate-200 rounded-md",
-                        "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
-                      )}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Options List */}
-              <div
-                ref={listRef}
-                className="max-h-60 overflow-y-auto py-1"
-                role="listbox"
-              >
-                {filteredOptions.length === 0 ? (
-                  <div className="px-3 py-6 text-center text-sm text-slate-500">
-                    No options found
-                  </div>
-                ) : (
-                  filteredOptions.map((option, index) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      disabled={option.disabled}
-                      onClick={() => {
-                        if (!option.disabled) handleSelect(option.value);
-                      }}
-                      onMouseEnter={() => {
-                        setHighlightedIndex(index);
-                      }}
-                      className={cn(
-                        "w-full flex items-center justify-between gap-2",
-                        "transition-colors duration-100",
-                        styles.option,
-                        option.disabled
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer",
-                        highlightedIndex === index && "bg-primary-50",
-                        option.value === value && "text-primary-600 font-medium"
-                      )}
-                      role="option"
-                      aria-selected={option.value === value}
-                    >
-                      <span className="flex items-center gap-2 truncate">
-                        {option.icon}
-                        {option.label}
-                      </span>
-                      {option.value === value && (
-                        <Check
+        {/* Dropdown - rendered in portal to escape overflow:hidden */}
+        {typeof document !== "undefined" &&
+          createPortal(
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  ref={dropdownRef}
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{
+                    position: "fixed",
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
+                  }}
+                  className={cn(
+                    "z-popover",
+                    "bg-white rounded-lg shadow-elevated border border-slate-200",
+                    "overflow-hidden"
+                  )}
+                >
+                  {/* Search Input */}
+                  {searchable && (
+                    <div className="p-2 border-b border-slate-100">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          placeholder={searchPlaceholder}
                           className={cn(
-                            styles.icon,
-                            "text-primary-600 shrink-0"
+                            "w-full pl-8 pr-3 py-1.5 text-sm",
+                            "bg-slate-50 border border-slate-200 rounded-md",
+                            "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                           )}
                         />
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </motion.div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Options List */}
+                  <div
+                    ref={listRef}
+                    className="max-h-60 overflow-y-auto py-1"
+                    role="listbox"
+                  >
+                    {filteredOptions.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-sm text-slate-500">
+                        No options found
+                      </div>
+                    ) : (
+                      filteredOptions.map((option, index) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={option.disabled}
+                          onClick={() => {
+                            if (!option.disabled) handleSelect(option.value);
+                          }}
+                          onMouseEnter={() => {
+                            setHighlightedIndex(index);
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-between gap-2",
+                            "transition-colors duration-100",
+                            styles.option,
+                            option.disabled
+                              ? "opacity-50 cursor-not-allowed"
+                              : "cursor-pointer",
+                            highlightedIndex === index && "bg-primary-50",
+                            option.value === value && "text-primary-600 font-medium"
+                          )}
+                          role="option"
+                          aria-selected={option.value === value}
+                        >
+                          <span className="flex items-center gap-2 truncate">
+                            {option.icon}
+                            {option.label}
+                          </span>
+                          {option.value === value && (
+                            <Check
+                              className={cn(
+                                styles.icon,
+                                "text-primary-600 shrink-0"
+                              )}
+                            />
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
           )}
-        </AnimatePresence>
 
         {/* Helper/Error Text */}
         {(helperText ?? error) && (
@@ -487,11 +521,26 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const styles = sizeStyles[size];
     const selectedOptions = options.filter((opt) => value.includes(opt.value));
+
+    // Calculate dropdown position when opening
+    useLayoutEffect(() => {
+      if (isOpen && triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
+      }
+    }, [isOpen]);
 
     // Filter options based on search
     const filteredOptions = searchable
@@ -500,13 +549,14 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         )
       : options;
 
-    // Close on outside click
+    // Close on outside click (check both container and portal dropdown)
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(event.target as Node)
-        ) {
+        const target = event.target as Node;
+        const isInsideContainer = containerRef.current?.contains(target);
+        const isInsideDropdown = dropdownRef.current?.contains(target);
+
+        if (!isInsideContainer && !isInsideDropdown) {
           setIsOpen(false);
           setSearchQuery("");
         }
@@ -577,7 +627,12 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
 
         {/* Trigger Button */}
         <button
-          ref={ref}
+          ref={(node) => {
+            // Handle both refs
+            triggerRef.current = node;
+            if (typeof ref === "function") ref(node);
+            else if (ref) ref.current = node;
+          }}
           id={id}
           type="button"
           disabled={disabled}
@@ -638,105 +693,116 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
           />
         </button>
 
-        {/* Dropdown */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              variants={dropdownVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className={cn(
-                "absolute z-dropdown mt-1 w-full",
-                "bg-white rounded-lg shadow-elevated border border-slate-200",
-                "overflow-hidden"
-              )}
-            >
-              {/* Search Input */}
-              {searchable && (
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                      }}
-                      placeholder={searchPlaceholder}
-                      className={cn(
-                        "w-full pl-8 pr-3 py-1.5 text-sm",
-                        "bg-slate-50 border border-slate-200 rounded-md",
-                        "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
-                      )}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Options List */}
-              <div className="max-h-60 overflow-y-auto py-1" role="listbox">
-                {filteredOptions.length === 0 ? (
-                  <div className="px-3 py-6 text-center text-sm text-slate-500">
-                    No options found
-                  </div>
-                ) : (
-                  filteredOptions.map((option, index) => {
-                    const isSelected = value.includes(option.value);
-                    const isDisabled =
-                      (option.disabled ?? false) ||
-                      (!isSelected && !canSelectMore);
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        disabled={isDisabled}
-                        onClick={() => {
-                          if (!isDisabled) handleToggle(option.value);
-                        }}
-                        onMouseEnter={() => {
-                          setHighlightedIndex(index);
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between gap-2",
-                          "transition-colors duration-100",
-                          styles.option,
-                          isDisabled
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer",
-                          highlightedIndex === index && "bg-primary-50",
-                          isSelected && "text-primary-600"
-                        )}
-                        role="option"
-                        aria-selected={isSelected}
-                      >
-                        <span className="flex items-center gap-2 truncate">
-                          {option.icon}
-                          {option.label}
-                        </span>
-                        <div
+        {/* Dropdown - rendered in portal to escape overflow:hidden */}
+        {typeof document !== "undefined" &&
+          createPortal(
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  ref={dropdownRef}
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{
+                    position: "fixed",
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
+                  }}
+                  className={cn(
+                    "z-popover",
+                    "bg-white rounded-lg shadow-elevated border border-slate-200",
+                    "overflow-hidden"
+                  )}
+                >
+                  {/* Search Input */}
+                  {searchable && (
+                    <div className="p-2 border-b border-slate-100">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                          }}
+                          placeholder={searchPlaceholder}
                           className={cn(
-                            "h-4 w-4 rounded border-2 flex items-center justify-center shrink-0",
-                            "transition-colors duration-100",
-                            isSelected
-                              ? "bg-primary-600 border-primary-600"
-                              : "border-slate-300"
+                            "w-full pl-8 pr-3 py-1.5 text-sm",
+                            "bg-slate-50 border border-slate-200 rounded-md",
+                            "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                           )}
-                        >
-                          {isSelected && (
-                            <Check className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Options List */}
+                  <div className="max-h-60 overflow-y-auto py-1" role="listbox">
+                    {filteredOptions.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-sm text-slate-500">
+                        No options found
+                      </div>
+                    ) : (
+                      filteredOptions.map((option, index) => {
+                        const isSelected = value.includes(option.value);
+                        const isDisabled =
+                          (option.disabled ?? false) ||
+                          (!isSelected && !canSelectMore);
+
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            disabled={isDisabled}
+                            onClick={() => {
+                              if (!isDisabled) handleToggle(option.value);
+                            }}
+                            onMouseEnter={() => {
+                              setHighlightedIndex(index);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between gap-2",
+                              "transition-colors duration-100",
+                              styles.option,
+                              isDisabled
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer",
+                              highlightedIndex === index && "bg-primary-50",
+                              isSelected && "text-primary-600"
+                            )}
+                            role="option"
+                            aria-selected={isSelected}
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              {option.icon}
+                              {option.label}
+                            </span>
+                            <div
+                              className={cn(
+                                "h-4 w-4 rounded border-2 flex items-center justify-center shrink-0",
+                                "transition-colors duration-100",
+                                isSelected
+                                  ? "bg-primary-600 border-primary-600"
+                                  : "border-slate-300"
+                              )}
+                            >
+                              {isSelected && (
+                                <Check className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
           )}
-        </AnimatePresence>
 
         {/* Helper/Error Text */}
         {(helperText ?? error) && (

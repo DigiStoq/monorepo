@@ -41,7 +41,7 @@ export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
 // STYLES
 // ============================================================================
 
-const baseStyles = ["bg-white", "rounded-lg", "overflow-hidden"].join(" ");
+const baseStyles = ["bg-white", "rounded-lg"].join(" ");
 
 const variantStyles: Record<CardVariant, string> = {
   default: "border border-slate-200 shadow-soft",
@@ -234,7 +234,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative overflow-hidden rounded-xl p-6",
+          "relative rounded-xl p-6",
           "bg-gradient-to-br",
           metricColorStyles[color],
           "text-white shadow-lg",

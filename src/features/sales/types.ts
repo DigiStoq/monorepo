@@ -2,7 +2,7 @@
 // SALE TYPES
 // ============================================================================
 
-export type InvoiceStatus = "draft" | "sent" | "paid" | "partial" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "unpaid" | "paid" | "returned";
 
 export interface SaleInvoice {
   id: string;
@@ -48,6 +48,19 @@ export interface SaleInvoiceFormData {
   terms?: string | undefined;
 }
 
+// Form data used for creating an invoice (dueDate is required by database)
+export interface InvoiceFormData {
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  date: string;
+  dueDate: string;
+  status?: string;
+  discountAmount?: number;
+  notes?: string;
+  terms?: string;
+}
+
 export interface SaleInvoiceItemFormData {
   itemId: string;
   quantity: number;
@@ -64,7 +77,7 @@ export interface SaleFilters {
     from: string | null;
     to: string | null;
   };
-  sortBy: "date" | "number" | "amount" | "party";
+  sortBy: "date" | "number" | "amount" | "customer";
   sortOrder: "asc" | "desc";
 }
 

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/hooks/useDashboard";
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   // Data from PowerSync
   const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
   const { transactions, isLoading: transactionsLoading } =
@@ -22,13 +24,23 @@ export function DashboardPage() {
   const { chartData, isLoading: chartLoading } = useSalesChartData(7);
 
   const handleQuickAction = (actionId: string) => {
-    console.log("Quick action:", actionId);
-    // Handle navigation/modal opening based on actionId
+    const routes: Record<string, string> = {
+      "add-sale": "/sale/invoices",
+      "add-purchase": "/purchase/invoices",
+      "add-item": "/items",
+      "add-customer": "/customers",
+      "payment-in": "/sale/payment-in",
+      "payment-out": "/purchase/payment-out",
+    };
+
+    const route = routes[actionId];
+    if (route) {
+      void navigate({ to: route });
+    }
   };
 
-  const handleTransactionClick = (transaction: Transaction) => {
-    console.log("Transaction clicked:", transaction);
-    // Navigate to transaction detail
+  const handleTransactionClick = (_transaction: Transaction) => {
+    // TODO: Navigate to transaction detail
   };
 
   return (
@@ -62,7 +74,7 @@ export function DashboardPage() {
         transactions={transactions as Transaction[]}
         isLoading={transactionsLoading}
         onViewAll={() => {
-          console.log("View all transactions");
+          void navigate({ to: "/sale/invoices" });
         }}
         onTransactionClick={handleTransactionClick}
       />

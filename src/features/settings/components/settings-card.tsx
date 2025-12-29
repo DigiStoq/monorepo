@@ -21,7 +21,7 @@ export function SettingsCard({
   actions,
 }: SettingsCardProps) {
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn(className)}>
       <CardHeader className="border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

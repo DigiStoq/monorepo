@@ -37,7 +37,7 @@ export interface PaymentInListProps {
 interface PaymentFilters {
   search: string;
   paymentMode: PaymentMode | "all";
-  sortBy: "date" | "amount" | "party";
+  sortBy: "date" | "amount" | "customer";
   sortOrder: "asc" | "desc";
 }
 
@@ -184,9 +184,9 @@ export function PaymentInList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesNumber = payment.receiptNumber.toLowerCase().includes(searchLower);
-          const matchesParty = payment.customerName.toLowerCase().includes(searchLower);
+          const matchesCustomer = payment.customerName.toLowerCase().includes(searchLower);
           const matchesRef = payment.referenceNumber?.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty && !matchesRef) return false;
+          if (!matchesNumber && !matchesCustomer && !matchesRef) return false;
         }
 
         // Payment mode filter
@@ -206,7 +206,7 @@ export function PaymentInList({
           case "amount":
             comparison = b.amount - a.amount;
             break;
-          case "party":
+          case "customer":
             comparison = a.customerName.localeCompare(b.customerName);
             break;
         }
@@ -276,10 +276,6 @@ export function PaymentInList({
             }
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onRecordPayment}>
-            Record Payment
-          </Button>
         </div>
       </div>
 

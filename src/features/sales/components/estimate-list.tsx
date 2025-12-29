@@ -39,7 +39,7 @@ export interface EstimateListProps {
 interface EstimateFilters {
   search: string;
   status: EstimateStatus | "all";
-  sortBy: "date" | "validUntil" | "amount" | "party";
+  sortBy: "date" | "validUntil" | "amount" | "customer";
   sortOrder: "asc" | "desc";
 }
 
@@ -195,8 +195,8 @@ export function EstimateList({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const matchesNumber = estimate.estimateNumber.toLowerCase().includes(searchLower);
-          const matchesParty = estimate.customerName.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty) return false;
+          const matchesCustomer = estimate.customerName.toLowerCase().includes(searchLower);
+          if (!matchesNumber && !matchesCustomer) return false;
         }
 
         // Status filter
@@ -219,7 +219,7 @@ export function EstimateList({
           case "amount":
             comparison = b.total - a.total;
             break;
-          case "party":
+          case "customer":
             comparison = a.customerName.localeCompare(b.customerName);
             break;
         }
@@ -289,10 +289,6 @@ export function EstimateList({
             }
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateEstimate}>
-            New Estimate
-          </Button>
         </div>
       </div>
 

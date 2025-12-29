@@ -9,42 +9,8 @@ import {
   Users,
   Package,
 } from "lucide-react";
-import { cn } from "@/lib/cn";
-import type { DateRange, SalesSummary } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockSalesData: SalesSummary = {
-  totalSales: 125000,
-  totalInvoices: 156,
-  totalPaid: 98500,
-  totalDue: 26500,
-  averageOrderValue: 801.28,
-  topCustomers: [
-    { customerId: "1", customerName: "Acme Electronics", amount: 28500 },
-    { customerId: "2", customerName: "Global Traders Inc", amount: 22000 },
-    { customerId: "3", customerName: "Metro Supplies Co", amount: 18750 },
-    { customerId: "4", customerName: "City Hardware Ltd", amount: 15200 },
-    { customerId: "5", customerName: "Valley Distributors", amount: 12800 },
-  ],
-  topItems: [
-    { itemId: "1", itemName: "Laptop Pro 15", quantity: 45, amount: 54000 },
-    { itemId: "2", itemName: "Office Chair Deluxe", quantity: 120, amount: 42000 },
-    { itemId: "3", itemName: "Wireless Mouse", quantity: 350, amount: 8750 },
-    { itemId: "4", itemName: "Desk Lamp LED", quantity: 200, amount: 9000 },
-    { itemId: "5", itemName: "Tool Kit Professional", quantity: 60, amount: 10800 },
-  ],
-  salesByMonth: [
-    { month: "Jan", amount: 18500 },
-    { month: "Feb", amount: 22000 },
-    { month: "Mar", amount: 19800 },
-    { month: "Apr", amount: 25500 },
-    { month: "May", amount: 21200 },
-    { month: "Jun", amount: 18000 },
-  ],
-};
+import type { DateRange } from "../types";
+import { useSalesSummaryReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -59,12 +25,7 @@ export function SalesSummaryReport() {
     to: today.toISOString().slice(0, 10),
   });
 
-  const data = mockSalesData;
-
-  // Calculate growth (mock data - will be dynamic later)
-  const growth = 12.5 as number;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- mock data comparison
-  const isPositiveGrowth = growth >= 0;
+  const { summary: data, isLoading } = useSalesSummaryReport(dateRange);
 
   // Format currency
   const formatCurrency = (value: number) =>
@@ -74,17 +35,51 @@ export function SalesSummaryReport() {
       maximumFractionDigits: 0,
     }).format(value);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Sales Summary"
+        subtitle="Overview of sales performance"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
+  // Empty state
+  if (!data) {
+    return (
+      <ReportLayout
+        title="Sales Summary"
+        subtitle="Overview of sales performance"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">No sales data found for the selected period.</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
   // Max values for bar charts
-  const maxCustomerAmount = Math.max(...data.topCustomers.map((c) => c.amount));
-  const maxItemAmount = Math.max(...data.topItems.map((i) => i.amount));
-  const maxMonthAmount = Math.max(...data.salesByMonth.map((m) => m.amount));
+  const maxCustomerAmount = data.topCustomers.length > 0 ? Math.max(...data.topCustomers.map((c) => c.amount)) : 1;
+  const maxItemAmount = data.topItems.length > 0 ? Math.max(...data.topItems.map((i) => i.amount)) : 1;
+  const maxMonthAmount = data.salesByMonth.length > 0 ? Math.max(...data.salesByMonth.map((m) => m.amount)) : 1;
+
+  // Calculate collection percentage
+  const collectionPercent = data.totalSales > 0 ? ((data.totalPaid / data.totalSales) * 100).toFixed(1) : "0";
+  const outstandingPercent = data.totalSales > 0 ? ((data.totalDue / data.totalSales) * 100).toFixed(1) : "0";
 
   return (
     <ReportLayout
       title="Sales Summary"
       subtitle="Overview of sales performance"
-      onRefresh={() => { console.log("Refresh"); }}
-      onExport={() => { console.log("Export"); }}
+      onRefresh={() => { /* TODO: Implement refresh */ }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -98,13 +93,9 @@ export function SalesSummaryReport() {
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Sales</p>
                 <p className="text-2xl font-bold text-slate-900">{formatCurrency(data.totalSales)}</p>
-                <div className={cn(
-                  "flex items-center gap-1 text-sm mt-1",
-                  isPositiveGrowth ? "text-success" : "text-error"
-                )}>
-                  {isPositiveGrowth ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  <span>{Math.abs(growth)}% vs last period</span>
-                </div>
+                <p className="text-sm text-slate-500 mt-1">
+                  {data.totalInvoices} invoices
+                </p>
               </div>
               <div className="p-2 rounded-lg bg-green-100">
                 <DollarSign className="h-5 w-5 text-green-700" />
@@ -137,7 +128,7 @@ export function SalesSummaryReport() {
                 <p className="text-sm text-slate-500 mb-1">Amount Received</p>
                 <p className="text-2xl font-bold text-success">{formatCurrency(data.totalPaid)}</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  {((data.totalPaid / data.totalSales) * 100).toFixed(1)}% collected
+                  {collectionPercent}% collected
                 </p>
               </div>
               <div className="p-2 rounded-lg bg-teal-100">
@@ -154,7 +145,7 @@ export function SalesSummaryReport() {
                 <p className="text-sm text-slate-500 mb-1">Amount Due</p>
                 <p className="text-2xl font-bold text-error">{formatCurrency(data.totalDue)}</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  {((data.totalDue / data.totalSales) * 100).toFixed(1)}% outstanding
+                  {outstandingPercent}% outstanding
                 </p>
               </div>
               <div className="p-2 rounded-lg bg-red-100">

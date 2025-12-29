@@ -327,10 +327,6 @@ export function ItemList({
             }}
             size="md"
           />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddItem}>
-            Add Item
-          </Button>
         </div>
       </div>
 

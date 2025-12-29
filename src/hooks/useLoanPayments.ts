@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { LoanPayment } from "@/features/cash-bank/types";
 
@@ -46,16 +46,25 @@ export function useLoanPayments(filters?: { loanId?: string }): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const loanIdFilter = filters?.loanId ?? null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: string[] = [];
 
-  const { data, isLoading, error } = useQuery<LoanPaymentRow>(
-    `SELECT * FROM loan_payments
-     WHERE ($1 IS NULL OR loan_id = $1)
-     ORDER BY date DESC, created_at DESC`,
-    [loanIdFilter]
-  );
+    if (filters?.loanId) {
+      conditions.push("loan_id = ?");
+      params.push(filters.loanId);
+    }
 
-  const payments = data.map(mapRowToLoanPayment);
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM loan_payments ${whereClause} ORDER BY date DESC, created_at DESC`,
+      params,
+    };
+  }, [filters?.loanId]);
+
+  const { data, isLoading, error } = useQuery<LoanPaymentRow>(query, params);
+
+  const payments = useMemo(() => data.map(mapRowToLoanPayment), [data]);
 
   return { payments, isLoading, error };
 }

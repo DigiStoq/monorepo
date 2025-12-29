@@ -1,44 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Card, CardBody, CardHeader } from "@/components/ui";
 import { ArrowUpCircle, ArrowDownCircle, Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, CashFlowReport as CashFlowReportType } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockCashFlow: CashFlowReportType = {
-  period: {
-    from: "2024-01-01",
-    to: "2024-01-31",
-  },
-  openingBalance: 25000,
-  inflows: {
-    salesReceipts: 185000,
-    otherReceipts: 5500,
-    total: 190500,
-  },
-  outflows: {
-    purchasePayments: 125000,
-    expenses: 28500,
-    otherPayments: 8000,
-    total: 161500,
-  },
-  netCashFlow: 29000,
-  closingBalance: 54000,
-};
-
-const mockMonthlyFlow = [
-  { month: "Aug", inflow: 165000, outflow: 142000 },
-  { month: "Sep", inflow: 175000, outflow: 155000 },
-  { month: "Oct", inflow: 182000, outflow: 158000 },
-  { month: "Nov", inflow: 195000, outflow: 168000 },
-  { month: "Dec", inflow: 210000, outflow: 175000 },
-  { month: "Jan", inflow: 190500, outflow: 161500 },
-];
+import type { DateRange } from "../types";
+import { useCashFlowReport } from "@/hooks/useReports";
 
 // ============================================================================
 // COMPONENT
@@ -50,7 +17,8 @@ export function CashFlowReportPage() {
     to: new Date().toISOString().slice(0, 10),
   });
 
-  const data = mockCashFlow;
+  // Fetch data from PowerSync
+  const { report, isLoading } = useCashFlowReport(dateRange);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
@@ -59,19 +27,34 @@ export function CashFlowReportPage() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  // Calculate max for chart scaling
-  const maxFlow = useMemo(() => {
-    return Math.max(
-      ...mockMonthlyFlow.map((m) => Math.max(m.inflow, m.outflow))
+  // Loading state
+  if (isLoading || !report) {
+    return (
+      <ReportLayout
+        title="Cash Flow Statement"
+        subtitle="Summary of cash inflows and outflows"
+        backPath="/reports"
+        filters={
+          <div className="flex items-center gap-4">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          </div>
+        }
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
     );
-  }, []);
+  }
+
+  const data = report;
 
   return (
     <ReportLayout
       title="Cash Flow Statement"
       subtitle="Summary of cash inflows and outflows"
       backPath="/reports"
-      onExport={() => { console.log("Export cash flow"); }}
+      onExport={() => { /* TODO: Implement export */ }}
       onPrint={() => { window.print(); }}
       filters={
         <div className="flex items-center gap-4">
@@ -237,57 +220,6 @@ export function CashFlowReportPage() {
           </CardBody>
         </Card>
 
-        {/* Monthly Trend */}
-        <Card>
-          <CardHeader>
-            <h3 className="font-medium text-slate-900">Monthly Cash Flow Trend</h3>
-          </CardHeader>
-          <CardBody>
-            <div className="flex items-end justify-between gap-4 h-56">
-              {mockMonthlyFlow.map((month, index) => {
-                const inflowHeight = (month.inflow / maxFlow) * 100;
-                const outflowHeight = (month.outflow / maxFlow) * 100;
-                const netFlow = month.inflow - month.outflow;
-
-                return (
-                  <div key={index} className="flex-1 flex flex-col items-center">
-                    <div className="w-full flex flex-col items-center justify-end h-48">
-                      <span className={cn(
-                        "text-xs font-medium mb-1",
-                        netFlow >= 0 ? "text-success" : "text-error"
-                      )}>
-                        {netFlow >= 0 ? "+" : ""}{formatCurrency(netFlow)}
-                      </span>
-                      <div className="w-full flex gap-1 items-end justify-center">
-                        <div
-                          className="w-5 bg-gradient-to-t from-green-500 to-green-400 rounded-t"
-                          style={{ height: `${inflowHeight}%` }}
-                          title={`Inflow: ${formatCurrency(month.inflow)}`}
-                        />
-                        <div
-                          className="w-5 bg-gradient-to-t from-red-500 to-red-400 rounded-t"
-                          style={{ height: `${outflowHeight}%` }}
-                          title={`Outflow: ${formatCurrency(month.outflow)}`}
-                        />
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-500 mt-2">{month.month}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded" />
-                <span className="text-sm text-slate-600">Inflows</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded" />
-                <span className="text-sm text-slate-600">Outflows</span>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
       </div>
     </ReportLayout>
   );
