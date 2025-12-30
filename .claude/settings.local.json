@@ -23,7 +23,12 @@
       "Bash(Measure-Object)",
       "Bash(Select-Object -ExpandProperty Count)",
       "Bash(grep:*)",
-      "Bash(npx jq:*)"
+      "Bash(npx jq:*)",
+      "Bash(Select-Object -First 50)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }

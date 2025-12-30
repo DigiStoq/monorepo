@@ -94,7 +94,7 @@ function itemsToPDFLineItems(
     itemName: string;
     description?: string;
     quantity: number;
-    unit: string;
+    unit?: string;
     unitPrice: number;
     discountPercent?: number;
     taxPercent?: number;
@@ -106,7 +106,7 @@ function itemsToPDFLineItems(
       index: idx + 1,
       name: item.itemName,
       quantity: item.quantity,
-      unit: item.unit,
+      unit: item.unit ?? "pcs",
       unitPrice: item.unitPrice,
       amount: item.amount,
     };

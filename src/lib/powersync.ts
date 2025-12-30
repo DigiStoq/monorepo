@@ -238,6 +238,8 @@ const expenses = new Table({
   category: column.text, // 'rent' | 'utilities' | 'salaries' | etc.
   customer_id: column.text,
   customer_name: column.text,
+  paid_to_name: column.text,
+  paid_to_details: column.text,
   date: column.text,
   amount: column.real,
   payment_mode: column.text,

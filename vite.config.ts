@@ -25,7 +25,8 @@ export default defineConfig({
 
   build: {
     // Tauri uses Chromium on Windows and WebKit on macOS/Linux
-    target: process.env.TAURI_PLATFORM === "windows" ? "chrome105" : "safari13",
+    // Safari 14+ is required for BigInt support used by @powersync/web
+    target: process.env.TAURI_PLATFORM === "windows" ? "chrome105" : "safari14",
     // Don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
     // Produce sourcemaps for debug builds

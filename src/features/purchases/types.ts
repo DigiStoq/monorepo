@@ -2,7 +2,7 @@
 // PURCHASE INVOICE TYPES
 // ============================================================================
 
-export type PurchaseInvoiceStatus = "draft" | "received" | "paid" | "partial" | "overdue" | "cancelled";
+export type PurchaseInvoiceStatus = "draft" | "ordered" | "received" | "paid" | "returned";
 
 export interface PurchaseInvoice {
   id: string;
@@ -122,11 +122,13 @@ export interface Expense {
   category: ExpenseCategory;
   customerId?: string;
   customerName?: string;
+  paidToName?: string;
+  paidToDetails?: string;
   date: string;
   amount: number;
   paymentMode: PaymentOutMode;
   referenceNumber?: string;
-  description: string;
+  description?: string;
   notes?: string;
   attachmentUrl?: string;
   createdAt: string;
@@ -136,10 +138,12 @@ export interface Expense {
 export interface ExpenseFormData {
   category: ExpenseCategory;
   customerId?: string | undefined;
+  paidToName?: string | undefined;
+  paidToDetails?: string | undefined;
   date: string;
   amount: number;
   paymentMode: PaymentOutMode;
   referenceNumber?: string | undefined;
-  description: string;
+  description?: string | undefined;
   notes?: string | undefined;
 }

@@ -132,7 +132,7 @@ export function useBankTransactionMutations(): BankTransactionMutations {
         `SELECT current_balance FROM bank_accounts WHERE id = ?`,
         [data.accountId]
       );
-      const rows = result.rows._array as BalanceQueryRow[];
+      const rows = (result.rows?._array ?? []) as BalanceQueryRow[];
       const currentBalance = rows[0]?.current_balance ?? 0;
 
       // Calculate new balance
@@ -180,7 +180,7 @@ export function useBankTransactionMutations(): BankTransactionMutations {
         `SELECT account_id, type, amount FROM bank_transactions WHERE id = ?`,
         [id]
       );
-      const tx = (result.rows._array as TransactionQueryRow[])[0];
+      const tx = ((result.rows?._array ?? []) as TransactionQueryRow[])[0];
 
       if (tx) {
         const now = new Date().toISOString();

@@ -42,25 +42,28 @@ export interface PurchaseInvoiceListProps {
 const statusOptions: SelectOption[] = [
   { value: "all", label: "All Status" },
   { value: "draft", label: "Draft" },
+  { value: "ordered", label: "Ordered" },
   { value: "received", label: "Received" },
   { value: "paid", label: "Paid" },
-  { value: "partial", label: "Partial" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "returned", label: "Returned" },
 ];
 
 // ============================================================================
 // STATUS CONFIG
 // ============================================================================
 
-const statusConfig: Record<PurchaseInvoiceStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
+const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
-  received: { label: "Received", variant: "info", icon: Clock },
+  ordered: { label: "Ordered", variant: "info", icon: Clock },
+  received: { label: "Received", variant: "warning", icon: CheckCircle },
   paid: { label: "Paid", variant: "success", icon: CheckCircle },
+  returned: { label: "Returned", variant: "error", icon: XCircle },
+  // Fallback for legacy/unknown statuses
   partial: { label: "Partial", variant: "warning", icon: AlertCircle },
-  overdue: { label: "Overdue", variant: "error", icon: AlertCircle },
-  cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
+  unpaid: { label: "Unpaid", variant: "warning", icon: Clock },
 };
+
+const defaultStatusConfig = { label: "Unknown", variant: "secondary" as const, icon: AlertCircle };
 
 // ============================================================================
 // INVOICE CARD COMPONENT
@@ -72,7 +75,7 @@ interface InvoiceCardProps {
 }
 
 function InvoiceCard({ invoice, onClick }: InvoiceCardProps) {
-  const status = statusConfig[invoice.status];
+  const status = statusConfig[invoice.status] ?? defaultStatusConfig;
   const StatusIcon = status.icon;
 
   const formatCurrency = (value: number) =>
@@ -129,7 +132,7 @@ function InvoiceCard({ invoice, onClick }: InvoiceCardProps) {
                 Ref: {invoice.supplierInvoiceNumber}
               </span>
             )}
-            {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            {invoice.status !== "paid" && invoice.status !== "returned" && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 Due: {formatDate(invoice.dueDate)}
@@ -220,20 +223,20 @@ export function PurchaseInvoiceList({
 
   // Calculate totals
   const totals = useMemo(() => {
-    if (!filteredInvoices.length) return { total: 0, paid: 0, pending: 0, overdue: 0 };
+    if (!filteredInvoices.length) return { total: 0, paid: 0, pending: 0, returned: 0 };
 
     return filteredInvoices.reduce(
       (acc, inv) => {
         acc.total += inv.total;
         acc.paid += inv.amountPaid;
-        if (inv.status === "overdue") {
-          acc.overdue += inv.amountDue;
+        if (inv.status === "returned") {
+          acc.returned += inv.total;
         } else if (inv.amountDue > 0) {
           acc.pending += inv.amountDue;
         }
         return acc;
       },
-      { total: 0, paid: 0, pending: 0, overdue: 0 }
+      { total: 0, paid: 0, pending: 0, returned: 0 }
     );
   }, [filteredInvoices]);
 
@@ -316,10 +319,10 @@ export function PurchaseInvoiceList({
         <Card className="bg-error-light">
           <CardBody className="py-3">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-error" />
-              <p className="text-xs text-error-dark font-medium">Overdue</p>
+              <XCircle className="h-4 w-4 text-error" />
+              <p className="text-xs text-error-dark font-medium">Returned</p>
             </div>
-            <p className="text-lg font-bold text-error">{formatCurrency(totals.overdue)}</p>
+            <p className="text-lg font-bold text-error">{formatCurrency(totals.returned)}</p>
           </CardBody>
         </Card>
       </div>

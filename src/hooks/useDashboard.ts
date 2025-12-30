@@ -40,14 +40,14 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
   const { data: todaySalesData, isLoading: todaySalesLoading } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM sale_invoices
-     WHERE date = date('now') AND status != 'cancelled'`
+     WHERE date = date('now') AND status != 'returned'`
   );
 
   // Today's Purchases
   const { data: todayPurchasesData, isLoading: todayPurchasesLoading } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM purchase_invoices
-     WHERE date = date('now') AND status != 'cancelled'`
+     WHERE date = date('now') AND status != 'returned'`
   );
 
   // Last month receivable (for change calculation)
@@ -56,7 +56,7 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
      FROM sale_invoices
      WHERE date >= date('now', 'start of month', '-1 month')
      AND date < date('now', 'start of month')
-     AND status IN ('sent', 'partial', 'overdue')`
+     AND status IN ('draft', 'unpaid') AND amount_due > 0`
   );
 
   // Last month payable (for change calculation)
@@ -65,21 +65,21 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
      FROM purchase_invoices
      WHERE date >= date('now', 'start of month', '-1 month')
      AND date < date('now', 'start of month')
-     AND status IN ('received', 'partial', 'overdue')`
+     AND status IN ('draft', 'ordered', 'received') AND amount_due > 0`
   );
 
   // Yesterday's sales (for change calculation)
   const { data: yesterdaySales } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM sale_invoices
-     WHERE date = date('now', '-1 day') AND status != 'cancelled'`
+     WHERE date = date('now', '-1 day') AND status != 'returned'`
   );
 
   // Yesterday's purchases (for change calculation)
   const { data: yesterdayPurchases } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM purchase_invoices
-     WHERE date = date('now', '-1 day') AND status != 'cancelled'`
+     WHERE date = date('now', '-1 day') AND status != 'returned'`
   );
 
   // Calculate percentage changes
@@ -124,7 +124,7 @@ export function useRecentTransactions(limit = 10): {
        date,
        invoice_number as invoiceNumber
      FROM sale_invoices
-     WHERE status != 'cancelled'
+     WHERE status != 'returned'
      ORDER BY created_at DESC
      LIMIT ?`,
     [Math.ceil(limit / 4)]
@@ -139,7 +139,7 @@ export function useRecentTransactions(limit = 10): {
        date,
        invoice_number as invoiceNumber
      FROM purchase_invoices
-     WHERE status != 'cancelled'
+     WHERE status != 'returned'
      ORDER BY created_at DESC
      LIMIT ?`,
     [Math.ceil(limit / 4)]
@@ -223,7 +223,7 @@ export function useSalesChartData(days = 7): {
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM sale_invoices
      WHERE date >= date('now', '-${days} days')
-     AND status != 'cancelled'
+     AND status != 'returned'
      GROUP BY date
      ORDER BY date ASC`
   );
@@ -232,7 +232,7 @@ export function useSalesChartData(days = 7): {
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM purchase_invoices
      WHERE date >= date('now', '-${days} days')
-     AND status != 'cancelled'
+     AND status != 'returned'
      GROUP BY date
      ORDER BY date ASC`
   );

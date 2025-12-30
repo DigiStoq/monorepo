@@ -1,43 +1,52 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout";
 import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { EstimateList, EstimateDetail, EstimateForm } from "./components";
-import { useEstimates, useEstimateMutations } from "@/hooks/useEstimates";
+import { useEstimates, useEstimateById, useEstimateMutations } from "@/hooks/useEstimates";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems } from "@/hooks/useItems";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { Estimate, EstimateFormData } from "./types";
 
 export function EstimatesPage() {
+  const navigate = useNavigate();
+
   // Data from PowerSync
   const { estimates, isLoading, error } = useEstimates();
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
-  const { createEstimate, updateEstimateStatus, deleteEstimate } = useEstimateMutations();
+  const { createEstimate, updateEstimateStatus, convertEstimateToInvoice, deleteEstimate } = useEstimateMutations();
 
   // PDF Generator
   const { downloadEstimate, printEstimate, isReady: pdfReady } = usePDFGenerator();
 
   // State
-  const [selectedEstimate, setSelectedEstimate] = useState<Estimate | null>(null);
+  const [selectedEstimateId, setSelectedEstimateId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update selected estimate when data changes
+  // Fetch full estimate with items when one is selected
+  const { estimate: selectedEstimateData, items: selectedEstimateItems } = useEstimateById(selectedEstimateId);
+
+  // Combine estimate with its items for the detail component
   const currentSelectedEstimate = useMemo(() => {
-    if (!selectedEstimate) return null;
-    return estimates.find((e) => e.id === selectedEstimate.id) ?? null;
-  }, [estimates, selectedEstimate]);
+    if (!selectedEstimateData) return null;
+    return {
+      ...selectedEstimateData,
+      items: selectedEstimateItems,
+    };
+  }, [selectedEstimateData, selectedEstimateItems]);
 
   // Handlers
   const handleEstimateClick = (estimate: Estimate) => {
-    setSelectedEstimate(estimate);
+    setSelectedEstimateId(estimate.id);
   };
 
   const handleCloseDetail = () => {
-    setSelectedEstimate(null);
+    setSelectedEstimateId(null);
   };
 
   const handleCreateEstimate = () => {
@@ -137,8 +146,30 @@ export function EstimatesPage() {
     }
   };
 
-  const handleConvertToInvoice = () => {
-    // TODO: Implement conversion to invoice
+  const handleConvertToInvoice = async () => {
+    if (currentSelectedEstimate && selectedEstimateItems.length > 0) {
+      setIsSubmitting(true);
+      try {
+        // Set due date to 30 days from now
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+        const dueDateStr = dueDate.toISOString().split("T")[0] ?? "";
+
+        await convertEstimateToInvoice(
+          currentSelectedEstimate,
+          selectedEstimateItems,
+          dueDateStr
+        );
+
+        // Navigate to the invoices page
+        setSelectedEstimateId(null);
+        void navigate({ to: "/sale/invoices" });
+      } catch (err) {
+        console.error("Failed to convert estimate to invoice:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   // PDF handlers
@@ -161,7 +192,7 @@ export function EstimatesPage() {
       setIsSubmitting(true);
       try {
         await deleteEstimate(currentSelectedEstimate.id);
-        setSelectedEstimate(null);
+        setSelectedEstimateId(null);
       } catch (err) {
         console.error("Failed to delete estimate:", err);
       } finally {
@@ -222,7 +253,7 @@ export function EstimatesPage() {
               onSend={() => { void handleSendEstimate(); }}
               onMarkAccepted={() => { void handleMarkAccepted(); }}
               onMarkRejected={() => { void handleMarkRejected(); }}
-              onConvertToInvoice={handleConvertToInvoice}
+              onConvertToInvoice={() => { void handleConvertToInvoice(); }}
             />
           </div>
         )}
@@ -238,7 +269,6 @@ export function EstimatesPage() {
               items={items}
               onSubmit={(data) => { void handleSubmitEstimate(data); }}
               onCancel={handleCloseForm}
-              isSubmitting={isSubmitting}
               className="p-6"
             />
           </ModalBody>

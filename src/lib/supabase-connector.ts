@@ -185,6 +185,55 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       transformed.customer_id = emptyToNull(transformed.customer_id);
     }
 
+    // Handle items - category_id is optional UUID
+    if (table === "items") {
+      transformed.category_id = emptyToNull(transformed.category_id);
+    }
+
+    // Handle estimates - customer_id and converted_to fields
+    if (table === "estimates") {
+      transformed.customer_id = emptyToNull(transformed.customer_id);
+      transformed.converted_to_invoice_id = emptyToNull(transformed.converted_to_invoice_id);
+    }
+
+    // Handle estimate_items - optional UUIDs
+    if (table === "estimate_items") {
+      transformed.item_id = emptyToNull(transformed.item_id);
+    }
+
+    // Handle sale_invoice_items - optional UUIDs
+    if (table === "sale_invoice_items") {
+      transformed.item_id = emptyToNull(transformed.item_id);
+    }
+
+    // Handle purchase_invoice_items - optional UUIDs
+    if (table === "purchase_invoice_items") {
+      transformed.item_id = emptyToNull(transformed.item_id);
+    }
+
+    // Handle credit_notes - optional UUIDs
+    if (table === "credit_notes") {
+      transformed.customer_id = emptyToNull(transformed.customer_id);
+      transformed.invoice_id = emptyToNull(transformed.invoice_id);
+    }
+
+    // Handle credit_note_items - optional UUIDs
+    if (table === "credit_note_items") {
+      transformed.item_id = emptyToNull(transformed.item_id);
+    }
+
+    // Handle loans - optional UUIDs
+    if (table === "loans") {
+      transformed.customer_id = emptyToNull(transformed.customer_id);
+      transformed.linked_bank_account_id = emptyToNull(transformed.linked_bank_account_id);
+    }
+
+    // Handle cheques - customer_id is also optional
+    if (table === "cheques") {
+      transformed.customer_id = emptyToNull(transformed.customer_id);
+      transformed.related_invoice_id = emptyToNull(transformed.related_invoice_id);
+    }
+
     return transformed;
   }
 }

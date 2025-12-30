@@ -3,11 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  ConfirmDeleteDialog,
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
@@ -180,48 +176,26 @@ export function CustomersPage() {
       />
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDeleteDialog
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setCustomerToDelete(null);
         }}
-        size="sm"
-      >
-        <ModalContent>
-          <ModalHeader title="Delete Customer" />
-          <ModalBody>
-            <p className="text-slate-600">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-slate-900">
-                {customerToDelete?.name}
-              </span>
-              ? This action cannot be undone.
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setCustomerToDelete(null);
-              }}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                void handleConfirmDelete();
-              }}
-              isLoading={isSubmitting}
-            >
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Customer"
+        itemName={customerToDelete?.name ?? ""}
+        itemType={customerToDelete?.type === "supplier" ? "Supplier" : customerToDelete?.type === "both" ? "Customer/Supplier" : "Customer"}
+        warningMessage={
+          (customerToDelete?.currentBalance ?? 0) !== 0
+            ? `This customer has a balance of ${(customerToDelete?.currentBalance ?? 0) > 0 ? "+" : ""}$${Math.abs(customerToDelete?.currentBalance ?? 0).toFixed(2)}. Deleting will remove all their transaction history.`
+            : "This will permanently delete this customer and all their transaction history."
+        }
+        linkedItems={selectedCustomerTransactions.length > 0 ? [
+          { type: "Transaction", count: selectedCustomerTransactions.length, description: "Will be deleted" },
+        ] : []}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

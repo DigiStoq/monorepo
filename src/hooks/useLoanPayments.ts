@@ -34,7 +34,7 @@ function mapRowToLoanPayment(row: LoanPaymentRow): LoanPayment {
     principalAmount: row.principal_amount,
     interestAmount: row.interest_amount,
     totalAmount: row.total_amount,
-    paymentMethod: row.payment_method ?? undefined,
+    paymentMethod: (row.payment_method ?? "cash") as "cash" | "bank" | "cheque",
     referenceNumber: row.reference_number ?? undefined,
     notes: row.notes ?? undefined,
     createdAt: row.created_at,
@@ -134,7 +134,7 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
         `SELECT outstanding_amount FROM loans WHERE id = ?`,
         [data.loanId]
       );
-      const rows = result.rows._array as LoanQueryRow[];
+      const rows = (result.rows?._array ?? []) as LoanQueryRow[];
       const loan = rows[0];
       if (loan && loan.outstanding_amount <= 0) {
         await db.execute(
@@ -155,7 +155,7 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
         `SELECT loan_id, principal_amount FROM loan_payments WHERE id = ?`,
         [id]
       );
-      const rows = result.rows._array as PaymentQueryRow[];
+      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
       const payment = rows[0];
 
       if (payment) {

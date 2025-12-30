@@ -13,6 +13,7 @@ import {
   Home,
   Zap,
   Users,
+  User,
   Briefcase,
   Plane,
   Megaphone,
@@ -93,7 +94,7 @@ export function ExpenseDetail({
     }).format(date);
   };
 
-  const config = categoryConfig[expense.category];
+  const config = categoryConfig[expense.category] ?? categoryConfig.other;
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -127,13 +128,15 @@ export function ExpenseDetail({
         {/* Details */}
         <Card>
           <CardBody className="space-y-3">
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-slate-500">Description</p>
-                <p className="font-medium text-slate-900">{expense.description}</p>
+            {expense.description && (
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-slate-500">Description</p>
+                  <p className="font-medium text-slate-900">{expense.description}</p>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex items-start gap-3">
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
@@ -155,8 +158,21 @@ export function ExpenseDetail({
               <div className="flex items-start gap-3">
                 <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-sm text-slate-500">Paid To</p>
+                  <p className="text-sm text-slate-500">Vendor</p>
                   <p className="font-medium text-slate-900">{expense.customerName}</p>
+                </div>
+              </div>
+            )}
+
+            {expense.paidToName && (
+              <div className="flex items-start gap-3">
+                <User className="h-5 w-5 text-slate-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-slate-500">Paid To</p>
+                  <p className="font-medium text-slate-900">{expense.paidToName}</p>
+                  {expense.paidToDetails && (
+                    <p className="text-sm text-slate-500">{expense.paidToDetails}</p>
+                  )}
                 </div>
               </div>
             )}

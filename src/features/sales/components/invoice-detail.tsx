@@ -60,12 +60,35 @@ const statusConfig: Record<InvoiceStatus, { label: string; variant: "success" | 
   returned: { label: "Returned", variant: "error", icon: RotateCcw },
 };
 
-const statusOptions: SelectOption[] = [
-  { value: "draft", label: "Draft" },
-  { value: "unpaid", label: "Unpaid" },
-  { value: "paid", label: "Paid" },
-  { value: "returned", label: "Returned" },
-];
+// Get available status options based on current status
+function getStatusOptions(currentStatus: InvoiceStatus): SelectOption[] {
+  switch (currentStatus) {
+    case "paid":
+      // Paid invoices can only be returned
+      return [
+        { value: "paid", label: "Paid" },
+        { value: "returned", label: "Returned" },
+      ];
+    case "returned":
+      // Returned invoices cannot change status
+      return [{ value: "returned", label: "Returned" }];
+    case "draft":
+      // Draft can go to unpaid or paid
+      return [
+        { value: "draft", label: "Draft" },
+        { value: "unpaid", label: "Unpaid" },
+        { value: "paid", label: "Paid" },
+      ];
+    case "unpaid":
+    default:
+      // Unpaid can go to paid or returned
+      return [
+        { value: "unpaid", label: "Unpaid" },
+        { value: "paid", label: "Paid" },
+        { value: "returned", label: "Returned" },
+      ];
+  }
+}
 
 const historyActionConfig: Record<InvoiceHistoryAction, { icon: typeof PlusCircle; color: string }> = {
   created: { icon: PlusCircle, color: "text-success" },
@@ -217,10 +240,11 @@ export function InvoiceDetail({
           action={
             <div className="flex items-center gap-2">
               <Select
-                options={statusOptions}
+                options={getStatusOptions(invoice.status)}
                 value={invoice.status}
                 onChange={(value) => onStatusChange?.(value as InvoiceStatus)}
                 className="w-32"
+                disabled={invoice.status === "returned"}
               />
               <Button variant="ghost" size="sm" onClick={onDownload}>
                 <Download className="h-4 w-4" />

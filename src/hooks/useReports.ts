@@ -19,6 +19,10 @@ import type {
   ProfitLossReport,
   CashFlowReport,
   TaxSummary,
+  CashMovementReport,
+  CashMovementTransaction,
+  PaymentModeMovement,
+  PaymentMode,
 } from "@/features/reports/types";
 
 // ============================================================================
@@ -1296,4 +1300,132 @@ export function useTaxSummaryReport(dateRange: DateRange): {
   }, [rawData, dateRange]);
 
   return { summary, isLoading, error };
+}
+
+// ============================================================================
+// CASH MOVEMENT REPORT
+// ============================================================================
+
+interface CashMovementRow {
+  id: string;
+  date: string;
+  type: string;
+  reference_number: string;
+  party_name: string | null;
+  description: string;
+  payment_mode: string;
+  amount: number;
+  is_money_in: number;
+}
+
+const paymentModeLabels: Record<PaymentMode, string> = {
+  cash: "Cash",
+  bank: "Bank Transfer",
+  card: "Card",
+  ach: "ACH Transfer",
+  cheque: "Cheque",
+  other: "Other",
+};
+
+export function useCashMovementReport(dateRange: DateRange, modeFilter?: PaymentMode): {
+  report: CashMovementReport | null;
+  isLoading: boolean;
+  error: Error | undefined;
+} {
+  // Fetch all payment transactions
+  const { data: rawData, isLoading, error } = useQuery<CashMovementRow>(
+    `SELECT
+       id, date, 'payment_in' as type, receipt_number as reference_number,
+       customer_name as party_name, 'Payment Received' as description,
+       payment_mode, amount, 1 as is_money_in
+     FROM payment_ins
+     WHERE date >= $1 AND date <= $2
+       AND ($3 IS NULL OR payment_mode = $3)
+     UNION ALL
+     SELECT
+       id, date, 'payment_out' as type, payment_number as reference_number,
+       customer_name as party_name, 'Payment Made' as description,
+       payment_mode, amount, 0 as is_money_in
+     FROM payment_outs
+     WHERE date >= $1 AND date <= $2
+       AND ($3 IS NULL OR payment_mode = $3)
+     UNION ALL
+     SELECT
+       id, date, 'expense' as type, expense_number as reference_number,
+       COALESCE(paid_to_name, customer_name) as party_name,
+       COALESCE(description, category) as description,
+       payment_mode, amount, 0 as is_money_in
+     FROM expenses
+     WHERE date >= $1 AND date <= $2
+       AND ($3 IS NULL OR payment_mode = $3)
+     ORDER BY date DESC, type`,
+    [dateRange.from, dateRange.to, modeFilter ?? null]
+  );
+
+  const report = useMemo((): CashMovementReport | null => {
+    // Build transactions list
+    const transactions: CashMovementTransaction[] = rawData.map((row) => ({
+      id: row.id,
+      date: row.date,
+      type: row.type as CashMovementTransaction["type"],
+      referenceNumber: row.reference_number,
+      partyName: row.party_name ?? undefined,
+      description: row.description,
+      paymentMode: row.payment_mode as PaymentMode,
+      moneyIn: row.is_money_in === 1 ? row.amount : 0,
+      moneyOut: row.is_money_in === 0 ? row.amount : 0,
+    }));
+
+    // Aggregate by payment mode
+    const modeMap = new Map<PaymentMode, PaymentModeMovement>();
+    const allModes: PaymentMode[] = ["cash", "bank", "card", "ach", "cheque", "other"];
+
+    // Initialize all modes
+    for (const mode of allModes) {
+      modeMap.set(mode, {
+        mode,
+        label: paymentModeLabels[mode],
+        moneyIn: 0,
+        moneyOut: 0,
+        net: 0,
+        transactionCount: 0,
+      });
+    }
+
+    // Aggregate transactions
+    let totalMoneyIn = 0;
+    let totalMoneyOut = 0;
+
+    for (const tx of transactions) {
+      const modeSummary = modeMap.get(tx.paymentMode);
+      if (modeSummary) {
+        modeSummary.moneyIn += tx.moneyIn;
+        modeSummary.moneyOut += tx.moneyOut;
+        modeSummary.transactionCount += 1;
+      }
+      totalMoneyIn += tx.moneyIn;
+      totalMoneyOut += tx.moneyOut;
+    }
+
+    // Calculate net for each mode
+    for (const summary of modeMap.values()) {
+      summary.net = summary.moneyIn - summary.moneyOut;
+    }
+
+    // Filter to only modes with transactions (unless filtering by mode)
+    const byMode = Array.from(modeMap.values()).filter(
+      (m) => modeFilter ? m.mode === modeFilter : m.transactionCount > 0
+    );
+
+    return {
+      period: dateRange,
+      byMode,
+      totalMoneyIn,
+      totalMoneyOut,
+      netMovement: totalMoneyIn - totalMoneyOut,
+      transactions,
+    };
+  }, [rawData, dateRange, modeFilter]);
+
+  return { report, isLoading, error };
 }

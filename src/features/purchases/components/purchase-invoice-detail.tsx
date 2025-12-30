@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { Card, CardHeader, CardBody, Button, Badge } from "@/components/ui";
+import { Card, CardHeader, CardBody, Button, Select } from "@/components/ui";
 import {
   X,
   Printer,
@@ -9,9 +9,6 @@ import {
   Building2,
   FileText,
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   DollarSign,
 } from "lucide-react";
 import type { PurchaseInvoice, PurchaseInvoiceStatus } from "../types";
@@ -27,6 +24,7 @@ export interface PurchaseInvoiceDetailProps {
   onDelete?: () => void;
   onPrint?: () => void;
   onRecordPayment?: () => void;
+  onStatusChange?: (newStatus: PurchaseInvoiceStatus) => void;
   className?: string;
 }
 
@@ -34,14 +32,26 @@ export interface PurchaseInvoiceDetailProps {
 // STATUS CONFIG
 // ============================================================================
 
-const statusConfig: Record<PurchaseInvoiceStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
-  draft: { label: "Draft", variant: "secondary", icon: FileText },
-  received: { label: "Received", variant: "info", icon: Clock },
-  paid: { label: "Paid", variant: "success", icon: CheckCircle },
-  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
-  overdue: { label: "Overdue", variant: "error", icon: AlertCircle },
-  cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
+const statusLabels: Record<string, string> = {
+  draft: "Draft",
+  ordered: "Ordered",
+  received: "Received",
+  paid: "Paid",
+  returned: "Returned",
 };
+
+// Status progression order (can only move forward)
+const statusOrder: string[] = ["draft", "ordered", "received", "paid", "returned"];
+
+function getAvailableStatuses(currentStatus: string): { value: string; label: string }[] {
+  const currentIndex = statusOrder.indexOf(currentStatus);
+  if (currentIndex === -1) {
+    // Unknown status - return all options
+    return statusOrder.map(s => ({ value: s, label: statusLabels[s] ?? s }));
+  }
+  // Only allow current status and statuses after it
+  return statusOrder.slice(currentIndex).map(s => ({ value: s, label: statusLabels[s] ?? s }));
+}
 
 // ============================================================================
 // COMPONENT
@@ -54,11 +64,9 @@ export function PurchaseInvoiceDetail({
   onDelete,
   onPrint,
   onRecordPayment,
+  onStatusChange,
   className,
 }: PurchaseInvoiceDetailProps) {
-  const status = statusConfig[invoice.status];
-  const StatusIcon = status.icon;
-
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -74,7 +82,7 @@ export function PurchaseInvoiceDetail({
       year: "numeric",
     });
 
-  const canPay = invoice.status !== "paid" && invoice.status !== "cancelled" && invoice.amountDue > 0;
+  const canPay = invoice.status !== "paid" && invoice.status !== "returned" && invoice.amountDue > 0;
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -101,14 +109,18 @@ export function PurchaseInvoiceDetail({
         {/* Status & Amount Card */}
         <Card className={cn(
           invoice.status === "paid" ? "bg-success-light border-success/20" :
-          invoice.status === "overdue" ? "bg-error-light border-error/20" :
+          invoice.status === "returned" ? "bg-error-light border-error/20" :
           "bg-slate-50"
         )}>
           <CardBody className="text-center py-6">
-            <Badge variant={status.variant} size="lg" className="mb-3">
-              <StatusIcon className="h-4 w-4 mr-1" />
-              {status.label}
-            </Badge>
+            <div className="flex justify-center mb-3">
+              <Select
+                options={getAvailableStatuses(invoice.status)}
+                value={invoice.status}
+                onChange={(value) => onStatusChange?.(value as PurchaseInvoiceStatus)}
+                size="sm"
+              />
+            </div>
             <p className="text-3xl font-bold text-slate-900">{formatCurrency(invoice.total)}</p>
             {invoice.amountDue > 0 && invoice.amountDue !== invoice.total && (
               <p className="text-lg text-error mt-1">
@@ -162,15 +174,12 @@ export function PurchaseInvoiceDetail({
             </div>
 
             <div className="flex items-start gap-3">
-              <div className={cn(
-                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                invoice.status === "overdue" ? "bg-error-light" : "bg-slate-100"
-              )}>
-                <Clock className={cn("h-4 w-4", invoice.status === "overdue" ? "text-error" : "text-slate-500")} />
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <Clock className="h-4 w-4 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Due Date</p>
-                <p className={cn("font-medium", invoice.status === "overdue" ? "text-error" : "text-slate-900")}>
+                <p className="font-medium text-slate-900">
                   {formatDate(invoice.dueDate)}
                 </p>
               </div>

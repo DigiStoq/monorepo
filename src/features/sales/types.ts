@@ -141,7 +141,7 @@ export interface Estimate {
   date: string;
   validUntil: string;
   status: EstimateStatus;
-  items: SaleInvoiceItem[];
+  items: EstimateItem[];
   subtotal: number;
   taxAmount: number;
   discountAmount: number;

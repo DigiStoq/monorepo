@@ -6,6 +6,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  ConfirmDeleteDialog,
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
@@ -38,6 +39,11 @@ export function BankAccountsPage() {
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(null);
 
   // Update selected account when data changes
   const currentSelectedAccount = useMemo(() => {
@@ -92,13 +98,25 @@ export function BankAccountsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteClick = () => {
     if (currentSelectedAccount) {
+      setAccountToDelete(currentSelectedAccount);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (accountToDelete) {
+      setIsSubmitting(true);
       try {
-        await deleteAccount(currentSelectedAccount.id);
+        await deleteAccount(accountToDelete.id);
         setSelectedAccount(null);
+        setIsDeleteModalOpen(false);
+        setAccountToDelete(null);
       } catch (err) {
         console.error("Failed to delete account:", err);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -181,9 +199,7 @@ export function BankAccountsPage() {
               onEdit={() => {
                 setIsFormOpen(true);
               }}
-              onDelete={() => {
-                void handleDeleteAccount();
-              }}
+              onDelete={handleDeleteClick}
               onAddTransaction={handleOpenTransactionForm}
             />
           </div>
@@ -226,6 +242,24 @@ export function BankAccountsPage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setAccountToDelete(null);
+        }}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Bank Account"
+        itemName={accountToDelete?.name ?? ""}
+        itemType="Bank Account"
+        warningMessage="This will permanently delete this bank account and all its transaction history."
+        linkedItems={accountTransactions.length > 0 ? [
+          { type: "Transaction", count: accountTransactions.length, description: "Will be deleted" },
+        ] : []}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

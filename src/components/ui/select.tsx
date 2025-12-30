@@ -155,7 +155,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
@@ -178,7 +178,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+          (opt.label ?? "").toLowerCase().includes(searchQuery.toLowerCase())
         )
       : options;
 
@@ -523,7 +523,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -545,7 +545,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+          (opt.label ?? "").toLowerCase().includes(searchQuery.toLowerCase())
         )
       : options;
 

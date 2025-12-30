@@ -1,23 +1,30 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ConfirmDeleteDialog } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { ExpenseList, ExpenseDetail, ExpenseForm } from "./components";
 import { useExpenses, useExpenseMutations } from "@/hooks/useExpenses";
 import { useCustomers } from "@/hooks/useCustomers";
+import { useSequenceMutations } from "@/hooks/useSequence";
 import type { Expense, ExpenseFormData } from "./types";
 
 export function ExpensesPage() {
   // Data from PowerSync
   const { expenses, isLoading, error } = useExpenses();
   const { customers } = useCustomers({ type: "supplier" });
-  const { createExpense, deleteExpense } = useExpenseMutations();
+  const { createExpense, updateExpense, deleteExpense } = useExpenseMutations();
+  const { getNextNumber } = useSequenceMutations();
 
   // State
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
   // Update selected expense when data changes
   const currentSelectedExpense = useMemo(() => {
@@ -35,31 +42,82 @@ export function ExpensesPage() {
   };
 
   const handleCreateExpense = () => {
+    setIsEditing(false);
+    setIsFormOpen(true);
+  };
+
+  const handleEditExpense = () => {
+    setIsEditing(true);
     setIsFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
+    setIsEditing(false);
   };
 
   const handleSubmitExpense = async (data: ExpenseFormData) => {
     setIsSubmitting(true);
     try {
-      await createExpense(data);
+      if (isEditing && currentSelectedExpense) {
+        // Update existing expense
+        const customer = customers.find((c) => c.id === data.customerId);
+        await updateExpense(currentSelectedExpense.id, {
+          category: data.category,
+          customerId: data.customerId,
+          customerName: customer?.name,
+          paidToName: data.paidToName,
+          paidToDetails: data.paidToDetails,
+          date: data.date,
+          amount: data.amount,
+          paymentMode: data.paymentMode,
+          referenceNumber: data.referenceNumber,
+          description: data.description,
+          notes: data.notes,
+        });
+      } else {
+        // Create new expense
+        const expenseNumber = await getNextNumber("expense");
+        const customer = customers.find((c) => c.id === data.customerId);
+        await createExpense({
+          expenseNumber,
+          category: data.category,
+          customerId: data.customerId,
+          customerName: customer?.name,
+          paidToName: data.paidToName,
+          paidToDetails: data.paidToDetails,
+          date: data.date,
+          amount: data.amount,
+          paymentMode: data.paymentMode,
+          referenceNumber: data.referenceNumber,
+          description: data.description,
+          notes: data.notes,
+        });
+      }
       setIsFormOpen(false);
+      setIsEditing(false);
     } catch (err) {
-      console.error("Failed to record expense:", err);
+      console.error("Failed to save expense:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteExpense = async () => {
+  const handleDeleteClick = () => {
     if (currentSelectedExpense) {
+      setExpenseToDelete(currentSelectedExpense);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (expenseToDelete) {
       setIsSubmitting(true);
       try {
-        await deleteExpense(currentSelectedExpense.id);
+        await deleteExpense(expenseToDelete.id);
         setSelectedExpense(null);
+        setIsDeleteModalOpen(false);
+        setExpenseToDelete(null);
       } catch (err) {
         console.error("Failed to delete expense:", err);
       } finally {
@@ -102,7 +160,6 @@ export function ExpensesPage() {
             <ExpenseList
               expenses={expenses}
               onExpenseClick={handleExpenseClick}
-              onCreateExpense={handleCreateExpense}
             />
           )}
         </div>
@@ -113,8 +170,8 @@ export function ExpensesPage() {
             <ExpenseDetail
               expense={currentSelectedExpense}
               onClose={handleCloseDetail}
-              onEdit={() => { setIsFormOpen(true); }}
-              onDelete={() => { void handleDeleteExpense(); }}
+              onEdit={handleEditExpense}
+              onDelete={handleDeleteClick}
               onPrint={() => { /* TODO: Implement print */ }}
             />
           </div>
@@ -125,19 +182,46 @@ export function ExpensesPage() {
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
           <ModalHeader onClose={handleCloseForm}>
-            Record Expense
+            {isEditing ? "Edit Expense" : "Record Expense"}
           </ModalHeader>
           <ModalBody className="p-0">
             <ExpenseForm
               customers={customers}
+              initialData={isEditing && currentSelectedExpense ? {
+                category: currentSelectedExpense.category,
+                customerId: currentSelectedExpense.customerId,
+                paidToName: currentSelectedExpense.paidToName,
+                paidToDetails: currentSelectedExpense.paidToDetails,
+                date: currentSelectedExpense.date,
+                amount: currentSelectedExpense.amount,
+                paymentMode: currentSelectedExpense.paymentMode,
+                referenceNumber: currentSelectedExpense.referenceNumber,
+                description: currentSelectedExpense.description,
+                notes: currentSelectedExpense.notes,
+              } : undefined}
               onSubmit={(data) => { void handleSubmitExpense(data); }}
               onCancel={handleCloseForm}
-              isSubmitting={isSubmitting}
+              isLoading={isSubmitting}
               className="p-6"
             />
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setExpenseToDelete(null);
+        }}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Expense"
+        itemName={expenseToDelete?.expenseNumber ?? ""}
+        itemType="Expense"
+        warningMessage="This will permanently delete this expense record."
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

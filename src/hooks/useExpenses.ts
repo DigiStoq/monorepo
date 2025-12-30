@@ -22,11 +22,13 @@ interface ExpenseRow {
   category: ExpenseCategory;
   customer_id: string | null;
   customer_name: string | null;
+  paid_to_name: string | null;
+  paid_to_details: string | null;
   date: string;
   amount: number;
   payment_mode: string;
   reference_number: string | null;
-  description: string;
+  description: string | null;
   notes: string | null;
   attachment_url: string | null;
   created_at: string;
@@ -38,13 +40,15 @@ function mapRowToExpense(row: ExpenseRow): Expense {
     id: row.id,
     expenseNumber: row.expense_number,
     category: row.category,
-    supplierId: row.customer_id ?? undefined,
-    supplierName: row.customer_name ?? undefined,
+    customerId: row.customer_id ?? undefined,
+    customerName: row.customer_name ?? undefined,
+    paidToName: row.paid_to_name ?? undefined,
+    paidToDetails: row.paid_to_details ?? undefined,
     date: row.date,
     amount: row.amount,
-    paymentMode: row.payment_mode,
+    paymentMode: row.payment_mode as Expense["paymentMode"],
     referenceNumber: row.reference_number ?? undefined,
-    description: row.description,
+    description: row.description ?? undefined,
     notes: row.notes ?? undefined,
     attachmentUrl: row.attachment_url ?? undefined,
     createdAt: row.created_at,
@@ -106,13 +110,15 @@ interface ExpenseMutations {
   createExpense: (data: {
     expenseNumber: string;
     category: ExpenseCategory;
-    supplierId?: string;
-    supplierName?: string;
+    customerId?: string;
+    customerName?: string;
+    paidToName?: string;
+    paidToDetails?: string;
     date: string;
     amount: number;
     paymentMode: string;
     referenceNumber?: string;
-    description: string;
+    description?: string;
     notes?: string;
     attachmentUrl?: string;
   }) => Promise<string>;
@@ -120,8 +126,10 @@ interface ExpenseMutations {
     id: string,
     data: Partial<{
       category: ExpenseCategory;
-      supplierId: string;
-      supplierName: string;
+      customerId: string;
+      customerName: string;
+      paidToName: string;
+      paidToDetails: string;
       date: string;
       amount: number;
       paymentMode: string;
@@ -141,13 +149,15 @@ export function useExpenseMutations(): ExpenseMutations {
     async (data: {
       expenseNumber: string;
       category: ExpenseCategory;
-      supplierId?: string;
-      supplierName?: string;
+      customerId?: string;
+      customerName?: string;
+      paidToName?: string;
+      paidToDetails?: string;
       date: string;
       amount: number;
       paymentMode: string;
       referenceNumber?: string;
-      description: string;
+      description?: string;
       notes?: string;
       attachmentUrl?: string;
     }): Promise<string> => {
@@ -156,21 +166,24 @@ export function useExpenseMutations(): ExpenseMutations {
 
       await db.execute(
         `INSERT INTO expenses (
-          id, expense_number, category, customer_id, customer_name, date, amount,
+          id, expense_number, category, customer_id, customer_name,
+          paid_to_name, paid_to_details, date, amount,
           payment_mode, reference_number, description, notes, attachment_url,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.expenseNumber,
           data.category,
-          data.supplierId ?? null,
-          data.supplierName ?? null,
+          data.customerId ?? null,
+          data.customerName ?? null,
+          data.paidToName ?? null,
+          data.paidToDetails ?? null,
           data.date,
           data.amount,
           data.paymentMode,
           data.referenceNumber ?? null,
-          data.description,
+          data.description ?? null,
           data.notes ?? null,
           data.attachmentUrl ?? null,
           now,
@@ -188,8 +201,10 @@ export function useExpenseMutations(): ExpenseMutations {
       id: string,
       data: Partial<{
         category: ExpenseCategory;
-        supplierId: string;
-        supplierName: string;
+        customerId: string;
+        customerName: string;
+        paidToName: string;
+        paidToDetails: string;
         date: string;
         amount: number;
         paymentMode: string;
@@ -207,13 +222,21 @@ export function useExpenseMutations(): ExpenseMutations {
         fields.push("category = ?");
         values.push(data.category);
       }
-      if (data.supplierId !== undefined) {
+      if (data.customerId !== undefined) {
         fields.push("customer_id = ?");
-        values.push(data.supplierId);
+        values.push(data.customerId);
       }
-      if (data.supplierName !== undefined) {
+      if (data.customerName !== undefined) {
         fields.push("customer_name = ?");
-        values.push(data.supplierName);
+        values.push(data.customerName);
+      }
+      if (data.paidToName !== undefined) {
+        fields.push("paid_to_name = ?");
+        values.push(data.paidToName);
+      }
+      if (data.paidToDetails !== undefined) {
+        fields.push("paid_to_details = ?");
+        values.push(data.paidToDetails);
       }
       if (data.date !== undefined) {
         fields.push("date = ?");

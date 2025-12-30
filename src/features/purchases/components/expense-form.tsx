@@ -10,7 +10,7 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Building2, Calendar, CreditCard, FileText, Hash } from "lucide-react";
+import { Building2, Calendar, CreditCard, FileText, Hash, User } from "lucide-react";
 import type { ExpenseFormData, ExpenseCategory, PaymentOutMode } from "../types";
 import type { Customer } from "@/features/customers";
 
@@ -69,6 +69,8 @@ export function ExpenseForm({
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [category, setCategory] = useState<ExpenseCategory>(initialData?.category ?? "other");
   const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [paidToName, setPaidToName] = useState(initialData?.paidToName ?? "");
+  const [paidToDetails, setPaidToDetails] = useState(initialData?.paidToDetails ?? "");
   const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
   const [amount, setAmount] = useState<number>(initialData?.amount ?? 0);
   const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(initialData?.paymentMode ?? "cash");
@@ -80,7 +82,9 @@ export function ExpenseForm({
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "No vendor (internal expense)" },
-      ...customers.map((c) => ({ value: c.id, label: c.name })),
+      ...customers
+        .filter((c) => c.name) // Filter out customers with null/undefined names
+        .map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
@@ -94,16 +98,18 @@ export function ExpenseForm({
 
   // Handle submit
   const handleSubmit = () => {
-    if (!description || amount <= 0) return;
+    if (amount <= 0) return;
 
     const formData: ExpenseFormData = {
       category,
       customerId: customerId || undefined,
+      paidToName: paidToName || undefined,
+      paidToDetails: paidToDetails || undefined,
       date,
       amount,
       paymentMode,
       referenceNumber: referenceNumber || undefined,
-      description,
+      description: description || undefined,
       notes: notes || undefined,
     };
 
@@ -191,13 +197,38 @@ export function ExpenseForm({
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   <Building2 className="h-4 w-4 inline mr-1" />
-                  Paid To (Optional)
+                  Vendor (Optional)
                 </label>
                 <Select
                   options={customerOptions}
                   value={customerId}
                   onChange={setCustomerId}
                   placeholder="Select vendor..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <User className="h-4 w-4 inline mr-1" />
+                  Paid To Name (Optional)
+                </label>
+                <Input
+                  type="text"
+                  value={paidToName}
+                  onChange={(e) => { setPaidToName(e.target.value); }}
+                  placeholder="Person or company name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Paid To Details (Optional)
+                </label>
+                <Input
+                  type="text"
+                  value={paidToDetails}
+                  onChange={(e) => { setPaidToDetails(e.target.value); }}
+                  placeholder="Contact, address, or other details"
                 />
               </div>
 
@@ -245,7 +276,7 @@ export function ExpenseForm({
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={!description || amount <= 0}
+          disabled={amount <= 0}
           isLoading={isLoading}
         >
           Record Expense

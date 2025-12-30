@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { CreditNote, CreditNoteItem } from "@/features/sales/types";
+import type { CreditNote, CreditNoteItem, CreditNoteReason } from "@/features/sales/types";
 
 // Database row types (snake_case columns from SQLite)
 interface CreditNoteRow {
@@ -43,7 +43,8 @@ function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
     date: row.date,
     invoiceId: row.invoice_id ?? undefined,
     invoiceNumber: row.invoice_number ?? undefined,
-    reason: row.reason,
+    reason: row.reason as CreditNoteReason,
+    items: [], // Items are fetched separately
     subtotal: row.subtotal,
     taxAmount: row.tax_amount,
     total: row.total,
@@ -239,7 +240,7 @@ export function useCreditNoteMutations(): CreditNoteMutations {
         `SELECT customer_id, total FROM credit_notes WHERE id = ?`,
         [id]
       );
-      const rows = result.rows._array as CreditNoteQueryRow[];
+      const rows = (result.rows?._array ?? []) as CreditNoteQueryRow[];
       const note = rows[0];
 
       if (note) {

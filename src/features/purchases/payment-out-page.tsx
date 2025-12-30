@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ConfirmDeleteDialog } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { PaymentOutList, PaymentOutDetail, PaymentOutForm } from "./components";
@@ -20,6 +20,10 @@ export function PaymentOutPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentOut | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<PaymentOut | null>(null);
 
   // Update selected payment when data changes
   const currentSelectedPayment = useMemo(() => {
@@ -47,7 +51,20 @@ export function PaymentOutPage() {
   const handleSubmitPayment = async (data: PaymentOutFormData) => {
     setIsSubmitting(true);
     try {
-      await createPayment(data);
+      const customer = customers.find((c) => c.id === data.customerId);
+      const invoice = invoices.find((i) => i.id === data.invoiceId);
+      await createPayment({
+        paymentNumber: `PAY-${Date.now()}`, // Generate payment number
+        supplierId: data.customerId,
+        supplierName: customer?.name ?? "Unknown",
+        date: data.date,
+        amount: data.amount,
+        paymentMode: data.paymentMode,
+        referenceNumber: data.referenceNumber,
+        invoiceId: data.invoiceId,
+        invoiceNumber: invoice?.invoiceNumber,
+        notes: data.notes,
+      });
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to record payment:", err);
@@ -56,12 +73,21 @@ export function PaymentOutPage() {
     }
   };
 
-  const handleDeletePayment = async () => {
+  const handleDeleteClick = () => {
     if (currentSelectedPayment) {
+      setPaymentToDelete(currentSelectedPayment);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (paymentToDelete) {
       setIsSubmitting(true);
       try {
-        await deletePayment(currentSelectedPayment.id);
+        await deletePayment(paymentToDelete.id);
         setSelectedPayment(null);
+        setIsDeleteModalOpen(false);
+        setPaymentToDelete(null);
       } catch (err) {
         console.error("Failed to delete payment:", err);
       } finally {
@@ -104,7 +130,6 @@ export function PaymentOutPage() {
             <PaymentOutList
               payments={payments}
               onPaymentClick={handlePaymentClick}
-              onRecordPayment={handleRecordPayment}
             />
           )}
         </div>
@@ -116,9 +141,8 @@ export function PaymentOutPage() {
               payment={currentSelectedPayment}
               onClose={handleCloseDetail}
               onEdit={() => { setIsFormOpen(true); }}
-              onDelete={() => { void handleDeletePayment(); }}
+              onDelete={handleDeleteClick}
               onPrint={() => { /* TODO: Implement print */ }}
-              onShare={() => { /* TODO: Implement share */ }}
             />
           </div>
         )}
@@ -136,12 +160,33 @@ export function PaymentOutPage() {
               invoices={invoices}
               onSubmit={(data) => { void handleSubmitPayment(data); }}
               onCancel={handleCloseForm}
-              isSubmitting={isSubmitting}
               className="p-6"
             />
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPaymentToDelete(null);
+        }}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Payment"
+        itemName={paymentToDelete?.paymentNumber ?? ""}
+        itemType="Payment"
+        warningMessage={
+          paymentToDelete?.invoiceId
+            ? "This will delete the payment and reverse the balance on the linked invoice."
+            : "This will permanently delete this payment record and reverse the supplier balance."
+        }
+        linkedItems={paymentToDelete?.invoiceId ? [
+          { type: "Invoice Link", count: 1, description: "Balance will be reversed" },
+        ] : undefined}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

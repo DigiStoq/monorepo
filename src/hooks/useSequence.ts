@@ -64,7 +64,7 @@ export function useSequenceMutations(): SequenceMutations {
         `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
         [type]
       );
-      const rows = result.rows._array as SequenceCounter[];
+      const rows = (result.rows?._array ?? []) as SequenceCounter[];
       const counter = rows[0];
 
       if (!counter) {

@@ -125,7 +125,7 @@ export function useCashTransactionMutations(): CashTransactionMutations {
       const result = await db.execute(
         `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
       );
-      const rows = result.rows._array as { balance: number }[];
+      const rows = (result.rows?._array ?? []) as { balance: number }[];
       const currentBalance: number = rows[0]?.balance ?? 0;
 
       // Calculate new balance

@@ -2,11 +2,7 @@ import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  ConfirmDeleteDialog,
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
@@ -179,40 +175,23 @@ export function ItemsPage() {
       />
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDeleteDialog
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setItemToDelete(null);
         }}
-        size="sm"
-      >
-        <ModalContent>
-          <ModalHeader title="Delete Item" />
-          <ModalBody>
-            <p className="text-slate-600">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-slate-900">{itemToDelete?.name}</span>?
-              This action cannot be undone.
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setItemToDelete(null);
-              }}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={() => { void handleConfirmDelete(); }} isLoading={isSubmitting}>
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Item"
+        itemName={itemToDelete?.name ?? ""}
+        itemType={itemToDelete?.type === "service" ? "Service" : "Product"}
+        warningMessage={
+          itemToDelete?.stockQuantity !== 0
+            ? `This item has ${itemToDelete?.stockQuantity ?? 0} units in stock. Deleting will remove all stock and transaction history.`
+            : "This will permanently delete this item."
+        }
+        isLoading={isSubmitting}
+      />
 
       {/* Stock Adjustment Modal */}
       <StockAdjustmentModal

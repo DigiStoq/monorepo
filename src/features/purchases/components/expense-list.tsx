@@ -70,10 +70,12 @@ export function ExpenseList({ expenses, onExpenseClick, className }: ExpenseList
   // Filter expenses
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
+      const searchLower = search.toLowerCase();
       const matchesSearch =
-        expense.expenseNumber.toLowerCase().includes(search.toLowerCase()) ||
-        expense.description.toLowerCase().includes(search.toLowerCase()) ||
-        (expense.customerName?.toLowerCase().includes(search.toLowerCase()) ?? false);
+        (expense.expenseNumber?.toLowerCase().includes(searchLower) ?? false) ||
+        (expense.description?.toLowerCase().includes(searchLower) ?? false) ||
+        (expense.customerName?.toLowerCase().includes(searchLower) ?? false) ||
+        (expense.paidToName?.toLowerCase().includes(searchLower) ?? false);
 
       const matchesCategory = categoryFilter === "all" || expense.category === categoryFilter;
 
@@ -174,7 +176,7 @@ export function ExpenseList({ expenses, onExpenseClick, className }: ExpenseList
           </Card>
         ) : (
           filteredExpenses.map((expense) => {
-            const config = categoryConfig[expense.category];
+            const config = categoryConfig[expense.category] ?? categoryConfig.other;
 
             return (
               <Card
@@ -191,10 +193,10 @@ export function ExpenseList({ expenses, onExpenseClick, className }: ExpenseList
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-slate-900">
-                            {expense.description}
+                            {expense.description ?? "No description"}
                           </span>
                           <Badge variant="secondary" size="sm">
-                            {expense.expenseNumber}
+                            {expense.expenseNumber ?? "N/A"}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-slate-500 mt-0.5">

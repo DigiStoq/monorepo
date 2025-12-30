@@ -39,41 +39,47 @@ interface PurchaseInvoiceItemRow {
 }
 
 function mapRowToPurchaseInvoice(row: PurchaseInvoiceRow): PurchaseInvoice {
-  return {
+  const invoice: PurchaseInvoice = {
     id: row.id,
     invoiceNumber: row.invoice_number,
-    supplierInvoiceNumber: row.supplier_invoice_number ?? undefined,
-    supplierId: row.customer_id,
-    supplierName: row.customer_name,
+    customerId: row.customer_id,
+    customerName: row.customer_name,
     date: row.date,
     dueDate: row.due_date,
-    status: row.status,
+    status: row.status as PurchaseInvoice["status"],
+    items: [], // Will be populated by usePurchaseInvoiceById
     subtotal: row.subtotal,
     taxAmount: row.tax_amount,
     discountAmount: row.discount_amount,
     total: row.total,
     amountPaid: row.amount_paid,
     amountDue: row.amount_due,
-    notes: row.notes ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+
+  if (row.supplier_invoice_number) invoice.supplierInvoiceNumber = row.supplier_invoice_number;
+  if (row.notes) invoice.notes = row.notes;
+
+  return invoice;
 }
 
 function mapRowToPurchaseInvoiceItem(row: PurchaseInvoiceItemRow): PurchaseInvoiceItem {
-  return {
+  const item: PurchaseInvoiceItem = {
     id: row.id,
-    invoiceId: row.invoice_id,
-    itemId: row.item_id ?? undefined,
+    itemId: row.item_id ?? "",
     itemName: row.item_name,
-    description: row.description ?? undefined,
     quantity: row.quantity,
-    unit: row.unit ?? undefined,
+    unit: row.unit ?? "pcs",
     unitPrice: row.unit_price,
-    discountPercent: row.discount_percent,
-    taxPercent: row.tax_percent,
     amount: row.amount,
   };
+
+  if (row.description) item.description = row.description;
+  if (row.discount_percent) item.discountPercent = row.discount_percent;
+  if (row.tax_percent) item.taxPercent = row.tax_percent;
+
+  return item;
 }
 
 export function usePurchaseInvoices(filters?: {
@@ -273,7 +279,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         `UPDATE purchase_invoices
          SET amount_paid = amount_paid + ?,
              amount_due = amount_due - ?,
-             status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE 'partial' END,
+             status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE status END,
              updated_at = ?
          WHERE id = ?`,
         [amount, amount, amount, now, id]
@@ -284,6 +290,60 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
 
   const deleteInvoice = useCallback(
     async (id: string): Promise<void> => {
+      const now = new Date().toISOString();
+
+      // Get invoice details to reverse balance
+      const invoiceResult = await db.execute(
+        `SELECT customer_id, total FROM purchase_invoices WHERE id = ?`,
+        [id]
+      );
+      const invoice = invoiceResult.rows?._array?.[0] as { customer_id: string; total: number } | undefined;
+
+      // Get items to reverse stock
+      const itemsResult = await db.execute(
+        `SELECT item_id, quantity FROM purchase_invoice_items WHERE invoice_id = ?`,
+        [id]
+      );
+      const items = (itemsResult.rows?._array ?? []) as { item_id: string; quantity: number }[];
+
+      // Get linked payments to delete and reverse
+      const paymentsResult = await db.execute(
+        `SELECT id, amount FROM payment_outs WHERE invoice_id = ?`,
+        [id]
+      );
+      const payments = (paymentsResult.rows?._array ?? []) as { id: string; amount: number }[];
+
+      // Reverse supplier balance for each payment (payments increased balance, so decrease it back)
+      for (const payment of payments) {
+        if (invoice) {
+          await db.execute(
+            `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
+            [payment.amount, now, invoice.customer_id]
+          );
+        }
+      }
+
+      // Delete linked payments
+      await db.execute(`DELETE FROM payment_outs WHERE invoice_id = ?`, [id]);
+
+      // Reverse stock for each item (decrease - we're undoing the purchase)
+      for (const item of items) {
+        if (item.item_id) {
+          await db.execute(
+            `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
+            [item.quantity, now, item.item_id]
+          );
+        }
+      }
+
+      // Reverse supplier balance (increase - we're undoing the payable)
+      if (invoice) {
+        await db.execute(
+          `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+          [invoice.total, now, invoice.customer_id]
+        );
+      }
+
       await db.execute(`DELETE FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
       await db.execute(`DELETE FROM purchase_invoices WHERE id = ?`, [id]);
     },
@@ -301,33 +361,59 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
 interface PurchaseInvoiceStats {
   totalPurchases: number;
   totalPayable: number;
-  overdueCount: number;
+  returnedCount: number;
   thisMonthPurchases: number;
 }
 
 export function usePurchaseInvoiceStats(): PurchaseInvoiceStats {
   const { data: totalPurchases } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices WHERE status != 'cancelled'`
+    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices WHERE status != 'returned'`
   );
 
   const { data: totalPayable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM purchase_invoices WHERE status IN ('received', 'partial', 'overdue')`
+    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM purchase_invoices WHERE status IN ('draft', 'ordered', 'received') AND amount_due > 0`
   );
 
-  const { data: overdueCount } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM purchase_invoices WHERE status = 'overdue'`
+  const { data: returnedCount } = useQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM purchase_invoices WHERE status = 'returned'`
   );
 
   const { data: thisMonthPurchases } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices
-     WHERE status != 'cancelled'
+     WHERE status != 'returned'
      AND date >= date('now', 'start of month')`
   );
 
   return {
     totalPurchases: totalPurchases[0]?.sum ?? 0,
     totalPayable: totalPayable[0]?.sum ?? 0,
-    overdueCount: overdueCount[0]?.count ?? 0,
+    returnedCount: returnedCount[0]?.count ?? 0,
     thisMonthPurchases: thisMonthPurchases[0]?.sum ?? 0,
+  };
+}
+
+export interface PurchaseInvoiceLinkedItems {
+  itemsCount: number;
+  paymentsCount: number;
+}
+
+export function usePurchaseInvoiceLinkedItems(invoiceId: string | null): PurchaseInvoiceLinkedItems {
+  const { data: itemsCount } = useQuery<{ count: number }>(
+    invoiceId
+      ? `SELECT COUNT(*) as count FROM purchase_invoice_items WHERE invoice_id = ?`
+      : `SELECT 0 as count`,
+    invoiceId ? [invoiceId] : []
+  );
+
+  const { data: paymentsCount } = useQuery<{ count: number }>(
+    invoiceId
+      ? `SELECT COUNT(*) as count FROM payment_outs WHERE invoice_id = ?`
+      : `SELECT 0 as count`,
+    invoiceId ? [invoiceId] : []
+  );
+
+  return {
+    itemsCount: itemsCount[0]?.count ?? 0,
+    paymentsCount: paymentsCount[0]?.count ?? 0,
   };
 }

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ConfirmDeleteDialog } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { PaymentInList, PaymentInDetail, PaymentInForm } from "./components";
@@ -20,6 +20,10 @@ export function PaymentInPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentIn | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<PaymentIn | null>(null);
 
   // Update selected payment when data changes
   const currentSelectedPayment = useMemo(() => {
@@ -47,7 +51,20 @@ export function PaymentInPage() {
   const handleSubmitPayment = async (data: PaymentInFormData) => {
     setIsSubmitting(true);
     try {
-      await createPayment(data);
+      const customer = customers.find((c) => c.id === data.customerId);
+      const invoice = invoices.find((i) => i.id === data.invoiceId);
+      await createPayment({
+        receiptNumber: `REC-${Date.now()}`,
+        customerId: data.customerId,
+        customerName: customer?.name ?? "Unknown",
+        date: data.date,
+        amount: data.amount,
+        paymentMode: data.paymentMode,
+        referenceNumber: data.referenceNumber,
+        invoiceId: data.invoiceId,
+        invoiceNumber: invoice?.invoiceNumber,
+        notes: data.notes,
+      });
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to record payment:", err);
@@ -56,12 +73,21 @@ export function PaymentInPage() {
     }
   };
 
-  const handleDeletePayment = async () => {
+  const handleDeleteClick = () => {
     if (currentSelectedPayment) {
+      setPaymentToDelete(currentSelectedPayment);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (paymentToDelete) {
       setIsSubmitting(true);
       try {
-        await deletePayment(currentSelectedPayment.id);
+        await deletePayment(paymentToDelete.id);
         setSelectedPayment(null);
+        setIsDeleteModalOpen(false);
+        setPaymentToDelete(null);
       } catch (err) {
         console.error("Failed to delete payment:", err);
       } finally {
@@ -118,7 +144,7 @@ export function PaymentInPage() {
               onEdit={() => {
                 setIsFormOpen(true);
               }}
-              onDelete={() => { void handleDeletePayment(); }}
+              onDelete={handleDeleteClick}
               onPrint={() => { /* TODO: Implement print */ }}
               onShare={() => { /* TODO: Implement share */ }}
             />
@@ -136,12 +162,33 @@ export function PaymentInPage() {
               invoices={invoices}
               onSubmit={(data) => { void handleSubmitPayment(data); }}
               onCancel={handleCloseForm}
-              isSubmitting={isSubmitting}
               className="p-6"
             />
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPaymentToDelete(null);
+        }}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        title="Delete Payment"
+        itemName={paymentToDelete?.receiptNumber ?? ""}
+        itemType="Payment"
+        warningMessage={
+          paymentToDelete?.invoiceId
+            ? "This will delete the payment and reverse the balance on the linked invoice."
+            : "This will permanently delete this payment record and reverse the customer balance."
+        }
+        linkedItems={paymentToDelete?.invoiceId ? [
+          { type: "Invoice Link", count: 1, description: "Balance will be reversed" },
+        ] : undefined}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

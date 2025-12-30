@@ -38,6 +38,7 @@ import {
   DayBookReport,
   ProfitLossReportPage,
   CashFlowReportPage,
+  CashMovementReportPage,
   TaxSummaryReport,
 } from "@/features/reports";
 import {
@@ -356,6 +357,12 @@ const cashFlowReportRoute = createRoute({
   component: CashFlowReportPage,
 });
 
+const cashMovementReportRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/reports/financial/cash-movement",
+  component: CashMovementReportPage,
+});
+
 const taxSummaryReportRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/reports/financial/tax-summary",
@@ -482,6 +489,7 @@ const protectedRoutes = protectedLayoutRoute.addChildren([
   dayBookReportRoute,
   profitLossReportRoute,
   cashFlowReportRoute,
+  cashMovementReportRoute,
   taxSummaryReportRoute,
   // Settings
   settingsRoute,

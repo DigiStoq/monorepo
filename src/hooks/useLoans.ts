@@ -75,7 +75,7 @@ function mapRowToLoanPayment(row: LoanPaymentRow): LoanPayment {
     principalAmount: row.principal_amount,
     interestAmount: row.interest_amount,
     totalAmount: row.total_amount,
-    paymentMethod: row.payment_method ?? undefined,
+    paymentMethod: (row.payment_method ?? "cash") as "cash" | "bank" | "cheque",
     referenceNumber: row.reference_number ?? undefined,
     notes: row.notes ?? undefined,
     createdAt: row.created_at,

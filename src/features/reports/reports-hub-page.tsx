@@ -22,6 +22,7 @@ import {
   Building2,
   Boxes,
   Scale,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -91,6 +92,7 @@ const reportCategories = [
     reports: [
       { id: "profit-loss", title: "Profit & Loss", description: "Revenue, expenses, and net profit", path: "/reports/financial/profit-loss", icon: BarChart3 },
       { id: "cash-flow", title: "Cash Flow Statement", description: "Cash inflows and outflows", path: "/reports/financial/cash-flow", icon: Wallet },
+      { id: "cash-movement", title: "Cash Movement", description: "Money flow by payment mode", path: "/reports/financial/cash-movement", icon: ArrowLeftRight },
       { id: "day-book", title: "Day Book", description: "All transactions by date", path: "/reports/financial/day-book", icon: Calendar },
       { id: "tax-summary", title: "Tax Summary", description: "Tax collected and paid summary", path: "/reports/financial/tax", icon: Receipt },
     ],
