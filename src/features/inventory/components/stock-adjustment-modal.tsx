@@ -25,7 +25,7 @@ export function StockAdjustmentModal({
   onSubmit,
   item,
   isLoading,
-}: StockAdjustmentModalProps) {
+}: StockAdjustmentModalProps): React.ReactNode | null {
   const [adjustmentType, setAdjustmentType] = useState<"add" | "remove">("add");
   const [quantity, setQuantity] = useState<number>(0);
 
@@ -47,7 +47,11 @@ export function StockAdjustmentModal({
     const newStock = item.stockQuantity + adjustedQuantity;
 
     if (quantity <= 0) {
-      return { newStock, isValid: false, errorMessage: "Enter a quantity greater than 0" };
+      return {
+        newStock,
+        isValid: false,
+        errorMessage: "Enter a quantity greater than 0",
+      };
     }
 
     if (newStock < 0) {
@@ -61,7 +65,7 @@ export function StockAdjustmentModal({
     return { newStock, isValid: true, errorMessage: null };
   }, [item, adjustmentType, quantity]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!isValid || !item) return;
 
     const adjustedQuantity = adjustmentType === "add" ? quantity : -quantity;
@@ -83,7 +87,9 @@ export function StockAdjustmentModal({
             Cancel
           </Button>
           <Button
-            onClick={() => { void handleSubmit(); }}
+            onClick={() => {
+              void handleSubmit();
+            }}
             disabled={!isValid}
             isLoading={isLoading}
           >
@@ -109,7 +115,9 @@ export function StockAdjustmentModal({
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => { setAdjustmentType("add"); }}
+            onClick={() => {
+              setAdjustmentType("add");
+            }}
             className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
               adjustmentType === "add"
                 ? "border-success bg-success-light text-success"
@@ -121,7 +129,9 @@ export function StockAdjustmentModal({
           </button>
           <button
             type="button"
-            onClick={() => { setAdjustmentType("remove"); }}
+            onClick={() => {
+              setAdjustmentType("remove");
+            }}
             className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
               adjustmentType === "remove"
                 ? "border-error bg-error-light text-error"
@@ -142,7 +152,9 @@ export function StockAdjustmentModal({
             type="number"
             min={0}
             value={quantity || ""}
-            onChange={(e) => { setQuantity(parseInt(e.target.value) || 0); }}
+            onChange={(e) => {
+              setQuantity(parseInt(e.target.value) || 0);
+            }}
             placeholder="Enter quantity"
             autoFocus
           />

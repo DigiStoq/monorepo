@@ -81,12 +81,19 @@ export function usePaymentOuts(filters?: {
       params.push(searchPattern, searchPattern);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM payment_outs ${whereClause} ORDER BY date DESC, created_at DESC`,
       params,
     };
-  }, [filters?.supplierId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
+  }, [
+    filters?.supplierId,
+    filters?.paymentMode,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<PaymentOutRow>(query, params);
 
@@ -101,7 +108,9 @@ export function usePaymentOutById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<PaymentOutRow>(
-    id ? `SELECT * FROM payment_outs WHERE id = ?` : `SELECT * FROM payment_outs WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM payment_outs WHERE id = ?`
+      : `SELECT * FROM payment_outs WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -201,9 +210,9 @@ export function usePaymentOutMutations(): PaymentOutMutations {
         [id]
       );
       const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
-      const payment = rows[0];
 
-      if (payment) {
+      if (rows.length > 0) {
+        const payment = rows[0];
         const now = new Date().toISOString();
 
         // Reverse supplier balance
@@ -223,7 +232,13 @@ export function usePaymentOutMutations(): PaymentOutMutations {
                  status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE status END,
                  updated_at = ?
              WHERE id = ?`,
-            [payment.amount, payment.amount, payment.amount, now, payment.invoice_id]
+            [
+              payment.amount,
+              payment.amount,
+              payment.amount,
+              now,
+              payment.invoice_id,
+            ]
           );
         }
       }

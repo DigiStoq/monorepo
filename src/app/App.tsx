@@ -38,7 +38,7 @@ function LoadingScreen(): ReactNode {
 // ============================================================================
 
 function ErrorScreen({ error }: { error: string | null }): ReactNode {
-  const handleRetry = () => {
+  const handleRetry = (): void => {
     window.location.reload();
   };
 
@@ -70,13 +70,14 @@ function ErrorScreen({ error }: { error: string | null }): ReactNode {
 // MAIN APP
 // ============================================================================
 
-export function App(): ReactNode {
+export function App(): React.ReactNode {
   const [db, setDb] = useState<PowerSyncDatabase | null>(null);
   const [status, setStatus] = useState<AppStatus>("loading");
   const [error, setError] = useState<string | null>(null);
 
   // Auth state
-  const { initialize: initializeAuth, isInitialized: authInitialized } = useAuthStore();
+  const { initialize: initializeAuth, isInitialized: authInitialized } =
+    useAuthStore();
 
   useEffect(() => {
     let mounted = true;

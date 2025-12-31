@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Card, CardBody, CardHeader } from "@/components/ui";
-import { Receipt, TrendingUp, TrendingDown, Calculator, AlertCircle } from "lucide-react";
+import {
+  Receipt,
+  TrendingUp,
+  TrendingDown,
+  Calculator,
+  AlertCircle,
+} from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
@@ -11,16 +17,18 @@ import { useTaxSummaryReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function TaxSummaryReport() {
+export function TaxSummaryReport(): React.ReactNode {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
 
   // Fetch data from PowerSync
   const { summary, isLoading } = useTaxSummaryReport(dateRange);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -50,20 +58,26 @@ export function TaxSummaryReport() {
   const data = summary;
 
   // Tax rate calculation
-  const salesTaxRate = data.salesTax.taxableAmount > 0
-    ? (data.salesTax.taxCollected / data.salesTax.taxableAmount) * 100
-    : 0;
-  const purchaseTaxRate = data.purchaseTax.taxableAmount > 0
-    ? (data.purchaseTax.taxPaid / data.purchaseTax.taxableAmount) * 100
-    : 0;
+  const salesTaxRate =
+    data.salesTax.taxableAmount > 0
+      ? (data.salesTax.taxCollected / data.salesTax.taxableAmount) * 100
+      : 0;
+  const purchaseTaxRate =
+    data.purchaseTax.taxableAmount > 0
+      ? (data.purchaseTax.taxPaid / data.purchaseTax.taxableAmount) * 100
+      : 0;
 
   return (
     <ReportLayout
       title="Tax Summary"
       subtitle="Sales tax collected vs purchase tax paid"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -80,8 +94,12 @@ export function TaxSummaryReport() {
                   <TrendingUp className="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <p className="text-xs text-green-600">Tax Collected (Sales)</p>
-                  <p className="text-xl font-bold text-success">{formatCurrency(data.salesTax.taxCollected)}</p>
+                  <p className="text-xs text-green-600">
+                    Tax Collected (Sales)
+                  </p>
+                  <p className="text-xl font-bold text-success">
+                    {formatCurrency(data.salesTax.taxCollected)}
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -93,37 +111,59 @@ export function TaxSummaryReport() {
                   <TrendingDown className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-orange-600">Tax Paid (Purchases)</p>
-                  <p className="text-xl font-bold text-orange-700">{formatCurrency(data.purchaseTax.taxPaid)}</p>
+                  <p className="text-xs text-orange-600">
+                    Tax Paid (Purchases)
+                  </p>
+                  <p className="text-xl font-bold text-orange-700">
+                    {formatCurrency(data.purchaseTax.taxPaid)}
+                  </p>
                 </div>
               </div>
             </CardBody>
           </Card>
-          <Card className={cn(
-            data.netTaxLiability >= 0 ? "bg-amber-50 border-amber-100" : "bg-teal-50 border-teal-100"
-          )}>
+          <Card
+            className={cn(
+              data.netTaxLiability >= 0
+                ? "bg-amber-50 border-amber-100"
+                : "bg-teal-50 border-teal-100"
+            )}
+          >
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  data.netTaxLiability >= 0 ? "bg-amber-100" : "bg-teal-100"
-                )}>
-                  <Calculator className={cn(
-                    "h-5 w-5",
-                    data.netTaxLiability >= 0 ? "text-amber-600" : "text-teal-600"
-                  )} />
+                <div
+                  className={cn(
+                    "p-2 rounded-lg",
+                    data.netTaxLiability >= 0 ? "bg-amber-100" : "bg-teal-100"
+                  )}
+                >
+                  <Calculator
+                    className={cn(
+                      "h-5 w-5",
+                      data.netTaxLiability >= 0
+                        ? "text-amber-600"
+                        : "text-teal-600"
+                    )}
+                  />
                 </div>
                 <div>
-                  <p className={cn(
-                    "text-xs",
-                    data.netTaxLiability >= 0 ? "text-amber-600" : "text-teal-600"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      data.netTaxLiability >= 0
+                        ? "text-amber-600"
+                        : "text-teal-600"
+                    )}
+                  >
                     {data.netTaxLiability >= 0 ? "Tax Payable" : "Tax Credit"}
                   </p>
-                  <p className={cn(
-                    "text-xl font-bold",
-                    data.netTaxLiability >= 0 ? "text-amber-700" : "text-teal-700"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-xl font-bold",
+                      data.netTaxLiability >= 0
+                        ? "text-amber-700"
+                        : "text-teal-700"
+                    )}
+                  >
                     {formatCurrency(Math.abs(data.netTaxLiability))}
                   </p>
                 </div>
@@ -138,7 +178,9 @@ export function TaxSummaryReport() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Avg Tax Rate</p>
-                  <p className="text-xl font-bold text-slate-900">{salesTaxRate.toFixed(1)}%</p>
+                  <p className="text-xl font-bold text-slate-900">
+                    {salesTaxRate.toFixed(1)}%
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -152,22 +194,32 @@ export function TaxSummaryReport() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-success" />
-                <h3 className="font-medium text-slate-900">Sales Tax (Output Tax)</h3>
+                <h3 className="font-medium text-slate-900">
+                  Sales Tax (Output Tax)
+                </h3>
               </div>
             </CardHeader>
             <CardBody className="p-0">
               <div className="divide-y divide-slate-100">
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Taxable Sales Amount</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(data.salesTax.taxableAmount)}</span>
+                  <span className="font-medium text-slate-900">
+                    {formatCurrency(data.salesTax.taxableAmount)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Tax Rate</span>
-                  <span className="font-medium text-slate-900">{salesTaxRate.toFixed(1)}%</span>
+                  <span className="font-medium text-slate-900">
+                    {salesTaxRate.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-green-50">
-                  <span className="font-medium text-slate-900">Tax Collected</span>
-                  <span className="font-bold text-success">{formatCurrency(data.salesTax.taxCollected)}</span>
+                  <span className="font-medium text-slate-900">
+                    Tax Collected
+                  </span>
+                  <span className="font-bold text-success">
+                    {formatCurrency(data.salesTax.taxCollected)}
+                  </span>
                 </div>
               </div>
             </CardBody>
@@ -178,22 +230,34 @@ export function TaxSummaryReport() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-orange-600" />
-                <h3 className="font-medium text-slate-900">Purchase Tax (Input Tax)</h3>
+                <h3 className="font-medium text-slate-900">
+                  Purchase Tax (Input Tax)
+                </h3>
               </div>
             </CardHeader>
             <CardBody className="p-0">
               <div className="divide-y divide-slate-100">
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-slate-600">Taxable Purchase Amount</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(data.purchaseTax.taxableAmount)}</span>
+                  <span className="text-slate-600">
+                    Taxable Purchase Amount
+                  </span>
+                  <span className="font-medium text-slate-900">
+                    {formatCurrency(data.purchaseTax.taxableAmount)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Tax Rate</span>
-                  <span className="font-medium text-slate-900">{purchaseTaxRate.toFixed(1)}%</span>
+                  <span className="font-medium text-slate-900">
+                    {purchaseTaxRate.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-orange-50">
-                  <span className="font-medium text-slate-900">Tax Paid (Credit)</span>
-                  <span className="font-bold text-orange-700">{formatCurrency(data.purchaseTax.taxPaid)}</span>
+                  <span className="font-medium text-slate-900">
+                    Tax Paid (Credit)
+                  </span>
+                  <span className="font-bold text-orange-700">
+                    {formatCurrency(data.purchaseTax.taxPaid)}
+                  </span>
                 </div>
               </div>
             </CardBody>
@@ -201,9 +265,13 @@ export function TaxSummaryReport() {
         </div>
 
         {/* Net Tax Liability */}
-        <Card className={cn(
-          data.netTaxLiability >= 0 ? "bg-amber-50 border-amber-200" : "bg-teal-50 border-teal-200"
-        )}>
+        <Card
+          className={cn(
+            data.netTaxLiability >= 0
+              ? "bg-amber-50 border-amber-200"
+              : "bg-teal-50 border-teal-200"
+          )}
+        >
           <CardBody>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -213,16 +281,26 @@ export function TaxSummaryReport() {
                   <Calculator className="h-8 w-8 text-teal-600" />
                 )}
                 <div>
-                  <p className={cn(
-                    "text-sm",
-                    data.netTaxLiability >= 0 ? "text-amber-600" : "text-teal-600"
-                  )}>
-                    {data.netTaxLiability >= 0 ? "Net Tax Payable to Government" : "Net Tax Credit Available"}
+                  <p
+                    className={cn(
+                      "text-sm",
+                      data.netTaxLiability >= 0
+                        ? "text-amber-600"
+                        : "text-teal-600"
+                    )}
+                  >
+                    {data.netTaxLiability >= 0
+                      ? "Net Tax Payable to Government"
+                      : "Net Tax Credit Available"}
                   </p>
-                  <p className={cn(
-                    "text-3xl font-bold",
-                    data.netTaxLiability >= 0 ? "text-amber-700" : "text-teal-700"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-3xl font-bold",
+                      data.netTaxLiability >= 0
+                        ? "text-amber-700"
+                        : "text-teal-700"
+                    )}
+                  >
                     {formatCurrency(Math.abs(data.netTaxLiability))}
                   </p>
                 </div>
@@ -230,7 +308,8 @@ export function TaxSummaryReport() {
               <div className="text-right">
                 <p className="text-sm text-slate-500">Calculation</p>
                 <p className="text-sm text-slate-600">
-                  {formatCurrency(data.salesTax.taxCollected)} - {formatCurrency(data.purchaseTax.taxPaid)}
+                  {formatCurrency(data.salesTax.taxCollected)} -{" "}
+                  {formatCurrency(data.purchaseTax.taxPaid)}
                 </p>
               </div>
             </div>

@@ -19,7 +19,7 @@ export function SettingsCard({
   children,
   className,
   actions,
-}: SettingsCardProps) {
+}: SettingsCardProps): React.ReactNode {
   return (
     <Card className={cn(className)}>
       <CardHeader className="border-b border-slate-100 bg-slate-50/50">
@@ -57,7 +57,7 @@ export function SettingsRow({
   description,
   children,
   className,
-}: SettingsRowProps) {
+}: SettingsRowProps): React.ReactNode {
   return (
     <div
       className={cn(
@@ -82,7 +82,11 @@ interface SettingsGroupProps {
   className?: string;
 }
 
-export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
+export function SettingsGroup({
+  title,
+  children,
+  className,
+}: SettingsGroupProps): React.ReactNode {
   return (
     <div className={cn("space-y-4", className)}>
       {title && (

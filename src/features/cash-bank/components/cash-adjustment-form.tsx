@@ -26,7 +26,7 @@ export function CashAdjustmentForm({
   onSubmit,
   onCancel,
   className,
-}: CashAdjustmentFormProps) {
+}: CashAdjustmentFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState<"add" | "subtract">("add");
@@ -39,7 +39,7 @@ export function CashAdjustmentForm({
     type === "add" ? currentBalance + amount : currentBalance - amount;
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -47,7 +47,7 @@ export function CashAdjustmentForm({
     }).format(value);
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (amount <= 0 || !description) return;
 
     const formData: CashAdjustmentFormData = {

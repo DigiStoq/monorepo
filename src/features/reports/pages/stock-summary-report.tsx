@@ -1,7 +1,21 @@
 import { useState, useMemo } from "react";
-import { Card, CardBody, Input, Select, Badge, type SelectOption } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  Input,
+  Select,
+  Badge,
+  type SelectOption,
+} from "@/components/ui";
 import { ReportLayout } from "../components";
-import { Search, Package, AlertTriangle, DollarSign, Boxes, TrendingUp } from "lucide-react";
+import {
+  Search,
+  Package,
+  AlertTriangle,
+  DollarSign,
+  Boxes,
+  TrendingUp,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStockSummaryReport } from "@/hooks/useReports";
 
@@ -9,7 +23,7 @@ import { useStockSummaryReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function StockSummaryReport() {
+export function StockSummaryReport(): React.ReactNode {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showLowStock, setShowLowStock] = useState(false);
@@ -19,14 +33,19 @@ export function StockSummaryReport() {
 
   // Get unique categories
   const categories = useMemo(() => {
-    const cats = [...new Set(stockData.map((item) => item.category).filter(Boolean))];
+    const cats = [
+      ...new Set(stockData.map((item) => item.category).filter(Boolean)),
+    ];
     return cats as string[];
   }, [stockData]);
 
-  const categoryOptions: SelectOption[] = useMemo(() => [
-    { value: "all", label: "All Categories" },
-    ...categories.map((cat) => ({ value: cat, label: cat })),
-  ], [categories]);
+  const categoryOptions: SelectOption[] = useMemo(
+    () => [
+      { value: "all", label: "All Categories" },
+      ...categories.map((cat) => ({ value: cat, label: cat })),
+    ],
+    [categories]
+  );
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -35,7 +54,8 @@ export function StockSummaryReport() {
         item.itemName.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase());
 
-      const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
+      const matchesCategory =
+        categoryFilter === "all" || item.category === categoryFilter;
       const matchesLowStock = !showLowStock || item.isLowStock;
 
       return matchesSearch && matchesCategory && matchesLowStock;
@@ -45,16 +65,33 @@ export function StockSummaryReport() {
   // Calculate totals
   const totals = useMemo(() => {
     const totalItems = filteredItems.length;
-    const totalQuantity = filteredItems.reduce((sum, item) => sum + item.stockQuantity, 0);
-    const totalValue = filteredItems.reduce((sum, item) => sum + item.stockValue, 0);
-    const lowStockCount = filteredItems.filter((item) => item.isLowStock).length;
-    const potentialRevenue = filteredItems.reduce((sum, item) => sum + (item.stockQuantity * item.salePrice), 0);
+    const totalQuantity = filteredItems.reduce(
+      (sum, item) => sum + item.stockQuantity,
+      0
+    );
+    const totalValue = filteredItems.reduce(
+      (sum, item) => sum + item.stockValue,
+      0
+    );
+    const lowStockCount = filteredItems.filter(
+      (item) => item.isLowStock
+    ).length;
+    const potentialRevenue = filteredItems.reduce(
+      (sum, item) => sum + item.stockQuantity * item.salePrice,
+      0
+    );
 
-    return { totalItems, totalQuantity, totalValue, lowStockCount, potentialRevenue };
+    return {
+      totalItems,
+      totalQuantity,
+      totalValue,
+      lowStockCount,
+      potentialRevenue,
+    };
   }, [filteredItems]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -79,9 +116,15 @@ export function StockSummaryReport() {
     <ReportLayout
       title="Stock Summary"
       subtitle="Current inventory levels and valuations"
-      onRefresh={() => { /* TODO: Implement refresh */ }}
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onRefresh={() => {
+        /* TODO: Implement refresh */
+      }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex items-center gap-4">
           <div className="flex-1 max-w-xs">
@@ -89,7 +132,9 @@ export function StockSummaryReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -103,7 +148,9 @@ export function StockSummaryReport() {
             <input
               type="checkbox"
               checked={showLowStock}
-              onChange={(e) => { setShowLowStock(e.target.checked); }}
+              onChange={(e) => {
+                setShowLowStock(e.target.checked);
+              }}
               className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-slate-600">Low Stock Only</span>
@@ -117,7 +164,9 @@ export function StockSummaryReport() {
           <CardBody className="p-4 text-center">
             <Boxes className="h-6 w-6 text-primary-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Items</p>
-            <p className="text-2xl font-bold text-slate-900">{totals.totalItems}</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {totals.totalItems}
+            </p>
           </CardBody>
         </Card>
 
@@ -125,7 +174,9 @@ export function StockSummaryReport() {
           <CardBody className="p-4 text-center">
             <Package className="h-6 w-6 text-blue-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Quantity</p>
-            <p className="text-2xl font-bold text-slate-900">{totals.totalQuantity.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {totals.totalQuantity.toLocaleString()}
+            </p>
           </CardBody>
         </Card>
 
@@ -133,7 +184,9 @@ export function StockSummaryReport() {
           <CardBody className="p-4 text-center">
             <DollarSign className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Stock Value</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totals.totalValue)}</p>
+            <p className="text-2xl font-bold text-green-600">
+              {formatCurrency(totals.totalValue)}
+            </p>
           </CardBody>
         </Card>
 
@@ -141,15 +194,27 @@ export function StockSummaryReport() {
           <CardBody className="p-4 text-center">
             <TrendingUp className="h-6 w-6 text-teal-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Potential Revenue</p>
-            <p className="text-2xl font-bold text-teal-600">{formatCurrency(totals.potentialRevenue)}</p>
+            <p className="text-2xl font-bold text-teal-600">
+              {formatCurrency(totals.potentialRevenue)}
+            </p>
           </CardBody>
         </Card>
 
         <Card className={totals.lowStockCount > 0 ? "border-warning" : ""}>
           <CardBody className="p-4 text-center">
-            <AlertTriangle className={cn("h-6 w-6 mx-auto mb-2", totals.lowStockCount > 0 ? "text-warning" : "text-slate-400")} />
+            <AlertTriangle
+              className={cn(
+                "h-6 w-6 mx-auto mb-2",
+                totals.lowStockCount > 0 ? "text-warning" : "text-slate-400"
+              )}
+            />
             <p className="text-sm text-slate-500 mb-1">Low Stock</p>
-            <p className={cn("text-2xl font-bold", totals.lowStockCount > 0 ? "text-warning" : "text-slate-900")}>
+            <p
+              className={cn(
+                "text-2xl font-bold",
+                totals.lowStockCount > 0 ? "text-warning" : "text-slate-900"
+              )}
+            >
               {totals.lowStockCount}
             </p>
           </CardBody>
@@ -162,33 +227,63 @@ export function StockSummaryReport() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Item</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">SKU</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Category</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Stock</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Purchase Price</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Sale Price</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Stock Value</th>
-                <th className="text-center text-xs font-medium text-slate-500 uppercase px-4 py-3">Status</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Item
+                </th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  SKU
+                </th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Category
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Stock
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Purchase Price
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Sale Price
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Stock Value
+                </th>
+                <th className="text-center text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredItems.map((item) => (
-                <tr key={item.itemId} className={cn("hover:bg-slate-50", item.isLowStock && "bg-warning-light")}>
+                <tr
+                  key={item.itemId}
+                  className={cn(
+                    "hover:bg-slate-50",
+                    item.isLowStock && "bg-warning-light"
+                  )}
+                >
                   <td className="px-4 py-3">
-                    <span className="font-medium text-slate-900">{item.itemName}</span>
+                    <span className="font-medium text-slate-900">
+                      {item.itemName}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm font-mono text-slate-600">{item.sku}</span>
+                    <span className="text-sm font-mono text-slate-600">
+                      {item.sku}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="secondary" size="sm">{item.category}</Badge>
+                    <Badge variant="secondary" size="sm">
+                      {item.category}
+                    </Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={cn(
-                      "font-medium",
-                      item.isLowStock ? "text-warning" : "text-slate-900"
-                    )}>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        item.isLowStock ? "text-warning" : "text-slate-900"
+                      )}
+                    >
                       {item.stockQuantity} {item.unit}
                     </span>
                     {item.isLowStock && (
@@ -213,7 +308,9 @@ export function StockSummaryReport() {
                         Low Stock
                       </Badge>
                     ) : (
-                      <Badge variant="success" size="sm">In Stock</Badge>
+                      <Badge variant="success" size="sm">
+                        In Stock
+                      </Badge>
                     )}
                   </td>
                 </tr>
@@ -221,7 +318,10 @@ export function StockSummaryReport() {
             </tbody>
             <tfoot className="bg-slate-100 border-t-2 border-slate-300">
               <tr>
-                <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-slate-900">
+                <td
+                  colSpan={3}
+                  className="px-4 py-3 text-sm font-semibold text-slate-900"
+                >
                   Total ({filteredItems.length} items)
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-slate-900">

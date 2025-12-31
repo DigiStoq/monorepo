@@ -53,12 +53,13 @@ export function ConfirmDeleteDialog({
   itemName,
   itemType,
   warningMessage,
-  linkedItems,
+  linkedItems = [],
   isLoading = false,
   confirmWord = "delete",
-}: ConfirmDeleteDialogProps): JSX.Element {
+}: ConfirmDeleteDialogProps): React.ReactNode {
   const [inputValue, setInputValue] = useState("");
-  const isConfirmEnabled = inputValue.toLowerCase() === confirmWord.toLowerCase();
+  const isConfirmEnabled =
+    inputValue.toLowerCase() === confirmWord.toLowerCase();
 
   // Reset input when dialog opens/closes
   useEffect(() => {
@@ -67,19 +68,20 @@ export function ConfirmDeleteDialog({
     }
   }, [isOpen]);
 
-  const handleConfirm = () => {
+  const handleConfirm = (): void => {
     if (isConfirmEnabled && !isLoading) {
       onConfirm();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Enter" && isConfirmEnabled && !isLoading) {
       onConfirm();
     }
   };
 
-  const hasLinkedItems = linkedItems && linkedItems.length > 0 && linkedItems.some(item => item.count > 0);
+  const hasLinkedItems =
+    linkedItems.length > 0 && linkedItems.some((item) => item.count > 0);
 
   return (
     <Modal
@@ -89,17 +91,16 @@ export function ConfirmDeleteDialog({
       closeOnBackdrop={!isLoading}
       closeOnEscape={!isLoading}
     >
-      <ModalHeader
-        showCloseButton={!isLoading}
-        onClose={onClose}
-      >
+      <ModalHeader showCloseButton={!isLoading} onClose={onClose}>
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-error-light flex items-center justify-center shrink-0">
             <AlertTriangle className="h-5 w-5 text-error" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-            <p className="text-sm text-slate-500">This action cannot be undone</p>
+            <p className="text-sm text-slate-500">
+              This action cannot be undone
+            </p>
           </div>
         </div>
       </ModalHeader>
@@ -113,9 +114,7 @@ export function ConfirmDeleteDialog({
 
         {/* Warning message */}
         {warningMessage && (
-          <div className="text-sm text-slate-600">
-            {warningMessage}
-          </div>
+          <div className="text-sm text-slate-600">{warningMessage}</div>
         )}
 
         {/* Linked items that will be affected */}
@@ -126,27 +125,31 @@ export function ConfirmDeleteDialog({
               <span>The following will also be deleted:</span>
             </div>
             <div className="space-y-1.5">
-              {linkedItems.map((item, index) => (
-                item.count > 0 && (
-                  <div
-                    key={index}
-                    className={cn(
-                      "flex items-center justify-between p-2.5 rounded-lg",
-                      "bg-error-light/50 border border-error/20"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Trash2 className="h-3.5 w-3.5 text-error" />
-                      <span className="text-sm text-slate-700">
-                        {item.count} {item.type}{item.count !== 1 ? "s" : ""}
-                      </span>
+              {linkedItems.map(
+                (item, index) =>
+                  item.count > 0 && (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-lg",
+                        "bg-error-light/50 border border-error/20"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="h-3.5 w-3.5 text-error" />
+                        <span className="text-sm text-slate-700">
+                          {item.count} {item.type}
+                          {item.count !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      {item.description && (
+                        <span className="text-xs text-slate-500">
+                          {item.description}
+                        </span>
+                      )}
                     </div>
-                    {item.description && (
-                      <span className="text-xs text-slate-500">{item.description}</span>
-                    )}
-                  </div>
-                )
-              ))}
+                  )
+              )}
             </div>
           </div>
         )}
@@ -154,11 +157,17 @@ export function ConfirmDeleteDialog({
         {/* Confirmation input */}
         <div className="pt-2">
           <p className="text-sm text-slate-600 mb-2">
-            Type <span className="font-semibold text-error">"{confirmWord}"</span> to confirm deletion:
+            Type{" "}
+            <span className="font-semibold text-error">
+              &quot;{confirmWord}&quot;
+            </span>{" "}
+            to confirm deletion:
           </p>
           <Input
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={`Type "${confirmWord}" here`}
             autoFocus
@@ -170,8 +179,10 @@ export function ConfirmDeleteDialog({
 
       <ModalFooter>
         <Button
-          variant="ghost"
-          onClick={onClose}
+          variant="outline"
+          onClick={() => {
+            onClose();
+          }}
           disabled={isLoading}
         >
           Cancel

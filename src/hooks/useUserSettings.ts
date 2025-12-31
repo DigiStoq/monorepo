@@ -56,7 +56,7 @@ function mapRowToUserProfile(row: UserProfileRow): UserProfile {
     userId: row.user_id,
     firstName: row.first_name ?? "",
     lastName: row.last_name ?? "",
-    role: (row.role as UserProfile["role"]) ?? "staff",
+    role: (row.role as UserProfile["role"] | null) ?? "staff",
     language: row.language ?? "en",
     notificationEmail: row.notification_email === 1,
     notificationPush: row.notification_push === 1,
@@ -88,7 +88,9 @@ export function useUserProfile(userId: string | null): {
   return { profile, isLoading, error };
 }
 
-export function useUserProfileMutations() {
+export function useUserProfileMutations(): {
+  upsertProfile: (userId: string, data: UserProfileFormData) => Promise<string>;
+} {
   const db = getPowerSyncDatabase();
 
   const upsertProfile = useCallback(
@@ -224,7 +226,7 @@ function mapRowToUserPreferences(row: UserPreferencesRow): UserPreferences {
   return {
     id: row.id,
     userId: row.user_id,
-    theme: (row.theme as UserPreferences["theme"]) ?? "system",
+    theme: (row.theme as UserPreferences["theme"] | null) ?? "system",
     dateFormat: row.date_format ?? "DD/MM/YYYY",
     decimalSeparator: row.decimal_separator ?? ".",
     thousandsSeparator: row.thousands_separator ?? ",",
@@ -255,7 +257,12 @@ export function useUserPreferences(userId: string | null): {
   return { preferences, isLoading, error };
 }
 
-export function useUserPreferencesMutations() {
+export function useUserPreferencesMutations(): {
+  upsertPreferences: (
+    userId: string,
+    data: UserPreferencesFormData
+  ) => Promise<string>;
+} {
   const db = getPowerSyncDatabase();
 
   const upsertPreferences = useCallback(
@@ -416,7 +423,12 @@ export function useSecuritySettings(userId: string | null): {
   return { settings, isLoading, error };
 }
 
-export function useSecuritySettingsMutations() {
+export function useSecuritySettingsMutations(): {
+  upsertSecuritySettings: (
+    userId: string,
+    data: SecuritySettingsFormData
+  ) => Promise<string>;
+} {
   const db = getPowerSyncDatabase();
 
   const upsertSecuritySettings = useCallback(
@@ -428,7 +440,9 @@ export function useSecuritySettingsMutations() {
         [userId]
       );
 
-      const allowedIpsJson = data.allowedIps ? JSON.stringify(data.allowedIps) : null;
+      const allowedIpsJson = data.allowedIps
+        ? JSON.stringify(data.allowedIps)
+        : null;
 
       if (existing) {
         await db.execute(
@@ -518,7 +532,10 @@ function mapRowToLoginHistory(row: LoginHistoryRow): LoginHistoryEntry {
   return entry;
 }
 
-export function useLoginHistory(userId: string | null, limit = 10): {
+export function useLoginHistory(
+  userId: string | null,
+  limit = 10
+): {
   history: LoginHistoryEntry[];
   isLoading: boolean;
   error: Error | undefined;
@@ -581,16 +598,23 @@ function mapRowToBackupSettings(row: BackupSettingsRow): BackupSettings {
     id: row.id,
     userId: row.user_id,
     autoBackupEnabled: row.auto_backup_enabled === 1,
-    backupFrequency: (row.backup_frequency as BackupSettings["backupFrequency"]) ?? "weekly",
+    backupFrequency:
+      (row.backup_frequency as BackupSettings["backupFrequency"] | null) ??
+      "weekly",
     backupTime: row.backup_time ?? "02:00",
     retentionDays: row.retention_days ?? 30,
-    backupDestination: (row.backup_destination as BackupSettings["backupDestination"]) ?? "local",
+    backupDestination:
+      (row.backup_destination as BackupSettings["backupDestination"] | null) ??
+      "local",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 
   if (row.cloud_provider) {
-    settings.cloudProvider = row.cloud_provider as "google_drive" | "dropbox" | "onedrive";
+    settings.cloudProvider = row.cloud_provider as
+      | "google_drive"
+      | "dropbox"
+      | "onedrive";
   }
   if (row.last_backup) {
     settings.lastBackup = row.last_backup;
@@ -616,7 +640,13 @@ export function useBackupSettings(userId: string | null): {
   return { settings, isLoading, error };
 }
 
-export function useBackupSettingsMutations() {
+export function useBackupSettingsMutations(): {
+  upsertBackupSettings: (
+    userId: string,
+    data: BackupSettingsFormData
+  ) => Promise<string>;
+  updateLastBackup: (userId: string) => Promise<void>;
+} {
   const db = getPowerSyncDatabase();
 
   const upsertBackupSettings = useCallback(
@@ -733,7 +763,10 @@ function mapRowToBackupHistory(row: BackupHistoryRow): BackupHistoryEntry {
   return entry;
 }
 
-export function useBackupHistory(userId: string | null, limit = 10): {
+export function useBackupHistory(
+  userId: string | null,
+  limit = 10
+): {
   history: BackupHistoryEntry[];
   isLoading: boolean;
   error: Error | undefined;
@@ -750,7 +783,24 @@ export function useBackupHistory(userId: string | null, limit = 10): {
   return { history, isLoading, error };
 }
 
-export function useBackupHistoryMutations() {
+export function useBackupHistoryMutations(): {
+  addBackupEntry: (
+    userId: string,
+    data: {
+      type: "manual" | "automatic";
+      destination: string;
+      fileSize?: number;
+      status: "success" | "failed" | "in_progress";
+      errorMessage?: string;
+      filePath?: string;
+    }
+  ) => Promise<string>;
+  updateBackupStatus: (
+    id: string,
+    status: "success" | "failed" | "in_progress",
+    errorMessage?: string
+  ) => Promise<void>;
+} {
   const db = getPowerSyncDatabase();
 
   const addBackupEntry = useCallback(

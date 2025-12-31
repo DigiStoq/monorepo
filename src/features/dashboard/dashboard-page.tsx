@@ -15,7 +15,7 @@ import {
   useSalesChartData,
 } from "@/hooks/useDashboard";
 
-export function DashboardPage() {
+export function DashboardPage(): React.ReactNode {
   const navigate = useNavigate();
   // Data from PowerSync
   const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
@@ -23,7 +23,7 @@ export function DashboardPage() {
     useRecentTransactions(10);
   const { chartData, isLoading: chartLoading } = useSalesChartData(7);
 
-  const handleQuickAction = (actionId: string) => {
+  const handleQuickAction = (actionId: string): void => {
     const routes: Record<string, string> = {
       "add-sale": "/sale/invoices",
       "add-purchase": "/purchase/invoices",
@@ -39,7 +39,7 @@ export function DashboardPage() {
     }
   };
 
-  const handleTransactionClick = (_transaction: Transaction) => {
+  const handleTransactionClick = (_transaction: Transaction): void => {
     // TODO: Navigate to transaction detail
   };
 

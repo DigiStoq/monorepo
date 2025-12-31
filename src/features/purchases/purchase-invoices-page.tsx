@@ -14,28 +14,48 @@ import {
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus, DollarSign } from "lucide-react";
-import { PurchaseInvoiceList, PurchaseInvoiceDetail, PurchaseInvoiceForm } from "./components";
-import { usePurchaseInvoices, usePurchaseInvoiceMutations, usePurchaseInvoiceLinkedItems } from "@/hooks/usePurchaseInvoices";
+import {
+  PurchaseInvoiceList,
+  PurchaseInvoiceDetail,
+  PurchaseInvoiceForm,
+} from "./components";
+import {
+  usePurchaseInvoices,
+  usePurchaseInvoiceMutations,
+  usePurchaseInvoiceLinkedItems,
+} from "@/hooks/usePurchaseInvoices";
 import { usePaymentOutMutations } from "@/hooks/usePaymentOuts";
 import { useCashTransactionMutations } from "@/hooks/useCashTransactions";
 import { useBankTransactionMutations } from "@/hooks/useBankTransactions";
-import { useBankAccounts, useBankAccountMutations } from "@/hooks/useBankAccounts";
+import {
+  useBankAccounts,
+  useBankAccountMutations,
+} from "@/hooks/useBankAccounts";
 import { useChequeMutations } from "@/hooks/useCheques";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems } from "@/hooks/useItems";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
-import type { PurchaseInvoice, PurchaseInvoiceFormData, PurchaseInvoiceStatus, PaymentOutMode } from "./types";
+import type {
+  PurchaseInvoice,
+  PurchaseInvoiceFormData,
+  PurchaseInvoiceStatus,
+  PaymentOutMode,
+} from "./types";
+import { CheckCircle, Clock, XCircle } from "lucide-react";
 
-export function PurchaseInvoicesPage() {
+export function PurchaseInvoicesPage(): React.ReactNode {
   // Data from PowerSync
   const { invoices, isLoading, error } = usePurchaseInvoices();
   const { customers } = useCustomers({ type: "supplier" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
-  const { createInvoice, deleteInvoice, updateInvoiceStatus } = usePurchaseInvoiceMutations();
+  const { createInvoice, deleteInvoice, updateInvoiceStatus } =
+    usePurchaseInvoiceMutations();
   const { createPayment } = usePaymentOutMutations();
-  const { createTransaction: createCashTransaction } = useCashTransactionMutations();
-  const { createTransaction: createBankTransaction } = useBankTransactionMutations();
+  const { createTransaction: createCashTransaction } =
+    useCashTransactionMutations();
+  const { createTransaction: createBankTransaction } =
+    useBankTransactionMutations();
   const { createCheque } = useChequeMutations();
   const { createAccount: createBankAccount } = useBankAccountMutations();
 
@@ -43,20 +63,25 @@ export function PurchaseInvoicesPage() {
   const { printPurchaseInvoice, isReady: pdfReady } = usePDFGenerator();
 
   // State
-  const [selectedPurchase, setSelectedPurchase] = useState<PurchaseInvoice | null>(null);
+  const [selectedPurchase, setSelectedPurchase] =
+    useState<PurchaseInvoice | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [invoiceToDelete, setInvoiceToDelete] = useState<PurchaseInvoice | null>(null);
-  const linkedItems = usePurchaseInvoiceLinkedItems(invoiceToDelete?.id ?? null);
+  const [invoiceToDelete, setInvoiceToDelete] =
+    useState<PurchaseInvoice | null>(null);
+  const linkedItems = usePurchaseInvoiceLinkedItems(
+    invoiceToDelete?.id ?? null
+  );
 
   // Payment modal state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentMode, setPaymentMode] = useState<PaymentOutMode>("cash");
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
+  const [selectedBankAccountId, setSelectedBankAccountId] =
+    useState<string>("");
 
   // Cheque details state
   const [chequeNumber, setChequeNumber] = useState<string>("");
@@ -77,11 +102,12 @@ export function PurchaseInvoicesPage() {
   ];
 
   // Bank account options for dropdown
-  const bankAccountOptions: SelectOption[] = useMemo(() =>
-    bankAccounts.map((account) => ({
-      value: account.id,
-      label: `${account.name} - ${account.bankName}`,
-    })),
+  const bankAccountOptions: SelectOption[] = useMemo(
+    () =>
+      bankAccounts.map((account) => ({
+        value: account.id,
+        label: `${account.name} - ${account.bankName}`,
+      })),
     [bankAccounts]
   );
 
@@ -92,23 +118,25 @@ export function PurchaseInvoicesPage() {
   }, [invoices, selectedPurchase]);
 
   // Handlers
-  const handlePurchaseClick = (purchase: PurchaseInvoice) => {
+  const handlePurchaseClick = (purchase: PurchaseInvoice): void => {
     setSelectedPurchase(purchase);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedPurchase(null);
   };
 
-  const handleCreatePurchase = () => {
+  const handleCreatePurchase = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitPurchase = async (data: PurchaseInvoiceFormData) => {
+  const handleSubmitPurchase = async (
+    data: PurchaseInvoiceFormData
+  ): Promise<void> => {
     setIsSubmitting(true);
     try {
       // Generate invoice number
@@ -142,13 +170,18 @@ export function PurchaseInvoicesPage() {
       });
 
       // Calculate discount amount from percentage
-      const subtotal = purchaseItems.reduce((sum, item) => sum + item.amount, 0);
+      const subtotal = purchaseItems.reduce(
+        (sum, item) => sum + item.amount,
+        0
+      );
       const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
 
       await createInvoice(
         {
           invoiceNumber,
-          ...(data.supplierInvoiceNumber && { supplierInvoiceNumber: data.supplierInvoiceNumber }),
+          ...(data.supplierInvoiceNumber && {
+            supplierInvoiceNumber: data.supplierInvoiceNumber,
+          }),
           supplierId: data.customerId,
           supplierName,
           date: data.date,
@@ -167,14 +200,119 @@ export function PurchaseInvoicesPage() {
     }
   };
 
-  const handleDeleteClick = () => {
+  interface PurchaseFilters {
+    search: string;
+    status: PurchaseInvoiceStatus | "all";
+    customerId: string;
+    dateRange: { from: Date | null; to: Date | null };
+    sortBy: "date" | "number" | "amount" | "supplier";
+    sortOrder: "asc" | "desc";
+  }
+
+  // State
+  const [filters, setFilters] = useState<PurchaseFilters>({
+    search: "",
+    status: "all",
+    customerId: "all",
+    dateRange: { from: null, to: null },
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+
+  const statusOptions: SelectOption[] = [
+    { value: "all", label: "All Status" },
+    { value: "draft", label: "Draft" },
+    { value: "ordered", label: "Ordered" },
+    { value: "received", label: "Received" },
+    { value: "paid", label: "Paid" },
+    { value: "returned", label: "Returned" },
+  ];
+
+  // Filter and sort invoices
+  const filteredInvoices = useMemo(() => {
+    return invoices
+      .filter((invoice) => {
+        // Search filter
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const matchesNumber = invoice.invoiceNumber
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesSupplier = invoice.customerName
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesSupplierRef = invoice.supplierInvoiceNumber
+            ?.toLowerCase()
+            .includes(searchLower);
+          if (!matchesNumber && !matchesSupplier && !matchesSupplierRef)
+            return false;
+        }
+
+        // Status filter
+        if (filters.status !== "all" && invoice.status !== filters.status) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+
+        switch (filters.sortBy) {
+          case "date":
+            comparison =
+              new Date(b.date).getTime() - new Date(a.date).getTime();
+            break;
+          case "number":
+            comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
+            break;
+          case "amount":
+            comparison = b.total - a.total;
+            break;
+          case "supplier":
+            comparison = a.customerName.localeCompare(b.customerName);
+            break;
+        }
+
+        return filters.sortOrder === "desc" ? comparison : -comparison;
+      });
+  }, [invoices, filters]);
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    if (!filteredInvoices.length)
+      return { total: 0, paid: 0, pending: 0, returned: 0 };
+
+    return filteredInvoices.reduce(
+      (acc, inv) => {
+        acc.total += inv.total;
+        acc.paid += inv.amountPaid;
+        if (inv.status === "returned") {
+          acc.returned += inv.total;
+        } else if (inv.amountDue > 0) {
+          acc.pending += inv.amountDue;
+        }
+        return acc;
+      },
+      { total: 0, paid: 0, pending: 0, returned: 0 }
+    );
+  }, [filteredInvoices]);
+
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const handleDeleteClick = (): void => {
     if (currentSelectedPurchase) {
       setInvoiceToDelete(currentSelectedPurchase);
       setIsDeleteModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (): Promise<void> => {
     if (invoiceToDelete) {
       setIsSubmitting(true);
       try {
@@ -190,7 +328,7 @@ export function PurchaseInvoicesPage() {
     }
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = (): void => {
     if (currentSelectedPurchase) {
       setPaymentAmount(currentSelectedPurchase.amountDue.toFixed(2));
       setPaymentMode("cash");
@@ -208,8 +346,13 @@ export function PurchaseInvoicesPage() {
     }
   };
 
-  const handleStatusChange = async (newStatus: PurchaseInvoiceStatus) => {
-    if (currentSelectedPurchase && newStatus !== currentSelectedPurchase.status) {
+  const handleStatusChange = async (
+    newStatus: PurchaseInvoiceStatus
+  ): Promise<void> => {
+    if (
+      currentSelectedPurchase &&
+      newStatus !== currentSelectedPurchase.status
+    ) {
       try {
         await updateInvoiceStatus(currentSelectedPurchase.id, newStatus);
       } catch (err) {
@@ -218,7 +361,7 @@ export function PurchaseInvoicesPage() {
     }
   };
 
-  const handleAddBankAccount = async () => {
+  const handleAddBankAccount = async (): Promise<void> => {
     if (!newBankAccountName || !newBankName || !newBankAccountNumber) return;
 
     try {
@@ -241,7 +384,7 @@ export function PurchaseInvoicesPage() {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (): Promise<void> => {
     // Prevent double submission
     if (isSubmitting) return;
 
@@ -261,7 +404,10 @@ export function PurchaseInvoicesPage() {
       }
 
       // Validate cheque fields for cheque payments
-      if (paymentMode === "cheque" && (!chequeNumber || !chequeBankName || !chequeDueDate)) {
+      if (
+        paymentMode === "cheque" &&
+        (!chequeNumber || !chequeBankName || !chequeDueDate)
+      ) {
         return;
       }
 
@@ -338,10 +484,12 @@ export function PurchaseInvoicesPage() {
   };
 
   // PDF handlers
-  const handlePrintPurchase = () => {
+  const handlePrintPurchase = (): void => {
     if (currentSelectedPurchase && pdfReady) {
       // Note: suppliers are stored in customers table with customerId
-      const supplier = customers.find((c) => c.id === currentSelectedPurchase.customerId);
+      const supplier = customers.find(
+        (c) => c.id === currentSelectedPurchase.customerId
+      );
       printPurchaseInvoice(currentSelectedPurchase, supplier);
     }
   };
@@ -363,13 +511,107 @@ export function PurchaseInvoicesPage() {
         title="Purchase Invoices"
         description="Manage your purchase orders and supplier invoices"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreatePurchase}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreatePurchase}
+          >
             New Purchase
           </Button>
         }
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Filters Header - Full Width */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <Input
+              placeholder="Search purchases..."
+              value={filters.search}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, search: e.target.value }));
+              }}
+              className="w-full sm:w-72"
+            />
+
+            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <Select
+                options={statusOptions}
+                value={filters.status}
+                onChange={(value) => {
+                  setFilters((f) => ({
+                    ...f,
+                    status: value as PurchaseInvoiceStatus | "all",
+                  }));
+                }}
+                size="md"
+                className="min-w-[140px]"
+              />
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <DollarSign className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Total
+                </p>
+                <p className="text-lg font-bold text-slate-900 leading-none">
+                  {formatCurrency(totals.total)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <CheckCircle className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-success-dark font-medium uppercase tracking-wider">
+                  Paid
+                </p>
+                <p className="text-lg font-bold text-success leading-none">
+                  {formatCurrency(totals.paid)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-warning-light rounded-lg border border-warning/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Clock className="h-4 w-4 text-warning" />
+              </div>
+              <div>
+                <p className="text-xs text-warning-dark font-medium uppercase tracking-wider">
+                  Pending
+                </p>
+                <p className="text-lg font-bold text-warning-dark leading-none">
+                  {formatCurrency(totals.pending)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-error-light rounded-lg border border-error/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <XCircle className="h-4 w-4 text-error" />
+              </div>
+              <div>
+                <p className="text-xs text-error-dark font-medium uppercase tracking-wider">
+                  Returned
+                </p>
+                <p className="text-lg font-bold text-error leading-none">
+                  {formatCurrency(totals.returned)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden bg-slate-50">
         {/* Purchase List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -377,28 +619,50 @@ export function PurchaseInvoicesPage() {
               <Spinner size="lg" />
             </div>
           ) : (
-            <PurchaseInvoiceList
-              invoices={invoices}
-              onInvoiceClick={handlePurchaseClick}
-              onCreateInvoice={handleCreatePurchase}
-            />
+            <div className="max-w-5xl mx-auto flex gap-4">
+              <div className="w-full max-w-[420px] shrink-0 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <PurchaseInvoiceList
+                    invoices={filteredInvoices}
+                    onInvoiceClick={handlePurchaseClick}
+                    onCreateInvoice={handleCreatePurchase}
+                    hasActiveFilters={
+                      !!filters.search || filters.status !== "all"
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Detail View */}
+              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-slate-200 shadow-sm">
+                {currentSelectedPurchase ? (
+                  <div className="h-full overflow-y-auto">
+                    <PurchaseInvoiceDetail
+                      invoice={currentSelectedPurchase}
+                      onClose={handleCloseDetail}
+                      onEdit={() => {
+                        setIsFormOpen(true);
+                      }}
+                      onDelete={handleDeleteClick}
+                      onPrint={handlePrintPurchase}
+                      onRecordPayment={handleRecordPayment}
+                      onStatusChange={(status) => {
+                        void handleStatusChange(status);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                    <DollarSign className="h-16 w-16 mb-4 opacity-20" />
+                    <p className="text-lg font-medium">
+                      Select a purchase to view details
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Purchase Detail Panel */}
-        {currentSelectedPurchase && (
-          <div className="w-96 border-l border-slate-200 bg-white overflow-hidden">
-            <PurchaseInvoiceDetail
-              invoice={currentSelectedPurchase}
-              onClose={handleCloseDetail}
-              onEdit={() => { setIsFormOpen(true); }}
-              onDelete={handleDeleteClick}
-              onPrint={handlePrintPurchase}
-              onRecordPayment={handleRecordPayment}
-              onStatusChange={(status) => { void handleStatusChange(status); }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Purchase Form Modal */}
@@ -411,7 +675,9 @@ export function PurchaseInvoicesPage() {
             <PurchaseInvoiceForm
               customers={customers}
               items={items}
-              onSubmit={(data) => { void handleSubmitPurchase(data); }}
+              onSubmit={(data) => {
+                void handleSubmitPurchase(data);
+              }}
               onCancel={handleCloseForm}
               className="p-6"
             />
@@ -460,7 +726,9 @@ export function PurchaseInvoicesPage() {
                   step="0.01"
                   max={currentSelectedPurchase?.amountDue}
                   value={paymentAmount}
-                  onChange={(e) => { setPaymentAmount(e.target.value); }}
+                  onChange={(e) => {
+                    setPaymentAmount(e.target.value);
+                  }}
                   leftIcon={<DollarSign className="h-4 w-4" />}
                   placeholder="0.00"
                 />
@@ -473,7 +741,9 @@ export function PurchaseInvoicesPage() {
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => { setPaymentMode(value as PaymentOutMode); }}
+                  onChange={(value) => {
+                    setPaymentMode(value as PaymentOutMode);
+                  }}
                 />
               </div>
 
@@ -487,7 +757,9 @@ export function PurchaseInvoicesPage() {
                         </label>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingBankAccount(true); }}
+                          onClick={() => {
+                            setIsAddingBankAccount(true);
+                          }}
                           className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
                         >
                           <Plus className="h-3 w-3" />
@@ -497,17 +769,23 @@ export function PurchaseInvoicesPage() {
                       <Select
                         options={bankAccountOptions}
                         value={selectedBankAccountId}
-                        onChange={(value) => { setSelectedBankAccountId(value); }}
+                        onChange={(value) => {
+                          setSelectedBankAccountId(value);
+                        }}
                         placeholder="Select bank account"
                       />
                     </div>
                   ) : (
                     <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">Add Bank Account</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          Add Bank Account
+                        </span>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingBankAccount(false); }}
+                          onClick={() => {
+                            setIsAddingBankAccount(false);
+                          }}
                           className="text-xs text-slate-500 hover:text-slate-700"
                         >
                           Cancel
@@ -520,7 +798,9 @@ export function PurchaseInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankAccountName}
-                          onChange={(e) => { setNewBankAccountName(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankAccountName(e.target.value);
+                          }}
                           placeholder="e.g., Business Checking"
                           size="sm"
                         />
@@ -532,7 +812,9 @@ export function PurchaseInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankName}
-                          onChange={(e) => { setNewBankName(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankName(e.target.value);
+                          }}
                           placeholder="e.g., Chase Bank"
                           size="sm"
                         />
@@ -544,15 +826,23 @@ export function PurchaseInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankAccountNumber}
-                          onChange={(e) => { setNewBankAccountNumber(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankAccountNumber(e.target.value);
+                          }}
                           placeholder="Enter account number"
                           size="sm"
                         />
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => { void handleAddBankAccount(); }}
-                        disabled={!newBankAccountName || !newBankName || !newBankAccountNumber}
+                        onClick={() => {
+                          void handleAddBankAccount();
+                        }}
+                        disabled={
+                          !newBankAccountName ||
+                          !newBankName ||
+                          !newBankAccountNumber
+                        }
                         fullWidth
                       >
                         Add Account
@@ -571,7 +861,9 @@ export function PurchaseInvoicesPage() {
                     <Input
                       type="text"
                       value={chequeNumber}
-                      onChange={(e) => { setChequeNumber(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeNumber(e.target.value);
+                      }}
                       placeholder="Enter cheque number"
                     />
                   </div>
@@ -582,7 +874,9 @@ export function PurchaseInvoicesPage() {
                     <Input
                       type="text"
                       value={chequeBankName}
-                      onChange={(e) => { setChequeBankName(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeBankName(e.target.value);
+                      }}
                       placeholder="Enter bank name"
                     />
                   </div>
@@ -593,7 +887,9 @@ export function PurchaseInvoicesPage() {
                     <Input
                       type="date"
                       value={chequeDueDate}
-                      onChange={(e) => { setChequeDueDate(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeDueDate(e.target.value);
+                      }}
                     />
                   </div>
                 </>
@@ -620,13 +916,17 @@ export function PurchaseInvoicesPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => { void handleConfirmPayment(); }}
+              onClick={() => {
+                void handleConfirmPayment();
+              }}
               isLoading={isSubmitting}
               disabled={
                 !paymentAmount ||
                 parseFloat(paymentAmount) <= 0 ||
-                (paymentMode === "bank" && (!selectedBankAccountId || isAddingBankAccount)) ||
-                (paymentMode === "cheque" && (!chequeNumber || !chequeBankName || !chequeDueDate))
+                (paymentMode === "bank" &&
+                  (!selectedBankAccountId || isAddingBankAccount)) ||
+                (paymentMode === "cheque" &&
+                  (!chequeNumber || !chequeBankName || !chequeDueDate))
               }
             >
               Record Payment
@@ -642,14 +942,24 @@ export function PurchaseInvoicesPage() {
           setIsDeleteModalOpen(false);
           setInvoiceToDelete(null);
         }}
-        onConfirm={() => { void handleConfirmDelete(); }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
         title="Delete Purchase Invoice"
         itemName={invoiceToDelete?.invoiceNumber ?? ""}
         itemType="Purchase Invoice"
         warningMessage="This will permanently delete the purchase invoice and reverse all related stock and balance changes."
         linkedItems={[
-          { type: "Invoice Item", count: linkedItems.itemsCount, description: "Stock will be reversed" },
-          { type: "Payment", count: linkedItems.paymentsCount, description: "Will be deleted" },
+          {
+            type: "Invoice Item",
+            count: linkedItems.itemsCount,
+            description: "Stock will be reversed",
+          },
+          {
+            type: "Payment",
+            count: linkedItems.paymentsCount,
+            description: "Will be deleted",
+          },
         ]}
         isLoading={isSubmitting}
       />

@@ -15,7 +15,8 @@ const settingsSections = [
   {
     id: "company",
     label: "Company Settings",
-    description: "Manage your business profile, address, and registration details",
+    description:
+      "Manage your business profile, address, and registration details",
     icon: Building2,
     path: "/settings/company",
     color: "bg-blue-100 text-blue-600",
@@ -62,7 +63,7 @@ const settingsSections = [
   },
 ];
 
-export function SettingsPage() {
+export function SettingsPage(): React.ReactNode {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto px-4 py-6">

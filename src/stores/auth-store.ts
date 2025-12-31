@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { User, Session, AuthError } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase-connector";
+import { supabase } from "@/lib/supabase-client";
 import {
   saveSession,
   clearSession,
@@ -25,8 +25,15 @@ export interface AuthState {
 
   // Actions
   initialize: () => Promise<void>;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    name?: string
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
@@ -42,10 +49,13 @@ export interface AuthState {
  * Build a minimal Session object from cached credentials for offline use.
  * This allows users to stay logged in when the app starts without internet.
  */
-async function buildOfflineSession(tokens: { access_token: string; refresh_token: string }): Promise<Session | null> {
+async function buildOfflineSession(tokens: {
+  access_token: string;
+  refresh_token: string;
+}): Promise<Session | null> {
   // Load full stored session which includes user info
   const storedSession = await loadSession();
-  
+
   if (!storedSession) {
     return null;
   }
@@ -109,7 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             if (error) {
               // Session invalid, clear stored tokens
-              console.warn("Stored session invalid, clearing:", error.message);
+              console.error("Auth store rehydrated with invalid session");
               await clearSession();
               set({
                 user: null,
@@ -135,7 +145,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
           } catch (networkError) {
             // Network error during validation - fall through to offline mode
-            console.warn("Network error during session validation, using cached session:", networkError);
+            console.warn(
+              "Network error during session validation, using cached session:",
+              networkError
+            );
           }
         }
 
@@ -143,7 +156,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Build a minimal session/user from stored tokens for offline use
         const offlineSession = await buildOfflineSession(storedTokens);
         if (offlineSession) {
-          console.log("Using cached session for offline mode");
           set({
             user: offlineSession.user,
             session: offlineSession,
@@ -158,7 +170,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // No stored session, check Supabase for existing session (online only)
       if (navigator.onLine) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
 
           if (session) {
             await saveSession(session);

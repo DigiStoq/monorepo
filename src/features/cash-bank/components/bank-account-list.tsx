@@ -83,7 +83,7 @@ export function BankAccountList({
   accounts,
   onAccountClick,
   className,
-}: BankAccountListProps) {
+}: BankAccountListProps): React.ReactNode {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<BankAccountType | "all">("all");
 
@@ -114,7 +114,7 @@ export function BankAccountList({
   }, [filteredAccounts]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -122,7 +122,7 @@ export function BankAccountList({
     }).format(value);
 
   // Mask account number
-  const maskAccountNumber = (num: string) => {
+  const maskAccountNumber = (num: string): string => {
     if (num.length <= 4) return num;
     return "••••" + num.slice(-4);
   };

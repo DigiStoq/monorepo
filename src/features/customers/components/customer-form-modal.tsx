@@ -67,7 +67,7 @@ export function CustomerFormModal({
   onSubmit,
   customer,
   isLoading,
-}: CustomerFormModalProps) {
+}: CustomerFormModalProps): React.ReactNode {
   const isEditing = Boolean(customer);
   const [activeTab, setActiveTab] = useState<"basic" | "details" | "credit">(
     "basic"
@@ -139,7 +139,7 @@ export function CustomerFormModal({
     setActiveTab("basic");
   }, [customer, reset, isOpen]);
 
-  const handleFormSubmit = (data: CustomerSchemaType) => {
+  const handleFormSubmit = (data: CustomerSchemaType): void => {
     onSubmit({
       ...data,
       phone: data.phone ?? undefined,

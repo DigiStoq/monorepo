@@ -1,7 +1,10 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { PurchaseInvoice, PurchaseInvoiceItem } from "@/features/purchases/types";
+import type {
+  PurchaseInvoice,
+  PurchaseInvoiceItem,
+} from "@/features/purchases/types";
 
 // Database row types (snake_case columns from SQLite)
 interface PurchaseInvoiceRow {
@@ -58,13 +61,16 @@ function mapRowToPurchaseInvoice(row: PurchaseInvoiceRow): PurchaseInvoice {
     updatedAt: row.updated_at,
   };
 
-  if (row.supplier_invoice_number) invoice.supplierInvoiceNumber = row.supplier_invoice_number;
+  if (row.supplier_invoice_number)
+    invoice.supplierInvoiceNumber = row.supplier_invoice_number;
   if (row.notes) invoice.notes = row.notes;
 
   return invoice;
 }
 
-function mapRowToPurchaseInvoiceItem(row: PurchaseInvoiceItemRow): PurchaseInvoiceItem {
+function mapRowToPurchaseInvoiceItem(
+  row: PurchaseInvoiceItemRow
+): PurchaseInvoiceItem {
   const item: PurchaseInvoiceItem = {
     id: row.id,
     itemId: row.item_id ?? "",
@@ -88,15 +94,31 @@ export function usePurchaseInvoices(filters?: {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-}): { invoices: PurchaseInvoice[]; isLoading: boolean; error: Error | undefined } {
+}): {
+  invoices: PurchaseInvoice[];
+  isLoading: boolean;
+  error: Error | undefined;
+} {
   const params = useMemo(() => {
     const statusFilter = filters?.status ?? null;
     const supplierFilter = filters?.supplierId ?? null;
     const dateFromFilter = filters?.dateFrom ?? null;
     const dateToFilter = filters?.dateTo ?? null;
     const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [statusFilter, supplierFilter, dateFromFilter, dateToFilter, searchFilter];
-  }, [filters?.status, filters?.supplierId, filters?.dateFrom, filters?.dateTo, filters?.search]);
+    return [
+      statusFilter,
+      supplierFilter,
+      dateFromFilter,
+      dateToFilter,
+      searchFilter,
+    ];
+  }, [
+    filters?.status,
+    filters?.supplierId,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<PurchaseInvoiceRow>(
     `SELECT * FROM purchase_invoices
@@ -119,21 +141,25 @@ export function usePurchaseInvoiceById(id: string | null): {
   items: PurchaseInvoiceItem[];
   isLoading: boolean;
 } {
-  const { data: invoiceData, isLoading: invoiceLoading } = useQuery<PurchaseInvoiceRow>(
-    id
-      ? `SELECT * FROM purchase_invoices WHERE id = ?`
-      : `SELECT * FROM purchase_invoices WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: invoiceData, isLoading: invoiceLoading } =
+    useQuery<PurchaseInvoiceRow>(
+      id
+        ? `SELECT * FROM purchase_invoices WHERE id = ?`
+        : `SELECT * FROM purchase_invoices WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
-  const { data: itemsData, isLoading: itemsLoading } = useQuery<PurchaseInvoiceItemRow>(
-    id
-      ? `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`
-      : `SELECT * FROM purchase_invoice_items WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: itemsData, isLoading: itemsLoading } =
+    useQuery<PurchaseInvoiceItemRow>(
+      id
+        ? `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`
+        : `SELECT * FROM purchase_invoice_items WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
-  const invoice = invoiceData[0] ? mapRowToPurchaseInvoice(invoiceData[0]) : null;
+  const invoice = invoiceData[0]
+    ? mapRowToPurchaseInvoice(invoiceData[0])
+    : null;
   const items = itemsData.map(mapRowToPurchaseInvoiceItem);
 
   return {
@@ -263,11 +289,10 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
   const updateInvoiceStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE purchase_invoices SET status = ?, updated_at = ? WHERE id = ?`, [
-        status,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE purchase_invoices SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
     },
     [db]
   );
@@ -297,21 +322,29 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         `SELECT customer_id, total FROM purchase_invoices WHERE id = ?`,
         [id]
       );
-      const invoice = invoiceResult.rows?._array?.[0] as { customer_id: string; total: number } | undefined;
+      const invoice = invoiceResult.rows?._array[0] as
+        | { customer_id: string; total: number }
+        | undefined;
 
       // Get items to reverse stock
       const itemsResult = await db.execute(
         `SELECT item_id, quantity FROM purchase_invoice_items WHERE invoice_id = ?`,
         [id]
       );
-      const items = (itemsResult.rows?._array ?? []) as { item_id: string; quantity: number }[];
+      const items = (itemsResult.rows?._array ?? []) as {
+        item_id: string;
+        quantity: number;
+      }[];
 
       // Get linked payments to delete and reverse
       const paymentsResult = await db.execute(
         `SELECT id, amount FROM payment_outs WHERE invoice_id = ?`,
         [id]
       );
-      const payments = (paymentsResult.rows?._array ?? []) as { id: string; amount: number }[];
+      const payments = (paymentsResult.rows?._array ?? []) as {
+        id: string;
+        amount: number;
+      }[];
 
       // Reverse supplier balance for each payment (payments increased balance, so decrease it back)
       for (const payment of payments) {
@@ -344,7 +377,10 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         );
       }
 
-      await db.execute(`DELETE FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
+      await db.execute(
+        `DELETE FROM purchase_invoice_items WHERE invoice_id = ?`,
+        [id]
+      );
       await db.execute(`DELETE FROM purchase_invoices WHERE id = ?`, [id]);
     },
     [db]
@@ -397,7 +433,9 @@ export interface PurchaseInvoiceLinkedItems {
   paymentsCount: number;
 }
 
-export function usePurchaseInvoiceLinkedItems(invoiceId: string | null): PurchaseInvoiceLinkedItems {
+export function usePurchaseInvoiceLinkedItems(
+  invoiceId: string | null
+): PurchaseInvoiceLinkedItems {
   const { data: itemsCount } = useQuery<{ count: number }>(
     invoiceId
       ? `SELECT COUNT(*) as count FROM purchase_invoice_items WHERE invoice_id = ?`

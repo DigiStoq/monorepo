@@ -50,7 +50,7 @@ export function Breadcrumbs({
   showHomeIcon = true,
   onNavigate,
   className,
-}: BreadcrumbsProps) {
+}: BreadcrumbsProps): React.ReactNode {
   if (items.length === 0) return null;
 
   return (
@@ -107,9 +107,7 @@ export function Breadcrumbs({
                 </span>
               )}
 
-              {!isLast && (
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              )}
+              {!isLast && <ChevronRight className="h-4 w-4 text-slate-300" />}
             </li>
           );
         })}
@@ -193,9 +191,7 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
 
             {/* Actions */}
             {actions && (
-              <div className="shrink-0 flex items-center gap-2">
-                {actions}
-              </div>
+              <div className="shrink-0 flex items-center gap-2">{actions}</div>
             )}
           </div>
         </div>

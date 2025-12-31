@@ -1,6 +1,12 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { Card, CardBody, Badge, Select, type SelectOption } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  Badge,
+  Select,
+  type SelectOption,
+} from "@/components/ui";
 import { ReportLayout } from "../components";
 import { DateRangeFilter } from "../components/date-range-filter";
 import {
@@ -22,7 +28,10 @@ import { useCashMovementReport } from "@/hooks/useReports";
 // HELPERS
 // ============================================================================
 
-const modeConfig: Record<PaymentMode, { label: string; icon: React.ReactNode; color: string; bgColor: string }> = {
+const modeConfig: Record<
+  PaymentMode,
+  { label: string; icon: React.ReactNode; color: string; bgColor: string }
+> = {
   cash: {
     label: "Cash",
     icon: <Banknote className="h-5 w-5" />,
@@ -61,7 +70,10 @@ const modeConfig: Record<PaymentMode, { label: string; icon: React.ReactNode; co
   },
 };
 
-const typeConfig: Record<CashMovementTransaction["type"], { label: string; icon: React.ReactNode; color: string }> = {
+const typeConfig: Record<
+  CashMovementTransaction["type"],
+  { label: string; icon: React.ReactNode; color: string }
+> = {
   payment_in: {
     label: "Payment In",
     icon: <ArrowUpCircle className="h-4 w-4" />,
@@ -93,9 +105,11 @@ const modeFilterOptions: SelectOption[] = [
 // COMPONENT
 // ============================================================================
 
-export function CashMovementReportPage() {
+export function CashMovementReportPage(): React.ReactNode {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
   const [modeFilter, setModeFilter] = useState<PaymentMode | "all">("all");
@@ -114,7 +128,7 @@ export function CashMovementReportPage() {
   }, [report, modeFilter]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -122,7 +136,7 @@ export function CashMovementReportPage() {
     }).format(value);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -156,15 +170,21 @@ export function CashMovementReportPage() {
       title="Cash Movement by Payment Mode"
       subtitle="Track money flow across different payment methods"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
           <Select
             options={modeFilterOptions}
             value={modeFilter}
-            onChange={(value) => { setModeFilter(value as PaymentMode | "all"); }}
+            onChange={(value) => {
+              setModeFilter(value as PaymentMode | "all");
+            }}
             className="w-48"
           />
         </div>
@@ -181,7 +201,9 @@ export function CashMovementReportPage() {
                 </div>
                 <div>
                   <p className="text-sm text-green-600">Total Money In</p>
-                  <p className="text-2xl font-bold text-success">{formatCurrency(report.totalMoneyIn)}</p>
+                  <p className="text-2xl font-bold text-success">
+                    {formatCurrency(report.totalMoneyIn)}
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -195,21 +217,29 @@ export function CashMovementReportPage() {
                 </div>
                 <div>
                   <p className="text-sm text-red-600">Total Money Out</p>
-                  <p className="text-2xl font-bold text-error">{formatCurrency(report.totalMoneyOut)}</p>
+                  <p className="text-2xl font-bold text-error">
+                    {formatCurrency(report.totalMoneyOut)}
+                  </p>
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          <Card className={cn(
-            report.netMovement >= 0 ? "bg-teal-50 border-teal-100" : "bg-orange-50 border-orange-100"
-          )}>
+          <Card
+            className={cn(
+              report.netMovement >= 0
+                ? "bg-teal-50 border-teal-100"
+                : "bg-orange-50 border-orange-100"
+            )}
+          >
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  report.netMovement >= 0 ? "bg-teal-100" : "bg-orange-100"
-                )}>
+                <div
+                  className={cn(
+                    "p-2 rounded-lg",
+                    report.netMovement >= 0 ? "bg-teal-100" : "bg-orange-100"
+                  )}
+                >
                   {report.netMovement >= 0 ? (
                     <TrendingUp className="h-6 w-6 text-teal-600" />
                   ) : (
@@ -217,17 +247,26 @@ export function CashMovementReportPage() {
                   )}
                 </div>
                 <div>
-                  <p className={cn(
-                    "text-sm",
-                    report.netMovement >= 0 ? "text-teal-600" : "text-orange-600"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-sm",
+                      report.netMovement >= 0
+                        ? "text-teal-600"
+                        : "text-orange-600"
+                    )}
+                  >
                     Net Movement
                   </p>
-                  <p className={cn(
-                    "text-2xl font-bold",
-                    report.netMovement >= 0 ? "text-teal-700" : "text-orange-700"
-                  )}>
-                    {report.netMovement >= 0 ? "+" : ""}{formatCurrency(report.netMovement)}
+                  <p
+                    className={cn(
+                      "text-2xl font-bold",
+                      report.netMovement >= 0
+                        ? "text-teal-700"
+                        : "text-orange-700"
+                    )}
+                  >
+                    {report.netMovement >= 0 ? "+" : ""}
+                    {formatCurrency(report.netMovement)}
                   </p>
                 </div>
               </div>
@@ -239,7 +278,9 @@ export function CashMovementReportPage() {
         <Card>
           <CardBody className="p-0">
             <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
-              <h3 className="font-medium text-slate-900">Movement by Payment Mode</h3>
+              <h3 className="font-medium text-slate-900">
+                Movement by Payment Mode
+              </h3>
             </div>
             <div className="divide-y divide-slate-100">
               {report.byMode.length === 0 ? (
@@ -256,35 +297,57 @@ export function CashMovementReportPage() {
                         "flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors",
                         modeFilter === mode.mode && "bg-slate-50"
                       )}
-                      onClick={() => { setModeFilter(modeFilter === mode.mode ? "all" : mode.mode); }}
+                      onClick={() => {
+                        setModeFilter(
+                          modeFilter === mode.mode ? "all" : mode.mode
+                        );
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={cn("p-2 rounded-lg", config.bgColor, config.color)}>
+                        <div
+                          className={cn(
+                            "p-2 rounded-lg",
+                            config.bgColor,
+                            config.color
+                          )}
+                        >
                           {config.icon}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{config.label}</p>
+                          <p className="font-medium text-slate-900">
+                            {config.label}
+                          </p>
                           <p className="text-sm text-slate-500">
-                            {mode.transactionCount} transaction{mode.transactionCount !== 1 ? "s" : ""}
+                            {mode.transactionCount} transaction
+                            {mode.transactionCount !== 1 ? "s" : ""}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-6 text-right">
                         <div>
                           <p className="text-xs text-slate-500">In</p>
-                          <p className="font-medium text-success">{formatCurrency(mode.moneyIn)}</p>
+                          <p className="font-medium text-success">
+                            {formatCurrency(mode.moneyIn)}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Out</p>
-                          <p className="font-medium text-error">{formatCurrency(mode.moneyOut)}</p>
+                          <p className="font-medium text-error">
+                            {formatCurrency(mode.moneyOut)}
+                          </p>
                         </div>
                         <div className="w-28">
                           <p className="text-xs text-slate-500">Net</p>
-                          <p className={cn(
-                            "font-bold",
-                            mode.net >= 0 ? "text-teal-600" : "text-orange-600"
-                          )}>
-                            {mode.net >= 0 ? "+" : ""}{formatCurrency(mode.net)}
+                          <p
+                            className={cn(
+                              "font-bold",
+                              mode.net >= 0
+                                ? "text-teal-600"
+                                : "text-orange-600"
+                            )}
+                          >
+                            {mode.net >= 0 ? "+" : ""}
+                            {formatCurrency(mode.net)}
                           </p>
                         </div>
                       </div>
@@ -309,27 +372,46 @@ export function CashMovementReportPage() {
                 )}
               </h3>
               <span className="text-sm text-slate-500">
-                {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
+                {filteredTransactions.length} transaction
+                {filteredTransactions.length !== 1 ? "s" : ""}
               </span>
             </div>
 
             {filteredTransactions.length === 0 ? (
               <div className="py-12 text-center">
                 <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-slate-900 mb-1">No transactions found</h3>
-                <p className="text-slate-500">No payment transactions for the selected filters</p>
+                <h3 className="text-lg font-medium text-slate-900 mb-1">
+                  No transactions found
+                </h3>
+                <p className="text-slate-500">
+                  No payment transactions for the selected filters
+                </p>
               </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">Date</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">Type</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">Reference</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">Party</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">Mode</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-2">Money In</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-2">Money Out</th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Date
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Type
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Reference
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Party
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Mode
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Money In
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-2">
+                      Money Out
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -343,7 +425,13 @@ export function CashMovementReportPage() {
                           {formatDate(tx.date)}
                         </td>
                         <td className="px-4 py-2">
-                          <Badge className={cn("flex items-center gap-1 w-fit", txConfig.color)} size="sm">
+                          <Badge
+                            className={cn(
+                              "flex items-center gap-1 w-fit",
+                              txConfig.color
+                            )}
+                            size="sm"
+                          >
                             {txConfig.icon}
                             {txConfig.label}
                           </Badge>
@@ -355,18 +443,29 @@ export function CashMovementReportPage() {
                           {tx.partyName ?? "-"}
                         </td>
                         <td className="px-4 py-2">
-                          <Badge className={cn("flex items-center gap-1 w-fit", mConfig.bgColor, mConfig.color)} size="sm">
+                          <Badge
+                            className={cn(
+                              "flex items-center gap-1 w-fit",
+                              mConfig.bgColor,
+                              mConfig.color
+                            )}
+                            size="sm"
+                          >
                             {mConfig.label}
                           </Badge>
                         </td>
                         <td className="px-4 py-2 text-sm text-right">
                           {tx.moneyIn > 0 && (
-                            <span className="font-medium text-success">{formatCurrency(tx.moneyIn)}</span>
+                            <span className="font-medium text-success">
+                              {formatCurrency(tx.moneyIn)}
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-2 text-sm text-right">
                           {tx.moneyOut > 0 && (
-                            <span className="font-medium text-error">{formatCurrency(tx.moneyOut)}</span>
+                            <span className="font-medium text-error">
+                              {formatCurrency(tx.moneyOut)}
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -375,12 +474,24 @@ export function CashMovementReportPage() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-50 font-medium">
-                    <td colSpan={5} className="px-4 py-3 text-slate-900">Total</td>
+                    <td colSpan={5} className="px-4 py-3 text-slate-900">
+                      Total
+                    </td>
                     <td className="px-4 py-3 text-right text-success">
-                      {formatCurrency(filteredTransactions.reduce((sum, tx) => sum + tx.moneyIn, 0))}
+                      {formatCurrency(
+                        filteredTransactions.reduce(
+                          (sum, tx) => sum + tx.moneyIn,
+                          0
+                        )
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-error">
-                      {formatCurrency(filteredTransactions.reduce((sum, tx) => sum + tx.moneyOut, 0))}
+                      {formatCurrency(
+                        filteredTransactions.reduce(
+                          (sum, tx) => sum + tx.moneyOut,
+                          0
+                        )
+                      )}
                     </td>
                   </tr>
                 </tfoot>

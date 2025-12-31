@@ -44,7 +44,7 @@ export function ChequeForm({
   onSubmit,
   onCancel,
   className,
-}: ChequeFormProps) {
+}: ChequeFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState<ChequeType>(initialData?.type ?? "received");
@@ -79,7 +79,7 @@ export function ChequeForm({
   }, [customers, type]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -87,13 +87,13 @@ export function ChequeForm({
     }).format(value);
 
   // Handle type change
-  const handleTypeChange = (newType: ChequeType) => {
+  const handleTypeChange = (newType: ChequeType): void => {
     setType(newType);
     setCustomerId(""); // Reset customer when type changes
   };
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!chequeNumber || !customerId || !bankName || amount <= 0) return;
 
     const formData: ChequeFormData = {

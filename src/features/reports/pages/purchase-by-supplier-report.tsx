@@ -10,17 +10,22 @@ import { usePurchaseBySupplierReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function PurchaseBySupplierReport() {
+export function PurchaseBySupplierReport(): React.ReactNode {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"purchases" | "invoices" | "due">("purchases");
+  const [sortBy, setSortBy] = useState<"purchases" | "invoices" | "due">(
+    "purchases"
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Fetch data from PowerSync
-  const { data: supplierData, isLoading } = usePurchaseBySupplierReport(dateRange);
+  const { data: supplierData, isLoading } =
+    usePurchaseBySupplierReport(dateRange);
 
   // Filter and sort data
   const processedData = useMemo(() => {
@@ -32,7 +37,8 @@ export function PurchaseBySupplierReport() {
         totalPurchases: s.totalAmount,
         totalPaid: s.paidAmount,
         totalDue: s.dueAmount,
-        averageOrderValue: s.invoiceCount > 0 ? s.totalAmount / s.invoiceCount : 0,
+        averageOrderValue:
+          s.invoiceCount > 0 ? s.totalAmount / s.invoiceCount : 0,
       }))
       .filter((supplier) =>
         supplier.supplierName.toLowerCase().includes(search.toLowerCase())
@@ -68,14 +74,14 @@ export function PurchaseBySupplierReport() {
     );
   }, [processedData]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(value);
 
-  const handleSort = (column: "purchases" | "invoices" | "due") => {
+  const handleSort = (column: "purchases" | "invoices" | "due"): void => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
@@ -84,7 +90,11 @@ export function PurchaseBySupplierReport() {
     }
   };
 
-  const SortIcon = ({ column }: { column: "purchases" | "invoices" | "due" }) => {
+  const SortIcon = ({
+    column,
+  }: {
+    column: "purchases" | "invoices" | "due";
+  }): React.ReactNode => {
     if (sortBy !== column) return null;
     return sortOrder === "desc" ? (
       <TrendingDown className="h-3 w-3 inline ml-1" />
@@ -94,7 +104,10 @@ export function PurchaseBySupplierReport() {
   };
 
   // Calculate percentage of total for bar visualization
-  const maxPurchases = Math.max(...processedData.map((s) => s.totalPurchases), 1);
+  const maxPurchases = Math.max(
+    ...processedData.map((s) => s.totalPurchases),
+    1
+  );
 
   // Loading state
   if (isLoading) {
@@ -117,8 +130,12 @@ export function PurchaseBySupplierReport() {
       title="Purchases by Supplier"
       subtitle="Supplier-wise purchase analysis"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -127,7 +144,9 @@ export function PurchaseBySupplierReport() {
               type="text"
               placeholder="Search suppliers..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -140,25 +159,33 @@ export function PurchaseBySupplierReport() {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Suppliers</p>
-              <p className="text-xl font-bold text-slate-900">{processedData.length}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {processedData.length}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Purchases</p>
-              <p className="text-xl font-bold text-orange-600">{formatCurrency(totals.purchases)}</p>
+              <p className="text-xl font-bold text-orange-600">
+                {formatCurrency(totals.purchases)}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Amount Paid</p>
-              <p className="text-xl font-bold text-success">{formatCurrency(totals.paid)}</p>
+              <p className="text-xl font-bold text-success">
+                {formatCurrency(totals.paid)}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Amount Due</p>
-              <p className="text-xl font-bold text-error">{formatCurrency(totals.due)}</p>
+              <p className="text-xl font-bold text-error">
+                {formatCurrency(totals.due)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -166,35 +193,51 @@ export function PurchaseBySupplierReport() {
         {/* Supplier Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Supplier Purchase Details</h3>
+            <h3 className="font-medium text-slate-900">
+              Supplier Purchase Details
+            </h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Supplier</th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Supplier
+                    </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("invoices"); }}
+                      onClick={() => {
+                        handleSort("invoices");
+                      }}
                     >
                       Invoices <SortIcon column="invoices" />
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("purchases"); }}
+                      onClick={() => {
+                        handleSort("purchases");
+                      }}
                     >
                       Total Purchases <SortIcon column="purchases" />
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Paid</th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Paid
+                    </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("due"); }}
+                      onClick={() => {
+                        handleSort("due");
+                      }}
                     >
                       Due <SortIcon column="due" />
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Avg Order</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 w-32">Share</th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Avg Order
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 w-32">
+                      Share
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -207,15 +250,31 @@ export function PurchaseBySupplierReport() {
                     </tr>
                   ) : (
                     processedData.map((supplier) => {
-                      const purchasePercentage = (supplier.totalPurchases / maxPurchases) * 100;
+                      const purchasePercentage =
+                        (supplier.totalPurchases / maxPurchases) * 100;
                       return (
-                        <tr key={supplier.supplierId} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-900">{supplier.supplierName}</td>
-                          <td className="px-4 py-3 text-right text-slate-600">{supplier.invoiceCount}</td>
-                          <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(supplier.totalPurchases)}</td>
-                          <td className="px-4 py-3 text-right text-success">{formatCurrency(supplier.totalPaid)}</td>
-                          <td className="px-4 py-3 text-right text-error">{formatCurrency(supplier.totalDue)}</td>
-                          <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(supplier.averageOrderValue)}</td>
+                        <tr
+                          key={supplier.supplierId}
+                          className="hover:bg-slate-50"
+                        >
+                          <td className="px-4 py-3 font-medium text-slate-900">
+                            {supplier.supplierName}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {supplier.invoiceCount}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-orange-600">
+                            {formatCurrency(supplier.totalPurchases)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-success">
+                            {formatCurrency(supplier.totalPaid)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-error">
+                            {formatCurrency(supplier.totalDue)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(supplier.averageOrderValue)}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="w-full bg-slate-100 rounded-full h-2">
                               <div
@@ -233,12 +292,24 @@ export function PurchaseBySupplierReport() {
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
                       <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-900">{totals.invoices}</td>
-                      <td className="px-4 py-3 text-right text-orange-600">{formatCurrency(totals.purchases)}</td>
-                      <td className="px-4 py-3 text-right text-success">{formatCurrency(totals.paid)}</td>
-                      <td className="px-4 py-3 text-right text-error">{formatCurrency(totals.due)}</td>
+                      <td className="px-4 py-3 text-right text-slate-900">
+                        {totals.invoices}
+                      </td>
+                      <td className="px-4 py-3 text-right text-orange-600">
+                        {formatCurrency(totals.purchases)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-success">
+                        {formatCurrency(totals.paid)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-error">
+                        {formatCurrency(totals.due)}
+                      </td>
                       <td className="px-4 py-3 text-right text-slate-600">
-                        {formatCurrency(totals.invoices > 0 ? totals.purchases / totals.invoices : 0)}
+                        {formatCurrency(
+                          totals.invoices > 0
+                            ? totals.purchases / totals.invoices
+                            : 0
+                        )}
                       </td>
                       <td className="px-4 py-3"></td>
                     </tr>

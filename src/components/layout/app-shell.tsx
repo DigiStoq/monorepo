@@ -30,7 +30,6 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
       sidebar,
       header,
       children,
-      sidebarCollapsed = false,
       hideSidebar = false,
       fixedHeader = true,
       className,

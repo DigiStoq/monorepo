@@ -47,7 +47,11 @@ interface InfoItemProps {
   value?: string | null | undefined;
 }
 
-function InfoItem({ icon, label, value }: InfoItemProps) {
+function InfoItem({
+  icon,
+  label,
+  value,
+}: InfoItemProps): React.ReactNode | null {
   if (!value) return null;
 
   return (
@@ -73,8 +77,8 @@ export function CustomerDetail({
   onDelete,
   onAddTransaction,
   className,
-}: CustomerDetailProps) {
-  const formatCurrency = (value: number) =>
+}: CustomerDetailProps): React.ReactNode {
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

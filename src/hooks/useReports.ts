@@ -167,7 +167,11 @@ export function useSalesSummaryReport(dateRange: DateRange): {
   error: Error | undefined;
 } {
   // Main aggregates
-  const { data: aggregateData, isLoading: aggLoading, error: aggError } = useQuery<SalesAggregateRow>(
+  const {
+    data: aggregateData,
+    isLoading: aggLoading,
+    error: aggError,
+  } = useQuery<SalesAggregateRow>(
     `SELECT
        COALESCE(SUM(total), 0) as total_sales,
        COUNT(*) as total_invoices,
@@ -179,8 +183,9 @@ export function useSalesSummaryReport(dateRange: DateRange): {
   );
 
   // Top customers
-  const { data: customerData, isLoading: custLoading } = useQuery<CustomerSalesRow>(
-    `SELECT
+  const { data: customerData, isLoading: custLoading } =
+    useQuery<CustomerSalesRow>(
+      `SELECT
        customer_id,
        customer_name,
        SUM(total) as amount
@@ -189,8 +194,8 @@ export function useSalesSummaryReport(dateRange: DateRange): {
      GROUP BY customer_id, customer_name
      ORDER BY amount DESC
      LIMIT 5`,
-    [dateRange.from, dateRange.to]
-  );
+      [dateRange.from, dateRange.to]
+    );
 
   // Top items
   const { data: itemData, isLoading: itemLoading } = useQuery<ItemSalesRow>(
@@ -221,7 +226,7 @@ export function useSalesSummaryReport(dateRange: DateRange): {
   );
 
   const summary = useMemo((): SalesSummary | null => {
-    if (!aggregateData[0]) return null;
+    if (aggregateData.length === 0) return null;
 
     const agg = aggregateData[0];
     return {
@@ -229,7 +234,8 @@ export function useSalesSummaryReport(dateRange: DateRange): {
       totalInvoices: agg.total_invoices,
       totalPaid: agg.total_paid,
       totalDue: agg.total_due,
-      averageOrderValue: agg.total_invoices > 0 ? agg.total_sales / agg.total_invoices : 0,
+      averageOrderValue:
+        agg.total_invoices > 0 ? agg.total_sales / agg.total_invoices : 0,
       topCustomers: customerData.map((c) => ({
         customerId: c.customer_id,
         customerName: c.customer_name,
@@ -301,11 +307,22 @@ export function useSalesRegisterReport(dateRange: DateRange): {
 }
 
 export function useSalesByCustomerReport(dateRange: DateRange): {
-  data: { customerId: string; customerName: string; invoiceCount: number; totalAmount: number; paidAmount: number; dueAmount: number }[];
+  data: {
+    customerId: string;
+    customerName: string;
+    invoiceCount: number;
+    totalAmount: number;
+    paidAmount: number;
+    dueAmount: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     customer_id: string;
     customer_name: string;
     invoice_count: number;
@@ -342,11 +359,21 @@ export function useSalesByCustomerReport(dateRange: DateRange): {
 }
 
 export function useSalesByItemReport(dateRange: DateRange): {
-  data: { itemId: string; itemName: string; quantitySold: number; totalRevenue: number; averagePrice: number }[];
+  data: {
+    itemId: string;
+    itemName: string;
+    quantitySold: number;
+    totalRevenue: number;
+    averagePrice: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     item_id: string;
     item_name: string;
     quantity_sold: number;
@@ -371,7 +398,8 @@ export function useSalesByItemReport(dateRange: DateRange): {
       itemName: row.item_name,
       quantitySold: row.quantity_sold,
       totalRevenue: row.total_revenue,
-      averagePrice: row.quantity_sold > 0 ? row.total_revenue / row.quantity_sold : 0,
+      averagePrice:
+        row.quantity_sold > 0 ? row.total_revenue / row.quantity_sold : 0,
     }));
   }, [rawData]);
 
@@ -388,7 +416,11 @@ export function usePurchaseSummaryReport(dateRange: DateRange): {
   error: Error | undefined;
 } {
   // Main aggregates
-  const { data: aggregateData, isLoading: aggLoading, error: aggError } = useQuery<PurchaseAggregateRow>(
+  const {
+    data: aggregateData,
+    isLoading: aggLoading,
+    error: aggError,
+  } = useQuery<PurchaseAggregateRow>(
     `SELECT
        COALESCE(SUM(total), 0) as total_purchases,
        COUNT(*) as total_invoices,
@@ -400,8 +432,9 @@ export function usePurchaseSummaryReport(dateRange: DateRange): {
   );
 
   // Top suppliers
-  const { data: supplierData, isLoading: suppLoading } = useQuery<SupplierPurchaseRow>(
-    `SELECT
+  const { data: supplierData, isLoading: suppLoading } =
+    useQuery<SupplierPurchaseRow>(
+      `SELECT
        customer_id as supplier_id,
        customer_name as supplier_name,
        SUM(total) as amount
@@ -410,8 +443,8 @@ export function usePurchaseSummaryReport(dateRange: DateRange): {
      GROUP BY customer_id, customer_name
      ORDER BY amount DESC
      LIMIT 5`,
-    [dateRange.from, dateRange.to]
-  );
+      [dateRange.from, dateRange.to]
+    );
 
   // Top items
   const { data: itemData, isLoading: itemLoading } = useQuery<ItemPurchaseRow>(
@@ -442,7 +475,7 @@ export function usePurchaseSummaryReport(dateRange: DateRange): {
   );
 
   const summary = useMemo((): PurchaseSummary | null => {
-    if (!aggregateData[0]) return null;
+    if (aggregateData.length === 0) return null;
 
     const agg = aggregateData[0];
     return {
@@ -450,7 +483,8 @@ export function usePurchaseSummaryReport(dateRange: DateRange): {
       totalInvoices: agg.total_invoices,
       totalPaid: agg.total_paid,
       totalDue: agg.total_due,
-      averageOrderValue: agg.total_invoices > 0 ? agg.total_purchases / agg.total_invoices : 0,
+      averageOrderValue:
+        agg.total_invoices > 0 ? agg.total_purchases / agg.total_invoices : 0,
       topSuppliers: supplierData.map((s) => ({
         supplierId: s.supplier_id,
         supplierName: s.supplier_name,
@@ -522,11 +556,22 @@ export function usePurchaseRegisterReport(dateRange: DateRange): {
 }
 
 export function usePurchaseBySupplierReport(dateRange: DateRange): {
-  data: { supplierId: string; supplierName: string; invoiceCount: number; totalAmount: number; paidAmount: number; dueAmount: number }[];
+  data: {
+    supplierId: string;
+    supplierName: string;
+    invoiceCount: number;
+    totalAmount: number;
+    paidAmount: number;
+    dueAmount: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     supplier_id: string;
     supplier_name: string;
     invoice_count: number;
@@ -563,11 +608,21 @@ export function usePurchaseBySupplierReport(dateRange: DateRange): {
 }
 
 export function usePurchaseByItemReport(dateRange: DateRange): {
-  data: { itemId: string; itemName: string; quantityPurchased: number; totalCost: number; averagePrice: number }[];
+  data: {
+    itemId: string;
+    itemName: string;
+    quantityPurchased: number;
+    totalCost: number;
+    averagePrice: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     item_id: string;
     item_name: string;
     quantity_purchased: number;
@@ -592,7 +647,10 @@ export function usePurchaseByItemReport(dateRange: DateRange): {
       itemName: row.item_name,
       quantityPurchased: row.quantity_purchased,
       totalCost: row.total_cost,
-      averagePrice: row.quantity_purchased > 0 ? row.total_cost / row.quantity_purchased : 0,
+      averagePrice:
+        row.quantity_purchased > 0
+          ? row.total_cost / row.quantity_purchased
+          : 0,
     }));
   }, [rawData]);
 
@@ -617,13 +675,16 @@ export function useCustomerStatementReport(
     name: string;
     type: string;
     opening_balance: number;
-  }>(
-    `SELECT id, name, type, opening_balance FROM customers WHERE id = $1`,
-    [customerId]
-  );
+  }>(`SELECT id, name, type, opening_balance FROM customers WHERE id = $1`, [
+    customerId,
+  ]);
 
   // Get all transactions (invoices, payments, credit notes)
-  const { data: invoiceData, isLoading: invLoading, error } = useQuery<LedgerEntryRow>(
+  const {
+    data: invoiceData,
+    isLoading: invLoading,
+    error,
+  } = useQuery<LedgerEntryRow>(
     `SELECT
        id,
        date,
@@ -661,8 +722,9 @@ export function useCustomerStatementReport(
   );
 
   const statement = useMemo((): CustomerStatement | null => {
+    if (customerData.length === 0) return null;
+
     const customer = customerData[0];
-    if (!customer) return null;
 
     let balance = customer.opening_balance;
     const entries: CustomerLedgerEntry[] = [
@@ -724,7 +786,11 @@ export function useAgingReport(type: "receivable" | "payable"): {
 } {
   const table = type === "receivable" ? "sale_invoices" : "purchase_invoices";
 
-  const { data: rawData, isLoading, error } = useQuery<AgingRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<AgingRow>(
     `SELECT
        customer_id,
        customer_name,
@@ -742,7 +808,9 @@ export function useAgingReport(type: "receivable" | "payable"): {
 
     for (const row of rawData) {
       const dueDate = new Date(row.due_date);
-      const daysPastDue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysPastDue = Math.floor(
+        (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       if (!agingMap.has(row.customer_id)) {
         agingMap.set(row.customer_id, {
@@ -757,19 +825,21 @@ export function useAgingReport(type: "receivable" | "payable"): {
         });
       }
 
-      const aging = agingMap.get(row.customer_id)!;
-      aging.total += row.amount_due;
+      const aging = agingMap.get(row.customer_id);
+      if (aging) {
+        aging.total += row.amount_due;
 
-      if (daysPastDue <= 0) {
-        aging.current += row.amount_due;
-      } else if (daysPastDue <= 30) {
-        aging.days30 += row.amount_due;
-      } else if (daysPastDue <= 60) {
-        aging.days60 += row.amount_due;
-      } else if (daysPastDue <= 90) {
-        aging.days90 += row.amount_due;
-      } else {
-        aging.over90 += row.amount_due;
+        if (daysPastDue <= 0) {
+          aging.current += row.amount_due;
+        } else if (daysPastDue <= 30) {
+          aging.days30 += row.amount_due;
+        } else if (daysPastDue <= 60) {
+          aging.days60 += row.amount_due;
+        } else if (daysPastDue <= 90) {
+          aging.days90 += row.amount_due;
+        } else {
+          aging.over90 += row.amount_due;
+        }
       }
     }
 
@@ -780,11 +850,21 @@ export function useAgingReport(type: "receivable" | "payable"): {
 }
 
 export function useReceivablesReport(): {
-  data: { customerId: string; customerName: string; totalDue: number; overdueAmount: number; invoiceCount: number }[];
+  data: {
+    customerId: string;
+    customerName: string;
+    totalDue: number;
+    overdueAmount: number;
+    invoiceCount: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     customer_id: string;
     customer_name: string;
     total_due: number;
@@ -817,11 +897,21 @@ export function useReceivablesReport(): {
 }
 
 export function usePayablesReport(): {
-  data: { supplierId: string; supplierName: string; totalDue: number; overdueAmount: number; invoiceCount: number }[];
+  data: {
+    supplierId: string;
+    supplierName: string;
+    totalDue: number;
+    overdueAmount: number;
+    invoiceCount: number;
+  }[];
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<{
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<{
     supplier_id: string;
     supplier_name: string;
     total_due: number;
@@ -862,7 +952,11 @@ export function useStockSummaryReport(): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<StockRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<StockRow>(
     `SELECT
        i.id,
        i.name,
@@ -911,13 +1005,12 @@ export function useStockMovementReport(dateRange: DateRange): {
     id: string;
     name: string;
     stock_quantity: number;
-  }>(
-    `SELECT id, name, stock_quantity FROM items WHERE is_active = 1`
-  );
+  }>(`SELECT id, name, stock_quantity FROM items WHERE is_active = 1`);
 
   // Get purchases in period
-  const { data: purchasesData, isLoading: purchasesLoading } = useQuery<StockMovementRow>(
-    `SELECT
+  const { data: purchasesData, isLoading: purchasesLoading } =
+    useQuery<StockMovementRow>(
+      `SELECT
        pii.item_id,
        pii.item_name,
        SUM(pii.quantity) as purchased,
@@ -926,11 +1019,15 @@ export function useStockMovementReport(dateRange: DateRange): {
      JOIN purchase_invoices pi ON pii.invoice_id = pi.id
      WHERE pi.date >= $1 AND pi.date <= $2 AND pi.status != 'cancelled'
      GROUP BY pii.item_id, pii.item_name`,
-    [dateRange.from, dateRange.to]
-  );
+      [dateRange.from, dateRange.to]
+    );
 
   // Get sales in period
-  const { data: salesData, isLoading: salesLoading, error } = useQuery<StockMovementRow>(
+  const {
+    data: salesData,
+    isLoading: salesLoading,
+    error,
+  } = useQuery<StockMovementRow>(
     `SELECT
        sii.item_id,
        sii.item_name,
@@ -965,7 +1062,8 @@ export function useStockMovementReport(dateRange: DateRange): {
       if (movement) {
         movement.purchased = purchase.purchased;
         // Calculate opening = current - purchased + sold
-        movement.openingStock = movement.closingStock - movement.purchased + movement.sold;
+        movement.openingStock =
+          movement.closingStock - movement.purchased + movement.sold;
       }
     }
 
@@ -974,14 +1072,19 @@ export function useStockMovementReport(dateRange: DateRange): {
       const movement = movementMap.get(sale.item_id);
       if (movement) {
         movement.sold = sale.sold;
-        movement.openingStock = movement.closingStock - movement.purchased + movement.sold;
+        movement.openingStock =
+          movement.closingStock - movement.purchased + movement.sold;
       }
     }
 
     return Array.from(movementMap.values());
   }, [itemsData, purchasesData, salesData]);
 
-  return { data, isLoading: itemsLoading || purchasesLoading || salesLoading, error };
+  return {
+    data,
+    isLoading: itemsLoading || purchasesLoading || salesLoading,
+    error,
+  };
 }
 
 export function useLowStockReport(): {
@@ -989,7 +1092,11 @@ export function useLowStockReport(): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<StockRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<StockRow>(
     `SELECT
        i.id,
        i.name,
@@ -1033,7 +1140,11 @@ export function useItemProfitabilityReport(dateRange: DateRange): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<ItemProfitRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<ItemProfitRow>(
     `SELECT
        sii.item_id,
        sii.item_name,
@@ -1077,7 +1188,11 @@ export function useDayBookReport(date: string): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<DayBookRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<DayBookRow>(
     `SELECT id, date, 'sale' as type, invoice_number as reference_number, customer_name, 'Sale Invoice' as description, total as amount, 1 as is_debit
      FROM sale_invoices WHERE date = $1 AND status != 'cancelled'
      UNION ALL
@@ -1134,7 +1249,9 @@ export function useProfitLossReport(dateRange: DateRange): {
   error: Error | undefined;
 } {
   // Sales revenue
-  const { data: salesData, isLoading: salesLoading } = useQuery<{ total: number }>(
+  const { data: salesData, isLoading: salesLoading } = useQuery<{
+    total: number;
+  }>(
     `SELECT COALESCE(SUM(total), 0) as total
      FROM sale_invoices
      WHERE date >= $1 AND date <= $2 AND status != 'cancelled'`,
@@ -1142,7 +1259,9 @@ export function useProfitLossReport(dateRange: DateRange): {
   );
 
   // Cost of goods sold (purchase price of items sold)
-  const { data: cogsData, isLoading: cogsLoading } = useQuery<{ total: number }>(
+  const { data: cogsData, isLoading: cogsLoading } = useQuery<{
+    total: number;
+  }>(
     `SELECT COALESCE(SUM(sii.quantity * i.purchase_price), 0) as total
      FROM sale_invoice_items sii
      JOIN sale_invoices si ON sii.invoice_id = si.id
@@ -1152,7 +1271,11 @@ export function useProfitLossReport(dateRange: DateRange): {
   );
 
   // Operating expenses
-  const { data: expensesData, isLoading: expLoading, error } = useQuery<{ total: number }>(
+  const {
+    data: expensesData,
+    isLoading: expLoading,
+    error,
+  } = useQuery<{ total: number }>(
     `SELECT COALESCE(SUM(amount), 0) as total
      FROM expenses
      WHERE date >= $1 AND date <= $2`,
@@ -1199,17 +1322,22 @@ export function useCashFlowReport(dateRange: DateRange): {
   error: Error | undefined;
 } {
   // Cash inflows (payments received)
-  const { data: inflowsData, isLoading: inflowsLoading } = useQuery<CashFlowRow>(
-    `SELECT 'sales_receipts' as type, COALESCE(SUM(amount), 0) as total
+  const { data: inflowsData, isLoading: inflowsLoading } =
+    useQuery<CashFlowRow>(
+      `SELECT 'sales_receipts' as type, COALESCE(SUM(amount), 0) as total
      FROM payment_ins WHERE date >= $1 AND date <= $2
      UNION ALL
      SELECT 'cash_deposits' as type, COALESCE(SUM(amount), 0) as total
      FROM cash_transactions WHERE date >= $1 AND date <= $2 AND type = 'in'`,
-    [dateRange.from, dateRange.to]
-  );
+      [dateRange.from, dateRange.to]
+    );
 
   // Cash outflows (payments made)
-  const { data: outflowsData, isLoading: outflowsLoading, error } = useQuery<CashFlowRow>(
+  const {
+    data: outflowsData,
+    isLoading: outflowsLoading,
+    error,
+  } = useQuery<CashFlowRow>(
     `SELECT 'purchase_payments' as type, COALESCE(SUM(amount), 0) as total
      FROM payment_outs WHERE date >= $1 AND date <= $2
      UNION ALL
@@ -1222,19 +1350,26 @@ export function useCashFlowReport(dateRange: DateRange): {
   );
 
   // Opening balance (cash at start of period)
-  const { data: openingData, isLoading: openingLoading } = useQuery<{ balance: number }>(
+  const { data: openingData, isLoading: openingLoading } = useQuery<{
+    balance: number;
+  }>(
     `SELECT COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE -amount END), 0) as balance
      FROM cash_transactions WHERE date < $1`,
     [dateRange.from]
   );
 
   const report = useMemo((): CashFlowReport | null => {
-    const salesReceipts = inflowsData.find((r) => r.type === "sales_receipts")?.total ?? 0;
-    const otherReceipts = inflowsData.find((r) => r.type === "cash_deposits")?.total ?? 0;
+    const salesReceipts =
+      inflowsData.find((r) => r.type === "sales_receipts")?.total ?? 0;
+    const otherReceipts =
+      inflowsData.find((r) => r.type === "cash_deposits")?.total ?? 0;
 
-    const purchasePayments = outflowsData.find((r) => r.type === "purchase_payments")?.total ?? 0;
-    const expenses = outflowsData.find((r) => r.type === "expenses")?.total ?? 0;
-    const otherPayments = outflowsData.find((r) => r.type === "cash_withdrawals")?.total ?? 0;
+    const purchasePayments =
+      outflowsData.find((r) => r.type === "purchase_payments")?.total ?? 0;
+    const expenses =
+      outflowsData.find((r) => r.type === "expenses")?.total ?? 0;
+    const otherPayments =
+      outflowsData.find((r) => r.type === "cash_withdrawals")?.total ?? 0;
 
     const totalInflows = salesReceipts + otherReceipts;
     const totalOutflows = purchasePayments + expenses + otherPayments;
@@ -1272,7 +1407,11 @@ export function useTaxSummaryReport(dateRange: DateRange): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const { data: rawData, isLoading, error } = useQuery<TaxRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<TaxRow>(
     `SELECT
        (SELECT COALESCE(SUM(subtotal), 0) FROM sale_invoices WHERE date >= $1 AND date <= $2 AND status != 'cancelled') as sales_taxable,
        (SELECT COALESCE(SUM(tax_amount), 0) FROM sale_invoices WHERE date >= $1 AND date <= $2 AND status != 'cancelled') as sales_tax,
@@ -1282,8 +1421,9 @@ export function useTaxSummaryReport(dateRange: DateRange): {
   );
 
   const summary = useMemo((): TaxSummary | null => {
+    if (rawData.length === 0) return null;
+
     const row = rawData[0];
-    if (!row) return null;
 
     return {
       period: dateRange,
@@ -1327,13 +1467,20 @@ const paymentModeLabels: Record<PaymentMode, string> = {
   other: "Other",
 };
 
-export function useCashMovementReport(dateRange: DateRange, modeFilter?: PaymentMode): {
+export function useCashMovementReport(
+  dateRange: DateRange,
+  modeFilter?: PaymentMode
+): {
   report: CashMovementReport | null;
   isLoading: boolean;
   error: Error | undefined;
 } {
   // Fetch all payment transactions
-  const { data: rawData, isLoading, error } = useQuery<CashMovementRow>(
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useQuery<CashMovementRow>(
     `SELECT
        id, date, 'payment_in' as type, receipt_number as reference_number,
        customer_name as party_name, 'Payment Received' as description,
@@ -1378,7 +1525,14 @@ export function useCashMovementReport(dateRange: DateRange, modeFilter?: Payment
 
     // Aggregate by payment mode
     const modeMap = new Map<PaymentMode, PaymentModeMovement>();
-    const allModes: PaymentMode[] = ["cash", "bank", "card", "ach", "cheque", "other"];
+    const allModes: PaymentMode[] = [
+      "cash",
+      "bank",
+      "card",
+      "ach",
+      "cheque",
+      "other",
+    ];
 
     // Initialize all modes
     for (const mode of allModes) {
@@ -1413,8 +1567,8 @@ export function useCashMovementReport(dateRange: DateRange, modeFilter?: Payment
     }
 
     // Filter to only modes with transactions (unless filtering by mode)
-    const byMode = Array.from(modeMap.values()).filter(
-      (m) => modeFilter ? m.mode === modeFilter : m.transactionCount > 0
+    const byMode = Array.from(modeMap.values()).filter((m) =>
+      modeFilter ? m.mode === modeFilter : m.transactionCount > 0
     );
 
     return {

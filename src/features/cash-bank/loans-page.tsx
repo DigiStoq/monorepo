@@ -19,7 +19,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import type { Loan, LoanFormData, LoanPaymentFormData } from "./types";
 
-export function LoansPage() {
+export function LoansPage(): React.ReactNode {
   // Data from PowerSync
   const { loans, isLoading, error } = useLoans();
   const { customers } = useCustomers();
@@ -44,23 +44,23 @@ export function LoansPage() {
   );
 
   // Handlers
-  const handleLoanClick = (loan: Loan) => {
+  const handleLoanClick = (loan: Loan): void => {
     setSelectedLoan(loan);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedLoan(null);
   };
 
-  const handleCreateLoan = () => {
+  const handleCreateLoan = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitLoan = async (data: LoanFormData) => {
+  const handleSubmitLoan = async (data: LoanFormData): Promise<void> => {
     try {
       // Find customer name if customer ID is provided
       const customer = data.customerId
@@ -88,7 +88,7 @@ export function LoansPage() {
     }
   };
 
-  const handleDeleteLoan = async () => {
+  const handleDeleteLoan = async (): Promise<void> => {
     if (currentSelectedLoan) {
       try {
         await deleteLoan(currentSelectedLoan.id);
@@ -99,15 +99,17 @@ export function LoansPage() {
     }
   };
 
-  const handleOpenPaymentForm = () => {
+  const handleOpenPaymentForm = (): void => {
     setIsPaymentFormOpen(true);
   };
 
-  const handleClosePaymentForm = () => {
+  const handleClosePaymentForm = (): void => {
     setIsPaymentFormOpen(false);
   };
 
-  const handleSubmitPayment = async (data: LoanPaymentFormData) => {
+  const handleSubmitPayment = async (
+    data: LoanPaymentFormData
+  ): Promise<void> => {
     if (!currentSelectedLoan) return;
 
     try {

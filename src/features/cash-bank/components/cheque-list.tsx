@@ -87,7 +87,7 @@ export function ChequeList({
   cheques,
   onChequeClick,
   className,
-}: ChequeListProps) {
+}: ChequeListProps): React.ReactNode {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ChequeType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<ChequeStatus | "all">("all");
@@ -120,7 +120,7 @@ export function ChequeList({
   }, [filteredCheques]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -128,7 +128,7 @@ export function ChequeList({
     }).format(value);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -138,7 +138,7 @@ export function ChequeList({
   };
 
   // Check if due soon (within 7 days)
-  const isDueSoon = (dueDate: string) => {
+  const isDueSoon = (dueDate: string): boolean => {
     const due = new Date(dueDate);
     const today = new Date();
     const diffDays = Math.ceil(

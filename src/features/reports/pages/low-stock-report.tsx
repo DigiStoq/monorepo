@@ -10,7 +10,7 @@ import { useLowStockReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function LowStockReport() {
+export function LowStockReport(): React.ReactNode {
   const [search, setSearch] = useState("");
   const [showOutOfStock, setShowOutOfStock] = useState(false);
 
@@ -31,22 +31,40 @@ export function LowStockReport() {
   // Calculate stats
   const stats = useMemo(() => {
     const outOfStock = filteredData.filter((i) => i.stockQuantity === 0).length;
-    const criticalLow = filteredData.filter((i) => i.stockQuantity > 0 && i.stockQuantity <= i.lowStockAlert * 0.5).length;
+    const criticalLow = filteredData.filter(
+      (i) => i.stockQuantity > 0 && i.stockQuantity <= i.lowStockAlert * 0.5
+    ).length;
     const totalValue = filteredData.reduce((sum, i) => sum + i.stockValue, 0);
     return { outOfStock, criticalLow, total: filteredData.length, totalValue };
   }, [filteredData]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
 
-  const getStockStatus = (item: StockSummaryItem) => {
-    if (item.stockQuantity === 0) return { label: "Out of Stock", variant: "error" as const, color: "text-error" };
-    if (item.stockQuantity <= item.lowStockAlert * 0.5) return { label: "Critical", variant: "error" as const, color: "text-error" };
-    return { label: "Low Stock", variant: "warning" as const, color: "text-amber-600" };
+  const getStockStatus = (
+    item: StockSummaryItem
+  ): { label: string; variant: "error" | "warning"; color: string } => {
+    if (item.stockQuantity === 0)
+      return {
+        label: "Out of Stock",
+        variant: "error" as const,
+        color: "text-error",
+      };
+    if (item.stockQuantity <= item.lowStockAlert * 0.5)
+      return {
+        label: "Critical",
+        variant: "error" as const,
+        color: "text-error",
+      };
+    return {
+      label: "Low Stock",
+      variant: "warning" as const,
+      color: "text-amber-600",
+    };
   };
 
   // Loading state
@@ -69,8 +87,12 @@ export function LowStockReport() {
       title="Low Stock Alert"
       subtitle="Items below minimum stock levels"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
@@ -78,7 +100,9 @@ export function LowStockReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -86,7 +110,9 @@ export function LowStockReport() {
             <input
               type="checkbox"
               checked={showOutOfStock}
-              onChange={(e) => { setShowOutOfStock(e.target.checked); }}
+              onChange={(e) => {
+                setShowOutOfStock(e.target.checked);
+              }}
               className="rounded border-slate-300"
             />
             Show only out of stock
@@ -112,7 +138,9 @@ export function LowStockReport() {
                 <TrendingDown className="h-3 w-3 text-orange-600" />
                 <p className="text-xs text-orange-600">Critical Low</p>
               </div>
-              <p className="text-xl font-bold text-orange-700">{stats.criticalLow}</p>
+              <p className="text-xl font-bold text-orange-700">
+                {stats.criticalLow}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-amber-50 border-amber-100">
@@ -124,7 +152,9 @@ export function LowStockReport() {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Stock Value at Risk</p>
-              <p className="text-xl font-bold text-slate-900">{formatCurrency(stats.totalValue)}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {formatCurrency(stats.totalValue)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -139,15 +169,33 @@ export function LowStockReport() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Item</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">SKU</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Category</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Current Stock</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Min. Level</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Shortage</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Purchase Price</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Reorder Cost</th>
-                    <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Item
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      SKU
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Category
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Current Stock
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Min. Level
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Shortage
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Purchase Price
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Reorder Cost
+                    </th>
+                    <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -155,7 +203,9 @@ export function LowStockReport() {
                     <tr>
                       <td colSpan={9} className="px-4 py-12 text-center">
                         <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">No low stock items found</p>
+                        <p className="text-slate-500">
+                          No low stock items found
+                        </p>
                       </td>
                     </tr>
                   ) : (
@@ -165,21 +215,43 @@ export function LowStockReport() {
                       const reorderCost = shortage * item.purchasePrice;
 
                       return (
-                        <tr key={item.itemId} className={cn("hover:bg-slate-50", item.stockQuantity === 0 && "bg-red-50/50")}>
-                          <td className="px-4 py-3 font-medium text-slate-900">{item.itemName}</td>
-                          <td className="px-4 py-3 text-slate-600">{item.sku}</td>
-                          <td className="px-4 py-3 text-slate-600">{item.category}</td>
+                        <tr
+                          key={item.itemId}
+                          className={cn(
+                            "hover:bg-slate-50",
+                            item.stockQuantity === 0 && "bg-red-50/50"
+                          )}
+                        >
+                          <td className="px-4 py-3 font-medium text-slate-900">
+                            {item.itemName}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {item.sku}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {item.category}
+                          </td>
                           <td className="px-4 py-3 text-right">
                             <span className={cn("font-medium", status.color)}>
                               {item.stockQuantity} {item.unit}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-600">{item.lowStockAlert} {item.unit}</td>
-                          <td className="px-4 py-3 text-right text-error font-medium">-{shortage} {item.unit}</td>
-                          <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.purchasePrice)}</td>
-                          <td className="px-4 py-3 text-right text-slate-900">{formatCurrency(reorderCost)}</td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.lowStockAlert} {item.unit}
+                          </td>
+                          <td className="px-4 py-3 text-right text-error font-medium">
+                            -{shortage} {item.unit}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.purchasePrice)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-900">
+                            {formatCurrency(reorderCost)}
+                          </td>
                           <td className="px-4 py-3 text-center">
-                            <Badge variant={status.variant}>{status.label}</Badge>
+                            <Badge variant={status.variant}>
+                              {status.label}
+                            </Badge>
                           </td>
                         </tr>
                       );
@@ -189,11 +261,14 @@ export function LowStockReport() {
                 {filteredData.length > 0 && (
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
-                      <td colSpan={7} className="px-4 py-3 text-slate-900">Total Reorder Cost</td>
+                      <td colSpan={7} className="px-4 py-3 text-slate-900">
+                        Total Reorder Cost
+                      </td>
                       <td className="px-4 py-3 text-right text-slate-900">
                         {formatCurrency(
                           filteredData.reduce((sum, item) => {
-                            const shortage = item.lowStockAlert - item.stockQuantity;
+                            const shortage =
+                              item.lowStockAlert - item.stockQuantity;
                             return sum + shortage * item.purchasePrice;
                           }, 0)
                         )}

@@ -11,45 +11,169 @@ import {
   Select,
   ConfirmDeleteDialog,
   type SelectOption,
+  SearchInput,
 } from "@/components/ui";
 import { Spinner } from "@/components/common";
-import { Plus, DollarSign, RotateCcw, Package } from "lucide-react";
+import {
+  Plus,
+  DollarSign,
+  RotateCcw,
+  Package,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
 import { InvoiceList, InvoiceDetail, InvoiceForm } from "./components";
-import { useSaleInvoices, useSaleInvoiceMutations, useSaleInvoiceById, useSaleInvoiceLinkedItems } from "@/hooks/useSaleInvoices";
+import {
+  useSaleInvoices,
+  useSaleInvoiceMutations,
+  useSaleInvoiceById,
+  useSaleInvoiceLinkedItems,
+} from "@/hooks/useSaleInvoices";
 import { usePaymentInMutations } from "@/hooks/usePaymentIns";
 import { useCashTransactionMutations } from "@/hooks/useCashTransactions";
 import { useBankTransactionMutations } from "@/hooks/useBankTransactions";
-import { useBankAccounts, useBankAccountMutations } from "@/hooks/useBankAccounts";
+import {
+  useBankAccounts,
+  useBankAccountMutations,
+} from "@/hooks/useBankAccounts";
 import { useChequeMutations } from "@/hooks/useCheques";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems, useItemMutations } from "@/hooks/useItems";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
-import type { SaleInvoice, SaleInvoiceFormData, PaymentMode } from "./types";
+import type {
+  SaleInvoice,
+  SaleInvoiceFormData,
+  PaymentMode,
+  SaleFilters,
+  InvoiceStatus,
+} from "./types";
 
-export function SaleInvoicesPage() {
+export function SaleInvoicesPage(): React.ReactNode {
   // Data from PowerSync
   const { invoices, isLoading: invoicesLoading, error } = useSaleInvoices();
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
-  const { createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice } = useSaleInvoiceMutations();
+  const { createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice } =
+    useSaleInvoiceMutations();
   const { createPayment } = usePaymentInMutations();
-  const { createTransaction: createCashTransaction } = useCashTransactionMutations();
-  const { createTransaction: createBankTransaction } = useBankTransactionMutations();
+  const { createTransaction: createCashTransaction } =
+    useCashTransactionMutations();
+  const { createTransaction: createBankTransaction } =
+    useBankTransactionMutations();
   const { createCheque } = useChequeMutations();
   const { createAccount: createBankAccount } = useBankAccountMutations();
   const { adjustStock } = useItemMutations();
 
   // PDF Generator
-  const { downloadSaleInvoice, printSaleInvoice, isReady: pdfReady } = usePDFGenerator();
+  const {
+    downloadSaleInvoice,
+    printSaleInvoice,
+    isReady: pdfReady,
+  } = usePDFGenerator();
 
   // State
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
+    null
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [invoiceToDelete, setInvoiceToDelete] = useState<SaleInvoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<SaleInvoice | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter State
+  const [filters, setFilters] = useState<SaleFilters>({
+    search: "",
+    status: "all",
+    customerId: "all",
+    dateRange: { from: null, to: null },
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+
+  const statusOptions: SelectOption[] = [
+    { value: "all", label: "All Status" },
+    { value: "draft", label: "Draft" },
+    { value: "unpaid", label: "Unpaid" },
+    { value: "paid", label: "Paid" },
+    { value: "returned", label: "Returned" },
+  ];
+
+  // Filter Logic
+  const filteredInvoices = useMemo(() => {
+    return invoices
+      .filter((invoice) => {
+        // Search filter
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const matchesNumber = invoice.invoiceNumber
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesCustomer = invoice.customerName
+            .toLowerCase()
+            .includes(searchLower);
+          if (!matchesNumber && !matchesCustomer) return false;
+        }
+
+        // Status filter
+        if (filters.status !== "all" && invoice.status !== filters.status) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+
+        switch (filters.sortBy) {
+          case "date":
+            comparison =
+              new Date(b.date).getTime() - new Date(a.date).getTime();
+            break;
+          case "number":
+            comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
+            break;
+          case "amount":
+            comparison = b.total - a.total;
+            break;
+          case "customer":
+            comparison = a.customerName.localeCompare(b.customerName);
+            break;
+        }
+
+        return filters.sortOrder === "desc" ? comparison : -comparison;
+      });
+  }, [invoices, filters]);
+
+  // Totals Calculation
+  const totals = useMemo(() => {
+    if (!filteredInvoices.length)
+      return { total: 0, paid: 0, unpaid: 0, returned: 0 };
+
+    return filteredInvoices.reduce(
+      (acc, inv) => {
+        acc.total += inv.total;
+        acc.paid += inv.amountPaid;
+        if (inv.status === "returned") {
+          acc.returned += inv.total;
+        } else if (inv.status === "unpaid" || inv.amountDue > 0) {
+          acc.unpaid += inv.amountDue;
+        }
+        return acc;
+      },
+      { total: 0, paid: 0, unpaid: 0, returned: 0 }
+    );
+  }, [filteredInvoices]);
+
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   // Linked items for delete dialog
   const linkedItems = useSaleInvoiceLinkedItems(invoiceToDelete?.id ?? null);
@@ -58,7 +182,8 @@ export function SaleInvoicesPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash");
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
+  const [selectedBankAccountId, setSelectedBankAccountId] =
+    useState<string>("");
 
   // Cheque details state
   const [chequeNumber, setChequeNumber] = useState<string>("");
@@ -84,16 +209,21 @@ export function SaleInvoicesPage() {
   ];
 
   // Bank account options for dropdown
-  const bankAccountOptions: SelectOption[] = useMemo(() =>
-    bankAccounts.map((account) => ({
-      value: account.id,
-      label: `${account.name} - ${account.bankName}`,
-    })),
+  const bankAccountOptions: SelectOption[] = useMemo(
+    () =>
+      bankAccounts.map((account) => ({
+        value: account.id,
+        label: `${account.name} - ${account.bankName}`,
+      })),
     [bankAccounts]
   );
 
   // Fetch full invoice with items when one is selected
-  const { invoice: selectedInvoiceData, items: selectedInvoiceItems, isLoading: invoiceDetailLoading } = useSaleInvoiceById(selectedInvoiceId);
+  const {
+    invoice: selectedInvoiceData,
+    items: selectedInvoiceItems,
+    isLoading: invoiceDetailLoading,
+  } = useSaleInvoiceById(selectedInvoiceId);
 
   // Merge invoice with items for the detail view
   const currentSelectedInvoice = useMemo(() => {
@@ -105,25 +235,25 @@ export function SaleInvoicesPage() {
   }, [selectedInvoiceData, selectedInvoiceItems]);
 
   // Handlers
-  const handleCreateInvoice = () => {
+  const handleCreateInvoice = (): void => {
     setSelectedInvoiceId(null);
     setIsCreating(true);
   };
 
-  const handleEditInvoice = () => {
+  const handleEditInvoice = (): void => {
     if (currentSelectedInvoice) {
       setIsEditing(true);
     }
   };
 
-  const handleDeleteInvoice = () => {
+  const handleDeleteInvoice = (): void => {
     if (currentSelectedInvoice) {
       setInvoiceToDelete(currentSelectedInvoice);
       setIsDeleteModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (): Promise<void> => {
     if (invoiceToDelete) {
       setIsSubmitting(true);
       try {
@@ -139,7 +269,7 @@ export function SaleInvoicesPage() {
     }
   };
 
-  const handleFormSubmit = async (data: SaleInvoiceFormData) => {
+  const handleFormSubmit = async (data: SaleInvoiceFormData): Promise<void> => {
     setIsSubmitting(true);
     try {
       // Generate invoice number
@@ -204,7 +334,7 @@ export function SaleInvoicesPage() {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string): Promise<void> => {
     if (currentSelectedInvoice) {
       // If changing to "paid", show payment modal instead of directly updating status
       if (newStatus === "paid" && currentSelectedInvoice.status !== "paid") {
@@ -225,7 +355,10 @@ export function SaleInvoicesPage() {
       }
 
       // If changing to "returned", show return reason modal
-      if (newStatus === "returned" && currentSelectedInvoice.status !== "returned") {
+      if (
+        newStatus === "returned" &&
+        currentSelectedInvoice.status !== "returned"
+      ) {
         setReturnReason("");
         setAddToStock(true);
         setIsReturnModalOpen(true);
@@ -233,14 +366,18 @@ export function SaleInvoicesPage() {
       }
 
       try {
-        await updateInvoiceStatus(currentSelectedInvoice.id, newStatus, currentSelectedInvoice.status);
+        await updateInvoiceStatus(
+          currentSelectedInvoice.id,
+          newStatus,
+          currentSelectedInvoice.status
+        );
       } catch (err) {
         console.error("Failed to update invoice status:", err);
       }
     }
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = (): void => {
     if (currentSelectedInvoice) {
       setPaymentAmount(currentSelectedInvoice.amountDue.toFixed(2));
       setPaymentMode("cash");
@@ -258,7 +395,7 @@ export function SaleInvoicesPage() {
     }
   };
 
-  const handleAddBankAccount = async () => {
+  const handleAddBankAccount = async (): Promise<void> => {
     if (!newBankAccountName || !newBankName || !newBankAccountNumber) return;
 
     try {
@@ -281,7 +418,7 @@ export function SaleInvoicesPage() {
     }
   };
 
-  const handleConfirmReturn = async () => {
+  const handleConfirmReturn = async (): Promise<void> => {
     if (currentSelectedInvoice && returnReason.trim()) {
       setIsSubmitting(true);
       try {
@@ -312,21 +449,25 @@ export function SaleInvoicesPage() {
   };
 
   // PDF handlers
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (): void => {
     if (currentSelectedInvoice && pdfReady) {
-      const customer = customers.find((c) => c.id === currentSelectedInvoice.customerId);
+      const customer = customers.find(
+        (c) => c.id === currentSelectedInvoice.customerId
+      );
       downloadSaleInvoice(currentSelectedInvoice, customer);
     }
   };
 
-  const handlePrintPDF = () => {
+  const handlePrintPDF = (): void => {
     if (currentSelectedInvoice && pdfReady) {
-      const customer = customers.find((c) => c.id === currentSelectedInvoice.customerId);
+      const customer = customers.find(
+        (c) => c.id === currentSelectedInvoice.customerId
+      );
       printSaleInvoice(currentSelectedInvoice, customer);
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (): Promise<void> => {
     // Prevent double submission
     if (isSubmitting) return;
 
@@ -346,7 +487,10 @@ export function SaleInvoicesPage() {
       }
 
       // Validate cheque fields for cheque payments
-      if (paymentMode === "cheque" && (!chequeNumber || !chequeBankName || !chequeDueDate)) {
+      if (
+        paymentMode === "cheque" &&
+        (!chequeNumber || !chequeBankName || !chequeDueDate)
+      ) {
         return;
       }
 
@@ -422,7 +566,7 @@ export function SaleInvoicesPage() {
     }
   };
 
-  const handleEditSubmit = async (data: SaleInvoiceFormData) => {
+  const handleEditSubmit = async (data: SaleInvoiceFormData): Promise<void> => {
     if (!currentSelectedInvoice) return;
 
     setIsSubmitting(true);
@@ -507,8 +651,12 @@ export function SaleInvoicesPage() {
           <InvoiceForm
             customers={customers}
             items={items}
-            onSubmit={(data) => { void handleFormSubmit(data); }}
-            onCancel={() => { setIsCreating(false); }}
+            onSubmit={(data) => {
+              void handleFormSubmit(data);
+            }}
+            onCancel={() => {
+              setIsCreating(false);
+            }}
             isSubmitting={isSubmitting}
           />
         </div>
@@ -523,16 +671,19 @@ export function SaleInvoicesPage() {
       customerId: currentSelectedInvoice.customerId,
       date: currentSelectedInvoice.date,
       dueDate: currentSelectedInvoice.dueDate,
-      items: currentSelectedInvoice.items.map(item => ({
+      items: currentSelectedInvoice.items.map((item) => ({
         itemId: item.itemId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discountPercent: item.discountPercent,
         taxPercent: item.taxPercent,
       })),
-      discountPercent: currentSelectedInvoice.subtotal > 0
-        ? (currentSelectedInvoice.discountAmount / currentSelectedInvoice.subtotal) * 100
-        : 0,
+      discountPercent:
+        currentSelectedInvoice.subtotal > 0
+          ? (currentSelectedInvoice.discountAmount /
+              currentSelectedInvoice.subtotal) *
+            100
+          : 0,
       notes: currentSelectedInvoice.notes,
       terms: currentSelectedInvoice.terms,
     };
@@ -544,8 +695,12 @@ export function SaleInvoicesPage() {
             customers={customers}
             items={items}
             initialData={editInitialData}
-            onSubmit={(data) => { void handleEditSubmit(data); }}
-            onCancel={() => { setIsEditing(false); }}
+            onSubmit={(data) => {
+              void handleEditSubmit(data);
+            }}
+            onCancel={() => {
+              setIsEditing(false);
+            }}
             isSubmitting={isSubmitting}
             isEditing
           />
@@ -561,26 +716,109 @@ export function SaleInvoicesPage() {
         title="Sale Invoices"
         description="Manage your sales and invoices"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateInvoice}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreateInvoice}
+          >
             New Invoice
           </Button>
         }
       />
 
+      {/* Filters Header - Full Width */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <SearchInput
+              placeholder="Search invoices..."
+              value={filters.search}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, search: e.target.value }));
+              }}
+              className="w-full sm:w-72"
+            />
+
+            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <Select
+                options={statusOptions}
+                value={filters.status}
+                onChange={(value) => {
+                  setFilters((f) => ({
+                    ...f,
+                    status: value as InvoiceStatus | "all",
+                  }));
+                }}
+                size="md"
+                className="min-w-[140px]"
+              />
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <DollarSign className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Total Revenue
+                </p>
+                <p className="text-lg font-bold text-slate-900 leading-none">
+                  {formatCurrency(totals.total)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <CheckCircle className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-success-dark font-medium uppercase tracking-wider">
+                  Paid
+                </p>
+                <p className="text-lg font-bold text-success leading-none">
+                  {formatCurrency(totals.paid)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-warning-light rounded-lg border border-warning/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Clock className="h-4 w-4 text-warning" />
+              </div>
+              <div>
+                <p className="text-xs text-warning-dark font-medium uppercase tracking-wider">
+                  Unpaid
+                </p>
+                <p className="text-lg font-bold text-warning-dark leading-none">
+                  {formatCurrency(totals.unpaid)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Content - Master-Detail Layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
+      <div className="flex-1 flex gap-4 p-4 overflow-hidden bg-slate-50">
         {/* Invoice List (Master) */}
-        <div className="w-[420px] shrink-0 overflow-auto">
+        <div className="w-full max-w-[420px] shrink-0 overflow-hidden flex flex-col">
           {invoicesLoading ? (
             <div className="h-full flex items-center justify-center">
               <Spinner size="lg" />
             </div>
           ) : (
             <InvoiceList
-              invoices={invoices}
-              onInvoiceClick={(invoice) => setSelectedInvoiceId(invoice.id)}
+              invoices={filteredInvoices}
+              onInvoiceClick={(invoice) => {
+                setSelectedInvoiceId(invoice.id);
+              }}
               onCreateInvoice={handleCreateInvoice}
-              className="h-full"
+              className="h-full overflow-auto pr-1"
+              hasActiveFilters={!!filters.search || filters.status !== "all"}
             />
           )}
         </div>
@@ -591,8 +829,12 @@ export function SaleInvoicesPage() {
             invoice={currentSelectedInvoice}
             isLoading={invoiceDetailLoading}
             onEdit={handleEditInvoice}
-            onDelete={() => { handleDeleteInvoice(); }}
-            onStatusChange={(status) => { void handleStatusChange(status); }}
+            onDelete={() => {
+              handleDeleteInvoice();
+            }}
+            onStatusChange={(status) => {
+              void handleStatusChange(status);
+            }}
             onRecordPayment={handleRecordPayment}
             onDownload={handleDownloadPDF}
             onPrint={handlePrintPDF}
@@ -607,14 +849,24 @@ export function SaleInvoicesPage() {
           setIsDeleteModalOpen(false);
           setInvoiceToDelete(null);
         }}
-        onConfirm={() => { void handleConfirmDelete(); }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
         title="Delete Sale Invoice"
         itemName={invoiceToDelete?.invoiceNumber ?? ""}
         itemType="Sale Invoice"
         warningMessage="This will permanently delete the sale invoice and reverse all related stock and balance changes."
         linkedItems={[
-          { type: "Invoice Item", count: linkedItems.itemsCount, description: "Stock will be reversed" },
-          { type: "Payment", count: linkedItems.paymentsCount, description: "Will be deleted" },
+          {
+            type: "Invoice Item",
+            count: linkedItems.itemsCount,
+            description: "Stock will be reversed",
+          },
+          {
+            type: "Payment",
+            count: linkedItems.paymentsCount,
+            description: "Will be deleted",
+          },
         ]}
         isLoading={isSubmitting}
       />
@@ -660,7 +912,9 @@ export function SaleInvoicesPage() {
                   step="0.01"
                   max={currentSelectedInvoice?.amountDue}
                   value={paymentAmount}
-                  onChange={(e) => { setPaymentAmount(e.target.value); }}
+                  onChange={(e) => {
+                    setPaymentAmount(e.target.value);
+                  }}
                   leftIcon={<DollarSign className="h-4 w-4" />}
                   placeholder="0.00"
                 />
@@ -673,7 +927,9 @@ export function SaleInvoicesPage() {
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => { setPaymentMode(value as PaymentMode); }}
+                  onChange={(value) => {
+                    setPaymentMode(value as PaymentMode);
+                  }}
                 />
               </div>
 
@@ -687,7 +943,9 @@ export function SaleInvoicesPage() {
                         </label>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingBankAccount(true); }}
+                          onClick={() => {
+                            setIsAddingBankAccount(true);
+                          }}
                           className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
                         >
                           <Plus className="h-3 w-3" />
@@ -697,17 +955,23 @@ export function SaleInvoicesPage() {
                       <Select
                         options={bankAccountOptions}
                         value={selectedBankAccountId}
-                        onChange={(value) => { setSelectedBankAccountId(value); }}
+                        onChange={(value) => {
+                          setSelectedBankAccountId(value);
+                        }}
                         placeholder="Select bank account"
                       />
                     </div>
                   ) : (
                     <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">Add Bank Account</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          Add Bank Account
+                        </span>
                         <button
                           type="button"
-                          onClick={() => { setIsAddingBankAccount(false); }}
+                          onClick={() => {
+                            setIsAddingBankAccount(false);
+                          }}
                           className="text-xs text-slate-500 hover:text-slate-700"
                         >
                           Cancel
@@ -720,7 +984,9 @@ export function SaleInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankAccountName}
-                          onChange={(e) => { setNewBankAccountName(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankAccountName(e.target.value);
+                          }}
                           placeholder="e.g., Business Checking"
                           size="sm"
                         />
@@ -732,7 +998,9 @@ export function SaleInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankName}
-                          onChange={(e) => { setNewBankName(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankName(e.target.value);
+                          }}
                           placeholder="e.g., Chase Bank"
                           size="sm"
                         />
@@ -744,15 +1012,23 @@ export function SaleInvoicesPage() {
                         <Input
                           type="text"
                           value={newBankAccountNumber}
-                          onChange={(e) => { setNewBankAccountNumber(e.target.value); }}
+                          onChange={(e) => {
+                            setNewBankAccountNumber(e.target.value);
+                          }}
                           placeholder="Enter account number"
                           size="sm"
                         />
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => { void handleAddBankAccount(); }}
-                        disabled={!newBankAccountName || !newBankName || !newBankAccountNumber}
+                        onClick={() => {
+                          void handleAddBankAccount();
+                        }}
+                        disabled={
+                          !newBankAccountName ||
+                          !newBankName ||
+                          !newBankAccountNumber
+                        }
                         fullWidth
                       >
                         Add Account
@@ -771,7 +1047,9 @@ export function SaleInvoicesPage() {
                     <Input
                       type="text"
                       value={chequeNumber}
-                      onChange={(e) => { setChequeNumber(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeNumber(e.target.value);
+                      }}
                       placeholder="Enter cheque number"
                     />
                   </div>
@@ -782,7 +1060,9 @@ export function SaleInvoicesPage() {
                     <Input
                       type="text"
                       value={chequeBankName}
-                      onChange={(e) => { setChequeBankName(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeBankName(e.target.value);
+                      }}
                       placeholder="Enter bank name"
                     />
                   </div>
@@ -793,7 +1073,9 @@ export function SaleInvoicesPage() {
                     <Input
                       type="date"
                       value={chequeDueDate}
-                      onChange={(e) => { setChequeDueDate(e.target.value); }}
+                      onChange={(e) => {
+                        setChequeDueDate(e.target.value);
+                      }}
                     />
                   </div>
                 </>
@@ -820,13 +1102,17 @@ export function SaleInvoicesPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => { void handleConfirmPayment(); }}
+              onClick={() => {
+                void handleConfirmPayment();
+              }}
               isLoading={isSubmitting}
               disabled={
                 !paymentAmount ||
                 parseFloat(paymentAmount) <= 0 ||
-                (paymentMode === "bank" && (!selectedBankAccountId || isAddingBankAccount)) ||
-                (paymentMode === "cheque" && (!chequeNumber || !chequeBankName || !chequeDueDate))
+                (paymentMode === "bank" &&
+                  (!selectedBankAccountId || isAddingBankAccount)) ||
+                (paymentMode === "cheque" &&
+                  (!chequeNumber || !chequeBankName || !chequeDueDate))
               }
             >
               Record Payment
@@ -869,7 +1155,9 @@ export function SaleInvoicesPage() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   rows={3}
                   value={returnReason}
-                  onChange={(e) => { setReturnReason(e.target.value); }}
+                  onChange={(e) => {
+                    setReturnReason(e.target.value);
+                  }}
                   placeholder="Enter the reason for returning this invoice (e.g., goods damaged, customer requested cancellation, wrong items shipped...)"
                 />
                 <p className="text-xs text-slate-500 mt-1">
@@ -882,7 +1170,9 @@ export function SaleInvoicesPage() {
                 <input
                   type="checkbox"
                   checked={addToStock}
-                  onChange={(e) => { setAddToStock(e.target.checked); }}
+                  onChange={(e) => {
+                    setAddToStock(e.target.checked);
+                  }}
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                 />
                 <div className="flex-1">
@@ -893,7 +1183,8 @@ export function SaleInvoicesPage() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
-                    Returned items will be added back to inventory ({currentSelectedInvoice?.items.length ?? 0} items)
+                    Returned items will be added back to inventory (
+                    {currentSelectedInvoice?.items.length ?? 0} items)
                   </p>
                 </div>
               </label>
@@ -913,7 +1204,9 @@ export function SaleInvoicesPage() {
             </Button>
             <Button
               variant="danger"
-              onClick={() => { void handleConfirmReturn(); }}
+              onClick={() => {
+                void handleConfirmReturn();
+              }}
               isLoading={isSubmitting}
               disabled={!returnReason.trim()}
             >

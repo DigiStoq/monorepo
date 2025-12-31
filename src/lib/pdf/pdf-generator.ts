@@ -19,12 +19,14 @@ import {
 import { buildModernDocument, buildMinimalDocument } from "./templates";
 
 // Initialize pdfmake with virtual file system fonts
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(async () => {
+void (async () => {
   try {
     const pdfFonts = await import("pdfmake/build/vfs_fonts");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pdfMake.vfs = (pdfFonts as any).pdfMake?.vfs ?? (pdfFonts as any).default?.pdfMake?.vfs ?? pdfFonts;
+    pdfMake.vfs =
+      (pdfFonts as any).pdfMake?.vfs ??
+      (pdfFonts as any).default?.pdfMake?.vfs ??
+      pdfFonts;
   } catch (e) {
     console.warn("Failed to load pdfmake fonts:", e);
   }
@@ -59,7 +61,7 @@ export class PDFGenerator {
    * Generate a document definition based on document type and selected template
    */
   generateDocument(data: PDFInvoiceData): TDocumentDefinitions {
-    const template = this.options.template || "classic";
+    const template = this.options.template;
 
     // For modern and minimal templates, use the unified template builders
     if (template === "modern") {
@@ -77,11 +79,17 @@ export class PDFGenerator {
       case "estimate":
         return buildEstimateDocument(data, this.companyInfo, this.options);
       case "purchase-invoice":
-        return buildPurchaseInvoiceDocument(data, this.companyInfo, this.options);
+        return buildPurchaseInvoiceDocument(
+          data,
+          this.companyInfo,
+          this.options
+        );
       case "credit-note":
         return buildCreditNoteDocument(data, this.companyInfo, this.options);
       default:
-        throw new Error(`Unknown document type: ${data.documentType}`);
+        throw new Error(
+          `Unknown document type: ${data.documentType as string}`
+        );
     }
   }
 
@@ -91,7 +99,9 @@ export class PDFGenerator {
   download(data: PDFInvoiceData, filename?: string): void {
     const docDefinition = this.generateDocument(data);
     const defaultFilename = `${data.documentNumber}.pdf`;
-    pdfMake.createPdf(docDefinition, undefined, fonts).download(filename ?? defaultFilename);
+    pdfMake
+      .createPdf(docDefinition, undefined, fonts)
+      .download(filename ?? defaultFilename);
   }
 
   /**
@@ -119,7 +129,7 @@ export class PDFGenerator {
       try {
         pdfMake.createPdf(docDefinition, undefined, fonts).getBlob(resolve);
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
@@ -133,7 +143,7 @@ export class PDFGenerator {
       try {
         pdfMake.createPdf(docDefinition, undefined, fonts).getBase64(resolve);
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
@@ -147,7 +157,7 @@ export class PDFGenerator {
       try {
         pdfMake.createPdf(docDefinition, undefined, fonts).getDataUrl(resolve);
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
@@ -161,7 +171,7 @@ export class PDFGenerator {
       try {
         pdfMake.createPdf(docDefinition, undefined, fonts).getBuffer(resolve);
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }

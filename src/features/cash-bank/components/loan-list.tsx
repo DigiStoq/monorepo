@@ -50,7 +50,10 @@ const statusConfig: Record<
 // COMPONENT
 // ============================================================================
 
-export function LoanList({ loans, onLoanClick }: LoanListProps) {
+export function LoanList({
+  loans,
+  onLoanClick,
+}: LoanListProps): React.ReactNode {
   const [filters, setFilters] = useState<LoanFilters>({
     search: "",
     type: "all",
@@ -88,7 +91,7 @@ export function LoanList({ loans, onLoanClick }: LoanListProps) {
     return { taken, given, net: given - taken };
   }, [filteredLoans]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

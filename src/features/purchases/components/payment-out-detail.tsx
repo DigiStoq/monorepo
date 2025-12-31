@@ -31,13 +31,40 @@ export interface PaymentOutDetailProps {
 // HELPERS
 // ============================================================================
 
-const paymentModeConfig: Record<PaymentOutMode, { label: string; icon: React.ReactNode; color: string }> = {
-  cash: { label: "Cash", icon: <Banknote className="h-4 w-4" />, color: "bg-green-100 text-green-700" },
-  bank: { label: "Bank Transfer", icon: <Building2 className="h-4 w-4" />, color: "bg-blue-100 text-blue-700" },
-  card: { label: "Card", icon: <CreditCard className="h-4 w-4" />, color: "bg-purple-100 text-purple-700" },
-  ach: { label: "ACH Transfer", icon: <Building2 className="h-4 w-4" />, color: "bg-teal-100 text-teal-700" },
-  cheque: { label: "Cheque", icon: <CreditCard className="h-4 w-4" />, color: "bg-orange-100 text-orange-700" },
-  other: { label: "Other", icon: <CreditCard className="h-4 w-4" />, color: "bg-slate-100 text-slate-700" },
+const paymentModeConfig: Record<
+  PaymentOutMode,
+  { label: string; icon: React.ReactNode; color: string }
+> = {
+  cash: {
+    label: "Cash",
+    icon: <Banknote className="h-4 w-4" />,
+    color: "bg-green-100 text-green-700",
+  },
+  bank: {
+    label: "Bank Transfer",
+    icon: <Building2 className="h-4 w-4" />,
+    color: "bg-blue-100 text-blue-700",
+  },
+  card: {
+    label: "Card",
+    icon: <CreditCard className="h-4 w-4" />,
+    color: "bg-purple-100 text-purple-700",
+  },
+  ach: {
+    label: "ACH Transfer",
+    icon: <Building2 className="h-4 w-4" />,
+    color: "bg-teal-100 text-teal-700",
+  },
+  cheque: {
+    label: "Cheque",
+    icon: <CreditCard className="h-4 w-4" />,
+    color: "bg-orange-100 text-orange-700",
+  },
+  other: {
+    label: "Other",
+    icon: <CreditCard className="h-4 w-4" />,
+    color: "bg-slate-100 text-slate-700",
+  },
 };
 
 // ============================================================================
@@ -51,9 +78,9 @@ export function PaymentOutDetail({
   onDelete,
   onPrint,
   className,
-}: PaymentOutDetailProps) {
+}: PaymentOutDetailProps): React.ReactNode {
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -61,7 +88,7 @@ export function PaymentOutDetail({
     }).format(value);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       weekday: "short",
@@ -78,7 +105,9 @@ export function PaymentOutDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Payment Details</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Payment Details
+          </h2>
           <p className="text-sm text-slate-500">{payment.paymentNumber}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -92,9 +121,13 @@ export function PaymentOutDetail({
         <Card className="bg-gradient-to-br from-red-50 to-orange-50 border-red-100">
           <CardBody className="text-center py-6">
             <p className="text-sm text-slate-600 mb-1">Payment Amount</p>
-            <p className="text-3xl font-bold text-error">{formatCurrency(payment.amount)}</p>
+            <p className="text-3xl font-bold text-error">
+              {formatCurrency(payment.amount)}
+            </p>
             <div className="mt-3 flex items-center justify-center gap-2">
-              <Badge className={cn("flex items-center gap-1", modeConfig.color)}>
+              <Badge
+                className={cn("flex items-center gap-1", modeConfig.color)}
+              >
                 {modeConfig.icon}
                 {modeConfig.label}
               </Badge>
@@ -109,7 +142,9 @@ export function PaymentOutDetail({
               <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Paid To</p>
-                <p className="font-medium text-slate-900">{payment.customerName}</p>
+                <p className="font-medium text-slate-900">
+                  {payment.customerName}
+                </p>
               </div>
             </div>
 
@@ -117,7 +152,9 @@ export function PaymentOutDetail({
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Payment Date</p>
-                <p className="font-medium text-slate-900">{formatDate(payment.date)}</p>
+                <p className="font-medium text-slate-900">
+                  {formatDate(payment.date)}
+                </p>
               </div>
             </div>
 
@@ -126,7 +163,9 @@ export function PaymentOutDetail({
                 <Hash className="h-5 w-5 text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-sm text-slate-500">Reference Number</p>
-                  <p className="font-medium text-slate-900">{payment.referenceNumber}</p>
+                  <p className="font-medium text-slate-900">
+                    {payment.referenceNumber}
+                  </p>
                 </div>
               </div>
             )}
@@ -136,7 +175,9 @@ export function PaymentOutDetail({
                 <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-sm text-slate-500">Applied to Invoice</p>
-                  <p className="font-medium text-primary-600">{payment.invoiceNumber}</p>
+                  <p className="font-medium text-primary-600">
+                    {payment.invoiceNumber}
+                  </p>
                 </div>
               </div>
             )}
@@ -148,7 +189,9 @@ export function PaymentOutDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{payment.notes}</p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                {payment.notes}
+              </p>
             </CardBody>
           </Card>
         )}
@@ -163,11 +206,21 @@ export function PaymentOutDetail({
       {/* Footer Actions */}
       <div className="p-4 border-t border-slate-200 space-y-2">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onPrint} className="flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPrint}
+            className="flex-1"
+          >
             <Printer className="h-4 w-4 mr-1" />
             Print
           </Button>
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEdit}
+            className="flex-1"
+          >
             <Edit2 className="h-4 w-4 mr-1" />
             Edit
           </Button>

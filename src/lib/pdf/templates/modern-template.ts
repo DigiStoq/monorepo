@@ -9,11 +9,15 @@ import type {
   PDFCompanyInfo,
   PDFGenerationOptions,
 } from "../types";
-import { TEMPLATE_THEMES, DOCUMENT_TITLES, FONT_SIZES, PDF_THEME } from "../constants";
-import { formatCurrency, formatDate, formatAddress } from "../utils/format-helpers";
+import { TEMPLATE_THEMES, DOCUMENT_TITLES, FONT_SIZES } from "../constants";
+import {
+  formatCurrency,
+  formatDate,
+  formatAddress,
+} from "../utils/format-helpers";
 import { numberToWords } from "../utils/number-to-words";
 
-const theme = TEMPLATE_THEMES.modern ?? PDF_THEME;
+const theme = TEMPLATE_THEMES.modern;
 const HEADER_BG = "#D8E0EF";
 const ALT_ROW_BG = "#E5E5E5";
 
@@ -40,15 +44,19 @@ function buildModernHeader(
     leftContent.push({
       table: {
         widths: [60],
-        body: [[{
-          text: initial,
-          fontSize: 32,
-          bold: true,
-          color: "#ffffff",
-          alignment: "center",
-          fillColor: theme.primaryColor,
-          margin: [0, 10, 0, 10],
-        }]],
+        body: [
+          [
+            {
+              text: initial,
+              fontSize: 32,
+              bold: true,
+              color: "#ffffff",
+              alignment: "center",
+              fillColor: theme.primaryColor,
+              margin: [0, 10, 0, 10],
+            },
+          ],
+        ],
       },
       layout: "noBorders",
       margin: [0, 0, 0, 10],
@@ -117,7 +125,9 @@ function buildModernHeader(
     });
   }
 
-  const cityState = [data.partyInfo.city, data.partyInfo.state].filter(Boolean).join(", ");
+  const cityState = [data.partyInfo.city, data.partyInfo.state]
+    .filter(Boolean)
+    .join(", ");
   if (cityState) {
     rightContent.push({
       text: cityState,
@@ -153,31 +163,53 @@ function buildTitleBar(data: PDFInvoiceData): Content {
   return {
     table: {
       widths: ["25%", "*", "*", "20%", "20%"],
-      body: [[
-        {
-          text: title,
-          fontSize: 20,
-          bold: true,
-          color: theme.primaryColor,
-          margin: [0, 15, 0, 15],
-        },
-        { text: "", margin: [0, 15, 0, 15] },
-        { text: "", margin: [0, 15, 0, 15] },
-        {
-          stack: [
-            { text: "Invoice No.", fontSize: 9, color: theme.mutedColor, bold: true },
-            { text: data.documentNumber, fontSize: 11, bold: true, color: theme.textColor },
-          ],
-          margin: [0, 10, 0, 10],
-        },
-        {
-          stack: [
-            { text: "Date", fontSize: 9, color: theme.mutedColor, bold: true },
-            { text: formatDate(data.date), fontSize: 11, bold: true, color: theme.textColor },
-          ],
-          margin: [0, 10, 0, 10],
-        },
-      ]],
+      body: [
+        [
+          {
+            text: title,
+            fontSize: 20,
+            bold: true,
+            color: theme.primaryColor,
+            margin: [0, 15, 0, 15],
+          },
+          { text: "", margin: [0, 15, 0, 15] },
+          { text: "", margin: [0, 15, 0, 15] },
+          {
+            stack: [
+              {
+                text: "Invoice No.",
+                fontSize: 9,
+                color: theme.mutedColor,
+                bold: true,
+              },
+              {
+                text: data.documentNumber,
+                fontSize: 11,
+                bold: true,
+                color: theme.textColor,
+              },
+            ],
+            margin: [0, 10, 0, 10],
+          },
+          {
+            stack: [
+              {
+                text: "Date",
+                fontSize: 9,
+                color: theme.mutedColor,
+                bold: true,
+              },
+              {
+                text: formatDate(data.date),
+                fontSize: 11,
+                bold: true,
+                color: theme.textColor,
+              },
+            ],
+            margin: [0, 10, 0, 10],
+          },
+        ],
+      ],
     },
     layout: {
       hLineWidth: () => 1,
@@ -198,10 +230,34 @@ function buildItemsTable(
 ): Content {
   const headerRow = [
     { text: "Item", fillColor: HEADER_BG, bold: true, margin: [10, 12, 5, 12] },
-    { text: "Qty", fillColor: HEADER_BG, bold: true, alignment: "center", margin: [5, 12, 5, 12] },
-    { text: "Rate", fillColor: HEADER_BG, bold: true, alignment: "right", margin: [5, 12, 5, 12] },
-    { text: "Disc%", fillColor: HEADER_BG, bold: true, alignment: "center", margin: [5, 12, 5, 12] },
-    { text: "Amount", fillColor: HEADER_BG, bold: true, alignment: "right", margin: [5, 12, 10, 12] },
+    {
+      text: "Qty",
+      fillColor: HEADER_BG,
+      bold: true,
+      alignment: "center",
+      margin: [5, 12, 5, 12],
+    },
+    {
+      text: "Rate",
+      fillColor: HEADER_BG,
+      bold: true,
+      alignment: "right",
+      margin: [5, 12, 5, 12],
+    },
+    {
+      text: "Disc%",
+      fillColor: HEADER_BG,
+      bold: true,
+      alignment: "center",
+      margin: [5, 12, 5, 12],
+    },
+    {
+      text: "Amount",
+      fillColor: HEADER_BG,
+      bold: true,
+      alignment: "right",
+      margin: [5, 12, 10, 12],
+    },
   ];
 
   const itemRows = items.map((item, idx) => {
@@ -212,15 +268,42 @@ function buildItemsTable(
       {
         stack: [
           { text: item.name, bold: true, fontSize: 10 },
-          ...(item.description ? [{ text: item.description, fontSize: 8, color: theme.mutedColor }] : []),
+          ...(item.description
+            ? [{ text: item.description, fontSize: 8, color: theme.mutedColor }]
+            : []),
         ],
         fillColor,
         margin: [10, 8, 5, 8],
       },
-      { text: `${item.quantity} ${item.unit}`, fillColor, alignment: "center", margin: [5, 8, 5, 8], fontSize: 10 },
-      { text: formatCurrency(item.unitPrice, currency, locale), fillColor, alignment: "right", margin: [5, 8, 5, 8], fontSize: 10 },
-      { text: item.discountPercent ? `${item.discountPercent}%` : "-", fillColor, alignment: "center", margin: [5, 8, 5, 8], fontSize: 10 },
-      { text: formatCurrency(item.amount, currency, locale), fillColor, alignment: "right", margin: [5, 8, 10, 8], fontSize: 10, bold: true },
+      {
+        text: `${item.quantity} ${item.unit}`,
+        fillColor,
+        alignment: "center",
+        margin: [5, 8, 5, 8],
+        fontSize: 10,
+      },
+      {
+        text: formatCurrency(item.unitPrice, currency, locale),
+        fillColor,
+        alignment: "right",
+        margin: [5, 8, 5, 8],
+        fontSize: 10,
+      },
+      {
+        text: item.discountPercent ? `${item.discountPercent}%` : "-",
+        fillColor,
+        alignment: "center",
+        margin: [5, 8, 5, 8],
+        fontSize: 10,
+      },
+      {
+        text: formatCurrency(item.amount, currency, locale),
+        fillColor,
+        alignment: "right",
+        margin: [5, 8, 10, 8],
+        fontSize: 10,
+        bold: true,
+      },
     ];
   });
 
@@ -231,7 +314,8 @@ function buildItemsTable(
       body: [headerRow, ...itemRows],
     },
     layout: {
-      hLineWidth: (i: number, node: { table: { body: unknown[] } }) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0,
+      hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
+        i === 0 || i === 1 || i === node.table.body.length ? 1 : 0,
       vLineWidth: () => 1,
       hLineColor: () => theme.borderColor,
       vLineColor: () => theme.borderColor,
@@ -256,7 +340,11 @@ function buildTotals(
     { text: "" },
     { text: "" },
     { text: "Subtotal", alignment: "right", bold: true, margin: [0, 8, 10, 8] },
-    { text: formatCurrency(data.subtotal, currency, locale), alignment: "right", margin: [0, 8, 10, 8] },
+    {
+      text: formatCurrency(data.subtotal, currency, locale),
+      alignment: "right",
+      margin: [0, 8, 10, 8],
+    },
   ]);
 
   // Discount
@@ -264,8 +352,19 @@ function buildTotals(
     rows.push([
       { text: "" },
       { text: "" },
-      { text: "Discount", alignment: "right", margin: [0, 8, 10, 8], fillColor: ALT_ROW_BG },
-      { text: `-${formatCurrency(data.discountAmount, currency, locale)}`, alignment: "right", margin: [0, 8, 10, 8], fillColor: ALT_ROW_BG, color: "#DC2626" },
+      {
+        text: "Discount",
+        alignment: "right",
+        margin: [0, 8, 10, 8],
+        fillColor: ALT_ROW_BG,
+      },
+      {
+        text: `-${formatCurrency(data.discountAmount, currency, locale)}`,
+        alignment: "right",
+        margin: [0, 8, 10, 8],
+        fillColor: ALT_ROW_BG,
+        color: "#DC2626",
+      },
     ]);
   }
 
@@ -275,7 +374,11 @@ function buildTotals(
       { text: "" },
       { text: "" },
       { text: "Tax", alignment: "right", margin: [0, 8, 10, 8] },
-      { text: formatCurrency(data.taxAmount, currency, locale), alignment: "right", margin: [0, 8, 10, 8] },
+      {
+        text: formatCurrency(data.taxAmount, currency, locale),
+        alignment: "right",
+        margin: [0, 8, 10, 8],
+      },
     ]);
   }
 
@@ -283,26 +386,62 @@ function buildTotals(
   rows.push([
     { text: "" },
     { text: "" },
-    { text: "Total", alignment: "right", bold: true, margin: [0, 10, 10, 10], fillColor: HEADER_BG, fontSize: 12 },
-    { text: formatCurrency(data.total, currency, locale), alignment: "right", bold: true, margin: [0, 10, 10, 10], fillColor: HEADER_BG, fontSize: 12 },
+    {
+      text: "Total",
+      alignment: "right",
+      bold: true,
+      margin: [0, 10, 10, 10],
+      fillColor: HEADER_BG,
+      fontSize: 12,
+    },
+    {
+      text: formatCurrency(data.total, currency, locale),
+      alignment: "right",
+      bold: true,
+      margin: [0, 10, 10, 10],
+      fillColor: HEADER_BG,
+      fontSize: 12,
+    },
   ]);
 
   // Amount Paid & Due
-  if (data.amountPaid !== undefined && data.amountPaid > 0) {
+  if ((data.amountPaid ?? 0) > 0) {
     rows.push([
       { text: "" },
       { text: "" },
-      { text: "Amount Paid", alignment: "right", margin: [0, 8, 10, 8], color: "#16A34A" },
-      { text: formatCurrency(data.amountPaid, currency, locale), alignment: "right", margin: [0, 8, 10, 8], color: "#16A34A" },
+      {
+        text: "Amount Paid",
+        alignment: "right",
+        margin: [0, 8, 10, 8],
+        color: "#16A34A",
+      },
+      {
+        text: formatCurrency(data.amountPaid ?? 0, currency, locale),
+        alignment: "right",
+        margin: [0, 8, 10, 8],
+        color: "#16A34A",
+      },
     ]);
   }
 
-  if (data.amountDue !== undefined && data.amountDue > 0) {
+  if ((data.amountDue ?? 0) > 0) {
     rows.push([
       { text: "" },
       { text: "" },
-      { text: "Balance Due", alignment: "right", bold: true, margin: [0, 8, 10, 8], color: "#DC2626" },
-      { text: formatCurrency(data.amountDue, currency, locale), alignment: "right", bold: true, margin: [0, 8, 10, 8], color: "#DC2626" },
+      {
+        text: "Balance Due",
+        alignment: "right",
+        bold: true,
+        margin: [0, 8, 10, 8],
+        color: "#DC2626",
+      },
+      {
+        text: formatCurrency(data.amountDue ?? 0, currency, locale),
+        alignment: "right",
+        bold: true,
+        margin: [0, 8, 10, 8],
+        color: "#DC2626",
+      },
     ]);
   }
 
@@ -325,14 +464,18 @@ function buildAmountInWords(total: number, currencyName = "Dollars"): Content {
   return {
     table: {
       widths: ["*"],
-      body: [[{
-        text: [
-          { text: "Amount in Words: ", bold: true, fontSize: 9 },
-          { text: words, fontSize: 9, italics: true },
+      body: [
+        [
+          {
+            text: [
+              { text: "Amount in Words: ", bold: true, fontSize: 9 },
+              { text: words, fontSize: 9, italics: true },
+            ],
+            fillColor: "#F8FAFC",
+            margin: [10, 8, 10, 8],
+          },
         ],
-        fillColor: "#F8FAFC",
-        margin: [10, 8, 10, 8],
-      }]],
+      ],
     },
     layout: {
       hLineWidth: () => 1,
@@ -358,7 +501,13 @@ function buildFooter(
   // Notes
   if (data.notes) {
     leftStack.push(
-      { text: "Notes", fontSize: 10, bold: true, color: theme.mutedColor, margin: [0, 0, 0, 5] },
+      {
+        text: "Notes",
+        fontSize: 10,
+        bold: true,
+        color: theme.mutedColor,
+        margin: [0, 0, 0, 5],
+      },
       { text: data.notes, fontSize: 9, color: theme.textColor }
     );
   }
@@ -366,7 +515,13 @@ function buildFooter(
   // Terms
   if (options.showTerms && data.terms) {
     leftStack.push(
-      { text: "Terms & Conditions", fontSize: 10, bold: true, color: theme.mutedColor, margin: [0, 10, 0, 5] },
+      {
+        text: "Terms & Conditions",
+        fontSize: 10,
+        bold: true,
+        color: theme.mutedColor,
+        margin: [0, 10, 0, 5],
+      },
       { text: data.terms, fontSize: 8, color: theme.mutedColor }
     );
   }
@@ -375,8 +530,25 @@ function buildFooter(
   if (options.showSignature) {
     rightStack.push(
       { text: "", margin: [0, 30, 0, 0] },
-      { canvas: [{ type: "line", x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 1, lineColor: theme.textColor }] },
-      { text: "Authorized Signature", fontSize: 9, color: theme.mutedColor, margin: [0, 5, 0, 0] },
+      {
+        canvas: [
+          {
+            type: "line",
+            x1: 0,
+            y1: 0,
+            x2: 150,
+            y2: 0,
+            lineWidth: 1,
+            lineColor: theme.textColor,
+          },
+        ],
+      },
+      {
+        text: "Authorized Signature",
+        fontSize: 9,
+        color: theme.mutedColor,
+        margin: [0, 5, 0, 0],
+      },
       { text: company.name, fontSize: 10, bold: true, margin: [0, 3, 0, 0] }
     );
   }
@@ -398,7 +570,12 @@ export function buildModernDocument(
   companyInfo: PDFCompanyInfo,
   options: PDFGenerationOptions
 ): TDocumentDefinitions {
-  const currencyName = options.currency === "PKR" ? "Rupees" : options.currency === "INR" ? "Rupees" : "Dollars";
+  const currencyName =
+    options.currency === "PKR"
+      ? "Rupees"
+      : options.currency === "INR"
+        ? "Rupees"
+        : "Dollars";
 
   const content: Content[] = [
     buildModernHeader(companyInfo, data, options.showLogo),

@@ -17,7 +17,7 @@ import {
 } from "@/hooks/useCashTransactions";
 import type { CashAdjustmentFormData } from "./types";
 
-export function CashInHandPage() {
+export function CashInHandPage(): React.ReactNode {
   // Data from PowerSync
   const { transactions, isLoading, error } = useCashTransactions();
   const { balance: currentBalance } = useCashBalance();
@@ -27,15 +27,17 @@ export function CashInHandPage() {
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
   // Handlers
-  const handleOpenAdjustment = () => {
+  const handleOpenAdjustment = (): void => {
     setIsAdjustmentOpen(true);
   };
 
-  const handleCloseAdjustment = () => {
+  const handleCloseAdjustment = (): void => {
     setIsAdjustmentOpen(false);
   };
 
-  const handleSubmitAdjustment = async (data: CashAdjustmentFormData) => {
+  const handleSubmitAdjustment = async (
+    data: CashAdjustmentFormData
+  ): Promise<void> => {
     try {
       await createTransaction({
         date: data.date,

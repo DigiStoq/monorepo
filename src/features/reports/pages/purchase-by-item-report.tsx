@@ -10,9 +10,11 @@ import { usePurchaseByItemReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function PurchaseByItemReport() {
+export function PurchaseByItemReport(): React.ReactNode {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
   const [search, setSearch] = useState("");
@@ -54,14 +56,14 @@ export function PurchaseByItemReport() {
     );
   }, [processedData]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
 
-  const handleSort = (column: "amount" | "quantity") => {
+  const handleSort = (column: "amount" | "quantity"): void => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
@@ -70,7 +72,11 @@ export function PurchaseByItemReport() {
     }
   };
 
-  const SortIcon = ({ column }: { column: "amount" | "quantity" }) => {
+  const SortIcon = ({
+    column,
+  }: {
+    column: "amount" | "quantity";
+  }): React.ReactNode => {
     if (sortBy !== column) return null;
     return sortOrder === "desc" ? (
       <TrendingDown className="h-3 w-3 inline ml-1" />
@@ -100,8 +106,12 @@ export function PurchaseByItemReport() {
       title="Purchases by Item"
       subtitle="Item-wise purchase analysis"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -110,7 +120,9 @@ export function PurchaseByItemReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -123,19 +135,25 @@ export function PurchaseByItemReport() {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Unique Items</p>
-              <p className="text-xl font-bold text-slate-900">{processedData.length}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {processedData.length}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Quantity</p>
-              <p className="text-xl font-bold text-slate-900">{totals.quantity.toLocaleString()}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {totals.quantity.toLocaleString()}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Amount</p>
-              <p className="text-xl font-bold text-orange-600">{formatCurrency(totals.amount)}</p>
+              <p className="text-xl font-bold text-orange-600">
+                {formatCurrency(totals.amount)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -143,24 +161,34 @@ export function PurchaseByItemReport() {
         {/* Items Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Item Purchase Details</h3>
+            <h3 className="font-medium text-slate-900">
+              Item Purchase Details
+            </h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Item</th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Item
+                    </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("quantity"); }}
+                      onClick={() => {
+                        handleSort("quantity");
+                      }}
                     >
                       Qty Purchased <SortIcon column="quantity" />
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Avg Price</th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Avg Price
+                    </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("amount"); }}
+                      onClick={() => {
+                        handleSort("amount");
+                      }}
                     >
                       Total Amount <SortIcon column="amount" />
                     </th>
@@ -177,10 +205,18 @@ export function PurchaseByItemReport() {
                   ) : (
                     processedData.map((item) => (
                       <tr key={item.itemId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">{item.itemName}</td>
-                        <td className="px-4 py-3 text-right text-slate-900">{item.quantityPurchased}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.averagePrice)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(item.totalCost)}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          {item.itemName}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-900">
+                          {item.quantityPurchased}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-600">
+                          {formatCurrency(item.averagePrice)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-orange-600">
+                          {formatCurrency(item.totalCost)}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -189,9 +225,13 @@ export function PurchaseByItemReport() {
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
                       <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-900">{totals.quantity}</td>
+                      <td className="px-4 py-3 text-right text-slate-900">
+                        {totals.quantity}
+                      </td>
                       <td className="px-4 py-3"></td>
-                      <td className="px-4 py-3 text-right text-orange-600">{formatCurrency(totals.amount)}</td>
+                      <td className="px-4 py-3 text-right text-orange-600">
+                        {formatCurrency(totals.amount)}
+                      </td>
                     </tr>
                   </tfoot>
                 )}

@@ -1,35 +1,160 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { EstimateList, EstimateDetail, EstimateForm } from "./components";
-import { useEstimates, useEstimateById, useEstimateMutations } from "@/hooks/useEstimates";
+import {
+  useEstimates,
+  useEstimateById,
+  useEstimateMutations,
+} from "@/hooks/useEstimates";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems } from "@/hooks/useItems";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
-import type { Estimate, EstimateFormData } from "./types";
+import type { Estimate, EstimateFormData, EstimateStatus } from "./types";
+import { SearchInput, Select, type SelectOption } from "@/components/ui";
+import { CheckCircle, Clock, DollarSign, FileText } from "lucide-react";
 
-export function EstimatesPage() {
+export function EstimatesPage(): React.ReactNode {
   const navigate = useNavigate();
 
   // Data from PowerSync
   const { estimates, isLoading, error } = useEstimates();
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
-  const { createEstimate, updateEstimateStatus, convertEstimateToInvoice, deleteEstimate } = useEstimateMutations();
+  const {
+    createEstimate,
+    updateEstimateStatus,
+    convertEstimateToInvoice,
+    deleteEstimate,
+  } = useEstimateMutations();
 
   // PDF Generator
-  const { downloadEstimate, printEstimate, isReady: pdfReady } = usePDFGenerator();
+  const {
+    downloadEstimate,
+    printEstimate,
+    isReady: pdfReady,
+  } = usePDFGenerator();
 
   // State
-  const [selectedEstimateId, setSelectedEstimateId] = useState<string | null>(null);
+  const [selectedEstimateId, setSelectedEstimateId] = useState<string | null>(
+    null
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  interface EstimateFilters {
+    search: string;
+    status: EstimateStatus | "all";
+    sortBy: "date" | "validUntil" | "amount" | "customer";
+    sortOrder: "asc" | "desc";
+  }
+
+  // Filter State
+  const [filters, setFilters] = useState<EstimateFilters>({
+    search: "",
+    status: "all",
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+
+  const statusOptions: SelectOption[] = [
+    { value: "all", label: "All Status" },
+    { value: "draft", label: "Draft" },
+    { value: "sent", label: "Sent" },
+    { value: "accepted", label: "Accepted" },
+    { value: "rejected", label: "Rejected" },
+    { value: "expired", label: "Expired" },
+    { value: "converted", label: "Converted" },
+  ];
+
+  // Filter Logic
+  const filteredEstimates = useMemo(() => {
+    return estimates
+      .filter((estimate) => {
+        // Search filter
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const matchesNumber = estimate.estimateNumber
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesCustomer = estimate.customerName
+            .toLowerCase()
+            .includes(searchLower);
+          if (!matchesNumber && !matchesCustomer) return false;
+        }
+
+        // Status filter
+        if (filters.status !== "all" && estimate.status !== filters.status) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+
+        switch (filters.sortBy) {
+          case "date":
+            comparison =
+              new Date(b.date).getTime() - new Date(a.date).getTime();
+            break;
+          case "validUntil":
+            comparison =
+              new Date(b.validUntil).getTime() -
+              new Date(a.validUntil).getTime();
+            break;
+          case "amount":
+            comparison = b.total - a.total;
+            break;
+          case "customer":
+            comparison = a.customerName.localeCompare(b.customerName);
+            break;
+        }
+
+        return filters.sortOrder === "desc" ? comparison : -comparison;
+      });
+  }, [estimates, filters]);
+
+  // Totals Calculation
+  const totals = useMemo(() => {
+    if (!filteredEstimates.length)
+      return { total: 0, pending: 0, accepted: 0, converted: 0 };
+
+    return filteredEstimates.reduce(
+      (acc, est) => {
+        acc.total += est.total;
+        if (est.status === "sent") {
+          acc.pending += est.total;
+        } else if (est.status === "accepted") {
+          acc.accepted += est.total;
+        } else if (est.status === "converted") {
+          acc.converted += est.total;
+        }
+        return acc;
+      },
+      { total: 0, pending: 0, accepted: 0, converted: 0 }
+    );
+  }, [filteredEstimates]);
+
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
   // Fetch full estimate with items when one is selected
-  const { estimate: selectedEstimateData, items: selectedEstimateItems } = useEstimateById(selectedEstimateId);
+  const { estimate: selectedEstimateData, items: selectedEstimateItems } =
+    useEstimateById(selectedEstimateId);
 
   // Combine estimate with its items for the detail component
   const currentSelectedEstimate = useMemo(() => {
@@ -41,23 +166,25 @@ export function EstimatesPage() {
   }, [selectedEstimateData, selectedEstimateItems]);
 
   // Handlers
-  const handleEstimateClick = (estimate: Estimate) => {
+  const handleEstimateClick = (estimate: Estimate): void => {
     setSelectedEstimateId(estimate.id);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedEstimateId(null);
   };
 
-  const handleCreateEstimate = () => {
+  const handleCreateEstimate = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitEstimate = async (data: EstimateFormData) => {
+  const handleSubmitEstimate = async (
+    data: EstimateFormData
+  ): Promise<void> => {
     setIsSubmitting(true);
     try {
       // Generate estimate number
@@ -91,7 +218,10 @@ export function EstimatesPage() {
       });
 
       // Calculate discount amount from percentage
-      const subtotal = estimateItems.reduce((sum, item) => sum + item.amount, 0);
+      const subtotal = estimateItems.reduce(
+        (sum, item) => sum + item.amount,
+        0
+      );
       const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
 
       await createEstimate(
@@ -116,7 +246,7 @@ export function EstimatesPage() {
     }
   };
 
-  const handleSendEstimate = async () => {
+  const handleSendEstimate = async (): Promise<void> => {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "sent");
@@ -126,7 +256,7 @@ export function EstimatesPage() {
     }
   };
 
-  const handleMarkAccepted = async () => {
+  const handleMarkAccepted = async (): Promise<void> => {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "accepted");
@@ -136,7 +266,7 @@ export function EstimatesPage() {
     }
   };
 
-  const handleMarkRejected = async () => {
+  const handleMarkRejected = async (): Promise<void> => {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "rejected");
@@ -146,7 +276,7 @@ export function EstimatesPage() {
     }
   };
 
-  const handleConvertToInvoice = async () => {
+  const handleConvertToInvoice = async (): Promise<void> => {
     if (currentSelectedEstimate && selectedEstimateItems.length > 0) {
       setIsSubmitting(true);
       try {
@@ -173,21 +303,25 @@ export function EstimatesPage() {
   };
 
   // PDF handlers
-  const handlePrintEstimate = () => {
+  const handlePrintEstimate = (): void => {
     if (currentSelectedEstimate && pdfReady) {
-      const customer = customers.find((c) => c.id === currentSelectedEstimate.customerId);
+      const customer = customers.find(
+        (c) => c.id === currentSelectedEstimate.customerId
+      );
       printEstimate(currentSelectedEstimate, customer);
     }
   };
 
-  const handleDownloadEstimate = () => {
+  const handleDownloadEstimate = (): void => {
     if (currentSelectedEstimate && pdfReady) {
-      const customer = customers.find((c) => c.id === currentSelectedEstimate.customerId);
+      const customer = customers.find(
+        (c) => c.id === currentSelectedEstimate.customerId
+      );
       downloadEstimate(currentSelectedEstimate, customer);
     }
   };
 
-  const handleDeleteEstimate = async () => {
+  const handleDeleteEstimate = async (): Promise<void> => {
     if (currentSelectedEstimate) {
       setIsSubmitting(true);
       try {
@@ -218,13 +352,93 @@ export function EstimatesPage() {
         title="Estimates/Quotations"
         description="Create and manage price quotations for customers"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateEstimate}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreateEstimate}
+          >
             New Estimate
           </Button>
         }
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Filters Header - Full Width */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <SearchInput
+              placeholder="Search estimates..."
+              value={filters.search}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, search: e.target.value }));
+              }}
+              className="w-full sm:w-72"
+            />
+
+            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <Select
+                options={statusOptions}
+                value={filters.status}
+                onChange={(value) => {
+                  setFilters((f) => ({
+                    ...f,
+                    status: value as EstimateStatus | "all",
+                  }));
+                }}
+                size="md"
+                className="min-w-[140px]"
+              />
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <DollarSign className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Total Value
+                </p>
+                <p className="text-lg font-bold text-slate-900 leading-none">
+                  {formatCurrency(totals.total)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Clock className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">
+                  Pending
+                </p>
+                <p className="text-lg font-bold text-blue-700 leading-none">
+                  {formatCurrency(totals.pending)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <CheckCircle className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-success-dark font-medium uppercase tracking-wider">
+                  Accepted
+                </p>
+                <p className="text-lg font-bold text-success leading-none">
+                  {formatCurrency(totals.accepted)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden bg-slate-50">
         {/* Estimate List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -232,31 +446,61 @@ export function EstimatesPage() {
               <Spinner size="lg" />
             </div>
           ) : (
-            <EstimateList
-              estimates={estimates}
-              onEstimateClick={handleEstimateClick}
-              onCreateEstimate={handleCreateEstimate}
-            />
+            <div className="max-w-5xl mx-auto flex gap-4">
+              <div className="w-full max-w-[420px] shrink-0 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <EstimateList
+                    estimates={filteredEstimates}
+                    onEstimateClick={handleEstimateClick}
+                    onCreateEstimate={handleCreateEstimate}
+                    hasActiveFilters={
+                      !!filters.search || filters.status !== "all"
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Detail - Showing Placeholder or Selected */}
+              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-slate-200 shadow-sm">
+                {currentSelectedEstimate ? (
+                  <div className="h-full overflow-y-auto">
+                    <EstimateDetail
+                      estimate={currentSelectedEstimate}
+                      onClose={handleCloseDetail}
+                      onEdit={() => {
+                        setIsFormOpen(true);
+                      }}
+                      onDelete={() => {
+                        void handleDeleteEstimate();
+                      }}
+                      onPrint={handlePrintEstimate}
+                      onShare={handleDownloadEstimate}
+                      onSend={() => {
+                        void handleSendEstimate();
+                      }}
+                      onMarkAccepted={() => {
+                        void handleMarkAccepted();
+                      }}
+                      onMarkRejected={() => {
+                        void handleMarkRejected();
+                      }}
+                      onConvertToInvoice={() => {
+                        void handleConvertToInvoice();
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                    <FileText className="h-16 w-16 mb-4 opacity-20" />
+                    <p className="text-lg font-medium">
+                      Select an estimate to view details
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Estimate Detail Panel */}
-        {currentSelectedEstimate && (
-          <div className="w-96 border-l border-slate-200 bg-white overflow-hidden">
-            <EstimateDetail
-              estimate={currentSelectedEstimate}
-              onClose={handleCloseDetail}
-              onEdit={() => { setIsFormOpen(true); }}
-              onDelete={() => { void handleDeleteEstimate(); }}
-              onPrint={handlePrintEstimate}
-              onShare={handleDownloadEstimate}
-              onSend={() => { void handleSendEstimate(); }}
-              onMarkAccepted={() => { void handleMarkAccepted(); }}
-              onMarkRejected={() => { void handleMarkRejected(); }}
-              onConvertToInvoice={() => { void handleConvertToInvoice(); }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Estimate Form Modal */}
@@ -267,9 +511,12 @@ export function EstimatesPage() {
             <EstimateForm
               customers={customers}
               items={items}
-              onSubmit={(data) => { void handleSubmitEstimate(data); }}
+              onSubmit={(data) => {
+                void handleSubmitEstimate(data);
+              }}
               onCancel={handleCloseForm}
               className="p-6"
+              isLoading={isSubmitting}
             />
           </ModalBody>
         </ModalContent>

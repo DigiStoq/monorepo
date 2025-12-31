@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Button, Input } from "@/components/ui";
 import { User, Bell, Lock, Save, Upload, Camera } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
 import type { UserProfile, NotificationPreferences } from "../types";
 
 // Mock data
@@ -33,13 +37,15 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}) {
+}): React.ReactNode {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => { onChange(!checked); }}
+      onClick={() => {
+        onChange(!checked);
+      }}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
         checked ? "bg-teal-600" : "bg-slate-200"
       }`}
@@ -53,22 +59,28 @@ function Toggle({
   );
 }
 
-export function UserProfilePage() {
+export function UserProfilePage(): React.ReactNode {
   const [profile, setProfile] = useState<UserProfile>(mockUserProfile);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
   };
 
-  const updateField = <K extends keyof UserProfile>(field: K, value: UserProfile[K]) => {
+  const updateField = <K extends keyof UserProfile>(
+    field: K,
+    value: UserProfile[K]
+  ): void => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateNotification = (field: keyof NotificationPreferences, value: boolean) => {
+  const updateNotification = (
+    field: keyof NotificationPreferences,
+    value: boolean
+  ): void => {
     setProfile((prev) => ({
       ...prev,
       notifications: { ...prev.notifications, [field]: value },
@@ -88,7 +100,13 @@ export function UserProfilePage() {
       title="User Profile"
       description="Manage your personal account settings"
       actions={
-        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
+        <Button
+          onClick={() => {
+            void handleSave();
+          }}
+          disabled={isSaving}
+          className="gap-2"
+        >
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -127,8 +145,14 @@ export function UserProfilePage() {
                 <p className="font-medium text-slate-900">
                   {profile.firstName} {profile.lastName}
                 </p>
-                <p className="text-sm text-slate-500">{roleLabels[profile.role]}</p>
-                <Button variant="ghost" size="sm" className="mt-1 gap-2 text-xs">
+                <p className="text-sm text-slate-500">
+                  {roleLabels[profile.role]}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 gap-2 text-xs"
+                >
                   <Upload className="h-3 w-3" />
                   Change Photo
                 </Button>
@@ -140,7 +164,9 @@ export function UserProfilePage() {
                 <Input
                   type="text"
                   value={profile.firstName}
-                  onChange={(e) => { updateField("firstName", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("firstName", e.target.value);
+                  }}
                   className="w-48"
                 />
               </SettingsRow>
@@ -148,15 +174,22 @@ export function UserProfilePage() {
                 <Input
                   type="text"
                   value={profile.lastName}
-                  onChange={(e) => { updateField("lastName", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("lastName", e.target.value);
+                  }}
                   className="w-48"
                 />
               </SettingsRow>
-              <SettingsRow label="Email Address" description="Used for login and notifications">
+              <SettingsRow
+                label="Email Address"
+                description="Used for login and notifications"
+              >
                 <Input
                   type="email"
                   value={profile.email}
-                  onChange={(e) => { updateField("email", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("email", e.target.value);
+                  }}
                   className="w-64"
                 />
               </SettingsRow>
@@ -164,14 +197,18 @@ export function UserProfilePage() {
                 <Input
                   type="tel"
                   value={profile.phone ?? ""}
-                  onChange={(e) => { updateField("phone", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("phone", e.target.value);
+                  }}
                   className="w-48"
                 />
               </SettingsRow>
               <SettingsRow label="Language">
                 <select
                   value={profile.language}
-                  onChange={(e) => { updateField("language", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("language", e.target.value);
+                  }}
                   className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="en">English</option>
@@ -195,7 +232,9 @@ export function UserProfilePage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => { setShowPasswordForm(true); }}
+                onClick={() => {
+                  setShowPasswordForm(true);
+                }}
               >
                 Change Password
               </Button>
@@ -205,16 +244,33 @@ export function UserProfilePage() {
           {showPasswordForm ? (
             <div className="space-y-4">
               <SettingsRow label="Current Password">
-                <Input type="password" className="w-64" placeholder="Enter current password" />
+                <Input
+                  type="password"
+                  className="w-64"
+                  placeholder="Enter current password"
+                />
               </SettingsRow>
               <SettingsRow label="New Password">
-                <Input type="password" className="w-64" placeholder="Enter new password" />
+                <Input
+                  type="password"
+                  className="w-64"
+                  placeholder="Enter new password"
+                />
               </SettingsRow>
               <SettingsRow label="Confirm Password">
-                <Input type="password" className="w-64" placeholder="Confirm new password" />
+                <Input
+                  type="password"
+                  className="w-64"
+                  placeholder="Confirm new password"
+                />
               </SettingsRow>
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <Button variant="ghost" onClick={() => { setShowPasswordForm(false); }}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button>Update Password</Button>
@@ -222,7 +278,8 @@ export function UserProfilePage() {
             </div>
           ) : (
             <p className="text-sm text-slate-500">
-              Last changed 30 days ago. It&apos;s recommended to change your password periodically.
+              Last changed 30 days ago. It&apos;s recommended to change your
+              password periodically.
             </p>
           )}
         </SettingsCard>
@@ -234,22 +291,37 @@ export function UserProfilePage() {
           icon={Bell}
         >
           <SettingsGroup title="Channels">
-            <SettingsRow label="Email Notifications" description="Receive updates via email">
+            <SettingsRow
+              label="Email Notifications"
+              description="Receive updates via email"
+            >
               <Toggle
                 checked={profile.notifications.email}
-                onChange={(v) => { updateNotification("email", v); }}
+                onChange={(v) => {
+                  updateNotification("email", v);
+                }}
               />
             </SettingsRow>
-            <SettingsRow label="Push Notifications" description="Browser and desktop notifications">
+            <SettingsRow
+              label="Push Notifications"
+              description="Browser and desktop notifications"
+            >
               <Toggle
                 checked={profile.notifications.push}
-                onChange={(v) => { updateNotification("push", v); }}
+                onChange={(v) => {
+                  updateNotification("push", v);
+                }}
               />
             </SettingsRow>
-            <SettingsRow label="SMS Notifications" description="Text message alerts">
+            <SettingsRow
+              label="SMS Notifications"
+              description="Text message alerts"
+            >
               <Toggle
                 checked={profile.notifications.sms}
-                onChange={(v) => { updateNotification("sms", v); }}
+                onChange={(v) => {
+                  updateNotification("sms", v);
+                }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -257,28 +329,48 @@ export function UserProfilePage() {
           <div className="my-6 border-t border-slate-100" />
 
           <SettingsGroup title="Alert Types">
-            <SettingsRow label="Invoice Reminders" description="Due date and overdue alerts">
+            <SettingsRow
+              label="Invoice Reminders"
+              description="Due date and overdue alerts"
+            >
               <Toggle
                 checked={profile.notifications.invoiceReminders}
-                onChange={(v) => { updateNotification("invoiceReminders", v); }}
+                onChange={(v) => {
+                  updateNotification("invoiceReminders", v);
+                }}
               />
             </SettingsRow>
-            <SettingsRow label="Payment Alerts" description="Incoming and outgoing payments">
+            <SettingsRow
+              label="Payment Alerts"
+              description="Incoming and outgoing payments"
+            >
               <Toggle
                 checked={profile.notifications.paymentAlerts}
-                onChange={(v) => { updateNotification("paymentAlerts", v); }}
+                onChange={(v) => {
+                  updateNotification("paymentAlerts", v);
+                }}
               />
             </SettingsRow>
-            <SettingsRow label="Low Stock Alerts" description="When items fall below reorder level">
+            <SettingsRow
+              label="Low Stock Alerts"
+              description="When items fall below reorder level"
+            >
               <Toggle
                 checked={profile.notifications.lowStockAlerts}
-                onChange={(v) => { updateNotification("lowStockAlerts", v); }}
+                onChange={(v) => {
+                  updateNotification("lowStockAlerts", v);
+                }}
               />
             </SettingsRow>
-            <SettingsRow label="Weekly Reports" description="Summary reports every week">
+            <SettingsRow
+              label="Weekly Reports"
+              description="Summary reports every week"
+            >
               <Toggle
                 checked={profile.notifications.weeklyReports}
-                onChange={(v) => { updateNotification("weeklyReports", v); }}
+                onChange={(v) => {
+                  updateNotification("weeklyReports", v);
+                }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -289,7 +381,9 @@ export function UserProfilePage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-slate-500">Role</p>
-              <p className="font-medium text-slate-900">{roleLabels[profile.role]}</p>
+              <p className="font-medium text-slate-900">
+                {roleLabels[profile.role]}
+              </p>
             </div>
             <div>
               <p className="text-slate-500">Account Created</p>

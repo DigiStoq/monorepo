@@ -10,7 +10,20 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Package, DollarSign, Layers, Box, Plus, ChevronDown, ChevronUp, Barcode, Calendar, MapPin, Tag, Shield } from "lucide-react";
+import {
+  Package,
+  DollarSign,
+  Layers,
+  Box,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  Barcode,
+  Calendar,
+  MapPin,
+  Tag,
+  Shield,
+} from "lucide-react";
 import { useCategoryMutations } from "@/hooks/useCategories";
 import type { Item, ItemFormData, ItemType, Category } from "../types";
 
@@ -88,11 +101,11 @@ export function ItemFormModal({
   item,
   categories = [],
   isLoading,
-}: ItemFormModalProps) {
+}: ItemFormModalProps): React.ReactNode {
   const isEditing = Boolean(item);
-  const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "stock" | "additional">(
-    "basic"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "basic" | "pricing" | "stock" | "additional"
+  >("basic");
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
 
   // Category creation state
@@ -170,9 +183,18 @@ export function ItemFormModal({
         location: item.location ?? "",
       });
       // Show additional fields section if any field has a value
-      const hasAdditionalData = item.batchNumber || item.expiryDate || item.manufactureDate ||
-        item.barcode || item.hsnCode || item.warrantyDays || item.brand || item.modelNumber || item.location;
-      setShowAdditionalFields(Boolean(hasAdditionalData));
+      const hasAdditionalData = [
+        item.batchNumber,
+        item.expiryDate,
+        item.manufactureDate,
+        item.barcode,
+        item.hsnCode,
+        item.warrantyDays,
+        item.brand,
+        item.modelNumber,
+        item.location,
+      ].some((val) => !!val);
+      setShowAdditionalFields(hasAdditionalData);
     } else {
       reset({
         name: "",
@@ -202,7 +224,7 @@ export function ItemFormModal({
     setActiveTab("basic");
   }, [item, reset, isOpen]);
 
-  const handleFormSubmit = (data: ItemSchemaType) => {
+  const handleFormSubmit = (data: ItemSchemaType): void => {
     onSubmit({
       ...data,
       sku: data.sku ?? undefined,
@@ -225,12 +247,14 @@ export function ItemFormModal({
     });
   };
 
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (): Promise<void> => {
     if (!newCategoryName.trim()) return;
 
     setIsCreatingCategory(true);
     try {
-      const newCategoryId = await createCategory({ name: newCategoryName.trim() });
+      const newCategoryId = await createCategory({
+        name: newCategoryName.trim(),
+      });
       setValue("category", newCategoryId);
       setNewCategoryName("");
       setIsAddCategoryOpen(false);
@@ -331,7 +355,9 @@ export function ItemFormModal({
                   </label>
                   <button
                     type="button"
-                    onClick={() => { setIsAddCategoryOpen(true); }}
+                    onClick={() => {
+                      setIsAddCategoryOpen(true);
+                    }}
                     className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-0.5"
                   >
                     <Plus className="h-3 w-3" />
@@ -486,7 +512,9 @@ export function ItemFormModal({
             <div className="mb-4">
               <button
                 type="button"
-                onClick={() => { setShowAdditionalFields(!showAdditionalFields); }}
+                onClick={() => {
+                  setShowAdditionalFields(!showAdditionalFields);
+                }}
                 className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
               >
                 {showAdditionalFields ? (
@@ -494,7 +522,9 @@ export function ItemFormModal({
                 ) : (
                   <ChevronDown className="h-4 w-4" />
                 )}
-                {showAdditionalFields ? "Hide optional fields" : "Show optional fields"}
+                {showAdditionalFields
+                  ? "Hide optional fields"
+                  : "Show optional fields"}
               </button>
               <p className="text-xs text-slate-500 mt-1">
                 Add batch tracking, expiry dates, barcodes, and more
@@ -603,7 +633,10 @@ export function ItemFormModal({
               <div className="text-center py-8 text-slate-500">
                 <Package className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-sm">No additional details configured</p>
-                <p className="text-xs mt-1">Click above to add optional fields like batch number, expiry date, etc.</p>
+                <p className="text-xs mt-1">
+                  Click above to add optional fields like batch number, expiry
+                  date, etc.
+                </p>
               </div>
             )}
           </>
@@ -628,7 +661,9 @@ export function ItemFormModal({
               label="Category Name"
               placeholder="e.g., Electronics, Clothing"
               value={newCategoryName}
-              onChange={(e) => { setNewCategoryName(e.target.value); }}
+              onChange={(e) => {
+                setNewCategoryName(e.target.value);
+              }}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -651,7 +686,9 @@ export function ItemFormModal({
               </Button>
               <Button
                 size="sm"
-                onClick={() => { void handleCreateCategory(); }}
+                onClick={() => {
+                  void handleCreateCategory();
+                }}
                 disabled={!newCategoryName.trim()}
                 isLoading={isCreatingCategory}
               >

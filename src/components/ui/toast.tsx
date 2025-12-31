@@ -71,6 +71,10 @@ export interface ToastProviderProps {
 // CONTEXT
 // ============================================================================
 
+// ============================================================================
+// CONTEXT
+// ============================================================================
+
 interface ToastContextValue {
   toasts: Toast[];
   toast: (options: Omit<Toast, "id">) => string;
@@ -84,7 +88,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");
@@ -194,7 +198,7 @@ const ToastItem = forwardRef<
       return undefined;
     }, [duration, onClose, onDismiss]);
 
-    const handleClose = () => {
+    const handleClose = (): void => {
       onClose();
       onDismiss?.();
     };
@@ -267,7 +271,7 @@ function ToastContainer({
   toasts: Toast[];
   position: ToastPosition;
   onClose: (id: string) => void;
-}) {
+}): JSX.Element | null {
   if (typeof window === "undefined") return null;
 
   return createPortal(
@@ -307,7 +311,7 @@ export function ToastProvider({
   position = "top-right",
   defaultDuration = 5000,
   maxToasts = 5,
-}: ToastProviderProps) {
+}: ToastProviderProps): JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismiss = useCallback((id: string) => {

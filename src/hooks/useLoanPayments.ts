@@ -55,7 +55,8 @@ export function useLoanPayments(filters?: { loanId?: string }): {
       params.push(filters.loanId);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM loan_payments ${whereClause} ORDER BY date DESC, created_at DESC`,
       params,
@@ -129,14 +130,13 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
         [data.principalAmount, now, data.loanId]
       );
 
-      // Check if loan is fully paid and update status
       const result = await db.execute(
         `SELECT outstanding_amount FROM loans WHERE id = ?`,
         [data.loanId]
       );
       const rows = (result.rows?._array ?? []) as LoanQueryRow[];
       const loan = rows[0];
-      if (loan && loan.outstanding_amount <= 0) {
+      if (rows.length > 0 && loan.outstanding_amount <= 0) {
         await db.execute(
           `UPDATE loans SET status = 'closed', updated_at = ? WHERE id = ?`,
           [now, data.loanId]
@@ -158,7 +158,7 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
       const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
       const payment = rows[0];
 
-      if (payment) {
+      if (rows.length > 0) {
         const now = new Date().toISOString();
         // Reverse the loan outstanding amount
         await db.execute(

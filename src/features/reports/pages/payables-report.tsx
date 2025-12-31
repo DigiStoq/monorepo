@@ -8,7 +8,7 @@ import { usePayablesReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function PayablesReport() {
+export function PayablesReport(): React.ReactNode {
   const [search, setSearch] = useState("");
   const [showOnlyOverdue, setShowOnlyOverdue] = useState(false);
 
@@ -18,7 +18,9 @@ export function PayablesReport() {
   // Filter data
   const filteredData = useMemo(() => {
     return payablesData.filter((entry) => {
-      const matchesSearch = entry.supplierName.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = entry.supplierName
+        .toLowerCase()
+        .includes(search.toLowerCase());
       const matchesOverdue = !showOnlyOverdue || entry.overdueAmount > 0;
       return matchesSearch && matchesOverdue;
     });
@@ -35,7 +37,7 @@ export function PayablesReport() {
     );
   }, [filteredData]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -62,8 +64,12 @@ export function PayablesReport() {
       title="Payables Report"
       subtitle="Outstanding amounts to suppliers"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
@@ -71,7 +77,9 @@ export function PayablesReport() {
               type="text"
               placeholder="Search suppliers..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -79,7 +87,9 @@ export function PayablesReport() {
             <input
               type="checkbox"
               checked={showOnlyOverdue}
-              onChange={(e) => { setShowOnlyOverdue(e.target.checked); }}
+              onChange={(e) => {
+                setShowOnlyOverdue(e.target.checked);
+              }}
               className="rounded border-slate-300"
             />
             Show only overdue
@@ -93,13 +103,17 @@ export function PayablesReport() {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Suppliers with Balance</p>
-              <p className="text-xl font-bold text-slate-900">{filteredData.length}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {filteredData.length}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-orange-50 border-orange-100">
             <CardBody className="py-3">
               <p className="text-xs text-orange-600">Total Amount Due</p>
-              <p className="text-xl font-bold text-orange-700">{formatCurrency(totals.due)}</p>
+              <p className="text-xl font-bold text-orange-700">
+                {formatCurrency(totals.due)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-red-50 border-red-100">
@@ -108,7 +122,9 @@ export function PayablesReport() {
                 <AlertCircle className="h-3 w-3 text-error" />
                 <p className="text-xs text-red-600">Overdue Amount</p>
               </div>
-              <p className="text-xl font-bold text-error">{formatCurrency(totals.overdue)}</p>
+              <p className="text-xl font-bold text-error">
+                {formatCurrency(totals.overdue)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -123,11 +139,21 @@ export function PayablesReport() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Supplier</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Invoices</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Amount Due</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Overdue</th>
-                    <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Supplier
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Invoices
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Amount Due
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Overdue
+                    </th>
+                    <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -141,11 +167,19 @@ export function PayablesReport() {
                   ) : (
                     filteredData.map((entry) => (
                       <tr key={entry.supplierId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">{entry.supplierName}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{entry.invoiceCount}</td>
-                        <td className="px-4 py-3 text-right font-medium text-orange-600">{formatCurrency(entry.totalDue)}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          {entry.supplierName}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-600">
+                          {entry.invoiceCount}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-orange-600">
+                          {formatCurrency(entry.totalDue)}
+                        </td>
                         <td className="px-4 py-3 text-right text-error">
-                          {entry.overdueAmount > 0 ? formatCurrency(entry.overdueAmount) : "-"}
+                          {entry.overdueAmount > 0
+                            ? formatCurrency(entry.overdueAmount)
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-center">
                           {entry.overdueAmount > 0 ? (
@@ -162,9 +196,18 @@ export function PayablesReport() {
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
                       <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-600">{filteredData.reduce((sum, e) => sum + e.invoiceCount, 0)}</td>
-                      <td className="px-4 py-3 text-right text-orange-600">{formatCurrency(totals.due)}</td>
-                      <td className="px-4 py-3 text-right text-error">{formatCurrency(totals.overdue)}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        {filteredData.reduce(
+                          (sum, e) => sum + e.invoiceCount,
+                          0
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-orange-600">
+                        {formatCurrency(totals.due)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-error">
+                        {formatCurrency(totals.overdue)}
+                      </td>
                       <td className="px-4 py-3"></td>
                     </tr>
                   </tfoot>

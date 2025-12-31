@@ -14,7 +14,7 @@ import { useCheques, useChequeMutations } from "@/hooks/useCheques";
 import { useCustomers } from "@/hooks/useCustomers";
 import type { Cheque, ChequeFormData } from "./types";
 
-export function ChequesPage() {
+export function ChequesPage(): React.ReactNode {
   // Data from PowerSync
   const { cheques, isLoading, error } = useCheques();
   const { customers } = useCustomers();
@@ -32,23 +32,23 @@ export function ChequesPage() {
   }, [cheques, selectedCheque]);
 
   // Handlers
-  const handleChequeClick = (cheque: Cheque) => {
+  const handleChequeClick = (cheque: Cheque): void => {
     setSelectedCheque(cheque);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedCheque(null);
   };
 
-  const handleCreateCheque = () => {
+  const handleCreateCheque = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitCheque = async (data: ChequeFormData) => {
+  const handleSubmitCheque = async (data: ChequeFormData): Promise<void> => {
     try {
       // Find customer name from ID
       const customer = customers.find((c) => c.id === data.customerId);
@@ -70,7 +70,7 @@ export function ChequesPage() {
     }
   };
 
-  const handleDeleteCheque = async () => {
+  const handleDeleteCheque = async (): Promise<void> => {
     if (currentSelectedCheque) {
       try {
         await deleteCheque(currentSelectedCheque.id);
@@ -81,7 +81,7 @@ export function ChequesPage() {
     }
   };
 
-  const handleMarkCleared = async () => {
+  const handleMarkCleared = async (): Promise<void> => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cleared");
@@ -91,7 +91,7 @@ export function ChequesPage() {
     }
   };
 
-  const handleMarkBounced = async () => {
+  const handleMarkBounced = async (): Promise<void> => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "bounced");
@@ -101,7 +101,7 @@ export function ChequesPage() {
     }
   };
 
-  const handleCancelCheque = async () => {
+  const handleCancelCheque = async (): Promise<void> => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cancelled");

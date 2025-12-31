@@ -74,7 +74,7 @@ export function formatNumber(value: number, decimals = 2): string {
  * Format percentage for display
  */
 export function formatPercent(value: number): string {
-  if (value === 0 || value === undefined) return "-";
+  if (value === 0) return "-";
   return `${value}%`;
 }
 

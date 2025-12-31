@@ -2,7 +2,11 @@ import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import { useAuthStore } from "@/stores/auth-store";
-import type { SaleInvoice, SaleInvoiceItem, InvoiceFormData } from "@/features/sales/types";
+import type {
+  SaleInvoice,
+  SaleInvoiceItem,
+  InvoiceFormData,
+} from "@/features/sales/types";
 
 // Database row types (snake_case columns from SQLite)
 interface SaleInvoiceRow {
@@ -98,8 +102,20 @@ export function useSaleInvoices(filters?: {
     const dateFromFilter = filters?.dateFrom ?? null;
     const dateToFilter = filters?.dateTo ?? null;
     const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [statusFilter, customerFilter, dateFromFilter, dateToFilter, searchFilter];
-  }, [filters?.status, filters?.customerId, filters?.dateFrom, filters?.dateTo, filters?.search]);
+    return [
+      statusFilter,
+      customerFilter,
+      dateFromFilter,
+      dateToFilter,
+      searchFilter,
+    ];
+  }, [
+    filters?.status,
+    filters?.customerId,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<SaleInvoiceRow>(
     `SELECT * FROM sale_invoices
@@ -122,17 +138,21 @@ export function useSaleInvoiceById(id: string | null): {
   items: SaleInvoiceItem[];
   isLoading: boolean;
 } {
-  const { data: invoiceData, isLoading: invoiceLoading } = useQuery<SaleInvoiceRow>(
-    id ? `SELECT * FROM sale_invoices WHERE id = ?` : `SELECT * FROM sale_invoices WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: invoiceData, isLoading: invoiceLoading } =
+    useQuery<SaleInvoiceRow>(
+      id
+        ? `SELECT * FROM sale_invoices WHERE id = ?`
+        : `SELECT * FROM sale_invoices WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
-  const { data: itemsData, isLoading: itemsLoading } = useQuery<SaleInvoiceItemRow>(
-    id
-      ? `SELECT * FROM sale_invoice_items WHERE invoice_id = ?`
-      : `SELECT * FROM sale_invoice_items WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: itemsData, isLoading: itemsLoading } =
+    useQuery<SaleInvoiceItemRow>(
+      id
+        ? `SELECT * FROM sale_invoice_items WHERE invoice_id = ?`
+        : `SELECT * FROM sale_invoice_items WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
   const invoice = invoiceData[0] ? mapRowToSaleInvoice(invoiceData[0]) : null;
   const items = itemsData.map(mapRowToSaleInvoiceItem);
@@ -155,8 +175,17 @@ interface SaleInvoiceMutations {
     items: Omit<SaleInvoiceItem, "id" | "invoiceId">[],
     oldInvoice?: SaleInvoice
   ) => Promise<void>;
-  updateInvoiceStatus: (id: string, status: string, oldStatus?: string, reason?: string) => Promise<void>;
-  recordPayment: (id: string, amount: number, paymentMode?: string) => Promise<void>;
+  updateInvoiceStatus: (
+    id: string,
+    status: string,
+    oldStatus?: string,
+    reason?: string
+  ) => Promise<void>;
+  recordPayment: (
+    id: string,
+    amount: number,
+    paymentMode?: string
+  ) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
 }
 
@@ -178,7 +207,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
       // Get current user from auth store
       const { user } = useAuthStore.getState();
       const userId = user?.id ?? null;
-      const userName = user?.user_metadata?.full_name ?? user?.email ?? "Unknown User";
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
       await db.execute(
         `INSERT INTO invoice_history (
@@ -288,7 +318,11 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         invoiceId: id,
         action: "created",
         description: `Invoice ${data.invoiceNumber} created for ${data.customerName}`,
-        newValues: { total, status: data.status ?? "draft", itemCount: items.length },
+        newValues: {
+          total,
+          status: data.status ?? "draft",
+          itemCount: items.length,
+        },
       });
 
       return id;
@@ -338,7 +372,9 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
       );
 
       // Delete old items and insert new ones
-      await db.execute(`DELETE FROM sale_invoice_items WHERE invoice_id = ?`, [id]);
+      await db.execute(`DELETE FROM sale_invoice_items WHERE invoice_id = ?`, [
+        id,
+      ]);
 
       for (const item of items) {
         const itemId = crypto.randomUUID();
@@ -391,7 +427,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         }
 
         // Track discount change
-        const oldDiscount = oldInvoice.discountAmount ?? 0;
+        const oldDiscount = oldInvoice.discountAmount;
         const newDiscount = data.discountAmount ?? 0;
         if (oldDiscount !== newDiscount) {
           changes.push("discount");
@@ -407,7 +443,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         }
 
         // Track item changes
-        const oldItems = oldInvoice.items ?? [];
+        const oldItems = oldInvoice.items;
         if (oldItems.length !== items.length) {
           changes.push(`items (${oldItems.length} → ${items.length})`);
           oldValues.itemCount = oldItems.length;
@@ -416,13 +452,17 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           // Check for quantity/price changes in existing items
           const itemChanges: string[] = [];
           for (const newItem of items) {
-            const oldItem = oldItems.find(o => o.itemId === newItem.itemId);
+            const oldItem = oldItems.find((o) => o.itemId === newItem.itemId);
             if (oldItem) {
               if (oldItem.quantity !== newItem.quantity) {
-                itemChanges.push(`${newItem.itemName}: qty ${oldItem.quantity} → ${newItem.quantity}`);
+                itemChanges.push(
+                  `${newItem.itemName}: qty ${oldItem.quantity} → ${newItem.quantity}`
+                );
               }
               if (oldItem.unitPrice !== newItem.unitPrice) {
-                itemChanges.push(`${newItem.itemName}: price ${oldItem.unitPrice} → ${newItem.unitPrice}`);
+                itemChanges.push(
+                  `${newItem.itemName}: price ${oldItem.unitPrice} → ${newItem.unitPrice}`
+                );
               }
             }
           }
@@ -446,9 +486,10 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
       await addHistoryEntry({
         invoiceId: id,
         action: "updated",
-        description: changes.length > 0
-          ? `Updated ${changes.join(", ")}`
-          : "Invoice updated",
+        description:
+          changes.length > 0
+            ? `Updated ${changes.join(", ")}`
+            : "Invoice updated",
         ...(Object.keys(oldValues).length > 0 && { oldValues }),
         ...(Object.keys(newValues).length > 0 && { newValues }),
       });
@@ -457,13 +498,17 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
   );
 
   const updateInvoiceStatus = useCallback(
-    async (id: string, status: string, oldStatus?: string, reason?: string): Promise<void> => {
+    async (
+      id: string,
+      status: string,
+      oldStatus?: string,
+      reason?: string
+    ): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE sale_invoices SET status = ?, updated_at = ? WHERE id = ?`, [
-        status,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE sale_invoices SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
 
       // Build description with optional reason
       let description = `Status changed from ${oldStatus ?? "unknown"} to ${status}`;
@@ -516,21 +561,33 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         `SELECT customer_id, total FROM sale_invoices WHERE id = ?`,
         [id]
       );
-      const invoice = invoiceResult.rows?._array?.[0] as { customer_id: string; total: number } | undefined;
+      const invoice =
+        invoiceResult.rows?._array && invoiceResult.rows._array.length > 0
+          ? (invoiceResult.rows._array[0] as {
+              customer_id: string;
+              total: number;
+            })
+          : undefined;
 
       // Get items to reverse stock
       const itemsResult = await db.execute(
         `SELECT item_id, quantity FROM sale_invoice_items WHERE invoice_id = ?`,
         [id]
       );
-      const items = (itemsResult.rows?._array ?? []) as { item_id: string; quantity: number }[];
+      const items = (itemsResult.rows?._array ?? []) as {
+        item_id: string;
+        quantity: number;
+      }[];
 
       // Get linked payments to delete and reverse
       const paymentsResult = await db.execute(
         `SELECT id, amount FROM payment_ins WHERE invoice_id = ?`,
         [id]
       );
-      const payments = (paymentsResult.rows?._array ?? []) as { id: string; amount: number }[];
+      const payments = (paymentsResult.rows?._array ?? []) as {
+        id: string;
+        amount: number;
+      }[];
 
       // Reverse customer balance for each payment (payments decreased balance, so increase it back)
       for (const payment of payments) {
@@ -563,7 +620,9 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         );
       }
 
-      await db.execute(`DELETE FROM sale_invoice_items WHERE invoice_id = ?`, [id]);
+      await db.execute(`DELETE FROM sale_invoice_items WHERE invoice_id = ?`, [
+        id,
+      ]);
       await db.execute(`DELETE FROM sale_invoices WHERE id = ?`, [id]);
     },
     [db]
@@ -617,7 +676,9 @@ export interface SaleInvoiceLinkedItems {
   paymentsCount: number;
 }
 
-export function useSaleInvoiceLinkedItems(invoiceId: string | null): SaleInvoiceLinkedItems {
+export function useSaleInvoiceLinkedItems(
+  invoiceId: string | null
+): SaleInvoiceLinkedItems {
   const { data: itemsCount } = useQuery<{ count: number }>(
     invoiceId
       ? `SELECT COUNT(*) as count FROM sale_invoice_items WHERE invoice_id = ?`

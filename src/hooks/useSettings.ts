@@ -1,7 +1,11 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { FlatCompanySettings, InvoiceSettings, TaxRate } from "@/features/settings/types";
+import type {
+  FlatCompanySettings,
+  InvoiceSettings,
+  TaxRate,
+} from "@/features/settings/types";
 
 // Database row types (snake_case columns from SQLite)
 interface CompanySettingsRow {
@@ -77,7 +81,8 @@ function mapRowToCompanySettings(row: CompanySettingsRow): FlatCompanySettings {
   if (row.address_street) result.addressStreet = row.address_street;
   if (row.address_city) result.addressCity = row.address_city;
   if (row.address_state) result.addressState = row.address_state;
-  if (row.address_postal_code) result.addressPostalCode = row.address_postal_code;
+  if (row.address_postal_code)
+    result.addressPostalCode = row.address_postal_code;
   if (row.address_country) result.addressCountry = row.address_country;
   if (row.contact_phone) result.contactPhone = row.contact_phone;
   if (row.contact_email) result.contactEmail = row.contact_email;
@@ -98,16 +103,21 @@ function mapRowToInvoiceSettings(row: InvoiceSettingsRow): InvoiceSettings {
     showBankDetails: row.show_bank_details === 1,
     dueDateDays: row.due_date_days,
     lateFeesEnabled: row.late_fees_enabled === 1,
-    pdfTemplate: (row.pdf_template as "classic" | "modern" | "minimal") ?? "classic",
+    pdfTemplate:
+      (row.pdf_template as "classic" | "modern" | "minimal" | null) ??
+      "classic",
   };
-  if (row.terms_and_conditions) result.termsAndConditions = row.terms_and_conditions;
+  if (row.terms_and_conditions)
+    result.termsAndConditions = row.terms_and_conditions;
   if (row.notes) result.notes = row.notes;
   if (row.show_payment_qr === 1) result.showPaymentQr = true;
-  if (row.late_fees_percentage !== null) result.lateFeesPercentage = row.late_fees_percentage;
+  result.lateFeesPercentage = row.late_fees_percentage;
   if (row.bank_account_name) result.bankAccountName = row.bank_account_name;
-  if (row.bank_account_number) result.bankAccountNumber = row.bank_account_number;
+  if (row.bank_account_number)
+    result.bankAccountNumber = row.bank_account_number;
   if (row.bank_name) result.bankName = row.bank_name;
-  if (row.bank_routing_number) result.bankRoutingNumber = row.bank_routing_number;
+  if (row.bank_routing_number)
+    result.bankRoutingNumber = row.bank_routing_number;
   if (row.bank_branch_name) result.bankBranchName = row.bank_branch_name;
   if (row.bank_swift_code) result.bankSwiftCode = row.bank_swift_code;
   if (row.created_at) result.createdAt = row.created_at;
@@ -144,7 +154,7 @@ export function useCompanySettings(): {
   // Memoize based on the row id and updated_at to prevent unnecessary re-renders
   const settings = useMemo(() => {
     return data[0] ? mapRowToCompanySettings(data[0]) : null;
-  }, [data[0]?.id, data[0]?.updated_at]);
+  }, [data]);
 
   return { settings, isLoading, error };
 }
@@ -239,7 +249,10 @@ export function useCompanySettingsMutations(): CompanySettingsMutations {
       values.push(now);
 
       if (fields.length > 1) {
-        await db.execute(`UPDATE company_settings SET ${fields.join(", ")}`, values);
+        await db.execute(
+          `UPDATE company_settings SET ${fields.join(", ")}`,
+          values
+        );
       }
     },
     [db]
@@ -264,7 +277,7 @@ export function useInvoiceSettings(): {
   // Memoize based on the row id and updated_at to prevent unnecessary re-renders
   const settings = useMemo(() => {
     return data[0] ? mapRowToInvoiceSettings(data[0]) : null;
-  }, [data[0]?.id, data[0]?.updated_at]);
+  }, [data]);
 
   return { settings, isLoading, error };
 }
@@ -355,7 +368,10 @@ export function useInvoiceSettingsMutations(): InvoiceSettingsMutations {
       values.push(now);
 
       if (fields.length > 1) {
-        await db.execute(`UPDATE invoice_settings SET ${fields.join(", ")}`, values);
+        await db.execute(
+          `UPDATE invoice_settings SET ${fields.join(", ")}`,
+          values
+        );
       }
     },
     [db]
@@ -374,7 +390,8 @@ export function useTaxRates(filters?: { isActive?: boolean }): {
   error: Error | undefined;
 } {
   const params = useMemo(() => {
-    const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
+    const activeFilter =
+      filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
     return [activeFilter];
   }, [filters?.isActive]);
 
@@ -498,7 +515,10 @@ export function useTaxRateMutations(): TaxRateMutations {
       values.push(id);
 
       if (fields.length > 0) {
-        await db.execute(`UPDATE tax_rates SET ${fields.join(", ")} WHERE id = ?`, values);
+        await db.execute(
+          `UPDATE tax_rates SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
       }
     },
     [db]

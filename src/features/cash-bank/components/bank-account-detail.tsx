@@ -35,12 +35,35 @@ export interface BankAccountDetailProps {
 // HELPERS
 // ============================================================================
 
-const accountTypeConfig: Record<BankAccountType, { label: string; icon: React.ReactNode; color: string }> = {
-  savings: { label: "Savings Account", icon: <PiggyBank className="h-5 w-5" />, color: "bg-green-100 text-green-700" },
-  checking: { label: "Checking Account", icon: <Wallet className="h-5 w-5" />, color: "bg-blue-100 text-blue-700" },
-  credit: { label: "Credit Card", icon: <CreditCard className="h-5 w-5" />, color: "bg-purple-100 text-purple-700" },
-  loan: { label: "Loan Account", icon: <Landmark className="h-5 w-5" />, color: "bg-orange-100 text-orange-700" },
-  other: { label: "Other Account", icon: <MoreHorizontal className="h-5 w-5" />, color: "bg-slate-100 text-slate-700" },
+const accountTypeConfig: Record<
+  BankAccountType,
+  { label: string; icon: React.ReactNode; color: string }
+> = {
+  savings: {
+    label: "Savings Account",
+    icon: <PiggyBank className="h-5 w-5" />,
+    color: "bg-green-100 text-green-700",
+  },
+  checking: {
+    label: "Checking Account",
+    icon: <Wallet className="h-5 w-5" />,
+    color: "bg-blue-100 text-blue-700",
+  },
+  credit: {
+    label: "Credit Card",
+    icon: <CreditCard className="h-5 w-5" />,
+    color: "bg-purple-100 text-purple-700",
+  },
+  loan: {
+    label: "Loan Account",
+    icon: <Landmark className="h-5 w-5" />,
+    color: "bg-orange-100 text-orange-700",
+  },
+  other: {
+    label: "Other Account",
+    icon: <MoreHorizontal className="h-5 w-5" />,
+    color: "bg-slate-100 text-slate-700",
+  },
 };
 
 // ============================================================================
@@ -55,12 +78,12 @@ export function BankAccountDetail({
   onDelete,
   onAddTransaction,
   className,
-}: BankAccountDetailProps) {
+}: BankAccountDetailProps): React.ReactNode {
   const config = accountTypeConfig[account.accountType];
   const isPositive = account.currentBalance >= 0;
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -68,7 +91,7 @@ export function BankAccountDetail({
     }).format(value);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -82,7 +105,9 @@ export function BankAccountDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Account Details</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Account Details
+          </h2>
           <p className="text-sm text-slate-500">{account.name}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -93,19 +118,31 @@ export function BankAccountDetail({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Balance Card */}
-        <Card className={cn(
-          "border",
-          isPositive
-            ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100"
-            : "bg-gradient-to-br from-red-50 to-orange-50 border-red-100"
-        )}>
+        <Card
+          className={cn(
+            "border",
+            isPositive
+              ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100"
+              : "bg-gradient-to-br from-red-50 to-orange-50 border-red-100"
+          )}
+        >
           <CardBody className="text-center py-6">
-            <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3", config.color)}>
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3",
+                config.color
+              )}
+            >
               {config.icon}
               <span className="text-sm font-medium">{config.label}</span>
             </div>
             <p className="text-sm text-slate-600 mb-1">Current Balance</p>
-            <p className={cn("text-3xl font-bold", isPositive ? "text-success" : "text-error")}>
+            <p
+              className={cn(
+                "text-3xl font-bold",
+                isPositive ? "text-success" : "text-error"
+              )}
+            >
               {formatCurrency(account.currentBalance)}
             </p>
           </CardBody>
@@ -139,7 +176,9 @@ export function BankAccountDetail({
               <Hash className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Account Number</p>
-                <p className="font-medium text-slate-900 font-mono">{account.accountNumber}</p>
+                <p className="font-medium text-slate-900 font-mono">
+                  {account.accountNumber}
+                </p>
               </div>
             </div>
 
@@ -147,7 +186,9 @@ export function BankAccountDetail({
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Opening Balance</p>
-                <p className="font-medium text-slate-900">{formatCurrency(account.openingBalance)}</p>
+                <p className="font-medium text-slate-900">
+                  {formatCurrency(account.openingBalance)}
+                </p>
               </div>
             </div>
           </CardBody>
@@ -164,12 +205,19 @@ export function BankAccountDetail({
             ) : (
               <div className="divide-y divide-slate-100">
                 {transactions.slice(0, 5).map((txn) => (
-                  <div key={txn.id} className="p-3 flex items-center justify-between">
+                  <div
+                    key={txn.id}
+                    className="p-3 flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-1.5 rounded-full",
-                        txn.type === "deposit" ? "bg-success-light" : "bg-error-light"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-1.5 rounded-full",
+                          txn.type === "deposit"
+                            ? "bg-success-light"
+                            : "bg-error-light"
+                        )}
+                      >
                         {txn.type === "deposit" ? (
                           <ArrowUpCircle className="h-4 w-4 text-success" />
                         ) : (
@@ -177,15 +225,22 @@ export function BankAccountDetail({
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{txn.description}</p>
-                        <p className="text-xs text-slate-500">{formatDate(txn.date)}</p>
+                        <p className="text-sm font-medium text-slate-900">
+                          {txn.description}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDate(txn.date)}
+                        </p>
                       </div>
                     </div>
-                    <span className={cn(
-                      "font-medium",
-                      txn.type === "deposit" ? "text-success" : "text-error"
-                    )}>
-                      {txn.type === "deposit" ? "+" : "-"}{formatCurrency(txn.amount)}
+                    <span
+                      className={cn(
+                        "font-medium",
+                        txn.type === "deposit" ? "text-success" : "text-error"
+                      )}
+                    >
+                      {txn.type === "deposit" ? "+" : "-"}
+                      {formatCurrency(txn.amount)}
                     </span>
                   </div>
                 ))}
@@ -199,7 +254,9 @@ export function BankAccountDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{account.notes}</p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                {account.notes}
+              </p>
             </CardBody>
           </Card>
         )}

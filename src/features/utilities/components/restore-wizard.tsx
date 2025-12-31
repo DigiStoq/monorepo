@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import {
-  Modal,
-  Button,
-  Card,
-  CardBody,
-  Badge,
-} from "@/components/ui";
+import { Modal, Button, Card, CardBody, Badge } from "@/components/ui";
 import {
   Upload,
   Cloud,
@@ -26,34 +20,13 @@ import {
 // TYPES
 // ============================================================================
 
+import type { RestoreOptions, RestoreResult, BackupFile } from "../types";
+
 interface RestoreWizardProps {
   isOpen: boolean;
   onClose: () => void;
   onRestore: (options: RestoreOptions) => Promise<RestoreResult>;
   availableBackups?: BackupFile[];
-}
-
-interface RestoreOptions {
-  source: "local" | "cloud";
-  backupId?: string | undefined;
-  file?: File | undefined;
-  overwriteExisting: boolean;
-}
-
-interface RestoreResult {
-  success: boolean;
-  recordsRestored: number;
-  timestamp: string;
-  errors?: string[];
-}
-
-interface BackupFile {
-  id: string;
-  filename: string;
-  size: number;
-  createdAt: string;
-  source: "local" | "cloud";
-  provider?: string;
 }
 
 type WizardStep = "source" | "select" | "confirm" | "result";
@@ -67,7 +40,7 @@ export function RestoreWizard({
   onClose,
   onRestore,
   availableBackups = [],
-}: RestoreWizardProps) {
+}: RestoreWizardProps): React.ReactNode {
   const [step, setStep] = useState<WizardStep>("source");
   const [source, setSource] = useState<"local" | "cloud">("local");
   const [selectedBackup, setSelectedBackup] = useState<BackupFile | null>(null);
@@ -76,14 +49,14 @@ export function RestoreWizard({
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<RestoreResult | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
     }
   };
 
-  const handleRestore = async () => {
+  const handleRestore = async (): Promise<void> => {
     setIsProcessing(true);
     try {
       const restoreResult = await onRestore({
@@ -107,7 +80,7 @@ export function RestoreWizard({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setStep("source");
     setSource("local");
     setSelectedBackup(null);
@@ -117,13 +90,13 @@ export function RestoreWizard({
     onClose();
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -135,7 +108,7 @@ export function RestoreWizard({
 
   const cloudBackups = availableBackups.filter((b) => b.source === "cloud");
 
-  const canProceed = () => {
+  const canProceed = (): boolean => {
     switch (step) {
       case "source":
         return true;
@@ -148,7 +121,7 @@ export function RestoreWizard({
     }
   };
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     switch (step) {
       case "source":
         setStep("select");
@@ -162,7 +135,7 @@ export function RestoreWizard({
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     switch (step) {
       case "select":
         setStep("source");
@@ -173,7 +146,7 @@ export function RestoreWizard({
     }
   };
 
-  const renderStepIndicator = () => {
+  const renderStepIndicator = (): React.ReactNode => {
     const steps = [
       { key: "source", label: "Source" },
       { key: "select", label: "Select Backup" },
@@ -195,7 +168,11 @@ export function RestoreWizard({
                 idx > currentIndex && "bg-slate-200 text-slate-500"
               )}
             >
-              {idx < currentIndex ? <CheckCircle2 className="h-5 w-5" /> : idx + 1}
+              {idx < currentIndex ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                idx + 1
+              )}
             </div>
             {idx < steps.length - 1 && (
               <div
@@ -211,14 +188,16 @@ export function RestoreWizard({
     );
   };
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactNode => {
     switch (step) {
       case "source":
         return (
           <div className="space-y-6">
             <div className="text-center">
               <RefreshCw className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">Restore Data</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Restore Data
+              </h3>
               <p className="text-sm text-slate-500 mt-1">
                 Choose where to restore your backup from
               </p>
@@ -227,7 +206,9 @@ export function RestoreWizard({
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => { setSource("local"); }}
+                onClick={() => {
+                  setSource("local");
+                }}
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "local"
@@ -244,7 +225,9 @@ export function RestoreWizard({
 
               <button
                 type="button"
-                onClick={() => { setSource("cloud"); }}
+                onClick={() => {
+                  setSource("cloud");
+                }}
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "cloud"
@@ -272,7 +255,9 @@ export function RestoreWizard({
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-slate-900">
-                {source === "local" ? "Upload Backup File" : "Select Cloud Backup"}
+                {source === "local"
+                  ? "Upload Backup File"
+                  : "Select Cloud Backup"}
               </h3>
               <p className="text-sm text-slate-500 mt-1">
                 {source === "local"
@@ -285,20 +270,26 @@ export function RestoreWizard({
               <div
                 className={cn(
                   "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
-                  uploadedFile ? "border-success bg-success-light" : "border-slate-300 hover:border-primary"
+                  uploadedFile
+                    ? "border-success bg-success-light"
+                    : "border-slate-300 hover:border-primary"
                 )}
               >
                 {uploadedFile ? (
                   <div className="space-y-2">
                     <FileArchive className="h-12 w-12 mx-auto text-success" />
-                    <p className="font-medium text-slate-900">{uploadedFile.name}</p>
+                    <p className="font-medium text-slate-900">
+                      {uploadedFile.name}
+                    </p>
                     <p className="text-sm text-slate-500">
                       {formatFileSize(uploadedFile.size)}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => { setUploadedFile(null); }}
+                      onClick={() => {
+                        setUploadedFile(null);
+                      }}
                     >
                       Choose different file
                     </Button>
@@ -314,9 +305,14 @@ export function RestoreWizard({
                     <div className="space-y-2">
                       <Upload className="h-12 w-12 mx-auto text-slate-400" />
                       <p className="text-sm text-slate-600">
-                        <span className="text-primary font-medium">Click to upload</span> or drag and drop
+                        <span className="text-primary font-medium">
+                          Click to upload
+                        </span>{" "}
+                        or drag and drop
                       </p>
-                      <p className="text-xs text-slate-400">ZIP or .backup files</p>
+                      <p className="text-xs text-slate-400">
+                        ZIP or .backup files
+                      </p>
                     </div>
                   </label>
                 )}
@@ -328,7 +324,9 @@ export function RestoreWizard({
                     <button
                       key={backup.id}
                       type="button"
-                      onClick={() => { setSelectedBackup(backup); }}
+                      onClick={() => {
+                        setSelectedBackup(backup);
+                      }}
                       className={cn(
                         "w-full p-4 rounded-lg border-2 text-left transition-all",
                         selectedBackup?.id === backup.id
@@ -339,7 +337,9 @@ export function RestoreWizard({
                       <div className="flex items-center gap-3">
                         <FileArchive className="h-8 w-8 text-slate-400" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 truncate">{backup.filename}</p>
+                          <p className="font-medium text-slate-900 truncate">
+                            {backup.filename}
+                          </p>
                           <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -347,7 +347,9 @@ export function RestoreWizard({
                             </span>
                             <span>{formatFileSize(backup.size)}</span>
                             {backup.provider && (
-                              <Badge variant="secondary" size="sm">{backup.provider}</Badge>
+                              <Badge variant="secondary" size="sm">
+                                {backup.provider}
+                              </Badge>
                             )}
                           </div>
                         </div>
@@ -361,7 +363,9 @@ export function RestoreWizard({
                   <Card className="bg-slate-50">
                     <CardBody className="text-center py-8">
                       <Cloud className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-                      <p className="text-sm text-slate-500">No cloud backups found</p>
+                      <p className="text-sm text-slate-500">
+                        No cloud backups found
+                      </p>
                     </CardBody>
                   </Card>
                 )}
@@ -375,7 +379,9 @@ export function RestoreWizard({
           <div className="space-y-6">
             <div className="text-center">
               <AlertTriangle className="h-16 w-16 mx-auto text-warning mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">Confirm Restore</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Confirm Restore
+              </h3>
               <p className="text-sm text-slate-500 mt-1">
                 Please review and confirm the restore operation
               </p>
@@ -385,18 +391,26 @@ export function RestoreWizard({
               <CardBody className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Source</span>
-                  <span className="font-medium text-slate-900 capitalize">{source}</span>
+                  <span className="font-medium text-slate-900 capitalize">
+                    {source}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">File</span>
                   <span className="font-medium text-slate-900">
-                    {source === "local" ? uploadedFile?.name : selectedBackup?.filename}
+                    {source === "local"
+                      ? uploadedFile?.name
+                      : selectedBackup?.filename}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Size</span>
                   <span className="font-medium text-slate-900">
-                    {formatFileSize(source === "local" ? uploadedFile?.size ?? 0 : selectedBackup?.size ?? 0)}
+                    {formatFileSize(
+                      source === "local"
+                        ? (uploadedFile?.size ?? 0)
+                        : (selectedBackup?.size ?? 0)
+                    )}
                   </span>
                 </div>
               </CardBody>
@@ -406,9 +420,12 @@ export function RestoreWizard({
               <CardBody className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-warning-dark">Important</p>
+                  <p className="text-sm font-medium text-warning-dark">
+                    Important
+                  </p>
                   <p className="text-xs text-warning-dark mt-1">
-                    This will restore data from the backup. Make sure you have a current backup before proceeding.
+                    This will restore data from the backup. Make sure you have a
+                    current backup before proceeding.
                   </p>
                 </div>
               </CardBody>
@@ -418,14 +435,20 @@ export function RestoreWizard({
               <input
                 type="checkbox"
                 checked={overwriteExisting}
-                onChange={(e) => { setOverwriteExisting(e.target.checked); }}
+                onChange={(e) => {
+                  setOverwriteExisting(e.target.checked);
+                }}
                 className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <div className="flex items-center gap-2">
                 <Trash2 className="h-4 w-4 text-error" />
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Overwrite existing data</p>
-                  <p className="text-xs text-slate-500">Delete current data before restoring</p>
+                  <p className="text-sm font-medium text-slate-700">
+                    Overwrite existing data
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Delete current data before restoring
+                  </p>
                 </div>
               </div>
             </label>
@@ -439,9 +462,12 @@ export function RestoreWizard({
               <>
                 <CheckCircle2 className="h-20 w-20 mx-auto text-success" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Restore Complete!</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">
+                    Restore Complete!
+                  </h3>
                   <p className="text-slate-500 mt-1">
-                    Successfully restored {result.recordsRestored.toLocaleString()} records
+                    Successfully restored{" "}
+                    {result.recordsRestored.toLocaleString()} records
                   </p>
                 </div>
                 <Card>
@@ -460,7 +486,9 @@ export function RestoreWizard({
               <>
                 <AlertTriangle className="h-20 w-20 mx-auto text-error" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Restore Failed</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">
+                    Restore Failed
+                  </h3>
                   <p className="text-slate-500 mt-1">
                     There was an error restoring your data
                   </p>
@@ -484,12 +512,7 @@ export function RestoreWizard({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Restore Data"
-      size="lg"
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title="Restore Data" size="lg">
       <div className="py-4">
         {renderStepIndicator()}
         {renderContent()}
@@ -497,7 +520,11 @@ export function RestoreWizard({
 
       <div className="flex justify-between pt-4 border-t">
         {step !== "source" && step !== "result" ? (
-          <Button variant="ghost" onClick={handleBack} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            leftIcon={<ArrowLeft className="h-4 w-4" />}
+          >
             Back
           </Button>
         ) : (

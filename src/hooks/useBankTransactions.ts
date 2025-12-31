@@ -43,7 +43,11 @@ export function useBankTransactions(filters?: {
   type?: "deposit" | "withdrawal" | "transfer";
   dateFrom?: string;
   dateTo?: string;
-}): { transactions: BankTransaction[]; isLoading: boolean; error: Error | undefined } {
+}): {
+  transactions: BankTransaction[];
+  isLoading: boolean;
+  error: Error | undefined;
+} {
   const { query, params } = useMemo(() => {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
@@ -68,14 +72,18 @@ export function useBankTransactions(filters?: {
       params.push(filters.dateTo);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM bank_transactions ${whereClause} ORDER BY date DESC, created_at DESC`,
       params,
     };
   }, [filters?.accountId, filters?.type, filters?.dateFrom, filters?.dateTo]);
 
-  const { data, isLoading, error } = useQuery<BankTransactionRow>(query, params);
+  const { data, isLoading, error } = useQuery<BankTransactionRow>(
+    query,
+    params
+  );
 
   const transactions = useMemo(() => data.map(mapRowToTransaction), [data]);
 
@@ -136,7 +144,8 @@ export function useBankTransactionMutations(): BankTransactionMutations {
       const currentBalance = rows[0]?.current_balance ?? 0;
 
       // Calculate new balance
-      const balanceChange = data.type === "deposit" ? data.amount : -data.amount;
+      const balanceChange =
+        data.type === "deposit" ? data.amount : -data.amount;
       const newBalance = currentBalance + balanceChange;
 
       await db.execute(
@@ -180,9 +189,10 @@ export function useBankTransactionMutations(): BankTransactionMutations {
         `SELECT account_id, type, amount FROM bank_transactions WHERE id = ?`,
         [id]
       );
-      const tx = ((result.rows?._array ?? []) as TransactionQueryRow[])[0];
+      const rows = (result.rows?._array ?? []) as TransactionQueryRow[];
 
-      if (tx) {
+      if (rows.length > 0) {
+        const tx = rows[0];
         const now = new Date().toISOString();
         // Reverse the balance change
         const reverseAmount = tx.type === "deposit" ? -tx.amount : tx.amount;

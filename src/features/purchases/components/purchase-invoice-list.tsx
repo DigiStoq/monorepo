@@ -1,27 +1,17 @@
-import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import {
-  Card,
-  CardBody,
-  SearchInput,
-  Button,
-  Badge,
-  Select,
-  type SelectOption,
-} from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import {
   Plus,
   FileText,
   Calendar,
   Building2,
-  DollarSign,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import type { PurchaseInvoice, PurchaseInvoiceStatus, PurchaseFilters } from "../types";
+import type { PurchaseInvoice } from "../types";
 
 // ============================================================================
 // TYPES
@@ -33,26 +23,21 @@ export interface PurchaseInvoiceListProps {
   onInvoiceClick?: (invoice: PurchaseInvoice) => void;
   onCreateInvoice?: () => void;
   className?: string;
+  hasActiveFilters?: boolean;
 }
-
-// ============================================================================
-// FILTER OPTIONS
-// ============================================================================
-
-const statusOptions: SelectOption[] = [
-  { value: "all", label: "All Status" },
-  { value: "draft", label: "Draft" },
-  { value: "ordered", label: "Ordered" },
-  { value: "received", label: "Received" },
-  { value: "paid", label: "Paid" },
-  { value: "returned", label: "Returned" },
-];
 
 // ============================================================================
 // STATUS CONFIG
 // ============================================================================
 
-const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
+const statusConfig: Record<
+  string,
+  {
+    label: string;
+    variant: "success" | "warning" | "error" | "info" | "secondary";
+    icon: typeof CheckCircle;
+  }
+> = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
   ordered: { label: "Ordered", variant: "info", icon: Clock },
   received: { label: "Received", variant: "warning", icon: CheckCircle },
@@ -63,7 +48,11 @@ const statusConfig: Record<string, { label: string; variant: "success" | "warnin
   unpaid: { label: "Unpaid", variant: "warning", icon: Clock },
 };
 
-const defaultStatusConfig = { label: "Unknown", variant: "secondary" as const, icon: AlertCircle };
+const defaultStatusConfig = {
+  label: "Unknown",
+  variant: "secondary" as const,
+  icon: AlertCircle,
+};
 
 // ============================================================================
 // INVOICE CARD COMPONENT
@@ -74,18 +63,18 @@ interface InvoiceCardProps {
   onClick?: () => void;
 }
 
-function InvoiceCard({ invoice, onClick }: InvoiceCardProps) {
+function InvoiceCard({ invoice, onClick }: InvoiceCardProps): React.ReactNode {
   const status = statusConfig[invoice.status] ?? defaultStatusConfig;
   const StatusIcon = status.icon;
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
 
-  const formatDate = (dateStr: string) =>
+  const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "short",
@@ -167,93 +156,11 @@ export function PurchaseInvoiceList({
   onInvoiceClick,
   onCreateInvoice,
   className,
-}: PurchaseInvoiceListProps) {
-  const [filters, setFilters] = useState<PurchaseFilters>({
-    search: "",
-    status: "all",
-    customerId: "all",
-    dateRange: { from: null, to: null },
-    sortBy: "date",
-    sortOrder: "desc",
-  });
-
-  // Filter and sort invoices
-  const filteredInvoices = useMemo(() => {
-    if (!invoices) return [];
-
-    return invoices
-      .filter((invoice) => {
-        // Search filter
-        if (filters.search) {
-          const searchLower = filters.search.toLowerCase();
-          const matchesNumber = invoice.invoiceNumber.toLowerCase().includes(searchLower);
-          const matchesSupplier = invoice.customerName.toLowerCase().includes(searchLower);
-          const matchesSupplierRef = invoice.supplierInvoiceNumber?.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesSupplier && !matchesSupplierRef) return false;
-        }
-
-        // Status filter
-        if (filters.status !== "all" && invoice.status !== filters.status) {
-          return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        let comparison = 0;
-
-        switch (filters.sortBy) {
-          case "date":
-            comparison = new Date(b.date).getTime() - new Date(a.date).getTime();
-            break;
-          case "number":
-            comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
-            break;
-          case "amount":
-            comparison = b.total - a.total;
-            break;
-          case "supplier":
-            comparison = a.customerName.localeCompare(b.customerName);
-            break;
-        }
-
-        return filters.sortOrder === "desc" ? comparison : -comparison;
-      });
-  }, [invoices, filters]);
-
-  // Calculate totals
-  const totals = useMemo(() => {
-    if (!filteredInvoices.length) return { total: 0, paid: 0, pending: 0, returned: 0 };
-
-    return filteredInvoices.reduce(
-      (acc, inv) => {
-        acc.total += inv.total;
-        acc.paid += inv.amountPaid;
-        if (inv.status === "returned") {
-          acc.returned += inv.total;
-        } else if (inv.amountDue > 0) {
-          acc.pending += inv.amountDue;
-        }
-        return acc;
-      },
-      { total: 0, paid: 0, pending: 0, returned: 0 }
-    );
-  }, [filteredInvoices]);
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
-
+  hasActiveFilters = false,
+}: PurchaseInvoiceListProps): React.ReactNode {
   if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
-        <div className="flex gap-4">
-          <div className="flex-1 h-10 bg-slate-200 rounded-lg animate-pulse" />
-          <div className="w-32 h-10 bg-slate-200 rounded-lg animate-pulse" />
-        </div>
         {Array.from({ length: 5 }).map((_, i) => (
           <CardSkeleton key={i} hasHeader={false} bodyLines={2} />
         ))}
@@ -261,85 +168,27 @@ export function PurchaseInvoiceList({
     );
   }
 
+  // Items are already filtered by parent
+  const displayInvoices = invoices ?? [];
+
   return (
     <div className={className}>
-      {/* Header with Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <SearchInput
-          placeholder="Search purchases..."
-          value={filters.search}
-          onChange={(e) => { setFilters((f) => ({ ...f, search: e.target.value })); }}
-          className="flex-1"
-        />
-
-        <div className="flex gap-2">
-          <Select
-            options={statusOptions}
-            value={filters.status}
-            onChange={(value) =>
-              { setFilters((f) => ({ ...f, status: value as PurchaseInvoiceStatus | "all" })); }
-            }
-            size="md"
-          />
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        <Card className="bg-slate-50">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-slate-500" />
-              <p className="text-xs text-slate-500 font-medium">Total</p>
-            </div>
-            <p className="text-lg font-bold text-slate-900">{formatCurrency(totals.total)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-success-light">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-success" />
-              <p className="text-xs text-success-dark font-medium">Paid</p>
-            </div>
-            <p className="text-lg font-bold text-success">{formatCurrency(totals.paid)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-warning-light">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-warning" />
-              <p className="text-xs text-warning-dark font-medium">Pending</p>
-            </div>
-            <p className="text-lg font-bold text-warning-dark">{formatCurrency(totals.pending)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-error-light">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-error" />
-              <p className="text-xs text-error-dark font-medium">Returned</p>
-            </div>
-            <p className="text-lg font-bold text-error">{formatCurrency(totals.returned)}</p>
-          </CardBody>
-        </Card>
-      </div>
-
       {/* Invoice List */}
-      {filteredInvoices.length === 0 ? (
+      {displayInvoices.length === 0 ? (
         <EmptyState
-          variant={filters.search ? "search" : "empty"}
-          title={filters.search ? "No purchases found" : "No purchases yet"}
+          variant={hasActiveFilters ? "search" : "empty"}
+          title={hasActiveFilters ? "No purchases found" : "No purchases yet"}
           description={
-            filters.search
+            hasActiveFilters
               ? "Try adjusting your search or filters"
               : "Record your first purchase invoice to get started"
           }
           action={
-            !filters.search && (
-              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateInvoice}>
+            !hasActiveFilters && (
+              <Button
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={onCreateInvoice}
+              >
                 Create Purchase
               </Button>
             )
@@ -347,11 +196,12 @@ export function PurchaseInvoiceList({
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2">
-            {filteredInvoices.length} {filteredInvoices.length === 1 ? "purchase" : "purchases"}
+          <p className="text-sm text-slate-500 mb-2 px-1">
+            {displayInvoices.length}{" "}
+            {displayInvoices.length === 1 ? "purchase" : "purchases"}
           </p>
 
-          {filteredInvoices.map((invoice) => (
+          {displayInvoices.map((invoice) => (
             <InvoiceCard
               key={invoice.id}
               invoice={invoice}

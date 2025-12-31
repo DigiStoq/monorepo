@@ -58,8 +58,8 @@ export function RecentTransactions({
   onViewAll,
   onTransactionClick,
   className,
-}: RecentTransactionsProps) {
-  const formatCurrency = (value: number) =>
+}: RecentTransactionsProps): React.ReactNode {
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

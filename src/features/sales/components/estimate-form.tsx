@@ -53,17 +53,25 @@ export function EstimateForm({
   onSubmit,
   onCancel,
   className,
-}: EstimateFormProps) {
+}: EstimateFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const defaultValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // 30 days from now
+  const defaultValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10); // 30 days from now
 
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [customerId, setCustomerId] = useState<string>(
+    initialData?.customerId ?? ""
+  );
   const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
-  const [validUntil, setValidUntil] = useState<string>(initialData?.validUntil ?? defaultValidUntil);
+  const [validUntil, setValidUntil] = useState<string>(
+    initialData?.validUntil ?? defaultValidUntil
+  );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [terms, setTerms] = useState(initialData?.terms ?? "");
-  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
+  const [discountPercent, setDiscountPercent] = useState(
+    initialData?.discountPercent ?? 0
+  );
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -88,7 +96,7 @@ export function EstimateForm({
   }, [items]);
 
   // Add line item
-  const handleAddItem = () => {
+  const handleAddItem = (): void => {
     const newItem: LineItem = {
       id: `line-${Date.now()}`,
       itemId: "",
@@ -104,7 +112,11 @@ export function EstimateForm({
   };
 
   // Update line item
-  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
+  const handleUpdateLineItem = (
+    id: string,
+    field: keyof LineItem,
+    value: string | number
+  ): void => {
     setLineItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -135,7 +147,7 @@ export function EstimateForm({
   };
 
   // Remove line item
-  const handleRemoveLineItem = (id: string) => {
+  const handleRemoveLineItem = (id: string): void => {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -146,10 +158,13 @@ export function EstimateForm({
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice * (item.discountPercent / 100);
+      return (
+        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
+      );
     }, 0);
 
-    const invoiceDiscount = (subtotal - itemDiscounts) * (discountPercent / 100);
+    const invoiceDiscount =
+      (subtotal - itemDiscounts) * (discountPercent / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
@@ -165,7 +180,7 @@ export function EstimateForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -173,20 +188,22 @@ export function EstimateForm({
     }).format(value);
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!customerId || lineItems.length === 0) return;
 
     const formData: EstimateFormData = {
       customerId,
       date,
       validUntil,
-      items: lineItems.map((item): SaleInvoiceItemFormData => ({
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discountPercent: item.discountPercent || undefined,
-        taxPercent: item.taxPercent || undefined,
-      })),
+      items: lineItems.map(
+        (item): SaleInvoiceItemFormData => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discountPercent: item.discountPercent || undefined,
+          taxPercent: item.taxPercent || undefined,
+        })
+      ),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
       terms: terms || undefined,
@@ -247,7 +264,9 @@ export function EstimateForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => { setDate(e.target.value); }}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                    }}
                   />
                 </div>
 
@@ -259,19 +278,27 @@ export function EstimateForm({
                   <Input
                     type="date"
                     value={validUntil}
-                    onChange={(e) => { setValidUntil(e.target.value); }}
+                    onChange={(e) => {
+                      setValidUntil(e.target.value);
+                    }}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedCustomer.name}
+                  </p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
+                    <p className="text-xs text-slate-500">
+                      {selectedCustomer.phone}
+                    </p>
                   )}
                   {selectedCustomer.email && (
-                    <p className="text-xs text-slate-500">{selectedCustomer.email}</p>
+                    <p className="text-xs text-slate-500">
+                      {selectedCustomer.email}
+                    </p>
                   )}
                 </div>
               )}
@@ -342,9 +369,9 @@ export function EstimateForm({
                             <Select
                               options={itemOptions}
                               value={item.itemId}
-                              onChange={(value) =>
-                                { handleUpdateLineItem(item.id, "itemId", value); }
-                              }
+                              onChange={(value) => {
+                                handleUpdateLineItem(item.id, "itemId", value);
+                              }}
                               size="sm"
                             />
                           </td>
@@ -353,13 +380,13 @@ export function EstimateForm({
                               type="number"
                               min="1"
                               value={item.quantity}
-                              onChange={(e) =>
-                                { handleUpdateLineItem(
+                              onChange={(e) => {
+                                handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                ); }
-                              }
+                                );
+                              }}
                               size="sm"
                               className="text-right"
                             />
@@ -370,13 +397,13 @@ export function EstimateForm({
                               min="0"
                               step="0.01"
                               value={item.unitPrice}
-                              onChange={(e) =>
-                                { handleUpdateLineItem(
+                              onChange={(e) => {
+                                handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                ); }
-                              }
+                                );
+                              }}
                               size="sm"
                               className="text-right"
                             />
@@ -387,13 +414,13 @@ export function EstimateForm({
                               min="0"
                               max="100"
                               value={item.discountPercent}
-                              onChange={(e) =>
-                                { handleUpdateLineItem(
+                              onChange={(e) => {
+                                handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                ); }
-                              }
+                                );
+                              }}
                               size="sm"
                               className="text-right"
                             />
@@ -404,13 +431,13 @@ export function EstimateForm({
                               min="0"
                               max="100"
                               value={item.taxPercent}
-                              onChange={(e) =>
-                                { handleUpdateLineItem(
+                              onChange={(e) => {
+                                handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                ); }
-                              }
+                                );
+                              }}
                               size="sm"
                               className="text-right"
                             />
@@ -422,7 +449,9 @@ export function EstimateForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => { handleRemoveLineItem(item.id); }}
+                              onClick={() => {
+                                handleRemoveLineItem(item.id);
+                              }}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -445,14 +474,18 @@ export function EstimateForm({
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
-                  onChange={(e) => { setNotes(e.target.value); }}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                  }}
                 />
                 <Textarea
                   label="Terms & Conditions"
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
-                  onChange={(e) => { setTerms(e.target.value); }}
+                  onChange={(e) => {
+                    setTerms(e.target.value);
+                  }}
                 />
               </div>
             </CardBody>
@@ -466,7 +499,9 @@ export function EstimateForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.subtotal)}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -476,7 +511,9 @@ export function EstimateForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => { setDiscountPercent(parseFloat(e.target.value) || 0); }}
+                  onChange={(e) => {
+                    setDiscountPercent(parseFloat(e.target.value) || 0);
+                  }}
                   size="sm"
                   className="w-16 text-right"
                 />
@@ -488,12 +525,16 @@ export function EstimateForm({
 
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tax</span>
-                <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.taxAmount)}
+                </span>
               </div>
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">Total</span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    Total
+                  </span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatCurrency(totals.total)}
                   </span>

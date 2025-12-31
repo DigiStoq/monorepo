@@ -153,7 +153,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [dropdownPosition, setDropdownPosition] = useState({
+      top: 0,
+      left: 0,
+      width: 0,
+    });
     const containerRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -178,13 +182,13 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          (opt.label ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
+      const handleClickOutside = (event: MouseEvent): void => {
         const target = event.target as Node;
         const isInsideContainer = containerRef.current?.contains(target);
         const isInsideDropdown = dropdownRef.current?.contains(target);
@@ -270,13 +274,13 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       }
     }, [highlightedIndex, isOpen]);
 
-    const handleSelect = (optionValue: string) => {
+    const handleSelect = (optionValue: string): void => {
       onChange?.(optionValue);
       setIsOpen(false);
       setSearchQuery("");
     };
 
-    const handleClear = (e: React.MouseEvent) => {
+    const handleClear = (e: React.MouseEvent): void => {
       e.stopPropagation();
       onChange?.("");
     };
@@ -447,7 +451,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                               ? "opacity-50 cursor-not-allowed"
                               : "cursor-pointer",
                             highlightedIndex === index && "bg-primary-50",
-                            option.value === value && "text-primary-600 font-medium"
+                            option.value === value &&
+                              "text-primary-600 font-medium"
                           )}
                           role="option"
                           aria-selected={option.value === value}
@@ -521,7 +526,11 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [dropdownPosition, setDropdownPosition] = useState({
+      top: 0,
+      left: 0,
+      width: 0,
+    });
     const containerRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -545,13 +554,13 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          (opt.label ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
+      const handleClickOutside = (event: MouseEvent): void => {
         const target = event.target as Node;
         const isInsideContainer = containerRef.current?.contains(target);
         const isInsideDropdown = dropdownRef.current?.contains(target);
@@ -575,7 +584,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
       }
     }, [isOpen, searchable]);
 
-    const handleToggle = (optionValue: string) => {
+    const handleToggle = (optionValue: string): void => {
       const isSelected = value.includes(optionValue);
       let newValue: string[];
 
@@ -591,7 +600,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
       onChange?.(newValue);
     };
 
-    const handleRemove = (optionValue: string, e: React.MouseEvent) => {
+    const handleRemove = (optionValue: string, e: React.MouseEvent): void => {
       e.stopPropagation();
       onChange?.(value.filter((v) => v !== optionValue));
     };

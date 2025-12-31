@@ -74,7 +74,10 @@ const defaultActions: Omit<QuickAction, "onClick">[] = [
 // COMPONENT
 // ============================================================================
 
-export function QuickActions({ onAction, className }: QuickActionsProps) {
+export function QuickActions({
+  onAction,
+  className,
+}: QuickActionsProps): React.ReactNode {
   return (
     <Card className={className}>
       <CardHeader title="Quick Actions" subtitle="Common operations" />
@@ -116,7 +119,10 @@ export interface FloatingActionButtonProps {
   className?: string;
 }
 
-export function FloatingActionButton({ onClick, className }: FloatingActionButtonProps) {
+export function FloatingActionButton({
+  onClick,
+  className,
+}: FloatingActionButtonProps): React.ReactNode {
   return (
     <button
       type="button"

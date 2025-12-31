@@ -64,7 +64,7 @@ export function buildSignature(
         ],
       },
       {
-        text: signatoryName || companyName,
+        text: signatoryName ?? companyName,
         fontSize: FONT_SIZES.small,
         alignment: "center",
         margin: [0, 5, 0, 0],

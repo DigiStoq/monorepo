@@ -38,6 +38,8 @@ export interface SidebarProps {
   expandedIds?: Set<string>;
   /** Toggle section expansion */
   onToggleExpand?: (id: string) => void;
+  /** Check if link is active */
+  isLinkActive?: (path: string) => boolean;
   /** Navigation callback */
   onNavigate?: (item: NavItem) => void;
   /** Collapsed state */
@@ -93,12 +95,12 @@ function SidebarItem({
   onToggle,
   onNavigate,
   activeId,
-}: SidebarItemProps) {
+}: SidebarItemProps): ReactNode {
   const hasChildren = item.children && item.children.length > 0;
   const Icon = item.icon;
   const isNested = depth > 0;
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (hasChildren) {
       onToggle?.();
     } else {
@@ -318,7 +320,7 @@ export function SidebarSection({
   children,
   isCollapsed,
   className,
-}: SidebarSectionProps) {
+}: SidebarSectionProps): React.ReactNode {
   return (
     <div className={cn("mb-4", className)}>
       {title && !isCollapsed && (
@@ -357,7 +359,7 @@ export function SidebarLogo({
   isCollapsed,
   onClick,
   className,
-}: SidebarLogoProps) {
+}: SidebarLogoProps): ReactNode {
   return (
     <button
       type="button"
@@ -421,7 +423,7 @@ export function SidebarUser({
   isCollapsed,
   onClick,
   className,
-}: SidebarUserProps) {
+}: SidebarUserProps): ReactNode {
   const initials =
     avatarFallback ??
     name

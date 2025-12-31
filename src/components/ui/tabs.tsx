@@ -85,7 +85,7 @@ interface TabsContextValue {
 
 const TabsContext = createContext<TabsContextValue | null>(null);
 
-function useTabsContext() {
+function useTabsContext(): TabsContextValue {
   const context = useContext(TabsContext);
   if (!context) {
     throw new Error("Tabs components must be used within a Tabs provider");
@@ -167,7 +167,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 
     const value = controlledValue ?? internalValue;
 
-    const handleChange = (newValue: string) => {
+    const handleChange = (newValue: string): void => {
       if (onChange) {
         onChange(newValue);
       } else {

@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { PaymentIn, PaymentInFormData, PaymentMode } from "@/features/sales/types";
+import type { PaymentIn, PaymentMode } from "@/features/sales/types";
 
 // Database row type (snake_case columns from SQLite)
 interface PaymentInRow {
@@ -81,12 +81,19 @@ export function usePaymentIns(filters?: {
       params.push(searchPattern, searchPattern);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM payment_ins ${whereClause} ORDER BY date DESC, created_at DESC`,
       params,
     };
-  }, [filters?.customerId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
+  }, [
+    filters?.customerId,
+    filters?.paymentMode,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<PaymentInRow>(query, params);
 
@@ -101,7 +108,9 @@ export function usePaymentInById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<PaymentInRow>(
-    id ? `SELECT * FROM payment_ins WHERE id = ?` : `SELECT * FROM payment_ins WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM payment_ins WHERE id = ?`
+      : `SELECT * FROM payment_ins WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -194,9 +203,9 @@ export function usePaymentInMutations(): PaymentInMutations {
         [id]
       );
       const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
-      const payment = rows[0];
 
-      if (payment) {
+      if (rows.length > 0) {
+        const payment = rows[0];
         const now = new Date().toISOString();
 
         // Reverse customer balance
@@ -216,7 +225,13 @@ export function usePaymentInMutations(): PaymentInMutations {
                  status = CASE WHEN amount_paid - ? <= 0 THEN 'sent' ELSE 'partial' END,
                  updated_at = ?
              WHERE id = ?`,
-            [payment.amount, payment.amount, payment.amount, now, payment.invoice_id]
+            [
+              payment.amount,
+              payment.amount,
+              payment.amount,
+              now,
+              payment.invoice_id,
+            ]
           );
         }
       }

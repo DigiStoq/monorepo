@@ -209,7 +209,7 @@ function Checkbox({
   indeterminate,
   onChange,
   disabled,
-}: CheckboxProps) {
+}: CheckboxProps): JSX.Element {
   return (
     <button
       type="button"
@@ -246,7 +246,7 @@ function LoadingSkeleton({
 }: {
   columns: number;
   rows?: number;
-}) {
+}): JSX.Element {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
@@ -272,7 +272,7 @@ function EmptyState({
 }: {
   colSpan: number;
   content?: ReactNode;
-}) {
+}): React.ReactNode {
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-12 text-center">
@@ -313,7 +313,7 @@ export function Table<T>({
   onSortChange,
   className,
   ...props
-}: TableProps<T>): JSX.Element {
+}: TableProps<T>): React.ReactNode {
   // Internal sort state (for uncontrolled mode)
   const [internalSortKey, setInternalSortKey] = useState<string | undefined>(
     defaultSortKey
@@ -326,7 +326,7 @@ export function Table<T>({
   const sortDirection = controlledSortDirection ?? internalSortDirection;
 
   // Sort handler
-  const handleSort = (key: string) => {
+  const handleSort = (key: string): void => {
     let newDirection: SortDirection;
 
     if (sortKey === key) {
@@ -386,7 +386,7 @@ export function Table<T>({
   const isAllSelected = selectedKeys.size === allKeys.size && allKeys.size > 0;
   const isSomeSelected = selectedKeys.size > 0 && !isAllSelected;
 
-  const handleSelectAll = () => {
+  const handleSelectAll = (): void => {
     if (isAllSelected) {
       onSelectionChange?.(new Set());
     } else {
@@ -394,7 +394,7 @@ export function Table<T>({
     }
   };
 
-  const handleSelectRow = (key: string | number) => {
+  const handleSelectRow = (key: string | number): void => {
     if (singleSelect) {
       onSelectionChange?.(new Set([key]));
     } else {
@@ -562,7 +562,7 @@ export function TablePagination({
   const canGoNext = page < totalPages;
 
   // Calculate visible page numbers
-  const getVisiblePages = () => {
+  const getVisiblePages = (): (number | "ellipsis")[] => {
     const pages: (number | "ellipsis")[] = [];
     const maxVisible = 5;
 

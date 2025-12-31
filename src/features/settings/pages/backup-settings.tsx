@@ -16,7 +16,11 @@ import {
   Save,
 } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { BackupSettings, BackupRecord } from "../types";
 
@@ -68,13 +72,15 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}) {
+}): React.ReactNode {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => { onChange(!checked); }}
+      onClick={() => {
+        onChange(!checked);
+      }}
       className={cn(
         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
         checked ? "bg-teal-600" : "bg-slate-200"
@@ -90,30 +96,30 @@ function Toggle({
   );
 }
 
-export function BackupSettingsPage() {
+export function BackupSettingsPage(): React.ReactNode {
   const [settings, setSettings] = useState<BackupSettings>(mockBackupSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
   };
 
-  const handleBackupNow = async () => {
+  const handleBackupNow = async (): Promise<void> => {
     setIsBackingUp(true);
     await new Promise((resolve) => setTimeout(resolve, 3000));
     setIsBackingUp(false);
   };
 
-  const formatSize = (bytes: number) => {
+  const formatSize = (bytes: number): string => {
     if (bytes === 0) return "—";
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(1)} MB`;
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
       month: "short",
@@ -125,17 +131,23 @@ export function BackupSettingsPage() {
     });
   };
 
-  const getTimeSince = (dateString: string) => {
+  const getTimeSince = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const hours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const hours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
     if (hours < 1) return "Less than an hour ago";
     if (hours < 24) return `${hours} hours ago`;
     const days = Math.floor(hours / 24);
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
 
-  const StatusIcon = ({ status }: { status: BackupRecord["status"] }) => {
+  const StatusIcon = ({
+    status,
+  }: {
+    status: BackupRecord["status"];
+  }): React.ReactNode => {
     switch (status) {
       case "success":
         return <CheckCircle className="h-5 w-5 text-success" />;
@@ -156,7 +168,9 @@ export function BackupSettingsPage() {
         <div className="flex gap-3">
           <Button
             variant="secondary"
-            onClick={() => { void handleBackupNow(); }}
+            onClick={() => {
+              void handleBackupNow();
+            }}
             disabled={isBackingUp}
             className="gap-2"
           >
@@ -167,7 +181,13 @@ export function BackupSettingsPage() {
             )}
             {isBackingUp ? "Backing up..." : "Backup Now"}
           </Button>
-          <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
+          <Button
+            onClick={() => {
+              void handleSave();
+            }}
+            disabled={isSaving}
+            className="gap-2"
+          >
             <Save className="h-4 w-4" />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
@@ -222,23 +242,29 @@ export function BackupSettingsPage() {
             >
               <Toggle
                 checked={settings.autoBackupEnabled}
-                onChange={(v) =>
-                  { setSettings((prev) => ({ ...prev, autoBackupEnabled: v })); }
-                }
+                onChange={(v) => {
+                  setSettings((prev) => ({ ...prev, autoBackupEnabled: v }));
+                }}
               />
             </SettingsRow>
 
             {settings.autoBackupEnabled && (
               <>
-                <SettingsRow label="Frequency" description="How often to backup">
+                <SettingsRow
+                  label="Frequency"
+                  description="How often to backup"
+                >
                   <select
                     value={settings.backupFrequency}
-                    onChange={(e) =>
-                      { setSettings((prev) => ({
+                    onChange={(e) => {
+                      setSettings((prev) => ({
                         ...prev,
-                        backupFrequency: e.target.value as "daily" | "weekly" | "monthly",
-                      })); }
-                    }
+                        backupFrequency: e.target.value as
+                          | "daily"
+                          | "weekly"
+                          | "monthly",
+                      }));
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="daily">Daily</option>
@@ -246,16 +272,19 @@ export function BackupSettingsPage() {
                     <option value="monthly">Monthly</option>
                   </select>
                 </SettingsRow>
-                <SettingsRow label="Backup Time" description="When to run backups">
+                <SettingsRow
+                  label="Backup Time"
+                  description="When to run backups"
+                >
                   <input
                     type="time"
                     value={settings.backupTime}
-                    onChange={(e) =>
-                      { setSettings((prev) => ({
+                    onChange={(e) => {
+                      setSettings((prev) => ({
                         ...prev,
                         backupTime: e.target.value,
-                      })); }
-                    }
+                      }));
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </SettingsRow>
@@ -265,12 +294,12 @@ export function BackupSettingsPage() {
                 >
                   <select
                     value={settings.retentionDays}
-                    onChange={(e) =>
-                      { setSettings((prev) => ({
+                    onChange={(e) => {
+                      setSettings((prev) => ({
                         ...prev,
                         retentionDays: parseInt(e.target.value),
-                      })); }
-                    }
+                      }));
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value={7}>7 days</option>
@@ -295,21 +324,39 @@ export function BackupSettingsPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
               {[
-                { value: "local", label: "Local Only", icon: HardDrive, desc: "Store on this device" },
-                { value: "cloud", label: "Cloud Only", icon: Cloud, desc: "Store in cloud" },
-                { value: "both", label: "Both", icon: Database, desc: "Local + Cloud" },
+                {
+                  value: "local",
+                  label: "Local Only",
+                  icon: HardDrive,
+                  desc: "Store on this device",
+                },
+                {
+                  value: "cloud",
+                  label: "Cloud Only",
+                  icon: Cloud,
+                  desc: "Store in cloud",
+                },
+                {
+                  value: "both",
+                  label: "Both",
+                  icon: Database,
+                  desc: "Local + Cloud",
+                },
               ].map((option) => {
                 const Icon = option.icon;
                 const isActive = settings.backupDestination === option.value;
                 return (
                   <button
                     key={option.value}
-                    onClick={() =>
-                      { setSettings((prev) => ({
+                    onClick={() => {
+                      setSettings((prev) => ({
                         ...prev,
-                        backupDestination: option.value as "local" | "cloud" | "both",
-                      })); }
-                    }
+                        backupDestination: option.value as
+                          | "local"
+                          | "cloud"
+                          | "both",
+                      }));
+                    }}
                     className={cn(
                       "p-4 rounded-lg border text-left transition-all",
                       isActive
@@ -344,12 +391,15 @@ export function BackupSettingsPage() {
                   ].map((provider) => (
                     <button
                       key={provider.value}
-                      onClick={() =>
-                        { setSettings((prev) => ({
+                      onClick={() => {
+                        setSettings((prev) => ({
                           ...prev,
-                          cloudProvider: provider.value as "google-drive" | "dropbox" | "onedrive",
-                        })); }
-                      }
+                          cloudProvider: provider.value as
+                            | "google-drive"
+                            | "dropbox"
+                            | "onedrive",
+                        }));
+                      }}
                       className={cn(
                         "px-4 py-3 rounded-lg border text-sm font-medium transition-all",
                         settings.cloudProvider === provider.value
@@ -393,7 +443,9 @@ export function BackupSettingsPage() {
                   </p>
                   <p className="text-xs text-slate-500">{record.destination}</p>
                   {record.errorMessage && (
-                    <p className="text-xs text-red-600 mt-1">{record.errorMessage}</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      {record.errorMessage}
+                    </p>
                   )}
                 </div>
                 <span className="text-sm text-slate-500 tabular-nums">

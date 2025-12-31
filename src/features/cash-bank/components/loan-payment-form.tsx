@@ -40,7 +40,7 @@ export function LoanPaymentForm({
   suggestedEmiAmount,
   onSubmit,
   onCancel,
-}: LoanPaymentFormProps) {
+}: LoanPaymentFormProps): React.ReactNode {
   const today = new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<LoanPaymentFormData>({
@@ -64,7 +64,7 @@ export function LoanPaymentForm({
   const handleChange = (
     field: keyof LoanPaymentFormData,
     value: string | number | undefined
-  ) => {
+  ): void => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
@@ -94,14 +94,14 @@ export function LoanPaymentForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (validate()) {
       onSubmit(formData);
     }
   };
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

@@ -14,7 +14,11 @@ import {
   Save,
 } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { SecuritySettings } from "../types";
 
@@ -77,13 +81,15 @@ function Toggle({
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
-}) {
+}): React.ReactNode {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => { if (!disabled) onChange(!checked); }}
+      onClick={() => {
+        if (!disabled) onChange(!checked);
+      }}
       disabled={disabled}
       className={cn(
         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
@@ -101,17 +107,18 @@ function Toggle({
   );
 }
 
-export function SecuritySettingsPage() {
-  const [settings, setSettings] = useState<SecuritySettings>(mockSecuritySettings);
+export function SecuritySettingsPage(): React.ReactNode {
+  const [settings, setSettings] =
+    useState<SecuritySettings>(mockSecuritySettings);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
       month: "short",
@@ -123,8 +130,11 @@ export function SecuritySettingsPage() {
     });
   };
 
-  const getDeviceIcon = (userAgent: string) => {
-    if (userAgent.toLowerCase().includes("mobile") || userAgent.toLowerCase().includes("iphone")) {
+  const getDeviceIcon = (userAgent: string): typeof Monitor => {
+    if (
+      userAgent.toLowerCase().includes("mobile") ||
+      userAgent.toLowerCase().includes("iphone")
+    ) {
       return Smartphone;
     }
     return Monitor;
@@ -135,7 +145,13 @@ export function SecuritySettingsPage() {
       title="Security Settings"
       description="Manage your account security and access"
       actions={
-        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
+        <Button
+          onClick={() => {
+            void handleSave();
+          }}
+          disabled={isSaving}
+          className="gap-2"
+        >
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -155,9 +171,9 @@ export function SecuritySettingsPage() {
             >
               <Toggle
                 checked={settings.twoFactorEnabled}
-                onChange={(v) =>
-                  { setSettings((prev) => ({ ...prev, twoFactorEnabled: v })); }
-                }
+                onChange={(v) => {
+                  setSettings((prev) => ({ ...prev, twoFactorEnabled: v }));
+                }}
               />
             </SettingsRow>
 
@@ -169,18 +185,33 @@ export function SecuritySettingsPage() {
                   </p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { value: "app", label: "Authenticator App", desc: "Google Authenticator, Authy" },
-                      { value: "sms", label: "SMS", desc: "Text message to phone" },
-                      { value: "email", label: "Email", desc: "Code sent to email" },
+                      {
+                        value: "app",
+                        label: "Authenticator App",
+                        desc: "Google Authenticator, Authy",
+                      },
+                      {
+                        value: "sms",
+                        label: "SMS",
+                        desc: "Text message to phone",
+                      },
+                      {
+                        value: "email",
+                        label: "Email",
+                        desc: "Code sent to email",
+                      },
                     ].map((method) => (
                       <button
                         key={method.value}
-                        onClick={() =>
-                          { setSettings((prev) => ({
+                        onClick={() => {
+                          setSettings((prev) => ({
                             ...prev,
-                            twoFactorMethod: method.value as "app" | "sms" | "email",
-                          })); }
-                        }
+                            twoFactorMethod: method.value as
+                              | "app"
+                              | "sms"
+                              | "email",
+                          }));
+                        }}
                         className={cn(
                           "p-4 rounded-lg border text-left transition-all",
                           settings.twoFactorMethod === method.value
@@ -188,8 +219,12 @@ export function SecuritySettingsPage() {
                             : "border-slate-200 hover:border-slate-300"
                         )}
                       >
-                        <p className="font-medium text-slate-900">{method.label}</p>
-                        <p className="text-xs text-slate-500 mt-1">{method.desc}</p>
+                        <p className="font-medium text-slate-900">
+                          {method.label}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {method.desc}
+                        </p>
                       </button>
                     ))}
                   </div>
@@ -201,7 +236,8 @@ export function SecuritySettingsPage() {
                       <div className="flex items-center gap-3">
                         <AlertTriangle className="h-5 w-5 text-amber-600" />
                         <p className="text-sm text-amber-700">
-                          Please select a verification method to complete 2FA setup.
+                          Please select a verification method to complete 2FA
+                          setup.
                         </p>
                       </div>
                     </CardBody>
@@ -225,12 +261,12 @@ export function SecuritySettingsPage() {
             >
               <select
                 value={settings.sessionTimeout}
-                onChange={(e) =>
-                  { setSettings((prev) => ({
+                onChange={(e) => {
+                  setSettings((prev) => ({
                     ...prev,
                     sessionTimeout: parseInt(e.target.value),
-                  })); }
-                }
+                  }));
+                }}
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value={15}>15 minutes</option>
@@ -253,7 +289,11 @@ export function SecuritySettingsPage() {
                 You&apos;re currently signed in on 2 devices
               </p>
             </div>
-            <Button variant="secondary" size="sm" className="text-error hover:text-error">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="text-error hover:text-error"
+            >
               Sign Out All Devices
             </Button>
           </div>
@@ -272,21 +312,27 @@ export function SecuritySettingsPage() {
             >
               <Toggle
                 checked={settings.requirePasswordChange}
-                onChange={(v) =>
-                  { setSettings((prev) => ({ ...prev, requirePasswordChange: v })); }
-                }
+                onChange={(v) => {
+                  setSettings((prev) => ({
+                    ...prev,
+                    requirePasswordChange: v,
+                  }));
+                }}
               />
             </SettingsRow>
             {settings.requirePasswordChange && (
-              <SettingsRow label="Change Every" description="Days between password changes">
+              <SettingsRow
+                label="Change Every"
+                description="Days between password changes"
+              >
                 <select
                   value={settings.passwordChangeDays ?? 90}
-                  onChange={(e) =>
-                    { setSettings((prev) => ({
+                  onChange={(e) => {
+                    setSettings((prev) => ({
                       ...prev,
                       passwordChangeDays: parseInt(e.target.value),
-                    })); }
-                  }
+                    }));
+                  }}
                   className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value={30}>30 days</option>
@@ -313,28 +359,29 @@ export function SecuritySettingsPage() {
             >
               <Toggle
                 checked={(settings.allowedIPs?.length ?? 0) > 0}
-                onChange={(v) =>
-                  { setSettings((prev) => ({
+                onChange={(v) => {
+                  setSettings((prev) => ({
                     ...prev,
                     allowedIPs: v ? [""] : [],
-                  })); }
-                }
+                  }));
+                }}
               />
             </SettingsRow>
 
             {(settings.allowedIPs?.length ?? 0) > 0 && (
               <div className="pt-4 border-t border-slate-100">
                 <p className="text-sm text-slate-500 mb-3">
-                  Enter IP addresses that are allowed to access the account (one per line)
+                  Enter IP addresses that are allowed to access the account (one
+                  per line)
                 </p>
                 <textarea
                   value={settings.allowedIPs?.join("\n") ?? ""}
-                  onChange={(e) =>
-                    { setSettings((prev) => ({
+                  onChange={(e) => {
+                    setSettings((prev) => ({
                       ...prev,
                       allowedIPs: e.target.value.split("\n").filter(Boolean),
-                    })); }
-                  }
+                    }));
+                  }}
                   rows={4}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                   placeholder="192.168.1.1&#10;10.0.0.0/24&#10;203.0.113.0"
@@ -361,7 +408,9 @@ export function SecuritySettingsPage() {
                   key={record.id}
                   className={cn(
                     "flex items-center gap-4 p-3 rounded-lg border",
-                    record.success ? "border-slate-200" : "border-red-200 bg-red-50"
+                    record.success
+                      ? "border-slate-200"
+                      : "border-red-200 bg-red-50"
                   )}
                 >
                   <div

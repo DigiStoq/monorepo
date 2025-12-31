@@ -28,7 +28,10 @@ import type { ImportEntityType, ImportPreview, ImportResult } from "../types";
 interface ImportWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (entityType: ImportEntityType, data: Record<string, unknown>[]) => Promise<ImportResult>;
+  onImport: (
+    entityType: ImportEntityType,
+    data: Record<string, unknown>[]
+  ) => Promise<ImportResult>;
 }
 
 type WizardStep = "select" | "upload" | "mapping" | "preview" | "result";
@@ -79,7 +82,11 @@ const itemFields = [
 // COMPONENT
 // ============================================================================
 
-export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
+export function ImportWizard({
+  isOpen,
+  onClose,
+  onImport,
+}: ImportWizardProps): React.ReactNode {
   const [step, setStep] = useState<WizardStep>("select");
   const [entityType, setEntityType] = useState<ImportEntityType>("customers");
   const [file, setFile] = useState<File | null>(null);
@@ -92,7 +99,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
 
   const targetFields = entityType === "customers" ? customerFields : itemFields;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const uploadedFile = e.target.files?.[0];
     if (!uploadedFile) return;
 
@@ -100,20 +107,71 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
 
     // Simulate parsing CSV/Excel file
     // In production, use Papa Parse or SheetJS
-    const mockColumns = entityType === "customers"
-      ? ["Customer Name", "Type", "Phone Number", "Email Address", "Tax ID", "Address", "City", "State", "ZIP"]
-      : ["Item Name", "SKU Code", "Description", "Category", "Sale Price", "Purchase Price", "Unit", "Stock"];
+    const mockColumns =
+      entityType === "customers"
+        ? [
+            "Customer Name",
+            "Type",
+            "Phone Number",
+            "Email Address",
+            "Tax ID",
+            "Address",
+            "City",
+            "State",
+            "ZIP",
+          ]
+        : [
+            "Item Name",
+            "SKU Code",
+            "Description",
+            "Category",
+            "Sale Price",
+            "Purchase Price",
+            "Unit",
+            "Stock",
+          ];
 
-    const mockData = entityType === "customers"
-      ? [
-          { "Customer Name": "John Doe", "Type": "customer", "Phone Number": "+1 555-0101", "Email Address": "john@example.com", "City": "New York" },
-          { "Customer Name": "Jane Smith", "Type": "supplier", "Phone Number": "+1 555-0102", "Email Address": "jane@example.com", "City": "Los Angeles" },
-          { "Customer Name": "Bob Johnson", "Type": "both", "Phone Number": "+1 555-0103", "Email Address": "bob@example.com", "City": "Chicago" },
-        ]
-      : [
-          { "Item Name": "Widget A", "SKU Code": "WGT-001", "Sale Price": "29.99", "Purchase Price": "15.00", "Stock": "100" },
-          { "Item Name": "Widget B", "SKU Code": "WGT-002", "Sale Price": "39.99", "Purchase Price": "20.00", "Stock": "50" },
-        ];
+    const mockData =
+      entityType === "customers"
+        ? [
+            {
+              "Customer Name": "John Doe",
+              Type: "customer",
+              "Phone Number": "+1 555-0101",
+              "Email Address": "john@example.com",
+              City: "New York",
+            },
+            {
+              "Customer Name": "Jane Smith",
+              Type: "supplier",
+              "Phone Number": "+1 555-0102",
+              "Email Address": "jane@example.com",
+              City: "Los Angeles",
+            },
+            {
+              "Customer Name": "Bob Johnson",
+              Type: "both",
+              "Phone Number": "+1 555-0103",
+              "Email Address": "bob@example.com",
+              City: "Chicago",
+            },
+          ]
+        : [
+            {
+              "Item Name": "Widget A",
+              "SKU Code": "WGT-001",
+              "Sale Price": "29.99",
+              "Purchase Price": "15.00",
+              Stock: "100",
+            },
+            {
+              "Item Name": "Widget B",
+              "SKU Code": "WGT-002",
+              "Sale Price": "39.99",
+              "Purchase Price": "20.00",
+              Stock: "50",
+            },
+          ];
 
     setColumns(mockColumns);
     setFileData(mockData);
@@ -124,7 +182,10 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
       const match = targetFields.find((f) => {
         const fieldNormalized = f.value.toLowerCase();
         const labelNormalized = f.label.toLowerCase().replace(/[^a-z]/g, "");
-        return normalized.includes(fieldNormalized) || normalized.includes(labelNormalized);
+        return (
+          normalized.includes(fieldNormalized) ||
+          normalized.includes(labelNormalized)
+        );
       });
       return {
         sourceColumn: col,
@@ -134,7 +195,10 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     setMappings(autoMappings);
   };
 
-  const handleMappingChange = (sourceColumn: string, targetField: string) => {
+  const handleMappingChange = (
+    sourceColumn: string,
+    targetField: string
+  ): void => {
     setMappings((prev) =>
       prev.map((m) =>
         m.sourceColumn === sourceColumn ? { ...m, targetField } : m
@@ -142,7 +206,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     );
   };
 
-  const generatePreview = () => {
+  const generatePreview = (): void => {
     const validRows = fileData.length;
     const errors = fileData.flatMap((row, idx) => {
       const rowErrors: ImportPreview["errors"] = [];
@@ -160,14 +224,20 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
 
     setPreview({
       totalRows: fileData.length,
-      validRows: validRows - errors.filter((e, i, arr) => arr.findIndex((x) => x.row === e.row) === i).length,
-      invalidRows: errors.filter((e, i, arr) => arr.findIndex((x) => x.row === e.row) === i).length,
+      validRows:
+        validRows -
+        errors.filter(
+          (e, i, arr) => arr.findIndex((x) => x.row === e.row) === i
+        ).length,
+      invalidRows: errors.filter(
+        (e, i, arr) => arr.findIndex((x) => x.row === e.row) === i
+      ).length,
       errors,
       previewData: fileData.slice(0, 5),
     });
   };
 
-  const handleImport = async () => {
+  const handleImport = async (): Promise<void> => {
     setIsProcessing(true);
     try {
       // Transform data based on mappings
@@ -197,7 +267,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setStep("select");
     setFile(null);
     setFileData([]);
@@ -208,11 +278,12 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     onClose();
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = (): void => {
     // In production, generate and download actual CSV template
-    const templateFields = entityType === "customers"
-      ? "Name,Type,Phone,Email,Tax ID,Address,City,State,ZIP Code,Opening Balance,Credit Limit"
-      : "Name,SKU,Description,Category,Sale Price,Purchase Price,Unit,Opening Stock,Min Stock,Tax Rate";
+    const templateFields =
+      entityType === "customers"
+        ? "Name,Type,Phone,Email,Tax ID,Address,City,State,ZIP Code,Opening Balance,Credit Limit"
+        : "Name,SKU,Description,Category,Sale Price,Purchase Price,Unit,Opening Stock,Min Stock,Tax Rate";
 
     const blob = new Blob([templateFields], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -223,7 +294,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     URL.revokeObjectURL(url);
   };
 
-  const renderStepIndicator = () => {
+  const renderStepIndicator = (): React.ReactNode => {
     const steps = [
       { key: "select", label: "Select Type" },
       { key: "upload", label: "Upload File" },
@@ -246,7 +317,11 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                 idx > currentIndex && "bg-slate-200 text-slate-500"
               )}
             >
-              {idx < currentIndex ? <CheckCircle2 className="h-5 w-5" /> : idx + 1}
+              {idx < currentIndex ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                idx + 1
+              )}
             </div>
             {idx < steps.length - 1 && (
               <div
@@ -262,14 +337,16 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     );
   };
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactNode => {
     switch (step) {
       case "select":
         return (
           <div className="space-y-6">
             <div className="text-center">
               <FileSpreadsheet className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">Import Data</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Import Data
+              </h3>
               <p className="text-sm text-slate-500 mt-1">
                 Select the type of data you want to import
               </p>
@@ -282,17 +359,28 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
               <Select
                 options={entityOptions}
                 value={entityType}
-                onChange={(v) => { setEntityType(v as ImportEntityType); }}
+                onChange={(v) => {
+                  setEntityType(v as ImportEntityType);
+                }}
               />
             </div>
 
             <Card className="bg-slate-50 border-dashed">
               <CardBody className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Need a template?</p>
-                  <p className="text-xs text-slate-500">Download our CSV template to get started</p>
+                  <p className="text-sm font-medium text-slate-700">
+                    Need a template?
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Download our CSV template to get started
+                  </p>
                 </div>
-                <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />} onClick={downloadTemplate}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  onClick={downloadTemplate}
+                >
                   Download Template
                 </Button>
               </CardBody>
@@ -305,7 +393,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
           <div className="space-y-6">
             <div className="text-center">
               <Upload className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">Upload File</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Upload File
+              </h3>
               <p className="text-sm text-slate-500 mt-1">
                 Upload a CSV or Excel file with your {entityType} data
               </p>
@@ -314,7 +404,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
             <div
               className={cn(
                 "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
-                file ? "border-success bg-success-light" : "border-slate-300 hover:border-primary"
+                file
+                  ? "border-success bg-success-light"
+                  : "border-slate-300 hover:border-primary"
               )}
             >
               {file ? (
@@ -322,7 +414,8 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                   <CheckCircle2 className="h-12 w-12 mx-auto text-success" />
                   <p className="font-medium text-slate-900">{file.name}</p>
                   <p className="text-sm text-slate-500">
-                    {(file.size / 1024).toFixed(1)} KB • {fileData.length} rows detected
+                    {(file.size / 1024).toFixed(1)} KB • {fileData.length} rows
+                    detected
                   </p>
                   <Button
                     variant="ghost"
@@ -347,9 +440,14 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                   <div className="space-y-2">
                     <Upload className="h-12 w-12 mx-auto text-slate-400" />
                     <p className="text-sm text-slate-600">
-                      <span className="text-primary font-medium">Click to upload</span> or drag and drop
+                      <span className="text-primary font-medium">
+                        Click to upload
+                      </span>{" "}
+                      or drag and drop
                     </p>
-                    <p className="text-xs text-slate-400">CSV or Excel files up to 10MB</p>
+                    <p className="text-xs text-slate-400">
+                      CSV or Excel files up to 10MB
+                    </p>
                   </div>
                 </label>
               )}
@@ -361,7 +459,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-slate-900">Map Fields</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Map Fields
+              </h3>
               <p className="text-sm text-slate-500">
                 Match your file columns to the corresponding fields
               </p>
@@ -379,14 +479,21 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                 ];
 
                 return (
-                  <div key={col} className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg">
+                  <div
+                    key={col}
+                    className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg"
+                  >
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-700">{col}</p>
+                      <p className="text-sm font-medium text-slate-700">
+                        {col}
+                      </p>
                       <p className="text-xs text-slate-400">
-                        Sample: {(() => {
+                        Sample:{" "}
+                        {(() => {
                           const val = fileData[0]?.[col];
                           if (val === undefined || val === null) return "—";
-                          if (typeof val === "object") return JSON.stringify(val);
+                          if (typeof val === "object")
+                            return JSON.stringify(val);
                           return String(val as string | number | boolean);
                         })()}
                       </p>
@@ -396,7 +503,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                       <Select
                         options={targetOptions}
                         value={mapping?.targetField ?? ""}
-                        onChange={(v) => { handleMappingChange(col, v); }}
+                        onChange={(v) => {
+                          handleMappingChange(col, v);
+                        }}
                         className="w-full"
                       />
                     </div>
@@ -411,7 +520,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-slate-900">Preview Import</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Preview Import
+              </h3>
               <p className="text-sm text-slate-500">
                 Review the data before importing
               </p>
@@ -422,19 +533,25 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                 <div className="grid grid-cols-3 gap-4">
                   <Card>
                     <CardBody className="text-center py-4">
-                      <p className="text-2xl font-bold text-slate-900">{preview.totalRows}</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {preview.totalRows}
+                      </p>
                       <p className="text-xs text-slate-500">Total Rows</p>
                     </CardBody>
                   </Card>
                   <Card>
                     <CardBody className="text-center py-4">
-                      <p className="text-2xl font-bold text-success">{preview.validRows}</p>
+                      <p className="text-2xl font-bold text-success">
+                        {preview.validRows}
+                      </p>
                       <p className="text-xs text-slate-500">Valid</p>
                     </CardBody>
                   </Card>
                   <Card>
                     <CardBody className="text-center py-4">
-                      <p className="text-2xl font-bold text-error">{preview.invalidRows}</p>
+                      <p className="text-2xl font-bold text-error">
+                        {preview.invalidRows}
+                      </p>
                       <p className="text-xs text-slate-500">Invalid</p>
                     </CardBody>
                   </Card>
@@ -446,10 +563,14 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="h-5 w-5 text-error shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium text-error">Validation Errors</p>
+                          <p className="text-sm font-medium text-error">
+                            Validation Errors
+                          </p>
                           <ul className="text-xs text-error mt-1 space-y-1">
                             {preview.errors.slice(0, 5).map((err, idx) => (
-                              <li key={idx}>Row {err.row}: {err.message}</li>
+                              <li key={idx}>
+                                Row {err.row}: {err.message}
+                              </li>
                             ))}
                             {preview.errors.length > 5 && (
                               <li>...and {preview.errors.length - 5} more</li>
@@ -469,26 +590,42 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 border-b">
                         <tr>
-                          {mappings.filter((m) => m.targetField).map((m) => (
-                            <th key={m.targetField} className="px-4 py-2 text-left font-medium text-slate-600">
-                              {targetFields.find((f) => f.value === m.targetField)?.label ?? m.targetField}
-                            </th>
-                          ))}
+                          {mappings
+                            .filter((m) => m.targetField)
+                            .map((m) => (
+                              <th
+                                key={m.targetField}
+                                className="px-4 py-2 text-left font-medium text-slate-600"
+                              >
+                                {targetFields.find(
+                                  (f) => f.value === m.targetField
+                                )?.label ?? m.targetField}
+                              </th>
+                            ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {preview.previewData.map((row, idx) => (
                           <tr key={idx}>
-                            {mappings.filter((m) => m.targetField).map((m) => (
-                              <td key={m.targetField} className="px-4 py-2 text-slate-600">
-                                {(() => {
-                                  const val = row[m.sourceColumn];
-                                  if (val === undefined || val === null) return "—";
-                                  if (typeof val === "object") return JSON.stringify(val);
-                                  return String(val as string | number | boolean);
-                                })()}
-                              </td>
-                            ))}
+                            {mappings
+                              .filter((m) => m.targetField)
+                              .map((m) => (
+                                <td
+                                  key={m.targetField}
+                                  className="px-4 py-2 text-slate-600"
+                                >
+                                  {(() => {
+                                    const val = row[m.sourceColumn];
+                                    if (val === undefined || val === null)
+                                      return "—";
+                                    if (typeof val === "object")
+                                      return JSON.stringify(val);
+                                    return String(
+                                      val as string | number | boolean
+                                    );
+                                  })()}
+                                </td>
+                              ))}
                           </tr>
                         ))}
                       </tbody>
@@ -507,7 +644,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
               <>
                 <CheckCircle2 className="h-20 w-20 mx-auto text-success" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Import Complete!</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">
+                    Import Complete!
+                  </h3>
                   <p className="text-slate-500 mt-1">
                     Successfully imported {result.imported} records
                   </p>
@@ -527,7 +666,9 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
               <>
                 <XCircle className="h-20 w-20 mx-auto text-error" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Import Failed</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">
+                    Import Failed
+                  </h3>
                   <p className="text-slate-500 mt-1">
                     Please check your data and try again
                   </p>
@@ -550,22 +691,22 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     }
   };
 
-  const canProceed = () => {
+  const canProceed = (): boolean => {
     switch (step) {
       case "select":
         return true;
       case "upload":
-        return file && fileData.length > 0;
+        return !!(file && fileData.length > 0);
       case "mapping":
         return mappings.some((m) => m.targetField === "name");
       case "preview":
-        return preview && preview.validRows > 0;
+        return !!(preview && preview.validRows > 0);
       default:
         return false;
     }
   };
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     switch (step) {
       case "select":
         setStep("upload");
@@ -583,7 +724,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     switch (step) {
       case "upload":
         setStep("select");
@@ -598,12 +739,7 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Import Data"
-      size="lg"
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title="Import Data" size="lg">
       <div className="py-4">
         {renderStepIndicator()}
         {renderContent()}
@@ -611,7 +747,11 @@ export function ImportWizard({ isOpen, onClose, onImport }: ImportWizardProps) {
 
       <div className="flex justify-between pt-4 border-t">
         {step !== "select" && step !== "result" ? (
-          <Button variant="ghost" onClick={handleBack} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            leftIcon={<ArrowLeft className="h-4 w-4" />}
+          >
             Back
           </Button>
         ) : (

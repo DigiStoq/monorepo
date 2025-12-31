@@ -89,8 +89,20 @@ export function useEstimates(filters?: {
     const dateFromFilter = filters?.dateFrom ?? null;
     const dateToFilter = filters?.dateTo ?? null;
     const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [statusFilter, customerFilter, dateFromFilter, dateToFilter, searchFilter];
-  }, [filters?.status, filters?.customerId, filters?.dateFrom, filters?.dateTo, filters?.search]);
+    return [
+      statusFilter,
+      customerFilter,
+      dateFromFilter,
+      dateToFilter,
+      searchFilter,
+    ];
+  }, [
+    filters?.status,
+    filters?.customerId,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<EstimateRow>(
     `SELECT * FROM estimates
@@ -113,17 +125,21 @@ export function useEstimateById(id: string | null): {
   items: EstimateItem[];
   isLoading: boolean;
 } {
-  const { data: estimateData, isLoading: estimateLoading } = useQuery<EstimateRow>(
-    id ? `SELECT * FROM estimates WHERE id = ?` : `SELECT * FROM estimates WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: estimateData, isLoading: estimateLoading } =
+    useQuery<EstimateRow>(
+      id
+        ? `SELECT * FROM estimates WHERE id = ?`
+        : `SELECT * FROM estimates WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
-  const { data: itemsData, isLoading: itemsLoading } = useQuery<EstimateItemRow>(
-    id
-      ? `SELECT * FROM estimate_items WHERE estimate_id = ?`
-      : `SELECT * FROM estimate_items WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: itemsData, isLoading: itemsLoading } =
+    useQuery<EstimateItemRow>(
+      id
+        ? `SELECT * FROM estimate_items WHERE estimate_id = ?`
+        : `SELECT * FROM estimate_items WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
   const estimate = estimateData[0] ? mapRowToEstimate(estimateData[0]) : null;
   const items = itemsData.map(mapRowToEstimateItem);
@@ -180,9 +196,13 @@ export function useEstimateMutations(): EstimateMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      const subtotal = items.reduce((sum: number, item) => sum + item.amount, 0);
+      const subtotal = items.reduce(
+        (sum: number, item) => sum + item.amount,
+        0
+      );
       const taxAmount = items.reduce(
-        (sum: number, item) => sum + (item.amount * (item.taxPercent ?? 0)) / 100,
+        (sum: number, item) =>
+          sum + (item.amount * (item.taxPercent ?? 0)) / 100,
         0
       );
       const total = subtotal + taxAmount - (data.discountAmount ?? 0);
@@ -243,11 +263,10 @@ export function useEstimateMutations(): EstimateMutations {
   const updateEstimateStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`, [
-        status,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
     },
     [db]
   );
@@ -266,7 +285,8 @@ export function useEstimateMutations(): EstimateMutations {
 
       const { user } = useAuthStore.getState();
       const userId = user?.id ?? null;
-      const userName = user?.user_metadata?.full_name ?? user?.email ?? "Unknown User";
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
       await db.execute(
         `INSERT INTO invoice_history (
@@ -291,7 +311,11 @@ export function useEstimateMutations(): EstimateMutations {
   );
 
   const convertEstimateToInvoice = useCallback(
-    async (estimate: Estimate, items: EstimateItem[], dueDate: string): Promise<string> => {
+    async (
+      estimate: Estimate,
+      items: EstimateItem[],
+      dueDate: string
+    ): Promise<string> => {
       const invoiceId = crypto.randomUUID();
       const now = new Date().toISOString();
 
@@ -300,10 +324,14 @@ export function useEstimateMutations(): EstimateMutations {
         `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
         ["sale_invoice"]
       );
-      const seqRows = (seqResult.rows?._array ?? []) as { prefix: string; next_number: number; padding: number }[];
+      const seqRows = (seqResult.rows?._array ?? []) as {
+        prefix: string;
+        next_number: number;
+        padding: number;
+      }[];
       const seq = seqRows[0];
 
-      if (!seq) {
+      if (seqRows.length === 0) {
         throw new Error("Invoice sequence counter not found");
       }
 
@@ -393,7 +421,9 @@ export function useEstimateMutations(): EstimateMutations {
 
   const deleteEstimate = useCallback(
     async (id: string): Promise<void> => {
-      await db.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [id]);
+      await db.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [
+        id,
+      ]);
       await db.execute(`DELETE FROM estimates WHERE id = ?`, [id]);
     },
     [db]

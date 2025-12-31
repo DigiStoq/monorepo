@@ -27,7 +27,7 @@ import {
 } from "@/hooks/useBankTransactions";
 import type { BankAccount, BankAccountFormData } from "./types";
 
-export function BankAccountsPage() {
+export function BankAccountsPage(): React.ReactNode {
   // Data from PowerSync
   const { accounts, isLoading, error } = useBankAccounts();
   const { createAccount, deleteAccount } = useBankAccountMutations();
@@ -43,7 +43,9 @@ export function BankAccountsPage() {
 
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(null);
+  const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(
+    null
+  );
 
   // Update selected account when data changes
   const currentSelectedAccount = useMemo(() => {
@@ -66,23 +68,25 @@ export function BankAccountsPage() {
     : [];
 
   // Handlers
-  const handleAccountClick = (account: BankAccount) => {
+  const handleAccountClick = (account: BankAccount): void => {
     setSelectedAccount(account);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedAccount(null);
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitAccount = async (data: BankAccountFormData) => {
+  const handleSubmitAccount = async (
+    data: BankAccountFormData
+  ): Promise<void> => {
     try {
       await createAccount({
         name: data.name,
@@ -98,14 +102,14 @@ export function BankAccountsPage() {
     }
   };
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = (): void => {
     if (currentSelectedAccount) {
       setAccountToDelete(currentSelectedAccount);
       setIsDeleteModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (): Promise<void> => {
     if (accountToDelete) {
       setIsSubmitting(true);
       try {
@@ -121,15 +125,17 @@ export function BankAccountsPage() {
     }
   };
 
-  const handleOpenTransactionForm = () => {
+  const handleOpenTransactionForm = (): void => {
     setIsTransactionFormOpen(true);
   };
 
-  const handleCloseTransactionForm = () => {
+  const handleCloseTransactionForm = (): void => {
     setIsTransactionFormOpen(false);
   };
 
-  const handleSubmitTransaction = async (data: BankTransactionFormData) => {
+  const handleSubmitTransaction = async (
+    data: BankTransactionFormData
+  ): Promise<void> => {
     if (!currentSelectedAccount) return;
 
     try {
@@ -250,14 +256,24 @@ export function BankAccountsPage() {
           setIsDeleteModalOpen(false);
           setAccountToDelete(null);
         }}
-        onConfirm={() => { void handleConfirmDelete(); }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
         title="Delete Bank Account"
         itemName={accountToDelete?.name ?? ""}
         itemType="Bank Account"
         warningMessage="This will permanently delete this bank account and all its transaction history."
-        linkedItems={accountTransactions.length > 0 ? [
-          { type: "Transaction", count: accountTransactions.length, description: "Will be deleted" },
-        ] : []}
+        linkedItems={
+          accountTransactions.length > 0
+            ? [
+                {
+                  type: "Transaction",
+                  count: accountTransactions.length,
+                  description: "Will be deleted",
+                },
+              ]
+            : []
+        }
         isLoading={isSubmitting}
       />
     </div>

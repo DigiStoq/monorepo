@@ -10,8 +10,19 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Building2, Calendar, CreditCard, FileText, Hash, User } from "lucide-react";
-import type { ExpenseFormData, ExpenseCategory, PaymentOutMode } from "../types";
+import {
+  Building2,
+  Calendar,
+  CreditCard,
+  FileText,
+  Hash,
+  User,
+} from "lucide-react";
+import type {
+  ExpenseFormData,
+  ExpenseCategory,
+  PaymentOutMode,
+} from "../types";
 import type { Customer } from "@/features/customers";
 
 // ============================================================================
@@ -64,18 +75,30 @@ export function ExpenseForm({
   onSubmit,
   onCancel,
   className,
-}: ExpenseFormProps) {
+}: ExpenseFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [category, setCategory] = useState<ExpenseCategory>(initialData?.category ?? "other");
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId ?? "");
+  const [category, setCategory] = useState<ExpenseCategory>(
+    initialData?.category ?? "other"
+  );
+  const [customerId, setCustomerId] = useState<string>(
+    initialData?.customerId ?? ""
+  );
   const [paidToName, setPaidToName] = useState(initialData?.paidToName ?? "");
-  const [paidToDetails, setPaidToDetails] = useState(initialData?.paidToDetails ?? "");
+  const [paidToDetails, setPaidToDetails] = useState(
+    initialData?.paidToDetails ?? ""
+  );
   const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
   const [amount, setAmount] = useState<number>(initialData?.amount ?? 0);
-  const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(initialData?.paymentMode ?? "cash");
-  const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(
+    initialData?.paymentMode ?? "cash"
+  );
+  const [referenceNumber, setReferenceNumber] = useState(
+    initialData?.referenceNumber ?? ""
+  );
+  const [description, setDescription] = useState(
+    initialData?.description ?? ""
+  );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
   // Customer options - hook already filters by type (suppliers)
@@ -89,7 +112,7 @@ export function ExpenseForm({
   }, [customers]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -97,7 +120,7 @@ export function ExpenseForm({
     }).format(value);
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (amount <= 0) return;
 
     const formData: ExpenseFormData = {
@@ -131,7 +154,9 @@ export function ExpenseForm({
                 <Select
                   options={categoryOptions}
                   value={category}
-                  onChange={(value) => { setCategory(value as ExpenseCategory); }}
+                  onChange={(value) => {
+                    setCategory(value as ExpenseCategory);
+                  }}
                 />
               </div>
 
@@ -143,7 +168,9 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={description}
-                  onChange={(e) => { setDescription(e.target.value); }}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                  }}
                   placeholder="What was this expense for?"
                 />
               </div>
@@ -156,7 +183,9 @@ export function ExpenseForm({
                 <Input
                   type="date"
                   value={date}
-                  onChange={(e) => { setDate(e.target.value); }}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                  }}
                 />
               </div>
 
@@ -169,7 +198,9 @@ export function ExpenseForm({
                   min="0"
                   step="0.01"
                   value={amount}
-                  onChange={(e) => { setAmount(parseFloat(e.target.value) || 0); }}
+                  onChange={(e) => {
+                    setAmount(parseFloat(e.target.value) || 0);
+                  }}
                   placeholder="0.00"
                 />
               </div>
@@ -190,7 +221,9 @@ export function ExpenseForm({
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => { setPaymentMode(value as PaymentOutMode); }}
+                  onChange={(value) => {
+                    setPaymentMode(value as PaymentOutMode);
+                  }}
                 />
               </div>
 
@@ -215,7 +248,9 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={paidToName}
-                  onChange={(e) => { setPaidToName(e.target.value); }}
+                  onChange={(e) => {
+                    setPaidToName(e.target.value);
+                  }}
                   placeholder="Person or company name"
                 />
               </div>
@@ -227,7 +262,9 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={paidToDetails}
-                  onChange={(e) => { setPaidToDetails(e.target.value); }}
+                  onChange={(e) => {
+                    setPaidToDetails(e.target.value);
+                  }}
                   placeholder="Contact, address, or other details"
                 />
               </div>
@@ -240,7 +277,9 @@ export function ExpenseForm({
                 <Input
                   type="text"
                   value={referenceNumber}
-                  onChange={(e) => { setReferenceNumber(e.target.value); }}
+                  onChange={(e) => {
+                    setReferenceNumber(e.target.value);
+                  }}
                   placeholder="Bill number, receipt number, etc."
                 />
               </div>
@@ -254,7 +293,9 @@ export function ExpenseForm({
                 placeholder="Add any additional notes..."
                 rows={3}
                 value={notes}
-                onChange={(e) => { setNotes(e.target.value); }}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                }}
               />
             </CardBody>
           </Card>
@@ -263,7 +304,9 @@ export function ExpenseForm({
           <Card className="bg-gradient-to-br from-red-50 to-orange-50 border-red-100">
             <CardBody className="text-center py-6">
               <p className="text-sm text-slate-600 mb-1">Expense Amount</p>
-              <p className="text-3xl font-bold text-error">{formatCurrency(amount)}</p>
+              <p className="text-3xl font-bold text-error">
+                {formatCurrency(amount)}
+              </p>
             </CardBody>
           </Card>
         </div>

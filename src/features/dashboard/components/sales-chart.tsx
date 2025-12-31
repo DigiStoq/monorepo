@@ -47,10 +47,10 @@ function CustomTooltip({
   active?: boolean;
   payload?: TooltipPayloadItem[];
   label?: string;
-}) {
+}): React.ReactNode {
   if (!active || !payload?.length) return null;
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -80,7 +80,11 @@ function CustomTooltip({
 // COMPONENT
 // ============================================================================
 
-export function SalesChart({ data, isLoading, className }: SalesChartProps) {
+export function SalesChart({
+  data,
+  isLoading,
+  className,
+}: SalesChartProps): React.ReactNode {
   // Generate mock data if not provided
   const chartData = useMemo(() => {
     if (data) return data;
@@ -93,7 +97,10 @@ export function SalesChart({ data, isLoading, className }: SalesChartProps) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       mockData.push({
-        date: date.toLocaleDateString("en-IN", { weekday: "short", day: "numeric" }),
+        date: date.toLocaleDateString("en-IN", {
+          weekday: "short",
+          day: "numeric",
+        }),
         sales: Math.floor(Math.random() * 50000) + 20000,
         purchases: Math.floor(Math.random() * 30000) + 10000,
       });
@@ -108,10 +115,7 @@ export function SalesChart({ data, isLoading, className }: SalesChartProps) {
 
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader
-        title="Sales & Purchases"
-        subtitle="Last 7 days trend"
-      />
+      <CardHeader title="Sales & Purchases" subtitle="Last 7 days trend" />
       <CardBody className="pt-0">
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -124,12 +128,22 @@ export function SalesChart({ data, isLoading, className }: SalesChartProps) {
                   <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="purchasesGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id="purchasesGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                vertical={false}
+              />
               <XAxis
                 dataKey="date"
                 axisLine={false}

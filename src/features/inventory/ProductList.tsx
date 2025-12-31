@@ -140,7 +140,6 @@ export function ProductList(): ReactNode {
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const product = products[virtualRow.index];
-              if (!product) return null;
 
               return (
                 <ProductRow

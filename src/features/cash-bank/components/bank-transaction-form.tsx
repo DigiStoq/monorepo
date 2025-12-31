@@ -49,7 +49,7 @@ export function BankTransactionForm({
   bankAccounts = [],
   onSubmit,
   onCancel,
-}: BankTransactionFormProps) {
+}: BankTransactionFormProps): React.ReactNode {
   const today = new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<BankTransactionFormData>({
@@ -69,7 +69,7 @@ export function BankTransactionForm({
   const handleChange = (
     field: keyof BankTransactionFormData,
     value: string | number
-  ) => {
+  ): void => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
@@ -99,7 +99,7 @@ export function BankTransactionForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (validate()) {
       onSubmit(formData);

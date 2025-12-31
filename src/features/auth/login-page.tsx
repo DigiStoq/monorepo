@@ -13,7 +13,7 @@ export function LoginPage(): ReactNode {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setFormError(null);
     clearError();

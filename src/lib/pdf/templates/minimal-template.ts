@@ -9,11 +9,15 @@ import type {
   PDFCompanyInfo,
   PDFGenerationOptions,
 } from "../types";
-import { TEMPLATE_THEMES, DOCUMENT_TITLES, FONT_SIZES, PDF_THEME } from "../constants";
-import { formatCurrency, formatDate, formatAddress } from "../utils/format-helpers";
+import { TEMPLATE_THEMES, DOCUMENT_TITLES, FONT_SIZES } from "../constants";
+import {
+  formatCurrency,
+  formatDate,
+  formatAddress,
+} from "../utils/format-helpers";
 import { numberToWords } from "../utils/number-to-words";
 
-const theme = TEMPLATE_THEMES.minimal ?? PDF_THEME;
+const theme = TEMPLATE_THEMES.minimal;
 
 /**
  * Build clean header with company and invoice info
@@ -154,7 +158,9 @@ function buildBillingSection(data: PDFInvoiceData): Content {
     data.partyInfo.city,
     data.partyInfo.state,
     data.partyInfo.zipCode,
-  ].filter(Boolean).join(", ");
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   if (cityStateZip) {
     stack.push({
@@ -198,9 +204,27 @@ function buildItemsTable(
   const headerRow = [
     { text: "#", bold: true, fontSize: 9, color: theme.mutedColor },
     { text: "Description", bold: true, fontSize: 9, color: theme.mutedColor },
-    { text: "Qty", bold: true, fontSize: 9, color: theme.mutedColor, alignment: "center" },
-    { text: "Rate", bold: true, fontSize: 9, color: theme.mutedColor, alignment: "right" },
-    { text: "Amount", bold: true, fontSize: 9, color: theme.mutedColor, alignment: "right" },
+    {
+      text: "Qty",
+      bold: true,
+      fontSize: 9,
+      color: theme.mutedColor,
+      alignment: "center",
+    },
+    {
+      text: "Rate",
+      bold: true,
+      fontSize: 9,
+      color: theme.mutedColor,
+      alignment: "right",
+    },
+    {
+      text: "Amount",
+      bold: true,
+      fontSize: 9,
+      color: theme.mutedColor,
+      alignment: "right",
+    },
   ];
 
   const itemRows = items.map((item) => [
@@ -208,12 +232,27 @@ function buildItemsTable(
     {
       stack: [
         { text: item.name, fontSize: 10, bold: true },
-        ...(item.description ? [{ text: item.description, fontSize: 9, color: theme.mutedColor }] : []),
+        ...(item.description
+          ? [{ text: item.description, fontSize: 9, color: theme.mutedColor }]
+          : []),
       ],
     },
-    { text: `${item.quantity} ${item.unit}`, fontSize: 10, alignment: "center" },
-    { text: formatCurrency(item.unitPrice, currency, locale), fontSize: 10, alignment: "right" },
-    { text: formatCurrency(item.amount, currency, locale), fontSize: 10, alignment: "right", bold: true },
+    {
+      text: `${item.quantity} ${item.unit}`,
+      fontSize: 10,
+      alignment: "center",
+    },
+    {
+      text: formatCurrency(item.unitPrice, currency, locale),
+      fontSize: 10,
+      alignment: "right",
+    },
+    {
+      text: formatCurrency(item.amount, currency, locale),
+      fontSize: 10,
+      alignment: "right",
+      bold: true,
+    },
   ]);
 
   return {
@@ -223,7 +262,8 @@ function buildItemsTable(
       body: [headerRow, ...itemRows],
     },
     layout: {
-      hLineWidth: (i: number, node: { table: { body: unknown[] } }) => (i === 1 || i === node.table.body.length) ? 0.5 : 0,
+      hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
+        i === 1 || i === node.table.body.length ? 0.5 : 0,
       vLineWidth: () => 0,
       hLineColor: () => theme.borderColor,
       paddingTop: () => 10,
@@ -241,26 +281,54 @@ function buildTotals(
   currency = "USD",
   locale = "en-US"
 ): Content {
-  const rows: { label: string; value: string; bold?: boolean; color?: string }[] = [];
+  const rows: {
+    label: string;
+    value: string;
+    bold?: boolean;
+    color?: string;
+  }[] = [];
 
-  rows.push({ label: "Subtotal", value: formatCurrency(data.subtotal, currency, locale) });
+  rows.push({
+    label: "Subtotal",
+    value: formatCurrency(data.subtotal, currency, locale),
+  });
 
   if (data.discountAmount > 0) {
-    rows.push({ label: "Discount", value: `-${formatCurrency(data.discountAmount, currency, locale)}`, color: "#DC2626" });
+    rows.push({
+      label: "Discount",
+      value: `-${formatCurrency(data.discountAmount, currency, locale)}`,
+      color: "#DC2626",
+    });
   }
 
   if (data.taxAmount > 0) {
-    rows.push({ label: "Tax", value: formatCurrency(data.taxAmount, currency, locale) });
+    rows.push({
+      label: "Tax",
+      value: formatCurrency(data.taxAmount, currency, locale),
+    });
   }
 
-  rows.push({ label: "Total", value: formatCurrency(data.total, currency, locale), bold: true });
+  rows.push({
+    label: "Total",
+    value: formatCurrency(data.total, currency, locale),
+    bold: true,
+  });
 
-  if (data.amountPaid !== undefined && data.amountPaid > 0) {
-    rows.push({ label: "Paid", value: formatCurrency(data.amountPaid, currency, locale), color: "#16A34A" });
+  if ((data.amountPaid ?? 0) > 0) {
+    rows.push({
+      label: "Paid",
+      value: formatCurrency(data.amountPaid ?? 0, currency, locale),
+      color: "#16A34A",
+    });
   }
 
-  if (data.amountDue !== undefined && data.amountDue > 0) {
-    rows.push({ label: "Balance Due", value: formatCurrency(data.amountDue, currency, locale), bold: true, color: "#DC2626" });
+  if ((data.amountDue ?? 0) > 0) {
+    rows.push({
+      label: "Balance Due",
+      value: formatCurrency(data.amountDue ?? 0, currency, locale),
+      bold: true,
+      color: "#DC2626",
+    });
   }
 
   return {
@@ -270,15 +338,28 @@ function buildTotals(
         width: 200,
         table: {
           widths: ["*", "auto"],
-          body: rows.map(row => [
-            { text: row.label, fontSize: 10, bold: row.bold, alignment: "right", margin: [0, 5, 10, 5] },
-            { text: row.value, fontSize: 10, bold: row.bold, alignment: "right", margin: [0, 5, 0, 5], color: row.color },
+          body: rows.map((row) => [
+            {
+              text: row.label,
+              fontSize: 10,
+              bold: row.bold,
+              alignment: "right",
+              margin: [0, 5, 10, 5],
+            },
+            {
+              text: row.value,
+              fontSize: 10,
+              bold: row.bold,
+              alignment: "right",
+              margin: [0, 5, 0, 5],
+              color: row.color,
+            },
           ]),
         },
         layout: {
           hLineWidth: (i: number) => {
             // Line before "Total" row
-            const totalRowIndex = rows.findIndex(r => r.label === "Total");
+            const totalRowIndex = rows.findIndex((r) => r.label === "Total");
             return i === totalRowIndex ? 0.5 : 0;
           },
           vLineWidth: () => 0,
@@ -298,7 +379,12 @@ function buildAmountInWords(total: number, currencyName = "Dollars"): Content {
 
   return {
     text: [
-      { text: "Amount in words: ", fontSize: 9, italics: true, color: theme.mutedColor },
+      {
+        text: "Amount in words: ",
+        fontSize: 9,
+        italics: true,
+        color: theme.mutedColor,
+      },
       { text: words, fontSize: 9, italics: true, color: theme.textColor },
     ],
     margin: [0, 0, 0, 25],
@@ -319,7 +405,13 @@ function buildFooter(
   if (data.notes) {
     content.push({
       stack: [
-        { text: "Notes", fontSize: 9, bold: true, color: theme.mutedColor, margin: [0, 0, 0, 5] },
+        {
+          text: "Notes",
+          fontSize: 9,
+          bold: true,
+          color: theme.mutedColor,
+          margin: [0, 0, 0, 5],
+        },
         { text: data.notes, fontSize: 9, color: theme.textColor },
       ],
       margin: [0, 0, 0, 15],
@@ -330,7 +422,13 @@ function buildFooter(
   if (options.showTerms && data.terms) {
     content.push({
       stack: [
-        { text: "Terms & Conditions", fontSize: 9, bold: true, color: theme.mutedColor, margin: [0, 0, 0, 5] },
+        {
+          text: "Terms & Conditions",
+          fontSize: 9,
+          bold: true,
+          color: theme.mutedColor,
+          margin: [0, 0, 0, 5],
+        },
         { text: data.terms, fontSize: 8, color: theme.mutedColor },
       ],
       margin: [0, 0, 0, 15],
@@ -346,8 +444,26 @@ function buildFooter(
           width: 180,
           stack: [
             { text: "", margin: [0, 20, 0, 0] },
-            { canvas: [{ type: "line", x1: 0, y1: 0, x2: 180, y2: 0, lineWidth: 0.5, lineColor: theme.textColor }] },
-            { text: "Authorized Signature", fontSize: 8, color: theme.mutedColor, alignment: "center", margin: [0, 5, 0, 0] },
+            {
+              canvas: [
+                {
+                  type: "line",
+                  x1: 0,
+                  y1: 0,
+                  x2: 180,
+                  y2: 0,
+                  lineWidth: 0.5,
+                  lineColor: theme.textColor,
+                },
+              ],
+            },
+            {
+              text: "Authorized Signature",
+              fontSize: 8,
+              color: theme.mutedColor,
+              alignment: "center",
+              margin: [0, 5, 0, 0],
+            },
           ],
         },
       ],
@@ -375,7 +491,12 @@ export function buildMinimalDocument(
   companyInfo: PDFCompanyInfo,
   options: PDFGenerationOptions
 ): TDocumentDefinitions {
-  const currencyName = options.currency === "PKR" ? "Rupees" : options.currency === "INR" ? "Rupees" : "Dollars";
+  const currencyName =
+    options.currency === "PKR"
+      ? "Rupees"
+      : options.currency === "INR"
+        ? "Rupees"
+        : "Dollars";
 
   const content: Content[] = [
     buildMinimalHeader(companyInfo, data, options.showLogo),

@@ -32,14 +32,20 @@ function validateIBAN(value: string): { valid: boolean; message: string } {
   }
 
   if (!/^[A-Z]{2}[0-9A-Z]+$/.test(cleaned)) {
-    return { valid: false, message: "Invalid IBAN format (2 letters followed by alphanumeric)" };
+    return {
+      valid: false,
+      message: "Invalid IBAN format (2 letters followed by alphanumeric)",
+    };
   }
 
   return { valid: true, message: "" };
 }
 
 // Validate account number (typically 8-20 digits)
-function validateAccountNumber(value: string): { valid: boolean; message: string } {
+function validateAccountNumber(value: string): {
+  valid: boolean;
+  message: string;
+} {
   const cleaned = value.replace(/\s|-/g, "");
 
   if (cleaned.length < 8 || cleaned.length > 20) {
@@ -47,7 +53,10 @@ function validateAccountNumber(value: string): { valid: boolean; message: string
   }
 
   if (!/^\d+$/.test(cleaned)) {
-    return { valid: false, message: "Account number should only contain digits" };
+    return {
+      valid: false,
+      message: "Account number should only contain digits",
+    };
   }
 
   return { valid: true, message: "" };
@@ -78,7 +87,10 @@ function luhnCheck(cardNumber: string): boolean {
 }
 
 // Validate credit card (16 digits with Luhn check)
-function validateCreditCard(value: string): { valid: boolean; message: string } {
+function validateCreditCard(value: string): {
+  valid: boolean;
+  message: string;
+} {
   const cleaned = value.replace(/\s|-/g, "");
 
   if (!/^\d{13,19}$/.test(cleaned)) {
@@ -121,7 +133,10 @@ function validateOther(value: string): { valid: boolean; message: string } {
     return { valid: true, message: "" };
   }
 
-  return { valid: false, message: "Enter a valid IBAN, phone number, or wallet identifier" };
+  return {
+    valid: false,
+    message: "Enter a valid IBAN, phone number, or wallet identifier",
+  };
 }
 
 // ============================================================================
@@ -158,7 +173,7 @@ export function BankAccountForm({
   onSubmit,
   onCancel,
   className,
-}: BankAccountFormProps) {
+}: BankAccountFormProps): React.ReactNode {
   // Form state
   const [name, setName] = useState(initialData?.name ?? "");
   const [bankName, setBankName] = useState(initialData?.bankName ?? "");
@@ -183,7 +198,8 @@ export function BankAccountForm({
           label: isIBANFormat(accountNumber) ? "IBAN" : "Account Number",
           icon: Hash,
           placeholder: "Enter IBAN or account number",
-          helperText: "Auto-detects IBAN (starts with 2 letters) or account number",
+          helperText:
+            "Auto-detects IBAN (starts with 2 letters) or account number",
         };
       case "credit":
         return {
@@ -204,7 +220,8 @@ export function BankAccountForm({
           label: "Account/Wallet ID",
           icon: Wallet,
           placeholder: "IBAN, phone, email, or wallet address",
-          helperText: "Supports IBAN, phone number, PayPal, Stripe, crypto wallet, etc.",
+          helperText:
+            "Supports IBAN, phone number, PayPal, Stripe, crypto wallet, etc.",
         };
       default:
         return {
@@ -246,7 +263,7 @@ export function BankAccountForm({
   }, [accountType, accountNumber]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -254,7 +271,7 @@ export function BankAccountForm({
     }).format(value);
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!name || !bankName || !accountNumber) return;
 
     const formData: BankAccountFormData = {
@@ -340,7 +357,9 @@ export function BankAccountForm({
                     setTouched(true);
                   }}
                   placeholder={fieldConfig.placeholder}
-                  error={showAccountError ? accountValidation.message : undefined}
+                  error={
+                    showAccountError ? accountValidation.message : undefined
+                  }
                   state={
                     showAccountError
                       ? "error"

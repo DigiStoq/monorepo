@@ -33,7 +33,7 @@ function buildAmountRow(
         width: 120,
         alignment: "right",
         fontSize: row.isTotal ? FONT_SIZES.header : FONT_SIZES.normal,
-        bold: row.isTotal || row.isBold,
+        bold: (row.isTotal ?? false) || (row.isBold ?? false),
         color: row.isTotal ? PDF_THEME.primaryColor : PDF_THEME.textColor,
       },
       {
@@ -41,7 +41,7 @@ function buildAmountRow(
         width: 80,
         alignment: "right",
         fontSize: row.isTotal ? FONT_SIZES.header : FONT_SIZES.normal,
-        bold: row.isTotal || row.isBold,
+        bold: (row.isTotal ?? false) || (row.isBold ?? false),
         color: row.isTotal ? PDF_THEME.primaryColor : PDF_THEME.textColor,
       },
     ],
@@ -65,7 +65,11 @@ export function buildAmounts(
 
   // Discount (if any)
   if (data.discountAmount > 0) {
-    rows.push({ label: "Discount:", value: data.discountAmount, isDiscount: true });
+    rows.push({
+      label: "Discount:",
+      value: data.discountAmount,
+      isDiscount: true,
+    });
   }
 
   // Tax (if any)
@@ -77,13 +81,17 @@ export function buildAmounts(
   rows.push({ label: "Total:", value: data.total, isTotal: true });
 
   // Amount Paid (for invoices with payments)
-  if (data.amountPaid !== undefined && data.amountPaid > 0) {
-    rows.push({ label: "Received:", value: data.amountPaid, isBold: true });
+  if ((data.amountPaid ?? 0) > 0) {
+    rows.push({
+      label: "Received:",
+      value: data.amountPaid ?? 0,
+      isBold: true,
+    });
   }
 
   // Balance Due (for invoices)
-  if (data.amountDue !== undefined && data.amountDue > 0) {
-    rows.push({ label: "Balance:", value: data.amountDue, isTotal: true });
+  if ((data.amountDue ?? 0) > 0) {
+    rows.push({ label: "Balance:", value: data.amountDue ?? 0, isTotal: true });
   }
 
   return {

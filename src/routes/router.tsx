@@ -14,9 +14,23 @@ import { LoginPage, SignupPage, ForgotPasswordPage } from "@/features/auth";
 import { DashboardPage } from "@/features/dashboard";
 import { CustomersPage } from "@/features/customers";
 import { ItemsPage } from "@/features/inventory";
-import { SaleInvoicesPage, PaymentInPage, CreditNotesPage, EstimatesPage } from "@/features/sales";
-import { PurchaseInvoicesPage, PaymentOutPage, ExpensesPage } from "@/features/purchases";
-import { BankAccountsPage, CashInHandPage, ChequesPage, LoansPage } from "@/features/cash-bank";
+import {
+  SaleInvoicesPage,
+  PaymentInPage,
+  CreditNotesPage,
+  EstimatesPage,
+} from "@/features/sales";
+import {
+  PurchaseInvoicesPage,
+  PaymentOutPage,
+  ExpensesPage,
+} from "@/features/purchases";
+import {
+  BankAccountsPage,
+  CashInHandPage,
+  ChequesPage,
+  LoansPage,
+} from "@/features/cash-bank";
 import {
   ReportsHubPage,
   SalesSummaryReport,
@@ -53,7 +67,7 @@ import {
 import { UtilitiesPage } from "@/features/utilities";
 
 // Placeholder pages (will be replaced with actual implementations)
-function PlaceholderPage({ title }: { title: string }) {
+function PlaceholderPage({ title }: { title: string }): React.ReactNode {
   return (
     <div className="p-6">
       <div className="max-w-2xl mx-auto text-center py-16">
@@ -72,7 +86,7 @@ function PlaceholderPage({ title }: { title: string }) {
 // ============================================================================
 
 // Check if user is authenticated - redirect to login if not
-function requireAuth() {
+function requireAuth(): void {
   const { isAuthenticated, isInitialized } = useAuthStore.getState();
 
   // If not initialized, we're still loading - don't redirect yet
@@ -87,7 +101,7 @@ function requireAuth() {
 }
 
 // Redirect authenticated users away from auth pages
-function redirectIfAuthenticated() {
+function redirectIfAuthenticated(): void {
   const { isAuthenticated, isInitialized } = useAuthStore.getState();
 
   if (!isInitialized) {

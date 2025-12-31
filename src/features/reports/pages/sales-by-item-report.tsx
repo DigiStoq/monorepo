@@ -10,9 +10,11 @@ import { useSalesByItemReport } from "@/hooks/useReports";
 // COMPONENT
 // ============================================================================
 
-export function SalesByItemReport() {
+export function SalesByItemReport(): React.ReactNode {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
   const [search, setSearch] = useState("");
@@ -54,14 +56,14 @@ export function SalesByItemReport() {
     );
   }, [processedData]);
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
 
-  const handleSort = (column: "revenue" | "quantity") => {
+  const handleSort = (column: "revenue" | "quantity"): void => {
     if (sortBy === column) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
@@ -70,7 +72,11 @@ export function SalesByItemReport() {
     }
   };
 
-  const SortIcon = ({ column }: { column: "revenue" | "quantity" }) => {
+  const SortIcon = ({
+    column,
+  }: {
+    column: "revenue" | "quantity";
+  }): React.ReactNode => {
     if (sortBy !== column) return null;
     return sortOrder === "desc" ? (
       <TrendingDown className="h-3 w-3 inline ml-1" />
@@ -100,8 +106,12 @@ export function SalesByItemReport() {
       title="Sales by Item"
       subtitle="Item-wise sales performance analysis"
       backPath="/reports"
-      onExport={() => { /* TODO: Implement export */ }}
-      onPrint={() => { window.print(); }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -110,7 +120,9 @@ export function SalesByItemReport() {
               type="text"
               placeholder="Search items..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -123,19 +135,25 @@ export function SalesByItemReport() {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Unique Items</p>
-              <p className="text-xl font-bold text-slate-900">{processedData.length}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {processedData.length}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Quantity Sold</p>
-              <p className="text-xl font-bold text-slate-900">{totals.quantity.toLocaleString()}</p>
+              <p className="text-xl font-bold text-slate-900">
+                {totals.quantity.toLocaleString()}
+              </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Revenue</p>
-              <p className="text-xl font-bold text-teal-600">{formatCurrency(totals.revenue)}</p>
+              <p className="text-xl font-bold text-teal-600">
+                {formatCurrency(totals.revenue)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -155,7 +173,9 @@ export function SalesByItemReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("quantity"); }}
+                      onClick={() => {
+                        handleSort("quantity");
+                      }}
                     >
                       Qty Sold <SortIcon column="quantity" />
                     </th>
@@ -164,7 +184,9 @@ export function SalesByItemReport() {
                     </th>
                     <th
                       className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3 cursor-pointer hover:text-slate-700"
-                      onClick={() => { handleSort("revenue"); }}
+                      onClick={() => {
+                        handleSort("revenue");
+                      }}
                     >
                       Revenue <SortIcon column="revenue" />
                     </th>
@@ -181,10 +203,18 @@ export function SalesByItemReport() {
                   ) : (
                     processedData.map((item) => (
                       <tr key={item.itemId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">{item.itemName}</td>
-                        <td className="px-4 py-3 text-right text-slate-900">{item.quantitySold}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(item.averagePrice)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-teal-600">{formatCurrency(item.totalRevenue)}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          {item.itemName}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-900">
+                          {item.quantitySold}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-600">
+                          {formatCurrency(item.averagePrice)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-teal-600">
+                          {formatCurrency(item.totalRevenue)}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -193,9 +223,13 @@ export function SalesByItemReport() {
                   <tfoot>
                     <tr className="bg-slate-50 font-medium">
                       <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-900">{totals.quantity}</td>
+                      <td className="px-4 py-3 text-right text-slate-900">
+                        {totals.quantity}
+                      </td>
                       <td className="px-4 py-3"></td>
-                      <td className="px-4 py-3 text-right text-teal-600">{formatCurrency(totals.revenue)}</td>
+                      <td className="px-4 py-3 text-right text-teal-600">
+                        {formatCurrency(totals.revenue)}
+                      </td>
                     </tr>
                   </tfoot>
                 )}

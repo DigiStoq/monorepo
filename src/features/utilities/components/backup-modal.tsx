@@ -24,33 +24,13 @@ import {
 // TYPES
 // ============================================================================
 
+import type { BackupOptions, BackupResult, BackupRecord } from "../types";
+
 interface BackupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBackup: (options: BackupOptions) => Promise<BackupResult>;
   lastBackup?: BackupRecord;
-}
-
-interface BackupOptions {
-  destination: "local" | "cloud";
-  cloudProvider?: "google-drive" | "dropbox" | "onedrive" | undefined;
-  includeAttachments: boolean;
-  compress: boolean;
-}
-
-interface BackupResult {
-  success: boolean;
-  filename: string;
-  size: number;
-  timestamp: string;
-  destination: string;
-}
-
-interface BackupRecord {
-  timestamp: string;
-  size: number;
-  destination: string;
-  status: "success" | "failed";
 }
 
 // ============================================================================
@@ -72,7 +52,7 @@ export function BackupModal({
   onClose,
   onBackup,
   lastBackup,
-}: BackupModalProps) {
+}: BackupModalProps): React.ReactNode {
   const [destination, setDestination] = useState<"local" | "cloud">("local");
   const [cloudProvider, setCloudProvider] = useState<string>("google-drive");
   const [includeAttachments, setIncludeAttachments] = useState(true);
@@ -80,12 +60,15 @@ export function BackupModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<BackupResult | null>(null);
 
-  const handleBackup = async () => {
+  const handleBackup = async (): Promise<void> => {
     setIsProcessing(true);
     try {
       const backupResult = await onBackup({
         destination,
-        cloudProvider: destination === "cloud" ? cloudProvider as "google-drive" | "dropbox" | "onedrive" : undefined,
+        cloudProvider:
+          destination === "cloud"
+            ? (cloudProvider as "google-drive" | "dropbox" | "onedrive")
+            : undefined,
         includeAttachments,
         compress,
       });
@@ -103,18 +86,18 @@ export function BackupModal({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setResult(null);
     onClose();
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -126,7 +109,12 @@ export function BackupModal({
 
   if (result) {
     return (
-      <Modal isOpen={isOpen} onClose={handleClose} title="Backup Complete" size="sm">
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Backup Complete"
+        size="sm"
+      >
         <div className="py-8 text-center space-y-6">
           {result.success ? (
             <>
@@ -134,7 +122,9 @@ export function BackupModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Backup Successful!</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Backup Successful!
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Your data has been safely backed up
                 </p>
@@ -143,19 +133,27 @@ export function BackupModal({
                 <CardBody className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Filename</span>
-                    <span className="font-medium text-slate-900">{result.filename}</span>
+                    <span className="font-medium text-slate-900">
+                      {result.filename}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Size</span>
-                    <span className="font-medium text-slate-900">{formatFileSize(result.size)}</span>
+                    <span className="font-medium text-slate-900">
+                      {formatFileSize(result.size)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Destination</span>
-                    <span className="font-medium text-slate-900">{result.destination}</span>
+                    <span className="font-medium text-slate-900">
+                      {result.destination}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Created</span>
-                    <span className="font-medium text-slate-900">{formatDate(result.timestamp)}</span>
+                    <span className="font-medium text-slate-900">
+                      {formatDate(result.timestamp)}
+                    </span>
                   </div>
                 </CardBody>
               </Card>
@@ -174,7 +172,9 @@ export function BackupModal({
                 <AlertTriangle className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Backup Failed</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Backup Failed
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Something went wrong. Please try again.
                 </p>
@@ -190,7 +190,12 @@ export function BackupModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Backup" size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Create Backup"
+      size="md"
+    >
       <div className="space-y-6 py-4">
         {/* Last Backup Info */}
         {lastBackup && (
@@ -200,12 +205,17 @@ export function BackupModal({
                 <Clock className="h-5 w-5 text-slate-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-slate-700">Last Backup</p>
+                <p className="text-sm font-medium text-slate-700">
+                  Last Backup
+                </p>
                 <p className="text-xs text-slate-500">
-                  {formatDate(lastBackup.timestamp)} • {formatFileSize(lastBackup.size)} • {lastBackup.destination}
+                  {formatDate(lastBackup.timestamp)} •{" "}
+                  {formatFileSize(lastBackup.size)} • {lastBackup.destination}
                 </p>
               </div>
-              <Badge variant={lastBackup.status === "success" ? "success" : "error"}>
+              <Badge
+                variant={lastBackup.status === "success" ? "success" : "error"}
+              >
                 {lastBackup.status === "success" ? "Successful" : "Failed"}
               </Badge>
             </CardBody>
@@ -220,7 +230,9 @@ export function BackupModal({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => { setDestination("local"); }}
+              onClick={() => {
+                setDestination("local");
+              }}
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "local"
@@ -230,11 +242,15 @@ export function BackupModal({
             >
               <HardDrive className="h-8 w-8 mx-auto mb-2 text-slate-600" />
               <p className="font-medium text-slate-900">Local Storage</p>
-              <p className="text-xs text-slate-500 mt-1">Download to your device</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Download to your device
+              </p>
             </button>
             <button
               type="button"
-              onClick={() => { setDestination("cloud"); }}
+              onClick={() => {
+                setDestination("cloud");
+              }}
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "cloud"
@@ -244,7 +260,9 @@ export function BackupModal({
             >
               <Cloud className="h-8 w-8 mx-auto mb-2 text-slate-600" />
               <p className="font-medium text-slate-900">Cloud Storage</p>
-              <p className="text-xs text-slate-500 mt-1">Save to cloud provider</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Save to cloud provider
+              </p>
             </button>
           </div>
         </div>
@@ -273,12 +291,18 @@ export function BackupModal({
             <input
               type="checkbox"
               checked={includeAttachments}
-              onChange={(e) => { setIncludeAttachments(e.target.checked); }}
+              onChange={(e) => {
+                setIncludeAttachments(e.target.checked);
+              }}
               className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
-              <p className="text-sm font-medium text-slate-700">Include Attachments</p>
-              <p className="text-xs text-slate-500">Include uploaded files and images</p>
+              <p className="text-sm font-medium text-slate-700">
+                Include Attachments
+              </p>
+              <p className="text-xs text-slate-500">
+                Include uploaded files and images
+              </p>
             </div>
           </label>
 
@@ -286,12 +310,18 @@ export function BackupModal({
             <input
               type="checkbox"
               checked={compress}
-              onChange={(e) => { setCompress(e.target.checked); }}
+              onChange={(e) => {
+                setCompress(e.target.checked);
+              }}
               className="h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
-              <p className="text-sm font-medium text-slate-700">Compress Backup</p>
-              <p className="text-xs text-slate-500">Create a smaller ZIP file</p>
+              <p className="text-sm font-medium text-slate-700">
+                Compress Backup
+              </p>
+              <p className="text-xs text-slate-500">
+                Create a smaller ZIP file
+              </p>
             </div>
           </label>
         </div>
@@ -301,7 +331,9 @@ export function BackupModal({
           <CardBody className="flex items-start gap-3">
             <Database className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-blue-900">What&apos;s included in the backup</p>
+              <p className="text-sm font-medium text-blue-900">
+                What&apos;s included in the backup
+              </p>
               <ul className="text-xs text-blue-700 mt-1 space-y-0.5 list-disc list-inside">
                 <li>All customers and items</li>
                 <li>Invoices, payments, and expenses</li>
@@ -318,7 +350,9 @@ export function BackupModal({
           Cancel
         </Button>
         <Button
-          onClick={() => { void handleBackup(); }}
+          onClick={() => {
+            void handleBackup();
+          }}
           disabled={isProcessing}
           leftIcon={
             isProcessing ? (

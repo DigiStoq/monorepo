@@ -18,53 +18,6 @@ import type { PurchaseInvoice } from "@/features/purchases/types";
 import type { Customer } from "@/features/customers/types";
 
 // ============================================================================
-// INTERNAL TYPES (match what useSettings actually returns - flat structure)
-// ============================================================================
-
-interface FlatCompanySettings {
-  id: string;
-  name: string;
-  legalName?: string;
-  logoUrl?: string;
-  addressStreet?: string;
-  addressCity?: string;
-  addressState?: string;
-  addressPostalCode?: string;
-  addressCountry?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  contactWebsite?: string;
-  taxId?: string;
-  ein?: string;
-  financialYearStartMonth: number;
-  financialYearStartDay: number;
-  currency: string;
-  locale: string;
-  timezone: string;
-}
-
-interface FlatInvoiceSettings {
-  id?: string;
-  prefix: string;
-  nextNumber: number;
-  padding: number;
-  termsAndConditions?: string;
-  notes?: string;
-  showPaymentQr?: boolean;
-  showBankDetails: boolean;
-  dueDateDays: number;
-  lateFeesEnabled: boolean;
-  lateFeesPercentage?: number;
-  bankAccountName?: string;
-  bankAccountNumber?: string;
-  bankName?: string;
-  bankRoutingNumber?: string;
-  bankBranchName?: string;
-  bankSwiftCode?: string;
-  pdfTemplate?: PDFTemplateId;
-}
-
-// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
@@ -90,7 +43,7 @@ function customerToPartyInfo(
  * Convert invoice items to PDF line items
  */
 function itemsToPDFLineItems(
-  items: Array<{
+  items: {
     itemName: string;
     description?: string;
     quantity: number;
@@ -99,7 +52,7 @@ function itemsToPDFLineItems(
     discountPercent?: number;
     taxPercent?: number;
     amount: number;
-  }>
+  }[]
 ): PDFLineItem[] {
   return items.map((item, idx) => {
     const lineItem: PDFLineItem = {
@@ -111,7 +64,8 @@ function itemsToPDFLineItems(
       amount: item.amount,
     };
     if (item.description) lineItem.description = item.description;
-    if (item.discountPercent !== undefined) lineItem.discountPercent = item.discountPercent;
+    if (item.discountPercent !== undefined)
+      lineItem.discountPercent = item.discountPercent;
     if (item.taxPercent !== undefined) lineItem.taxPercent = item.taxPercent;
     return lineItem;
   });
@@ -123,7 +77,10 @@ function itemsToPDFLineItems(
 
 export interface UsePDFGeneratorReturn {
   // Sale Invoice methods
-  downloadSaleInvoice: (invoice: SaleInvoice, customer?: Customer | null) => void;
+  downloadSaleInvoice: (
+    invoice: SaleInvoice,
+    customer?: Customer | null
+  ) => void;
   printSaleInvoice: (invoice: SaleInvoice, customer?: Customer | null) => void;
   openSaleInvoice: (invoice: SaleInvoice, customer?: Customer | null) => void;
 
@@ -133,9 +90,18 @@ export interface UsePDFGeneratorReturn {
   openEstimate: (estimate: Estimate, customer?: Customer | null) => void;
 
   // Purchase Invoice methods
-  downloadPurchaseInvoice: (invoice: PurchaseInvoice, supplier?: Customer | null) => void;
-  printPurchaseInvoice: (invoice: PurchaseInvoice, supplier?: Customer | null) => void;
-  openPurchaseInvoice: (invoice: PurchaseInvoice, supplier?: Customer | null) => void;
+  downloadPurchaseInvoice: (
+    invoice: PurchaseInvoice,
+    supplier?: Customer | null
+  ) => void;
+  printPurchaseInvoice: (
+    invoice: PurchaseInvoice,
+    supplier?: Customer | null
+  ) => void;
+  openPurchaseInvoice: (
+    invoice: PurchaseInvoice,
+    supplier?: Customer | null
+  ) => void;
 
   // Credit Note methods
   downloadCreditNote: (note: CreditNote, customer?: Customer | null) => void;
@@ -151,9 +117,9 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const { settings: rawCompanySettings } = useCompanySettings();
   const { settings: rawInvoiceSettings } = useInvoiceSettings();
 
-  // Cast to flat types (the actual shape returned by hooks)
-  const companySettings = rawCompanySettings as unknown as FlatCompanySettings | null;
-  const invoiceSettings = rawInvoiceSettings as unknown as FlatInvoiceSettings | null;
+  // No casting needed as we use shared types
+  const companySettings = rawCompanySettings;
+  const invoiceSettings = rawInvoiceSettings;
 
   // Build company info for PDF (with fallback for when settings aren't configured)
   const companyInfo = useMemo((): PDFCompanyInfo => {
@@ -183,11 +149,16 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
       companySettings.addressCountry
     ) {
       info.address = {};
-      if (companySettings.addressStreet) info.address.street = companySettings.addressStreet;
-      if (companySettings.addressCity) info.address.city = companySettings.addressCity;
-      if (companySettings.addressState) info.address.state = companySettings.addressState;
-      if (companySettings.addressPostalCode) info.address.postalCode = companySettings.addressPostalCode;
-      if (companySettings.addressCountry) info.address.country = companySettings.addressCountry;
+      if (companySettings.addressStreet)
+        info.address.street = companySettings.addressStreet;
+      if (companySettings.addressCity)
+        info.address.city = companySettings.addressCity;
+      if (companySettings.addressState)
+        info.address.state = companySettings.addressState;
+      if (companySettings.addressPostalCode)
+        info.address.postalCode = companySettings.addressPostalCode;
+      if (companySettings.addressCountry)
+        info.address.country = companySettings.addressCountry;
     }
 
     return info;
@@ -208,7 +179,12 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
       currency: companySettings?.currency ?? "USD",
       locale: companySettings?.locale ?? "en-US",
     };
-  }, [template, invoiceSettings?.showBankDetails, companySettings?.currency, companySettings?.locale]);
+  }, [
+    template,
+    invoiceSettings?.showBankDetails,
+    companySettings?.currency,
+    companySettings?.locale,
+  ]);
 
   // Create PDF generator instance (always available with fallback company info)
   const generator = useMemo(() => {
@@ -235,8 +211,8 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
       };
 
       if (invoice.dueDate) data.dueDate = invoice.dueDate;
-      if (invoice.amountPaid !== undefined) data.amountPaid = invoice.amountPaid;
-      if (invoice.amountDue !== undefined) data.amountDue = invoice.amountDue;
+      data.amountPaid = invoice.amountPaid;
+      data.amountDue = invoice.amountDue;
       if (invoice.notes) data.notes = invoice.notes;
       if (invoice.terms) data.terms = invoice.terms;
 
@@ -341,8 +317,8 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
       };
 
       if (invoice.dueDate) data.dueDate = invoice.dueDate;
-      if (invoice.amountPaid !== undefined) data.amountPaid = invoice.amountPaid;
-      if (invoice.amountDue !== undefined) data.amountDue = invoice.amountDue;
+      data.amountPaid = invoice.amountPaid;
+      data.amountDue = invoice.amountDue;
       if (invoice.notes) data.notes = invoice.notes;
 
       return data;
@@ -395,7 +371,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
 
       if (note.notes) data.notes = note.notes;
       if (note.invoiceNumber) data.originalInvoiceNumber = note.invoiceNumber;
-      if (note.reason) data.reason = note.reason;
+      data.reason = note.reason;
 
       return data;
     },

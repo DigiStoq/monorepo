@@ -1,9 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, Input } from "@/components/ui";
-import { Building2, MapPin, Phone, Globe, FileText, Save, Upload } from "lucide-react";
+import {
+  Building2,
+  MapPin,
+  Phone,
+  Globe,
+  FileText,
+  Save,
+  Upload,
+} from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
-import { useCompanySettings, useCompanySettingsMutations } from "@/hooks/useSettings";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
+import {
+  useCompanySettings,
+  useCompanySettingsMutations,
+} from "@/hooks/useSettings";
 import type { CompanySettings } from "../types";
 
 // Flat type matching what the database returns
@@ -93,21 +108,23 @@ function flatToNested(flat: FlatCompanySettings): CompanySettings {
 }
 
 // Convert nested UI structure to flat DB structure for updates
-function nestedToFlatUpdate(nested: CompanySettings): Record<string, string | number | undefined> {
+function nestedToFlatUpdate(
+  nested: CompanySettings
+): Record<string, string | number | undefined> {
   return {
     name: nested.name,
-    legalName: nested.legalName || undefined,
-    logoUrl: nested.logo || undefined,
-    addressStreet: nested.address.street || undefined,
-    addressCity: nested.address.city || undefined,
-    addressState: nested.address.state || undefined,
-    addressPostalCode: nested.address.postalCode || undefined,
-    addressCountry: nested.address.country || undefined,
-    contactPhone: nested.contact.phone || undefined,
-    contactEmail: nested.contact.email || undefined,
-    contactWebsite: nested.contact.website || undefined,
-    taxId: nested.registration.taxId || undefined,
-    ein: nested.registration.ein || undefined,
+    legalName: nested.legalName,
+    logoUrl: nested.logo,
+    addressStreet: nested.address.street,
+    addressCity: nested.address.city,
+    addressState: nested.address.state,
+    addressPostalCode: nested.address.postalCode,
+    addressCountry: nested.address.country,
+    contactPhone: nested.contact.phone,
+    contactEmail: nested.contact.email,
+    contactWebsite: nested.contact.website,
+    taxId: nested.registration.taxId,
+    ein: nested.registration.ein,
     financialYearStartMonth: nested.financialYear.startMonth,
     financialYearStartDay: nested.financialYear.startDay,
     currency: nested.currency,
@@ -116,7 +133,7 @@ function nestedToFlatUpdate(nested: CompanySettings): Record<string, string | nu
   };
 }
 
-export function CompanySettingsPage() {
+export function CompanySettingsPage(): React.ReactNode {
   // Fetch from database
   const { settings: dbSettings, isLoading } = useCompanySettings();
   const { updateCompanySettings } = useCompanySettingsMutations();
@@ -136,7 +153,7 @@ export function CompanySettingsPage() {
     }
   }, [dbSettings]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     try {
       const flatData = nestedToFlatUpdate(settings);
@@ -150,18 +167,24 @@ export function CompanySettingsPage() {
   const updateField = <K extends keyof CompanySettings>(
     field: K,
     value: CompanySettings[K]
-  ) => {
+  ): void => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateAddress = (field: keyof CompanySettings["address"], value: string) => {
+  const updateAddress = (
+    field: keyof CompanySettings["address"],
+    value: string
+  ): void => {
     setSettings((prev) => ({
       ...prev,
       address: { ...prev.address, [field]: value },
     }));
   };
 
-  const updateContact = (field: keyof CompanySettings["contact"], value: string) => {
+  const updateContact = (
+    field: keyof CompanySettings["contact"],
+    value: string
+  ): void => {
     setSettings((prev) => ({
       ...prev,
       contact: { ...prev.contact, [field]: value },
@@ -171,7 +194,7 @@ export function CompanySettingsPage() {
   const updateRegistration = (
     field: keyof CompanySettings["registration"],
     value: string
-  ) => {
+  ): void => {
     setSettings((prev) => ({
       ...prev,
       registration: { ...prev.registration, [field]: value },
@@ -196,7 +219,13 @@ export function CompanySettingsPage() {
       title="Company Settings"
       description="Manage your business profile and registration details"
       actions={
-        <Button onClick={() => { void handleSave(); }} disabled={isSaving} className="gap-2">
+        <Button
+          onClick={() => {
+            void handleSave();
+          }}
+          disabled={isSaving}
+          className="gap-2"
+        >
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -235,19 +264,29 @@ export function CompanySettingsPage() {
             </div>
 
             <SettingsGroup>
-              <SettingsRow label="Business Name" description="Display name for your business">
+              <SettingsRow
+                label="Business Name"
+                description="Display name for your business"
+              >
                 <Input
                   type="text"
                   value={settings.name}
-                  onChange={(e) => { updateField("name", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("name", e.target.value);
+                  }}
                   className="w-64"
                 />
               </SettingsRow>
-              <SettingsRow label="Legal Name" description="Registered legal name">
+              <SettingsRow
+                label="Legal Name"
+                description="Registered legal name"
+              >
                 <Input
                   type="text"
                   value={settings.legalName ?? ""}
-                  onChange={(e) => { updateField("legalName", e.target.value); }}
+                  onChange={(e) => {
+                    updateField("legalName", e.target.value);
+                  }}
                   className="w-64"
                 />
               </SettingsRow>
@@ -266,7 +305,9 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.street}
-                onChange={(e) => { updateAddress("street", e.target.value); }}
+                onChange={(e) => {
+                  updateAddress("street", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -274,7 +315,9 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.city}
-                onChange={(e) => { updateAddress("city", e.target.value); }}
+                onChange={(e) => {
+                  updateAddress("city", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -282,7 +325,9 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.state}
-                onChange={(e) => { updateAddress("state", e.target.value); }}
+                onChange={(e) => {
+                  updateAddress("state", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -290,7 +335,9 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.postalCode}
-                onChange={(e) => { updateAddress("postalCode", e.target.value); }}
+                onChange={(e) => {
+                  updateAddress("postalCode", e.target.value);
+                }}
                 className="w-40"
               />
             </SettingsRow>
@@ -298,7 +345,9 @@ export function CompanySettingsPage() {
               <Input
                 type="text"
                 value={settings.address.country}
-                onChange={(e) => { updateAddress("country", e.target.value); }}
+                onChange={(e) => {
+                  updateAddress("country", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -316,7 +365,9 @@ export function CompanySettingsPage() {
               <Input
                 type="tel"
                 value={settings.contact.phone}
-                onChange={(e) => { updateContact("phone", e.target.value); }}
+                onChange={(e) => {
+                  updateContact("phone", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -324,7 +375,9 @@ export function CompanySettingsPage() {
               <Input
                 type="email"
                 value={settings.contact.email}
-                onChange={(e) => { updateContact("email", e.target.value); }}
+                onChange={(e) => {
+                  updateContact("email", e.target.value);
+                }}
                 className="w-64"
               />
             </SettingsRow>
@@ -332,7 +385,9 @@ export function CompanySettingsPage() {
               <Input
                 type="url"
                 value={settings.contact.website ?? ""}
-                onChange={(e) => { updateContact("website", e.target.value); }}
+                onChange={(e) => {
+                  updateContact("website", e.target.value);
+                }}
                 className="w-64"
                 leftIcon={<Globe className="h-4 w-4" />}
               />
@@ -347,20 +402,30 @@ export function CompanySettingsPage() {
           icon={FileText}
         >
           <SettingsGroup>
-            <SettingsRow label="Tax ID" description="Federal Tax Identification Number">
+            <SettingsRow
+              label="Tax ID"
+              description="Federal Tax Identification Number"
+            >
               <Input
                 type="text"
                 value={settings.registration.taxId ?? ""}
-                onChange={(e) => { updateRegistration("taxId", e.target.value); }}
+                onChange={(e) => {
+                  updateRegistration("taxId", e.target.value);
+                }}
                 className="w-64 font-mono"
                 placeholder="12-3456789"
               />
             </SettingsRow>
-            <SettingsRow label="EIN" description="Employer Identification Number">
+            <SettingsRow
+              label="EIN"
+              description="Employer Identification Number"
+            >
               <Input
                 type="text"
                 value={settings.registration.ein ?? ""}
-                onChange={(e) => { updateRegistration("ein", e.target.value); }}
+                onChange={(e) => {
+                  updateRegistration("ein", e.target.value);
+                }}
                 className="w-48 font-mono"
                 placeholder="12-3456789"
               />
@@ -375,10 +440,15 @@ export function CompanySettingsPage() {
           icon={Globe}
         >
           <SettingsGroup>
-            <SettingsRow label="Currency" description="Default currency for transactions">
+            <SettingsRow
+              label="Currency"
+              description="Default currency for transactions"
+            >
               <select
                 value={settings.currency}
-                onChange={(e) => { updateField("currency", e.target.value); }}
+                onChange={(e) => {
+                  updateField("currency", e.target.value);
+                }}
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="USD">USD ($)</option>
@@ -387,19 +457,22 @@ export function CompanySettingsPage() {
                 <option value="GBP">GBP (£)</option>
               </select>
             </SettingsRow>
-            <SettingsRow label="Financial Year Start" description="When your financial year begins">
+            <SettingsRow
+              label="Financial Year Start"
+              description="When your financial year begins"
+            >
               <div className="flex gap-2">
                 <select
                   value={settings.financialYear.startMonth}
-                  onChange={(e) =>
-                    { setSettings((prev) => ({
+                  onChange={(e) => {
+                    setSettings((prev) => ({
                       ...prev,
                       financialYear: {
                         ...prev.financialYear,
                         startMonth: parseInt(e.target.value),
                       },
-                    })); }
-                  }
+                    }));
+                  }}
                   className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value={1}>January</option>
@@ -417,15 +490,15 @@ export function CompanySettingsPage() {
                 </select>
                 <select
                   value={settings.financialYear.startDay}
-                  onChange={(e) =>
-                    { setSettings((prev) => ({
+                  onChange={(e) => {
+                    setSettings((prev) => ({
                       ...prev,
                       financialYear: {
                         ...prev.financialYear,
                         startDay: parseInt(e.target.value),
                       },
-                    })); }
-                  }
+                    }));
+                  }}
                   className="w-20 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   {Array.from({ length: 28 }, (_, i) => (
@@ -439,12 +512,16 @@ export function CompanySettingsPage() {
             <SettingsRow label="Timezone">
               <select
                 value={settings.timezone}
-                onChange={(e) => { updateField("timezone", e.target.value); }}
+                onChange={(e) => {
+                  updateField("timezone", e.target.value);
+                }}
                 className="w-64 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="America/New_York">America/New_York (EST)</option>
                 <option value="America/Chicago">America/Chicago (CST)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                <option value="America/Los_Angeles">
+                  America/Los_Angeles (PST)
+                </option>
                 <option value="Europe/London">Europe/London (GMT)</option>
                 <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
               </select>

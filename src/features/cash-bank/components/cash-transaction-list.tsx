@@ -69,7 +69,7 @@ export function CashTransactionList({
   currentBalance,
   onTransactionClick,
   className,
-}: CashTransactionListProps) {
+}: CashTransactionListProps): React.ReactNode {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<CashTransaction["type"] | "all">(
     "all"
@@ -103,7 +103,7 @@ export function CashTransactionList({
   }, [filteredTransactions]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -111,7 +111,7 @@ export function CashTransactionList({
     }).format(value);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
