@@ -15,6 +15,7 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { PaymentIn, PaymentMode } from "../types";
 
 // ============================================================================
@@ -79,12 +80,7 @@ export function PaymentInDetail({
   const mode = paymentModeConfig[payment.paymentMode];
   const ModeIcon = mode.icon;
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {

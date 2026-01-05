@@ -11,6 +11,7 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { Building2, Calendar, CreditCard, FileText, Hash } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type {
   PaymentOutFormData,
   PaymentOutMode,
@@ -105,12 +106,7 @@ export function PaymentOutForm({
   const selectedInvoice = invoices.find((inv) => inv.id === invoiceId);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle invoice selection
   const handleInvoiceChange = (value: string): void => {

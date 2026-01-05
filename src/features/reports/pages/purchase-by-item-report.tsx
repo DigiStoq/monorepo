@@ -5,6 +5,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { usePurchaseByItemReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -56,12 +57,7 @@ export function PurchaseByItemReport(): React.ReactNode {
     );
   }, [processedData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const handleSort = (column: "amount" | "quantity"): void => {
     if (sortBy === column) {

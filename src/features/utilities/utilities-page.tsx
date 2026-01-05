@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/layout";
 import { Card, CardBody, Button } from "@/components/ui";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Upload,
   Download,
@@ -14,13 +15,7 @@ import {
   Shield,
   HardDrive,
 } from "lucide-react";
-import {
-  ImportWizard,
-  ExportModal,
-  BulkUpdateModal,
-  BackupModal,
-  RestoreWizard,
-} from "./components";
+import { ImportWizard, ExportModal, BulkUpdateModal } from "./components";
 import type {
   ImportEntityType,
   ExportOptions,
@@ -29,6 +24,7 @@ import type {
   ExportResult,
   BulkUpdateResult,
 } from "./types";
+import { useDataExport, useDataImport, useBulkActions } from "@/hooks";
 
 // ============================================================================
 // TYPES
@@ -48,18 +44,17 @@ interface UtilityCard {
 // ============================================================================
 
 export function UtilitiesPage(): React.ReactNode {
+  const navigate = useNavigate();
+  const { exportData } = useDataExport();
+  const { importData } = useDataImport();
+  const { bulkUpdate } = useBulkActions();
+
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
-  const [isBackupOpen, setIsBackupOpen] = useState(false);
-  const [isRestoreOpen, setIsRestoreOpen] = useState(false);
 
-  // Mock data for bulk update
-  const mockSelectedItems = [
-    { id: "1", name: "Widget A", salePrice: 29.99, purchasePrice: 15.0 },
-    { id: "2", name: "Widget B", salePrice: 39.99, purchasePrice: 20.0 },
-    { id: "3", name: "Widget C", salePrice: 49.99, purchasePrice: 25.0 },
-  ];
+  // Mock data for bulk update items - in real app this would come from a selection context or picker
+  // For now we keep the mock expectation for the modal, but the ACTION is real
 
   const mockCategories = [
     { id: "cat-1", name: "Electronics" },
@@ -68,115 +63,26 @@ export function UtilitiesPage(): React.ReactNode {
     { id: "cat-4", name: "Software" },
   ];
 
-  // Mock handlers
   const handleImport = async (
-    _entityType: ImportEntityType,
-    _data: Record<string, unknown>[]
+    entityType: ImportEntityType,
+    data: Record<string, unknown>[]
   ): Promise<ImportResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      success: true,
-      imported: _data.length,
-      skipped: 0,
-      errors: [],
-    };
+    return importData(entityType, data);
   };
 
   const handleExport = async (
     options: ExportOptions
   ): Promise<ExportResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const filename = `${options.entityType}-export-${new Date().toISOString().slice(0, 10)}.${options.format}`;
-    return {
-      success: true,
-      filename,
-      recordCount: Math.floor(Math.random() * 500) + 50,
-      fileSize: Math.floor(Math.random() * 500000) + 10000,
-    };
+    return exportData(options);
   };
 
   const handleBulkUpdate = async (
-    _type: BulkUpdateType,
-    _config: unknown
+    type: BulkUpdateType,
+    selectedIds: string[],
+    config: unknown
   ): Promise<BulkUpdateResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      success: true,
-      updated: mockSelectedItems.length,
-      failed: 0,
-      errors: [],
-    };
-  };
-
-  const handleBackup = async (_options: {
-    destination: "local" | "cloud";
-    cloudProvider?: string | undefined;
-    includeAttachments: boolean;
-    compress: boolean;
-  }): Promise<BackupResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    return {
-      success: true,
-      filename: `digistoq-backup-${new Date().toISOString().slice(0, 10)}.zip`,
-      size: 15728640, // 15 MB
-      timestamp: new Date().toISOString(),
-      destination:
-        _options.destination === "local" ? "Local Storage" : "Google Drive",
-    };
-  };
-
-  const handleRestore = async (_options: {
-    source: "local" | "cloud";
-    backupId?: string | undefined;
-    file?: File | undefined;
-    overwriteExisting: boolean;
-  }): Promise<RestoreResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    return {
-      success: true,
-      recordsRestored: 1247,
-      timestamp: new Date().toISOString(),
-    };
-  };
-
-  // Mock data for available cloud backups
-  const mockCloudBackups = [
-    {
-      id: "bk-1",
-      filename: "digistoq-backup-2024-01-15.zip",
-      size: 12582912,
-      createdAt: "2024-01-15T10:30:00Z",
-      source: "cloud" as const,
-      provider: "Google Drive",
-    },
-    {
-      id: "bk-2",
-      filename: "digistoq-backup-2024-01-08.zip",
-      size: 11534336,
-      createdAt: "2024-01-08T14:15:00Z",
-      source: "cloud" as const,
-      provider: "Google Drive",
-    },
-    {
-      id: "bk-3",
-      filename: "digistoq-backup-2024-01-01.zip",
-      size: 10485760,
-      createdAt: "2024-01-01T09:00:00Z",
-      source: "cloud" as const,
-      provider: "Google Drive",
-    },
-  ];
-
-  const mockLastBackup = {
-    timestamp: "2024-01-15T10:30:00Z",
-    size: 12582912,
-    destination: "Google Drive",
-    status: "success" as const,
+    // The modal now handles selection, so we pass selectedIds directly to the hook
+    return bulkUpdate(type, selectedIds, config);
   };
 
   const utilities: UtilityCard[] = [
@@ -218,7 +124,7 @@ export function UtilitiesPage(): React.ReactNode {
       icon: <HardDrive className="h-6 w-6" />,
       color: "bg-teal-500",
       action: () => {
-        setIsBackupOpen(true);
+        void navigate({ to: "/settings/backup" });
       },
     },
     {
@@ -228,7 +134,7 @@ export function UtilitiesPage(): React.ReactNode {
       icon: <RefreshCw className="h-6 w-6" />,
       color: "bg-orange-500",
       action: () => {
-        setIsRestoreOpen(true);
+        void navigate({ to: "/settings/backup" });
       },
     },
     {
@@ -411,27 +317,8 @@ export function UtilitiesPage(): React.ReactNode {
         onClose={() => {
           setIsBulkUpdateOpen(false);
         }}
-        selectedItems={mockSelectedItems}
         categories={mockCategories}
         onUpdate={handleBulkUpdate}
-      />
-
-      <BackupModal
-        isOpen={isBackupOpen}
-        onClose={() => {
-          setIsBackupOpen(false);
-        }}
-        onBackup={handleBackup}
-        lastBackup={mockLastBackup}
-      />
-
-      <RestoreWizard
-        isOpen={isRestoreOpen}
-        onClose={() => {
-          setIsRestoreOpen(false);
-        }}
-        onRestore={handleRestore}
-        availableBackups={mockCloudBackups}
       />
     </>
   );

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { DateRange, PaymentMode, CashMovementTransaction } from "../types";
 import { useCashMovementReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // HELPERS
@@ -128,12 +129,7 @@ export function CashMovementReportPage(): React.ReactNode {
   }, [report, modeFilter]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

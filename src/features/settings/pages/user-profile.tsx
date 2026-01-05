@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Input } from "@/components/ui";
 import { User, Bell, Lock, Save, Upload, Camera } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
@@ -8,28 +8,11 @@ import {
   SettingsGroup,
 } from "../components/settings-card";
 import type { UserProfile, NotificationPreferences } from "../types";
-
-// Mock data
-const mockUserProfile: UserProfile = {
-  id: "1",
-  firstName: "John",
-  lastName: "Doe",
-  email: "john.doe@acmecorp.com",
-  phone: "+91 98765 43210",
-  role: "admin",
-  language: "en",
-  notifications: {
-    email: true,
-    push: true,
-    sms: false,
-    invoiceReminders: true,
-    paymentAlerts: true,
-    lowStockAlerts: true,
-    weeklyReports: false,
-  },
-  createdAt: "2024-01-15T10:00:00Z",
-  lastLogin: "2024-01-20T14:30:00Z",
-};
+import {
+  useUserProfile,
+  useUserProfileMutations,
+} from "@/hooks/useUserSettings";
+import { Spinner } from "@/components/common";
 
 function Toggle({
   checked,
@@ -60,40 +43,89 @@ function Toggle({
 }
 
 export function UserProfilePage(): React.ReactNode {
-  const [profile, setProfile] = useState<UserProfile>(mockUserProfile);
+  const { profile: data, isLoading } = useUserProfile();
+  const { updateUserProfile } = useUserProfileMutations();
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
+  // Sync data to local state
+  useEffect(() => {
+    if (data) {
+      setProfile(data);
+    }
+  }, [data]);
+
   const handleSave = async (): Promise<void> => {
+    if (!profile) return;
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      await updateUserProfile(profile);
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateField = <K extends keyof UserProfile>(
     field: K,
     value: UserProfile[K]
   ): void => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
+    if (!profile) return;
+    setProfile((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
   const updateNotification = (
     field: keyof NotificationPreferences,
     value: boolean
   ): void => {
-    setProfile((prev) => ({
-      ...prev,
-      notifications: { ...prev.notifications, [field]: value },
-    }));
+    if (!profile) return;
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            notifications: { ...prev.notifications, [field]: value },
+          }
+        : null
+    );
   };
 
-  const roleLabels: Record<UserProfile["role"], string> = {
+  const roleLabels: Record<string, string> = {
     owner: "Owner",
     admin: "Administrator",
     manager: "Manager",
     staff: "Staff",
     accountant: "Accountant",
   };
+
+  if (isLoading && !profile) {
+    return (
+      <SettingsLayout
+        title="User Profile"
+        description="Manage your personal account settings"
+      >
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </SettingsLayout>
+    );
+  }
+
+  // Fallback if no profile and not loading (should be handled by creating default in hook, but safeguard)
+  if (!profile) {
+    return (
+      <SettingsLayout
+        title="User Profile"
+        description="Manage your personal account settings"
+      >
+        <div className="text-center py-12">
+          <p>Profile not found.</p>
+        </div>
+      </SettingsLayout>
+    );
+  }
 
   return (
     <SettingsLayout
@@ -132,8 +164,8 @@ export function UserProfilePage(): React.ReactNode {
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white">
-                      {profile.firstName[0]}
-                      {profile.lastName[0]}
+                      {profile.firstName[0] || "U"}
+                      {profile.lastName[0] || ""}
                     </span>
                   )}
                 </div>
@@ -146,7 +178,7 @@ export function UserProfilePage(): React.ReactNode {
                   {profile.firstName} {profile.lastName}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {roleLabels[profile.role]}
+                  {roleLabels[profile.role] || profile.role}
                 </p>
                 <Button
                   variant="ghost"
@@ -187,10 +219,8 @@ export function UserProfilePage(): React.ReactNode {
                 <Input
                   type="email"
                   value={profile.email}
-                  onChange={(e) => {
-                    updateField("email", e.target.value);
-                  }}
-                  className="w-64"
+                  disabled // Email usually can't be changed directly here
+                  className="w-64 bg-slate-50"
                 />
               </SettingsRow>
               <SettingsRow label="Phone Number">
@@ -382,7 +412,7 @@ export function UserProfilePage(): React.ReactNode {
             <div>
               <p className="text-slate-500">Role</p>
               <p className="font-medium text-slate-900">
-                {roleLabels[profile.role]}
+                {roleLabels[profile.role] || profile.role}
               </p>
             </div>
             <div>

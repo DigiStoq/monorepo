@@ -107,12 +107,19 @@ export function useItems(filters?: {
       params.push(searchPattern, searchPattern);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM items ${whereClause} ORDER BY name`,
       params,
     };
-  }, [filters?.categoryId, filters?.type, filters?.isActive, filters?.lowStock, filters?.search]);
+  }, [
+    filters?.categoryId,
+    filters?.type,
+    filters?.isActive,
+    filters?.lowStock,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<ItemRow>(query, params);
 
@@ -153,6 +160,50 @@ interface ItemMutations {
 
 export function useItemMutations(): ItemMutations {
   const db = getPowerSyncDatabase();
+
+  // Helper to add history entry
+  const addItemHistoryEntry = useCallback(
+    async (entry: {
+      itemId: string;
+      action: string;
+      description: string;
+      oldValues?: Record<string, unknown>;
+      newValues?: Record<string, unknown>;
+    }) => {
+      try {
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+
+        // Get user info - use dynamic import to avoid circular dependencies
+        const { useAuthStore } = await import("@/stores/auth-store");
+        const { user } = useAuthStore.getState();
+        const userId = user?.id ?? null;
+        const userName =
+          user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
+
+        await db.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description,
+            old_values, new_values, user_id, user_name, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            entry.itemId,
+            entry.action,
+            entry.description,
+            entry.oldValues ? JSON.stringify(entry.oldValues) : null,
+            entry.newValues ? JSON.stringify(entry.newValues) : null,
+            userId,
+            userName,
+            now,
+          ]
+        );
+      } catch (error) {
+        console.error("[Item History] Failed to add history entry:", error);
+      }
+    },
+    [db]
+  );
 
   const createItem = useCallback(
     async (data: ItemMutationData): Promise<string> => {
@@ -196,9 +247,24 @@ export function useItemMutations(): ItemMutations {
         ]
       );
 
+      // Log history
+      await addItemHistoryEntry({
+        itemId: id,
+        action: "created",
+        description: `Item "${data.name}" created`,
+        newValues: {
+          name: data.name,
+          sku: data.sku,
+          type: data.type,
+          salePrice: data.salePrice,
+          purchasePrice: data.purchasePrice,
+          stockQuantity: data.stockQuantity ?? data.openingStock ?? 0,
+        },
+      });
+
       return id;
     },
-    [db]
+    [db, addItemHistoryEntry]
   );
 
   const updateItem = useCallback(
@@ -290,40 +356,93 @@ export function useItemMutations(): ItemMutations {
       values.push(id);
 
       if (fields.length > 1) {
-        await db.execute(`UPDATE items SET ${fields.join(", ")} WHERE id = ?`, values);
+        await db.execute(
+          `UPDATE items SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
+
+        // Log history for update
+        await addItemHistoryEntry({
+          itemId: id,
+          action: "updated",
+          description: `Item updated`,
+          newValues: data as Record<string, unknown>,
+        });
       }
     },
-    [db]
+    [db, addItemHistoryEntry]
   );
 
   const deleteItem = useCallback(
     async (id: string): Promise<void> => {
+      // Log history before delete
+      await addItemHistoryEntry({
+        itemId: id,
+        action: "deleted",
+        description: `Item deleted`,
+      });
+
       await db.execute(`DELETE FROM items WHERE id = ?`, [id]);
     },
-    [db]
+    [db, addItemHistoryEntry]
   );
 
   const toggleItemActive = useCallback(
     async (id: string, isActive: boolean): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE items SET is_active = ?, updated_at = ? WHERE id = ?`, [
-        isActive ? 1 : 0,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE items SET is_active = ?, updated_at = ? WHERE id = ?`,
+        [isActive ? 1 : 0, now, id]
+      );
+
+      // Log history
+      await addItemHistoryEntry({
+        itemId: id,
+        action: isActive ? "activated" : "deactivated",
+        description: `Item ${isActive ? "activated" : "deactivated"}`,
+        newValues: { isActive },
+      });
     },
-    [db]
+    [db, addItemHistoryEntry]
   );
 
   const adjustStock = useCallback(
     async (id: string, quantity: number): Promise<void> => {
       const now = new Date().toISOString();
+
+      // Get current stock before update
+      const result = await db.execute(
+        `SELECT stock_quantity, name FROM items WHERE id = ?`,
+        [id]
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const oldStock =
+        (
+          result.rows?._array?.[0] as
+            | { stock_quantity: number; name: string }
+            | undefined
+        )?.stock_quantity ?? 0;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const itemName =
+        (result.rows?._array?.[0] as { name: string } | undefined)?.name ??
+        "Unknown";
+      const newStock = oldStock + quantity;
+
       await db.execute(
         `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
         [quantity, now, id]
       );
+
+      // Log history
+      await addItemHistoryEntry({
+        itemId: id,
+        action: "stock_adjusted",
+        description: `Stock adjusted for "${itemName}": ${oldStock} → ${newStock} (${quantity > 0 ? "+" : ""}${quantity})`,
+        oldValues: { stockQuantity: oldStock },
+        newValues: { stockQuantity: newStock, adjustment: quantity },
+      });
     },
-    [db]
+    [db, addItemHistoryEntry]
   );
 
   return {

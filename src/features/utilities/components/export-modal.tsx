@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { isTauri } from "@tauri-apps/api/core";
 import {
   Modal,
   Button,
@@ -92,6 +93,8 @@ export function ExportModal({
   const [isExporting, setIsExporting] = useState(false);
   const [result, setResult] = useState<ExportResult | null>(null);
 
+  const isDesktop = isTauri();
+
   const needsDateRange = [
     "sale-invoices",
     "purchase-invoices",
@@ -156,7 +159,9 @@ export function ExportModal({
                   Export Successful!
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Your file is ready for download
+                  {isDesktop
+                    ? "File saved successfully to your computer"
+                    : "Your file is ready for download"}
                 </p>
               </div>
               <Card className="text-left">
@@ -181,12 +186,20 @@ export function ExportModal({
                   </div>
                 </CardBody>
               </Card>
-              <Button
-                onClick={handleClose}
-                leftIcon={<Download className="h-4 w-4" />}
-              >
-                Download File
-              </Button>
+
+              {isDesktop ? (
+                <Button onClick={handleClose} className="w-full">
+                  Done
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleClose}
+                  leftIcon={<Download className="h-4 w-4" />}
+                  className="w-full"
+                >
+                  Download File
+                </Button>
+              )}
             </>
           ) : (
             <>

@@ -178,6 +178,9 @@ export interface InvoiceSettings {
   lateFeesEnabled: boolean;
   lateFeesPercentage?: number;
   pdfTemplate: PDFTemplateId;
+  taxEnabled: boolean;
+  taxInclusive: boolean;
+  roundTax: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

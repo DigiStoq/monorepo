@@ -11,6 +11,7 @@ import {
 import { Search, Users, AlertTriangle } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { useAgingReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // HELPERS
@@ -65,12 +66,7 @@ export function AgingReport(): React.ReactNode {
     { label: "90+ Days", amount: totals.over90, color: "bg-error" },
   ];
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const maxBucket = Math.max(...agingBuckets.map((b) => b.amount), 1);
 

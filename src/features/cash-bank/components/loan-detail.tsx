@@ -11,6 +11,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Loan, LoanPayment, LoanStatus } from "../types";
 
 // ============================================================================
@@ -51,12 +52,7 @@ export function LoanDetail({
   onDelete,
   onAddPayment,
 }: LoanDetailProps): React.ReactNode {
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);

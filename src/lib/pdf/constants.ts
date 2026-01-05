@@ -8,7 +8,7 @@ import type { PDFTheme, PDFGenerationOptions, PDFTemplateInfo } from "./types";
 export const PDF_THEME: PDFTheme = {
   primaryColor: "#847DE6", // Purple from Med_rep
   headerBgColor: "#847DE6",
-  borderColor: "#847DE6",
+  borderColor: "#000000",
   textColor: "#1e293b", // slate-800
   mutedColor: "#64748b", // slate-500
 };
@@ -33,14 +33,14 @@ export const DEFAULT_MARGINS = {
 
 // Document titles by type
 export const DOCUMENT_TITLES: Record<string, string> = {
-  "sale-invoice": "INVOICE",
+  "sale-invoice": "Bill/ Cash Memo",
   estimate: "ESTIMATE / QUOTATION",
   "purchase-invoice": "PURCHASE INVOICE",
   "credit-note": "CREDIT NOTE",
 };
 
-// Table column widths
-export const ITEMS_TABLE_WIDTHS = [25, "*", 50, 60, 40, 70];
+// Table column widths: #, Item Name, No., MRP, Qty, Rate, Discount, Amount
+export const ITEMS_TABLE_WIDTHS = [18, "*", 50, 55, 40, 55, 45, 60];
 
 // Default PDF generation options
 export const DEFAULT_PDF_OPTIONS: PDFGenerationOptions = {
@@ -94,7 +94,7 @@ export const TEMPLATE_THEMES: Record<string, PDFTheme> = {
   classic: {
     primaryColor: "#847DE6",
     headerBgColor: "#847DE6",
-    borderColor: "#847DE6",
+    borderColor: "#000000",
     textColor: "#1e293b",
     mutedColor: "#64748b",
   },

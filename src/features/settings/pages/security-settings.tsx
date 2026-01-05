@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
 import { Card, CardBody } from "@/components/ui";
 import {
@@ -21,57 +21,11 @@ import {
 } from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { SecuritySettings } from "../types";
-
-// Mock data
-const mockSecuritySettings: SecuritySettings = {
-  twoFactorEnabled: false,
-  sessionTimeout: 30,
-  requirePasswordChange: false,
-  passwordChangeDays: 90,
-  allowedIPs: [],
-  loginHistory: [
-    {
-      id: "1",
-      timestamp: "2024-01-20T14:30:00Z",
-      ipAddress: "192.168.1.100",
-      userAgent: "Chrome 120.0.0.0 on Windows",
-      location: "New York, NY",
-      success: true,
-    },
-    {
-      id: "2",
-      timestamp: "2024-01-19T09:15:00Z",
-      ipAddress: "192.168.1.100",
-      userAgent: "Chrome 120.0.0.0 on Windows",
-      location: "New York, NY",
-      success: true,
-    },
-    {
-      id: "3",
-      timestamp: "2024-01-18T16:45:00Z",
-      ipAddress: "103.45.67.89",
-      userAgent: "Firefox 121.0 on MacOS",
-      location: "Los Angeles, CA",
-      success: false,
-    },
-    {
-      id: "4",
-      timestamp: "2024-01-17T11:00:00Z",
-      ipAddress: "192.168.1.100",
-      userAgent: "Chrome 120.0.0.0 on Windows",
-      location: "Chicago, IL",
-      success: true,
-    },
-    {
-      id: "5",
-      timestamp: "2024-01-16T08:30:00Z",
-      ipAddress: "192.168.1.100",
-      userAgent: "Mobile Safari on iPhone",
-      location: "New York, NY",
-      success: true,
-    },
-  ],
-};
+import {
+  useSecuritySettings,
+  useSecuritySettingsMutations,
+} from "@/hooks/useSecuritySettings";
+import { Spinner } from "@/components/common";
 
 function Toggle({
   checked,
@@ -108,14 +62,28 @@ function Toggle({
 }
 
 export function SecuritySettingsPage(): React.ReactNode {
-  const [settings, setSettings] =
-    useState<SecuritySettings>(mockSecuritySettings);
+  const { settings: data, isLoading } = useSecuritySettings();
+  const { updateSecuritySettings } = useSecuritySettingsMutations();
+
+  const [settings, setSettings] = useState<SecuritySettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    if (data) {
+      setSettings(data);
+    }
+  }, [data]);
+
   const handleSave = async (): Promise<void> => {
+    if (!settings) return;
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      await updateSecuritySettings(settings);
+    } catch (err) {
+      console.error("Error saving security settings:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatDate = (dateString: string): string => {
@@ -131,14 +99,42 @@ export function SecuritySettingsPage(): React.ReactNode {
   };
 
   const getDeviceIcon = (userAgent: string): typeof Monitor => {
+    const ua = userAgent.toLowerCase();
     if (
-      userAgent.toLowerCase().includes("mobile") ||
-      userAgent.toLowerCase().includes("iphone")
+      ua.includes("mobile") ||
+      ua.includes("iphone") ||
+      ua.includes("android")
     ) {
       return Smartphone;
     }
     return Monitor;
   };
+
+  if (isLoading && !settings) {
+    return (
+      <SettingsLayout
+        title="Security Settings"
+        description="Manage your account security and access"
+      >
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </SettingsLayout>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <SettingsLayout
+        title="Security Settings"
+        description="Manage your account security and access"
+      >
+        <div className="text-center py-12">
+          <p>Security settings not found.</p>
+        </div>
+      </SettingsLayout>
+    );
+  }
 
   return (
     <SettingsLayout
@@ -172,7 +168,9 @@ export function SecuritySettingsPage(): React.ReactNode {
               <Toggle
                 checked={settings.twoFactorEnabled}
                 onChange={(v) => {
-                  setSettings((prev) => ({ ...prev, twoFactorEnabled: v }));
+                  setSettings((prev) =>
+                    prev ? { ...prev, twoFactorEnabled: v } : null
+                  );
                 }}
               />
             </SettingsRow>
@@ -204,13 +202,17 @@ export function SecuritySettingsPage(): React.ReactNode {
                       <button
                         key={method.value}
                         onClick={() => {
-                          setSettings((prev) => ({
-                            ...prev,
-                            twoFactorMethod: method.value as
-                              | "app"
-                              | "sms"
-                              | "email",
-                          }));
+                          setSettings((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  twoFactorMethod: method.value as
+                                    | "app"
+                                    | "sms"
+                                    | "email",
+                                }
+                              : null
+                          );
                         }}
                         className={cn(
                           "p-4 rounded-lg border text-left transition-all",
@@ -262,10 +264,14 @@ export function SecuritySettingsPage(): React.ReactNode {
               <select
                 value={settings.sessionTimeout}
                 onChange={(e) => {
-                  setSettings((prev) => ({
-                    ...prev,
-                    sessionTimeout: parseInt(e.target.value),
-                  }));
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          sessionTimeout: parseInt(e.target.value),
+                        }
+                      : null
+                  );
                 }}
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -286,7 +292,7 @@ export function SecuritySettingsPage(): React.ReactNode {
             <div>
               <p className="font-medium text-slate-900">Active Sessions</p>
               <p className="text-sm text-slate-500">
-                You&apos;re currently signed in on 2 devices
+                You&apos;re currently signed in
               </p>
             </div>
             <Button
@@ -313,10 +319,14 @@ export function SecuritySettingsPage(): React.ReactNode {
               <Toggle
                 checked={settings.requirePasswordChange}
                 onChange={(v) => {
-                  setSettings((prev) => ({
-                    ...prev,
-                    requirePasswordChange: v,
-                  }));
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          requirePasswordChange: v,
+                        }
+                      : null
+                  );
                 }}
               />
             </SettingsRow>
@@ -328,10 +338,14 @@ export function SecuritySettingsPage(): React.ReactNode {
                 <select
                   value={settings.passwordChangeDays ?? 90}
                   onChange={(e) => {
-                    setSettings((prev) => ({
-                      ...prev,
-                      passwordChangeDays: parseInt(e.target.value),
-                    }));
+                    setSettings((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            passwordChangeDays: parseInt(e.target.value),
+                          }
+                        : null
+                    );
                   }}
                   className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
@@ -360,10 +374,14 @@ export function SecuritySettingsPage(): React.ReactNode {
               <Toggle
                 checked={(settings.allowedIPs?.length ?? 0) > 0}
                 onChange={(v) => {
-                  setSettings((prev) => ({
-                    ...prev,
-                    allowedIPs: v ? [""] : [],
-                  }));
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          allowedIPs: v ? [""] : [],
+                        }
+                      : null
+                  );
                 }}
               />
             </SettingsRow>
@@ -377,10 +395,16 @@ export function SecuritySettingsPage(): React.ReactNode {
                 <textarea
                   value={settings.allowedIPs?.join("\n") ?? ""}
                   onChange={(e) => {
-                    setSettings((prev) => ({
-                      ...prev,
-                      allowedIPs: e.target.value.split("\n").filter(Boolean),
-                    }));
+                    setSettings((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            allowedIPs: e.target.value
+                              .split("\n")
+                              .filter(Boolean),
+                          }
+                        : null
+                    );
                   }}
                   rows={4}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
@@ -401,59 +425,66 @@ export function SecuritySettingsPage(): React.ReactNode {
           icon={Clock}
         >
           <div className="space-y-3">
-            {settings.loginHistory.map((record) => {
-              const DeviceIcon = getDeviceIcon(record.userAgent);
-              return (
-                <div
-                  key={record.id}
-                  className={cn(
-                    "flex items-center gap-4 p-3 rounded-lg border",
-                    record.success
-                      ? "border-slate-200"
-                      : "border-red-200 bg-red-50"
-                  )}
-                >
+            {settings.loginHistory.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                No login history recorded.
+              </p>
+            ) : (
+              settings.loginHistory.map((record) => {
+                const DeviceIcon = getDeviceIcon(record.userAgent);
+                return (
                   <div
+                    key={record.id}
                     className={cn(
-                      "p-2 rounded-lg",
-                      record.success ? "bg-slate-100" : "bg-red-100"
+                      "flex items-center gap-4 p-3 rounded-lg border",
+                      record.success
+                        ? "border-slate-200"
+                        : "border-red-200 bg-red-50"
                     )}
                   >
-                    <DeviceIcon
+                    <div
                       className={cn(
-                        "h-5 w-5",
-                        record.success ? "text-slate-600" : "text-red-600"
+                        "p-2 rounded-lg",
+                        record.success ? "bg-slate-100" : "bg-red-100"
                       )}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-900">
-                        {record.userAgent.split(" on ")[0]}
-                      </span>
-                      {record.success ? (
-                        <Check className="h-4 w-4 text-success" />
-                      ) : (
-                        <X className="h-4 w-4 text-error" />
-                      )}
+                    >
+                      <DeviceIcon
+                        className={cn(
+                          "h-5 w-5",
+                          record.success ? "text-slate-600" : "text-red-600"
+                        )}
+                      />
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
-                      <span>{formatDate(record.timestamp)}</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {record.location ?? "Unknown"}
-                      </span>
-                      <span className="font-mono">{record.ipAddress}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900">
+                          {record.userAgent.split(" on ")[0] ||
+                            "Unknown Device"}
+                        </span>
+                        {record.success ? (
+                          <Check className="h-4 w-4 text-success" />
+                        ) : (
+                          <X className="h-4 w-4 text-error" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                        <span>{formatDate(record.timestamp)}</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {record.location ?? "Unknown"}
+                        </span>
+                        <span className="font-mono">{record.ipAddress}</span>
+                      </div>
                     </div>
+                    {!record.success && (
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                        Failed
+                      </span>
+                    )}
                   </div>
-                  {!record.success && (
-                    <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">
-                      Failed
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
           <div className="mt-4 pt-4 border-t border-slate-100 text-center">
             <Button variant="ghost" size="sm">

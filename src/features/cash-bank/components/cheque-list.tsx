@@ -19,6 +19,7 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Cheque, ChequeStatus, ChequeType } from "../types";
 
 // ============================================================================
@@ -120,12 +121,7 @@ export function ChequeList({
   }, [filteredCheques]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

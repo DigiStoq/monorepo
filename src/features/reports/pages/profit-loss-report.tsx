@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, DollarSign, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { DateRange } from "../types";
 import { useProfitLossReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -47,12 +48,7 @@ export function ProfitLossReportPage(): React.ReactNode {
   }, [report]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading || !report) {

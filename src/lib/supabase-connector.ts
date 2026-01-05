@@ -16,6 +16,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     endpoint: string;
     token: string;
   } | null> {
+    // Basic online check to avoid hammering when offline
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return null;
+    }
+
+    // Optional: Add a simple debounce or check if we recently failed?
+    // For now, Supabase getSession is local and fast, but we log less.
+
     const {
       data: { session },
     } = await this.client.auth.getSession();

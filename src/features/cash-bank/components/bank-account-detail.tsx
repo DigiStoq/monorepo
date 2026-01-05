@@ -15,6 +15,7 @@ import {
   Landmark,
   MoreHorizontal,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { BankAccount, BankAccountType, BankTransaction } from "../types";
 
 // ============================================================================
@@ -83,12 +84,7 @@ export function BankAccountDetail({
   const isPositive = account.currentBalance >= 0;
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

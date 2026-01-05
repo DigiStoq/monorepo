@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useStockSummaryReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -91,12 +92,8 @@ export function StockSummaryReport(): React.ReactNode {
   }, [filteredItems]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  // Format currency
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading) {

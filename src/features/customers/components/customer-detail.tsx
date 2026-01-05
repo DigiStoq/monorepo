@@ -21,6 +21,7 @@ import {
   ArrowUpRight,
   Plus,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Customer, CustomerTransaction } from "../types";
 
 // ============================================================================
@@ -78,12 +79,7 @@ export function CustomerDetail({
   onAddTransaction,
   className,
 }: CustomerDetailProps): React.ReactNode {
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(Math.abs(value));
+  const { formatCurrency } = useCurrency();
 
   // Transaction table columns
   const columns: Column<CustomerTransaction>[] = [

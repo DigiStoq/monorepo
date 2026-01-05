@@ -22,6 +22,7 @@ import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { Estimate, EstimateFormData, EstimateStatus } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { CheckCircle, Clock, DollarSign, FileText } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function EstimatesPage(): React.ReactNode {
   const navigate = useNavigate();
@@ -145,12 +146,7 @@ export function EstimatesPage(): React.ReactNode {
     );
   }, [filteredEstimates]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Fetch full estimate with items when one is selected
   const { estimate: selectedEstimateData, items: selectedEstimateItems } =

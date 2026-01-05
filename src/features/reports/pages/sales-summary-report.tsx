@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { DateRange } from "../types";
 import { useSalesSummaryReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -28,12 +29,8 @@ export function SalesSummaryReport(): React.ReactNode {
   const { summary: data, isLoading } = useSalesSummaryReport(dateRange);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  // Format currency
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading) {

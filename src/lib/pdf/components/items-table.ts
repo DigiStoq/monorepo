@@ -4,12 +4,17 @@
 
 import type { Content, TableCell } from "pdfmake/interfaces";
 import type { PDFLineItem } from "../types";
-import { PDF_THEME, LIGHT_PURPLE, FONT_SIZES, ITEMS_TABLE_WIDTHS } from "../constants";
+import {
+  PDF_THEME,
+  LIGHT_PURPLE,
+  FONT_SIZES,
+  ITEMS_TABLE_WIDTHS,
+} from "../constants";
 import { formatCurrency, formatPercent } from "../utils/format-helpers";
 
 /**
  * Build the items table
- * Columns: #, Item Name, Qty, Rate, Disc%, Amount
+ * Columns: #, Item Name, No., MRP, Qty, Rate, Discount, Amount
  */
 export function buildItemsTable(
   items: PDFLineItem[],
@@ -18,11 +23,10 @@ export function buildItemsTable(
 ): Content {
   const tableBody: TableCell[][] = [];
 
-  // Header row
+  // Header row with purple background
   tableBody.push([
     {
       text: "#",
-      style: "tableHeader",
       alignment: "center",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
@@ -31,8 +35,7 @@ export function buildItemsTable(
       margin: [0, 6, 0, 6],
     },
     {
-      text: "Item Name",
-      style: "tableHeader",
+      text: "Item name",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
       bold: true,
@@ -40,9 +43,26 @@ export function buildItemsTable(
       margin: [0, 6, 0, 6],
     },
     {
-      text: "Qty",
-      style: "tableHeader",
+      text: "No.",
+      alignment: "center",
+      fillColor: PDF_THEME.headerBgColor,
+      color: "#ffffff",
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      margin: [0, 6, 0, 6],
+    },
+    {
+      text: "MRP",
       alignment: "right",
+      fillColor: PDF_THEME.headerBgColor,
+      color: "#ffffff",
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      margin: [0, 6, 0, 6],
+    },
+    {
+      text: "Quantity",
+      alignment: "center",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
       bold: true,
@@ -51,7 +71,6 @@ export function buildItemsTable(
     },
     {
       text: "Rate",
-      style: "tableHeader",
       alignment: "right",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
@@ -60,9 +79,8 @@ export function buildItemsTable(
       margin: [0, 6, 0, 6],
     },
     {
-      text: "Disc",
-      style: "tableHeader",
-      alignment: "right",
+      text: "Discount",
+      alignment: "center",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
       bold: true,
@@ -71,7 +89,6 @@ export function buildItemsTable(
     },
     {
       text: "Amount",
-      style: "tableHeader",
       alignment: "right",
       fillColor: PDF_THEME.headerBgColor,
       color: "#ffffff",
@@ -82,23 +99,17 @@ export function buildItemsTable(
   ]);
 
   // Data rows
+  let totalQty = 0;
+  let totalMRP = 0;
+  let totalAmount = 0;
+
   items.forEach((item, index) => {
     const isAlternate = index % 2 === 1;
     const bgColor = isAlternate ? LIGHT_PURPLE : undefined;
 
-    const itemNameContent: Content = item.description
-      ? {
-          stack: [
-            { text: item.name, fontSize: FONT_SIZES.small, bold: true },
-            {
-              text: item.description,
-              fontSize: FONT_SIZES.tiny,
-              color: PDF_THEME.mutedColor,
-              margin: [0, 2, 0, 0] as [number, number, number, number],
-            },
-          ],
-        }
-      : { text: item.name, fontSize: FONT_SIZES.small };
+    totalQty += item.quantity;
+    totalMRP += (item.mrp ?? item.unitPrice) * item.quantity;
+    totalAmount += item.amount;
 
     const row: TableCell[] = [
       {
@@ -109,13 +120,28 @@ export function buildItemsTable(
         margin: [0, 4, 0, 4] as [number, number, number, number],
       },
       {
-        ...itemNameContent,
+        text: item.name,
+        fontSize: FONT_SIZES.small,
         fillColor: bgColor,
         margin: [0, 4, 0, 4] as [number, number, number, number],
-      } as TableCell,
+      },
       {
-        text: `${item.quantity} ${item.unit}`,
+        text: item.batchNumber ?? "",
+        alignment: "center" as const,
+        fontSize: FONT_SIZES.small,
+        fillColor: bgColor,
+        margin: [0, 4, 0, 4] as [number, number, number, number],
+      },
+      {
+        text: item.mrp ? formatCurrency(item.mrp, currency, locale) : "",
         alignment: "right" as const,
+        fontSize: FONT_SIZES.small,
+        fillColor: bgColor,
+        margin: [0, 4, 0, 4] as [number, number, number, number],
+      },
+      {
+        text: item.quantity.toString(),
+        alignment: "center" as const,
         fontSize: FONT_SIZES.small,
         fillColor: bgColor,
         margin: [0, 4, 0, 4] as [number, number, number, number],
@@ -129,7 +155,7 @@ export function buildItemsTable(
       },
       {
         text: formatPercent(item.discountPercent ?? 0),
-        alignment: "right" as const,
+        alignment: "center" as const,
         fontSize: FONT_SIZES.small,
         fillColor: bgColor,
         margin: [0, 4, 0, 4] as [number, number, number, number],
@@ -138,7 +164,6 @@ export function buildItemsTable(
         text: formatCurrency(item.amount, currency, locale),
         alignment: "right" as const,
         fontSize: FONT_SIZES.small,
-        bold: true,
         fillColor: bgColor,
         margin: [0, 4, 0, 4] as [number, number, number, number],
       },
@@ -147,6 +172,65 @@ export function buildItemsTable(
     tableBody.push(row);
   });
 
+  // Total row
+  tableBody.push([
+    {
+      text: "",
+      fillColor: LIGHT_PURPLE,
+      border: [true, true, false, true],
+    },
+    {
+      text: "Total",
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      fillColor: LIGHT_PURPLE,
+      margin: [0, 6, 0, 6] as [number, number, number, number],
+      border: [false, true, false, true],
+    },
+    {
+      text: "",
+      fillColor: LIGHT_PURPLE,
+      border: [false, true, false, true],
+    },
+    {
+      text: "",
+      fillColor: LIGHT_PURPLE,
+      border: [false, true, false, true],
+    },
+    {
+      text: totalQty.toString(),
+      alignment: "center" as const,
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      fillColor: LIGHT_PURPLE,
+      margin: [0, 6, 0, 6] as [number, number, number, number],
+      border: [false, true, false, true],
+    },
+    {
+      text: "",
+      fillColor: LIGHT_PURPLE,
+      border: [false, true, false, true],
+    },
+    {
+      text: formatCurrency(totalMRP, currency, locale),
+      alignment: "right" as const,
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      fillColor: LIGHT_PURPLE,
+      margin: [0, 6, 0, 6] as [number, number, number, number],
+      border: [false, true, false, true],
+    },
+    {
+      text: formatCurrency(totalAmount, currency, locale),
+      alignment: "right" as const,
+      bold: true,
+      fontSize: FONT_SIZES.small,
+      fillColor: LIGHT_PURPLE,
+      margin: [0, 6, 0, 6] as [number, number, number, number],
+      border: [false, true, true, true],
+    },
+  ]);
+
   return {
     table: {
       headerRows: 1,
@@ -154,9 +238,7 @@ export function buildItemsTable(
       body: tableBody,
     },
     layout: {
-      hLineWidth: (i: number, node: { table: { body: TableCell[][] } }) => {
-        return i === 0 || i === 1 || i === node.table.body.length ? 1 : 0.5;
-      },
+      hLineWidth: () => 0.5,
       vLineWidth: () => 0.5,
       hLineColor: () => PDF_THEME.borderColor,
       vLineColor: () => PDF_THEME.borderColor,
@@ -165,6 +247,6 @@ export function buildItemsTable(
       paddingTop: () => 0,
       paddingBottom: () => 0,
     },
-    margin: [0, 0, 0, 15],
+    margin: [0, 0, 0, 0],
   };
 }

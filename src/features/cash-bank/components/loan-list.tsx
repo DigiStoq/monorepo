@@ -9,6 +9,7 @@ import {
 } from "@/components/ui";
 import { Search, Landmark, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Loan, LoanFilters, LoanType, LoanStatus } from "../types";
 
 // ============================================================================
@@ -91,12 +92,7 @@ export function LoanList({
     return { taken, given, net: given - taken };
   }, [filteredLoans]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   return (
     <div className="space-y-4">

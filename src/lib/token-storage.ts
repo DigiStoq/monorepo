@@ -23,7 +23,13 @@ const STORE_NAME = "auth.json";
 const SESSION_KEY = "supabase_session";
 
 async function getStore(): Promise<Store> {
-  store ??= await load(STORE_NAME);
+  if (store) return store;
+  try {
+    store = await load(STORE_NAME);
+  } catch (e) {
+    console.error("[token-storage] Failed to load store:", e);
+    throw e;
+  }
   return store;
 }
 

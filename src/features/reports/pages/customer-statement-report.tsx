@@ -8,6 +8,7 @@ import type {
   CustomerStatement,
   CustomerLedgerEntry,
 } from "../types";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // MOCK DATA
@@ -182,12 +183,7 @@ export function CustomerStatementReport(): React.ReactNode {
   const statement = mockStatement;
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

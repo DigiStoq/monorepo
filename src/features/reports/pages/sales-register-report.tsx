@@ -12,6 +12,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { useSalesRegisterReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // HELPERS
@@ -77,12 +78,7 @@ export function SalesRegisterReport(): React.ReactNode {
     );
   }, [filteredData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);

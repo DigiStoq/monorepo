@@ -54,6 +54,9 @@ interface FlatInvoiceSettings {
   bankBranchName?: string;
   bankSwiftCode?: string;
   pdfTemplate?: PDFTemplateId;
+  taxEnabled?: number;
+  taxInclusive?: number;
+  roundTax?: number;
 }
 
 // Convert flat DB structure to nested UI structure
@@ -77,6 +80,10 @@ function flatToNested(flat: FlatInvoiceSettings): InvoiceSettings {
     dueDateDays: flat.dueDateDays,
     lateFeesEnabled: flat.lateFeesEnabled,
     pdfTemplate: flat.pdfTemplate ?? "classic",
+    // These defaults should match database defaults
+    taxEnabled: flat.taxEnabled !== 0,
+    taxInclusive: flat.taxInclusive === 1,
+    roundTax: flat.roundTax !== 0,
   };
 
   if (flat.id) result.id = flat.id;
@@ -113,6 +120,9 @@ function nestedToFlatUpdate(
     bankBranchName: nested.bankDetails?.branchName,
     bankSwiftCode: nested.bankDetails?.swiftCode,
     pdfTemplate: nested.pdfTemplate,
+    taxEnabled: nested.taxEnabled ? 1 : 0,
+    taxInclusive: nested.taxInclusive ? 1 : 0,
+    roundTax: nested.roundTax ? 1 : 0,
   };
 }
 
@@ -122,7 +132,7 @@ const defaultInvoiceSettings: InvoiceSettings = {
   nextNumber: 1001,
   padding: 4,
   termsAndConditions:
-    "1. Payment is due within 30 days.\n2. All sales are final.\n3. Subject to state jurisdiction.",
+    "1. Payment is due within 30 days.\n2. All sales are final.\n3. Subject to the jurisdiction of {{COMPANY_NAME}} courts.",
   notes: "Thank you for your business!",
   showPaymentQR: false,
   showBankDetails: true,
@@ -138,6 +148,9 @@ const defaultInvoiceSettings: InvoiceSettings = {
   lateFeesEnabled: false,
   lateFeesPercentage: 2,
   pdfTemplate: "classic",
+  taxEnabled: true,
+  taxInclusive: false,
+  roundTax: true,
 };
 
 const defaultTaxSettings: TaxSettings = {
@@ -204,6 +217,15 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
     if (dbInvoiceSettings && !hasInitializedInvoice.current) {
       const flat = dbInvoiceSettings as unknown as FlatInvoiceSettings;
       setInvoiceSettings(flatToNested(flat));
+
+      // Also sync tax settings flags
+      setTaxSettings((prev) => ({
+        ...prev,
+        taxEnabled: dbInvoiceSettings.taxEnabled,
+        taxInclusive: dbInvoiceSettings.taxInclusive,
+        roundTax: dbInvoiceSettings.roundTax,
+      }));
+
       hasInitializedInvoice.current = true;
     }
   }, [dbInvoiceSettings]);
@@ -217,6 +239,8 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
           ...r,
           type: r.type,
         })),
+        // Calculate defaultTaxRate for UI display (though it's derived from isDefault)
+        defaultTaxRate: dbTaxRates.find((r) => r.isDefault)?.rate ?? 0,
       }));
       hasInitializedTax.current = true;
     }
@@ -232,7 +256,16 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
     try {
       // Save invoice settings to database
       const flatData = nestedToFlatUpdate(invoiceSettings);
-      await updateInvoiceSettings(flatData);
+
+      // Include tax settings
+      const updatePayload = {
+        ...flatData,
+        taxEnabled: taxSettings.taxEnabled,
+        taxInclusive: taxSettings.taxInclusive,
+        roundTax: taxSettings.roundTax,
+      };
+
+      await updateInvoiceSettings(updatePayload);
     } catch (error) {
       console.error("Failed to save invoice settings:", error);
     }

@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { MetricCard } from "@/components/ui";
 import { MetricCardSkeleton } from "@/components/common";
 import { TrendingUp, TrendingDown, ShoppingCart, Package } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -33,6 +34,8 @@ export function MetricCards({
   isLoading,
   className,
 }: MetricCardsProps): React.ReactNode {
+  const { formatCurrency } = useCurrency();
+
   if (isLoading || !metrics) {
     return (
       <div
@@ -47,14 +50,6 @@ export function MetricCards({
       </div>
     );
   }
-
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   return (
     <div

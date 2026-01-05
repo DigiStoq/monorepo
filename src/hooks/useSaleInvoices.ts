@@ -25,6 +25,9 @@ interface SaleInvoiceRow {
   amount_due: number;
   notes: string | null;
   terms: string | null;
+  transport_name: string | null;
+  delivery_date: string | null;
+  delivery_location: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,9 +38,11 @@ interface SaleInvoiceItemRow {
   item_id: string | null;
   item_name: string;
   description: string | null;
+  batch_number: string | null;
   quantity: number;
   unit: string | null;
   unit_price: number;
+  mrp: number | null;
   discount_percent: number;
   tax_percent: number;
   amount: number;
@@ -66,6 +71,9 @@ function mapRowToSaleInvoice(row: SaleInvoiceRow): SaleInvoice {
   // Add optional fields only if they have values
   if (row.notes) invoice.notes = row.notes;
   if (row.terms) invoice.terms = row.terms;
+  if (row.transport_name) invoice.transportName = row.transport_name;
+  if (row.delivery_date) invoice.deliveryDate = row.delivery_date;
+  if (row.delivery_location) invoice.deliveryLocation = row.delivery_location;
 
   return invoice;
 }
@@ -85,6 +93,8 @@ function mapRowToSaleInvoiceItem(row: SaleInvoiceItemRow): SaleInvoiceItem {
 
   // Add optional fields only if they have values
   if (row.description) item.description = row.description;
+  if (row.batch_number) item.batchNumber = row.batch_number;
+  if (row.mrp !== null) item.mrp = row.mrp;
 
   return item;
 }
@@ -252,8 +262,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         `INSERT INTO sale_invoices (
           id, invoice_number, customer_id, customer_name, date, due_date, status,
           subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-          notes, terms, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          notes, terms, transport_name, delivery_date, delivery_location, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.invoiceNumber,
@@ -269,7 +279,11 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           0, // amount_paid
           total, // amount_due
           data.notes ?? null,
+          data.notes ?? null,
           data.terms ?? null,
+          data.transportName ?? null,
+          data.deliveryDate ?? null,
+          data.deliveryLocation ?? null,
           now,
           now,
         ]
@@ -280,18 +294,20 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         const itemId = crypto.randomUUID();
         await db.execute(
           `INSERT INTO sale_invoice_items (
-            id, invoice_id, item_id, item_name, description, quantity, unit,
-            unit_price, discount_percent, tax_percent, amount
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            id, invoice_id, item_id, item_name, description, batch_number, quantity, unit,
+            unit_price, mrp, discount_percent, tax_percent, amount
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             id,
             item.itemId,
             item.itemName,
             item.description ?? null,
+            item.batchNumber ?? null,
             item.quantity,
             item.unit,
             item.unitPrice,
+            item.mrp ?? null,
             item.discountPercent ?? 0,
             item.taxPercent ?? 0,
             item.amount,
@@ -352,7 +368,9 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         `UPDATE sale_invoices SET
           customer_id = ?, customer_name = ?, date = ?, due_date = ?,
           subtotal = ?, tax_amount = ?, discount_amount = ?, total = ?,
-          amount_due = ?, notes = ?, terms = ?, updated_at = ?
+          amount_due = ?, notes = ?, terms = ?, 
+          transport_name = ?, delivery_date = ?, delivery_location = ?,
+          updated_at = ?
         WHERE id = ?`,
         [
           data.customerId,
@@ -365,7 +383,11 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           total,
           total - (oldInvoice?.amountPaid ?? 0),
           data.notes ?? null,
+          data.notes ?? null,
           data.terms ?? null,
+          data.transportName ?? null,
+          data.deliveryDate ?? null,
+          data.deliveryLocation ?? null,
           now,
           id,
         ]
@@ -380,18 +402,20 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
         const itemId = crypto.randomUUID();
         await db.execute(
           `INSERT INTO sale_invoice_items (
-            id, invoice_id, item_id, item_name, description, quantity, unit,
-            unit_price, discount_percent, tax_percent, amount
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            id, invoice_id, item_id, item_name, description, batch_number, quantity, unit,
+            unit_price, mrp, discount_percent, tax_percent, amount
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             itemId,
             id,
             item.itemId,
             item.itemName,
             item.description ?? null,
+            item.batchNumber ?? null,
             item.quantity,
             item.unit,
             item.unitPrice,
+            item.mrp ?? null,
             item.discountPercent ?? 0,
             item.taxPercent ?? 0,
             item.amount,

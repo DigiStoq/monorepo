@@ -18,15 +18,20 @@ import {
 } from "./document-builders";
 import { buildModernDocument, buildMinimalDocument } from "./templates";
 
+// Tauri imports
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { open } from "@tauri-apps/plugin-shell";
+import { tempDir } from "@tauri-apps/api/path";
+import { join } from "@tauri-apps/api/path";
+
 // Initialize pdfmake with virtual file system fonts
 void (async () => {
   try {
     const pdfFonts = await import("pdfmake/build/vfs_fonts");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pdfMake.vfs =
-      (pdfFonts as any).pdfMake?.vfs ??
-      (pdfFonts as any).default?.pdfMake?.vfs ??
-      pdfFonts;
+    const vfs = pdfFonts as any;
+    pdfMake.vfs = vfs.pdfMake?.vfs ?? vfs.default?.pdfMake?.vfs ?? pdfFonts;
   } catch (e) {
     console.warn("Failed to load pdfmake fonts:", e);
   }
@@ -40,6 +45,13 @@ const fonts: TFontDictionary = {
     italics: "Roboto-Italic.ttf",
     bolditalics: "Roboto-MediumItalic.ttf",
   },
+};
+
+/**
+ * Check if running in Tauri environment
+ */
+const isTauri = (): boolean => {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 };
 
 /**
@@ -96,28 +108,97 @@ export class PDFGenerator {
   /**
    * Download PDF to user's device
    */
-  download(data: PDFInvoiceData, filename?: string): void {
-    const docDefinition = this.generateDocument(data);
+  async download(data: PDFInvoiceData, filename?: string): Promise<void> {
     const defaultFilename = `${data.documentNumber}.pdf`;
-    pdfMake
-      .createPdf(docDefinition, undefined, fonts)
-      .download(filename ?? defaultFilename);
+    const finalFilename = filename ?? defaultFilename;
+
+    if (isTauri()) {
+      try {
+        // 1. Generate PDF buffer
+        const buffer = await this.getBuffer(data);
+
+        // 2. Open Save Dialog
+        const filePath = await save({
+          defaultPath: finalFilename,
+          filters: [
+            {
+              name: "PDF Files",
+              extensions: ["pdf"],
+            },
+          ],
+        });
+
+        if (!filePath) return; // User cancelled
+
+        // 3. Write file
+        // Convert Buffer to Uint8Array for Tauri fs
+        const uint8Array = new Uint8Array(buffer);
+        await writeFile(filePath, uint8Array);
+      } catch (err) {
+        console.error("Failed to save PDF in desktop mode:", err);
+        // Fallback to browser download if something fails
+        this.downloadBrowser(data, finalFilename);
+      }
+    } else {
+      this.downloadBrowser(data, finalFilename);
+    }
+  }
+
+  private downloadBrowser(data: PDFInvoiceData, filename: string): void {
+    const docDefinition = this.generateDocument(data);
+    pdfMake.createPdf(docDefinition, undefined, fonts).download(filename);
   }
 
   /**
-   * Open PDF in new browser tab
+   * Open PDF in new browser tab or system viewer
    */
-  open(data: PDFInvoiceData): void {
-    const docDefinition = this.generateDocument(data);
-    pdfMake.createPdf(docDefinition, undefined, fonts).open();
+  async open(data: PDFInvoiceData): Promise<void> {
+    if (isTauri()) {
+      await this.print(data);
+    } else {
+      const docDefinition = this.generateDocument(data);
+      pdfMake.createPdf(docDefinition, undefined, fonts).open();
+    }
   }
 
   /**
    * Print PDF directly
    */
-  print(data: PDFInvoiceData): void {
-    const docDefinition = this.generateDocument(data);
-    pdfMake.createPdf(docDefinition, undefined, fonts).print();
+  async print(data: PDFInvoiceData): Promise<void> {
+    if (isTauri()) {
+      try {
+        // 1. Generate PDF buffer
+        const buffer = await this.getBuffer(data);
+
+        // 2. Save to temp location
+        const tempDirPath = await tempDir();
+        const filename = `document-${Date.now()}.pdf`;
+
+        const uint8Array = new Uint8Array(buffer);
+        // Use full path for writing if we can resolve it, or BaseDirectory.Temp?
+        // writeBinaryFile with BaseDirectory.Temp is relative to temp.
+        // shell.open needs absolute path.
+        // Best approach:
+
+        // Resolve path manually
+        const fullPath = await join(tempDirPath, filename);
+
+        // Write using absolute path (BaseDirectory not needed if path is absolute)
+        // Note: writeFile(path, contents, options?)
+        await writeFile(fullPath, uint8Array);
+
+        // 3. Open with system viewer
+        await open(fullPath);
+      } catch (err) {
+        console.error("Failed to print PDF in desktop mode:", err);
+        // Fallback
+        const docDefinition = this.generateDocument(data);
+        pdfMake.createPdf(docDefinition, undefined, fonts).print();
+      }
+    } else {
+      const docDefinition = this.generateDocument(data);
+      pdfMake.createPdf(docDefinition, undefined, fonts).print();
+    }
   }
 
   /**

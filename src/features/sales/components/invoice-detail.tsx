@@ -34,6 +34,7 @@ import {
   useInvoiceHistory,
   type InvoiceHistoryAction,
 } from "@/hooks/useInvoiceHistory";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { SaleInvoice, SaleInvoiceItem, InvoiceStatus } from "../types";
 
 // ============================================================================
@@ -132,12 +133,7 @@ export function InvoiceDetail({
     "sale"
   );
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
@@ -170,6 +166,17 @@ export function InvoiceDetail({
       ),
     },
     {
+      key: "batchNumber",
+      header: "Batch No.",
+      cell: (row) => row.batchNumber ?? "-",
+    },
+    {
+      key: "mrp",
+      header: "MRP",
+      align: "right",
+      cell: (row) => (row.mrp ? formatCurrency(row.mrp) : "-"),
+    },
+    {
       key: "quantity",
       header: "Qty",
       align: "right",
@@ -181,7 +188,7 @@ export function InvoiceDetail({
     },
     {
       key: "price",
-      header: "Price",
+      header: "Rate",
       align: "right",
       cell: (row) => formatCurrency(row.unitPrice),
     },

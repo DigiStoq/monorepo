@@ -18,6 +18,7 @@ import type {
 } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function CustomersPage(): React.ReactNode {
   const navigate = useNavigate();
@@ -132,12 +133,7 @@ export function CustomersPage(): React.ReactNode {
     );
   }, [filteredCustomers]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Update selected customer when data changes
   const currentSelectedCustomer = useMemo(() => {

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { PaymentInFormData, PaymentMode, SaleInvoice } from "../types";
 import type { Customer } from "@/features/customers";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -103,12 +104,7 @@ export function PaymentInForm({
   const selectedInvoice = invoices.find((inv) => inv.id === invoiceId);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {

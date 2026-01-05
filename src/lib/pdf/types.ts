@@ -56,9 +56,11 @@ export interface PDFLineItem {
   index: number;
   name: string;
   description?: string;
+  batchNumber?: string; // Batch/Product number (No. column)
   quantity: number;
   unit: string;
   unitPrice: number;
+  mrp?: number; // Maximum Retail Price
   discountPercent?: number;
   taxPercent?: number;
   amount: number;
@@ -90,6 +92,9 @@ export interface PDFInvoiceData {
   // Additional
   notes?: string;
   terms?: string;
+  transportName?: string;
+  deliveryDate?: string;
+  deliveryLocation?: string;
 
   // For credit notes
   originalInvoiceNumber?: string;

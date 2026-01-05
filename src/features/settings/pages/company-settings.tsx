@@ -19,6 +19,7 @@ import {
   useCompanySettings,
   useCompanySettingsMutations,
 } from "@/hooks/useSettings";
+import { SUPPORTED_CURRENCIES } from "@/hooks/useCurrency";
 import type { CompanySettings } from "../types";
 
 // Flat type matching what the database returns
@@ -451,10 +452,11 @@ export function CompanySettingsPage(): React.ReactNode {
                 }}
                 className="w-40 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="USD">USD ($)</option>
-                <option value="INR">INR (₹)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} - {c.name} ({c.symbol})
+                  </option>
+                ))}
               </select>
             </SettingsRow>
             <SettingsRow

@@ -12,6 +12,7 @@ import {
   Banknote,
   CreditCard,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { PaymentOut, PaymentOutMode } from "../types";
 
 // ============================================================================
@@ -80,12 +81,7 @@ export function PaymentOutDetail({
   className,
 }: PaymentOutDetailProps): React.ReactNode {
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

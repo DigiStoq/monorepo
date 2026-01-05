@@ -61,12 +61,15 @@ export function DashboardPage(): React.ReactNode {
 
       {/* Charts and Actions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <QuickActions
+          onAction={handleQuickAction}
+          className="lg:col-span-1 lg:order-last"
+        />
         <SalesChart
           data={chartData}
           isLoading={chartLoading}
-          className="lg:col-span-2"
+          className="lg:col-span-2 lg:order-first"
         />
-        <QuickActions onAction={handleQuickAction} />
       </div>
 
       {/* Recent Transactions */}

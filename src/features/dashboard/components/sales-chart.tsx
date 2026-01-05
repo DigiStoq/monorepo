@@ -11,7 +11,8 @@ import {
 } from "recharts";
 import { cn } from "@/lib/cn";
 import { Card, CardHeader, CardBody } from "@/components/ui";
-import { CardSkeleton } from "@/components/common";
+
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -48,14 +49,9 @@ function CustomTooltip({
   payload?: TooltipPayloadItem[];
   label?: string;
 }): React.ReactNode {
-  if (!active || !payload?.length) return null;
+  const { formatCurrency } = useCurrency();
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  if (!active || !payload?.length) return null;
 
   return (
     <div className="bg-white rounded-lg shadow-elevated border border-slate-200 p-3">
@@ -82,10 +78,12 @@ function CustomTooltip({
 
 export function SalesChart({
   data,
-  isLoading,
+  isLoading: _isLoading,
   className,
 }: SalesChartProps): React.ReactNode {
   // Generate mock data if not provided
+  const isMockData = !data;
+
   const chartData = useMemo(() => {
     if (data) return data;
 
@@ -109,24 +107,40 @@ export function SalesChart({
     return mockData;
   }, [data]);
 
-  if (isLoading) {
-    return <CardSkeleton className={className} bodyLines={8} />;
-  }
-
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader title="Sales & Purchases" subtitle="Last 7 days trend" />
+    <Card className={cn("overflow-hidden relative", className)}>
+      <CardHeader
+        title="Sales & Purchases"
+        subtitle="Last 7 days trend"
+        action={
+          isMockData && (
+            <div className="text-xs font-medium px-2 py-1 bg-warning/10 text-warning rounded-full border border-warning/20">
+              Coming Soon
+            </div>
+          )
+        }
+      />
       <CardBody className="pt-0">
-        <div className="h-72">
+        <div className="h-72 relative">
+          {/* Overlay for Mock Data context if needed, but the header badge is subtle enough */}
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
+              {/* Patterns/Gradients */}
               <defs>
                 <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  <stop
+                    offset="5%"
+                    stopColor={isMockData ? "#94a3b8" : "#0d9488"}
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={isMockData ? "#94a3b8" : "#0d9488"}
+                    stopOpacity={0}
+                  />
                 </linearGradient>
                 <linearGradient
                   id="purchasesGradient"
@@ -135,8 +149,16 @@ export function SalesChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  <stop
+                    offset="5%"
+                    stopColor={isMockData ? "#cbd5e1" : "#3b82f6"}
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={isMockData ? "#cbd5e1" : "#3b82f6"}
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -158,7 +180,10 @@ export function SalesChart({
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                 dx={-10}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "transparent" }}
+              />
               <Legend
                 wrapperStyle={{ paddingTop: 20 }}
                 iconType="circle"
@@ -168,7 +193,7 @@ export function SalesChart({
                 type="monotone"
                 dataKey="sales"
                 name="Sales"
-                stroke="#0d9488"
+                stroke={isMockData ? "#94a3b8" : "#0d9488"} // Gray out if mock
                 strokeWidth={2}
                 fill="url(#salesGradient)"
               />
@@ -176,7 +201,7 @@ export function SalesChart({
                 type="monotone"
                 dataKey="purchases"
                 name="Purchases"
-                stroke="#3b82f6"
+                stroke={isMockData ? "#cbd5e1" : "#3b82f6"} // Gray out if mock
                 strokeWidth={2}
                 fill="url(#purchasesGradient)"
               />

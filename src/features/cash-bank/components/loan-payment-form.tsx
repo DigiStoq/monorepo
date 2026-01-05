@@ -6,6 +6,7 @@ import {
   Textarea,
   type SelectOption,
 } from "@/components/ui";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { LoanPaymentFormData } from "../types";
 
 // ============================================================================
@@ -101,12 +102,7 @@ export function LoanPaymentForm({
     }
   };
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

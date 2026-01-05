@@ -12,6 +12,7 @@ import {
   AlertCircle,
   ArrowRightCircle,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Estimate, EstimateStatus } from "../types";
 
 // ============================================================================
@@ -63,12 +64,7 @@ function EstimateCard({
   const status = statusConfig[estimate.status];
   const StatusIcon = status.icon;
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {

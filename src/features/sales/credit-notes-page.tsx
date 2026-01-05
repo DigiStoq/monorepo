@@ -17,6 +17,7 @@ import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { CreditNote, CreditNoteReason } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { FileText, RotateCcw, Percent } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function CreditNotesPage(): React.ReactNode {
   // Data from PowerSync
@@ -126,12 +127,7 @@ export function CreditNotesPage(): React.ReactNode {
     );
   }, [filteredCreditNotes]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Update selected credit note when data changes
   const currentSelectedCreditNote = useMemo(() => {

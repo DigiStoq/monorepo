@@ -12,6 +12,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { useItemProfitabilityReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -74,12 +75,7 @@ export function ItemProfitabilityReport(): React.ReactNode {
     };
   }, [processedData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const handleSort = (column: "profit" | "margin" | "revenue"): void => {
     if (sortBy === column) {

@@ -33,6 +33,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
       hideSidebar = false,
       fixedHeader = true,
       className,
+      sidebarCollapsed: _sidebarCollapsed,
       ...props
     },
     ref

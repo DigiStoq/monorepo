@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import { Plus, Package, AlertTriangle, Layers } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Item, Category } from "../types";
 
 // ============================================================================
@@ -32,12 +33,7 @@ function ItemCard({ item, onClick }: ItemCardProps): React.ReactNode {
     item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   return (
     <button

@@ -12,6 +12,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { useCashFlowReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -28,12 +29,7 @@ export function CashFlowReportPage(): React.ReactNode {
   // Fetch data from PowerSync
   const { report, isLoading } = useCashFlowReport(dateRange);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading || !report) {

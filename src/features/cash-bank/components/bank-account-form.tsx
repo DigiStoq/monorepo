@@ -11,6 +11,7 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { Building2, Hash, CreditCard, Wallet } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { BankAccountFormData, BankAccountType } from "../types";
 
 // ============================================================================
@@ -263,12 +264,7 @@ export function BankAccountForm({
   }, [accountType, accountNumber]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {

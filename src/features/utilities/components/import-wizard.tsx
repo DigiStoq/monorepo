@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { isTauri } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
+import { parseCSV } from "@/lib/csv-parser";
 import {
   Modal,
   Button,
@@ -99,85 +103,21 @@ export function ImportWizard({
 
   const targetFields = entityType === "customers" ? customerFields : itemFields;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const uploadedFile = e.target.files?.[0];
-    if (!uploadedFile) return;
+  // Helper to process file content (Text)
+  const processFileContent = (content: string): void => {
+    const rawData = parseCSV(content); // simple parsing
 
-    setFile(uploadedFile);
+    if (rawData.length === 0) {
+      alert("No records found in CSV");
+      return;
+    }
 
-    // Simulate parsing CSV/Excel file
-    // In production, use Papa Parse or SheetJS
-    const mockColumns =
-      entityType === "customers"
-        ? [
-            "Customer Name",
-            "Type",
-            "Phone Number",
-            "Email Address",
-            "Tax ID",
-            "Address",
-            "City",
-            "State",
-            "ZIP",
-          ]
-        : [
-            "Item Name",
-            "SKU Code",
-            "Description",
-            "Category",
-            "Sale Price",
-            "Purchase Price",
-            "Unit",
-            "Stock",
-          ];
-
-    const mockData =
-      entityType === "customers"
-        ? [
-            {
-              "Customer Name": "John Doe",
-              Type: "customer",
-              "Phone Number": "+1 555-0101",
-              "Email Address": "john@example.com",
-              City: "New York",
-            },
-            {
-              "Customer Name": "Jane Smith",
-              Type: "supplier",
-              "Phone Number": "+1 555-0102",
-              "Email Address": "jane@example.com",
-              City: "Los Angeles",
-            },
-            {
-              "Customer Name": "Bob Johnson",
-              Type: "both",
-              "Phone Number": "+1 555-0103",
-              "Email Address": "bob@example.com",
-              City: "Chicago",
-            },
-          ]
-        : [
-            {
-              "Item Name": "Widget A",
-              "SKU Code": "WGT-001",
-              "Sale Price": "29.99",
-              "Purchase Price": "15.00",
-              Stock: "100",
-            },
-            {
-              "Item Name": "Widget B",
-              "SKU Code": "WGT-002",
-              "Sale Price": "39.99",
-              "Purchase Price": "20.00",
-              Stock: "50",
-            },
-          ];
-
-    setColumns(mockColumns);
-    setFileData(mockData);
+    const detectedColumns = Object.keys(rawData[0]);
+    setColumns(detectedColumns);
+    setFileData(rawData as unknown as Record<string, unknown>[]); // simple cast for now
 
     // Auto-suggest mappings
-    const autoMappings = mockColumns.map((col) => {
+    const autoMappings = detectedColumns.map((col) => {
       const normalized = col.toLowerCase().replace(/[^a-z]/g, "");
       const match = targetFields.find((f) => {
         const fieldNormalized = f.value.toLowerCase();
@@ -193,6 +133,54 @@ export function ImportWizard({
       };
     });
     setMappings(autoMappings);
+  };
+
+  const handleNativeFileUpload = async (): Promise<void> => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [
+          {
+            name: "CSV File",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      if (typeof selected === "string") {
+        const contents = await readTextFile(selected);
+        // Derive filename from path (windows vs unix)
+        const name = selected.split(/[\\/]/).pop() ?? "imported_file.csv";
+
+        // Set file object mock for UI display
+        // We can't create a real File object from path easily without reading into blob,
+        // but we only need name and size for UI.
+        const size = new Blob([contents]).size; // approximation
+
+        setFile({ name, size } as File);
+        processFileContent(contents);
+      }
+    } catch (err) {
+      console.error("Failed to open file", err);
+    }
+  };
+
+  const handleWebFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const uploadedFile = e.target.files?.[0];
+    if (!uploadedFile) return;
+
+    setFile(uploadedFile);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        processFileContent(text);
+      }
+    };
+    reader.readAsText(uploadedFile);
   };
 
   const handleMappingChange = (
@@ -430,26 +418,45 @@ export function ImportWizard({
                   </Button>
                 </div>
               ) : (
-                <label className="cursor-pointer block">
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                  />
-                  <div className="space-y-2">
-                    <Upload className="h-12 w-12 mx-auto text-slate-400" />
-                    <p className="text-sm text-slate-600">
-                      <span className="text-primary font-medium">
-                        Click to upload
-                      </span>{" "}
-                      or drag and drop
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      CSV or Excel files up to 10MB
-                    </p>
-                  </div>
-                </label>
+                <>
+                  {isTauri() ? (
+                    <div
+                      className="cursor-pointer space-y-2"
+                      onClick={() => void handleNativeFileUpload()}
+                    >
+                      <Upload className="h-12 w-12 mx-auto text-slate-400" />
+                      <p className="text-sm text-slate-600">
+                        <span className="text-primary font-medium">
+                          Click to select CSV file
+                        </span>
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        CSV files supported
+                      </p>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block">
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".csv"
+                        onChange={handleWebFileUpload}
+                      />
+                      <div className="space-y-2">
+                        <Upload className="h-12 w-12 mx-auto text-slate-400" />
+                        <p className="text-sm text-slate-600">
+                          <span className="text-primary font-medium">
+                            Click to upload
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          CSV files up to 10MB
+                        </p>
+                      </div>
+                    </label>
+                  )}
+                </>
               )}
             </div>
           </div>

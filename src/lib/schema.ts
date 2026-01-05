@@ -61,6 +61,18 @@ const items = new Table({
   updated_at: column.text,
 });
 
+// Item history for audit trail
+const item_history = new Table({
+  item_id: column.text,
+  action: column.text, // 'created' | 'updated' | 'stock_adjusted' | 'activated' | 'deactivated' | 'deleted'
+  description: column.text,
+  old_values: column.text, // JSON string of changed fields
+  new_values: column.text, // JSON string of new values
+  user_id: column.text,
+  user_name: column.text,
+  created_at: column.text,
+});
+
 // ============================================================================
 // SALES TABLES
 // ============================================================================
@@ -81,6 +93,9 @@ const sale_invoices = new Table({
   amount_due: column.real,
   notes: column.text,
   terms: column.text,
+  transport_name: column.text,
+  delivery_date: column.text,
+  delivery_location: column.text,
   created_at: column.text,
   updated_at: column.text,
 });
@@ -91,9 +106,11 @@ const sale_invoice_items = new Table({
   item_id: column.text,
   item_name: column.text,
   description: column.text,
+  batch_number: column.text,
   quantity: column.real,
   unit: column.text,
   unit_price: column.real,
+  mrp: column.real,
   discount_percent: column.real,
   tax_percent: column.real,
   amount: column.real,
@@ -140,9 +157,11 @@ const estimate_items = new Table({
   item_id: column.text,
   item_name: column.text,
   description: column.text,
+  batch_number: column.text,
   quantity: column.real,
   unit: column.text,
   unit_price: column.real,
+  mrp: column.real,
   discount_percent: column.real,
   tax_percent: column.real,
   amount: column.real,
@@ -221,9 +240,11 @@ const purchase_invoice_items = new Table({
   item_id: column.text,
   item_name: column.text,
   description: column.text,
+  batch_number: column.text,
   quantity: column.real,
   unit: column.text,
   unit_price: column.real,
+  mrp: column.real,
   discount_percent: column.real,
   tax_percent: column.real,
   amount: column.real,
@@ -427,6 +448,9 @@ const invoice_settings = new Table({
   bank_branch_name: column.text,
   bank_swift_code: column.text,
   pdf_template: column.text, // 'classic' | 'modern' | 'minimal'
+  tax_enabled: column.integer,
+  tax_inclusive: column.integer,
+  round_tax: column.integer,
   created_at: column.text,
   updated_at: column.text,
 });
@@ -530,6 +554,7 @@ export const AppSchema = new Schema({
   customers,
   categories,
   items,
+  item_history,
   // Sales
   sale_invoices,
   sale_invoice_items,

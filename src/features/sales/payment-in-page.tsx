@@ -17,6 +17,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import type { PaymentIn, PaymentInFormData, PaymentMode } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { Wallet, Banknote, Building2 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function PaymentInPage(): React.ReactNode {
   // Data from PowerSync
@@ -127,12 +128,7 @@ export function PaymentInPage(): React.ReactNode {
     );
   }, [filteredPayments]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

@@ -19,6 +19,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { BankAccount, BankAccountType } from "../types";
 
 // ============================================================================
@@ -114,12 +115,7 @@ export function BankAccountList({
   }, [filteredAccounts]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Mask account number
   const maskAccountNumber = (num: string): string => {

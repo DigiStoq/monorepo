@@ -21,6 +21,9 @@ export interface SaleInvoice {
   amountDue: number;
   notes?: string;
   terms?: string;
+  transportName?: string;
+  deliveryDate?: string;
+  deliveryLocation?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,9 +33,11 @@ export interface SaleInvoiceItem {
   itemId: string;
   itemName: string;
   description?: string;
+  batchNumber?: string;
   quantity: number;
   unit: string;
   unitPrice: number;
+  mrp?: number;
   discountPercent?: number;
   taxPercent?: number;
   amount: number;
@@ -46,6 +51,9 @@ export interface SaleInvoiceFormData {
   discountPercent?: number | undefined;
   notes?: string | undefined;
   terms?: string | undefined;
+  transportName?: string | undefined;
+  deliveryDate?: string | undefined;
+  deliveryLocation?: string | undefined;
 }
 
 // Form data used for creating an invoice (dueDate is required by database)
@@ -59,12 +67,17 @@ export interface InvoiceFormData {
   discountAmount?: number;
   notes?: string;
   terms?: string;
+  transportName?: string;
+  deliveryDate?: string;
+  deliveryLocation?: string;
 }
 
 export interface SaleInvoiceItemFormData {
   itemId: string;
+  batchNumber?: string | undefined;
   quantity: number;
   unitPrice: number;
+  mrp?: number | undefined;
   discountPercent?: number | undefined;
   taxPercent?: number | undefined;
 }
@@ -117,7 +130,13 @@ export interface PaymentInFormData {
 // ESTIMATE TYPES
 // ============================================================================
 
-export type EstimateStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "converted";
+export type EstimateStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "converted";
 
 export interface EstimateItem {
   id: string;

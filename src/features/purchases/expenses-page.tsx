@@ -17,6 +17,7 @@ import { useSequenceMutations } from "@/hooks/useSequence";
 import type { Expense, ExpenseFormData, ExpenseCategory } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { Receipt, PieChart } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function ExpensesPage(): React.ReactNode {
   // Data from PowerSync
@@ -99,12 +100,7 @@ export function ExpensesPage(): React.ReactNode {
     return { total, count };
   }, [filteredExpenses]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

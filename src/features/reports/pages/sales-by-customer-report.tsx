@@ -5,6 +5,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { useSalesByCustomerReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -72,12 +73,7 @@ export function SalesByCustomerReport(): React.ReactNode {
     );
   }, [processedData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const handleSort = (column: "sales" | "invoices" | "due"): void => {
     if (sortBy === column) {

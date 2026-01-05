@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/cn";
 import type { DayBookEntry } from "../types";
 import { useDayBookReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // HELPERS
@@ -113,12 +114,7 @@ export function DayBookReport(): React.ReactNode {
   }, [filteredEntries, totals, typeFilter]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

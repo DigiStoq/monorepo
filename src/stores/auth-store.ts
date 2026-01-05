@@ -29,6 +29,7 @@ export interface AuthState {
     email: string,
     password: string
   ) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signUp: (
     email: string,
     password: string,
@@ -232,6 +233,228 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
       isLoading: false,
     });
+
+    return { error: null };
+  },
+
+  // Sign in with Google
+  signInWithGoogle: async () => {
+    set({ isLoading: true, error: null });
+
+    // Open popup immediately to prevent blockage (must be synchronous to user click)
+    // HANDLE TAURI ENV
+    if (typeof window !== "undefined" && "__TAURI__" in window) {
+      try {
+        // Dynamic imports for Tauri APIs
+        const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+        const { listen } = await import("@tauri-apps/api/event");
+        // open is unused
+        // const { open } = await import('@tauri-apps/plugin-shell');
+
+        // 1. Get Auth URL from Supabase
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin + "?auth_popup=true",
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) {
+          console.error("Supabase OAuth Init Error:", error);
+          set({ isLoading: false, error });
+          return { error };
+        }
+
+        if (data.url) {
+          // eslint-disable-next-line no-console
+          console.log("Opening auth window for URL:", data.url);
+
+          try {
+            // 2. Try creating a Webview Window (Best DX)
+            const authWindow = new WebviewWindow("google-auth", {
+              url: data.url,
+              title: "Sign in with Google",
+              width: 500,
+              height: 600,
+              center: true,
+              focus: true,
+              skipTaskbar: false,
+            });
+
+            // Check if creation failed immediately (promise rejection usually)
+            void authWindow.once("tauri://error", (e) => {
+              console.error("Window creation error event:", JSON.stringify(e));
+              // Fallback handled below if listen fails
+            });
+
+            // 3. Listen for success event from the popup window
+            const unlisten = await listen("auth-success", (event: unknown) => {
+              void (async () => {
+                const payload = (event as { payload: { session: Session } })
+                  .payload;
+                // eslint-disable-next-line no-console
+                console.log("Auth success event received", event);
+                unlisten(); // Stop listening
+
+                // Close the window from the main process!
+                // eslint-disable-next-line no-console
+                console.log("Closing auth window from main process...");
+                try {
+                  await authWindow.close();
+                } catch (e) {
+                  console.error(
+                    "Failed to close auth window from main process",
+                    e
+                  );
+                }
+
+                const session = payload.session;
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                if (session) {
+                  const { error } = await supabase.auth.setSession(session);
+                  if (!error) {
+                    await saveSession(session);
+                    set({
+                      user: session.user,
+                      session: session,
+                      isAuthenticated: true,
+                      isLoading: false,
+                    });
+                  }
+                } else {
+                  console.error("Auth success event missing session");
+                  set({
+                    isLoading: false,
+                    error: new Error(
+                      "Authentication failed: No session received"
+                    ) as AuthError,
+                  });
+                }
+              })();
+            });
+          } catch (windowError: unknown) {
+            console.error("WebviewWindow creation failed:", windowError);
+            alert("Could not open sign-in window. Trying system browser...");
+
+            // Fallback: Open in Default System Browser
+            // Note: This requires the redirect URL to be a deep link (e.g. com.digistoq.desktop://login) which we haven't set up yet.
+            // So using system browser with localhost redirect WON'T work for Desktop app login.
+            // We must fail gracefully.
+            const errorMsg =
+              windowError instanceof Error
+                ? windowError.message
+                : String(windowError);
+            set({
+              isLoading: false,
+              error: {
+                message: "Failed to open sign-in window: " + errorMsg,
+              } as AuthError,
+            });
+            return {
+              error: {
+                message: "Could not open sign-in window. Please restart app.",
+              } as AuthError,
+            };
+          }
+        }
+        return { error: null };
+      } catch (err: unknown) {
+        console.error("Tauri Auth Critical Failure:", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        set({
+          isLoading: false,
+          error: { message: "Tauri auth error: " + msg } as AuthError,
+        });
+        return { error: { message: "Tauri auth error" } as AuthError };
+      }
+    }
+
+    // HANDLE WEB ENV (Standard Popup)
+    const width = 500;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    const popup = window.open(
+      "about:blank",
+      "google-auth",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+    );
+
+    if (!popup) {
+      set({
+        isLoading: false,
+        error: {
+          message: "Popup blocked. Please allow popups for this site.",
+        } as AuthError,
+      });
+      return {
+        error: {
+          message: "Popup blocked. Please allow popups for this site.",
+        } as AuthError,
+      };
+    }
+
+    // Show loading state in popup
+    popup.document.write(`
+      <html>
+        <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f8fafc;">
+          <div style="text-align:center;color:#475569;">
+            <p>Connecting to Google...</p>
+          </div>
+        </body>
+      </html>
+    `);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      popup.close();
+      set({ isLoading: false, error });
+      return { error };
+    }
+
+    if (data.url) {
+      // Redirect the already-open popup
+      popup.location.href = data.url;
+
+      // We rely on the popup closing itself or storage events to update state
+      const checkSession = setInterval(() => {
+        void (async () => {
+          if (popup.closed) {
+            clearInterval(checkSession);
+            // Re-check session on close
+            try {
+              const {
+                data: { session },
+              } = await supabase.auth.getSession();
+              if (session) {
+                await saveSession(session);
+                set({
+                  user: session.user,
+                  session: session,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+              } else {
+                set({ isLoading: false });
+              }
+            } catch {
+              set({ isLoading: false });
+            }
+          }
+        })();
+      }, 1000);
+    } else {
+      popup.close();
+    }
 
     return { error: null };
   },

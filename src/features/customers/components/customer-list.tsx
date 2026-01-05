@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import { Plus, Phone, Mail, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Customer } from "../types";
 
 // ============================================================================
@@ -33,12 +34,7 @@ function CustomerCard({
   const isReceivable = customer.currentBalance > 0;
   const hasBalance = customer.currentBalance !== 0;
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(Math.abs(value));
+  const { formatCurrency } = useCurrency();
 
   return (
     <button
@@ -111,7 +107,7 @@ function CustomerCard({
               ) : (
                 <ArrowUpRight className="h-4 w-4" />
               )}
-              {formatCurrency(customer.currentBalance)}
+              {formatCurrency(Math.abs(customer.currentBalance))}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               {isReceivable ? "To Receive" : "To Pay"}

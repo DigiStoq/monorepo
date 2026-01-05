@@ -22,6 +22,7 @@ import {
   Landmark,
   MoreHorizontal,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Expense, ExpenseCategory, PaymentOutMode } from "../types";
 
 // ============================================================================
@@ -119,12 +120,7 @@ export function ExpenseDetail({
   className,
 }: ExpenseDetailProps): React.ReactNode {
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
   const formatDate = (dateString: string): string => {

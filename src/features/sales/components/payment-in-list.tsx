@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { PaymentIn, PaymentMode } from "../types";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -67,12 +68,7 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
   const mode = paymentModeConfig[payment.paymentMode];
   const ModeIcon = mode.icon;
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {

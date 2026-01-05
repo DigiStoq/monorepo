@@ -17,6 +17,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { ChequeFormData, ChequeType } from "../types";
 import type { Customer } from "@/features/customers";
 
@@ -79,12 +80,7 @@ export function ChequeForm({
   }, [customers, type]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle type change
   const handleTypeChange = (newType: ChequeType): void => {

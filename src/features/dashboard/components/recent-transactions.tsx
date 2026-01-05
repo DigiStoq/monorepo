@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { Card, CardHeader, CardBody, Badge, Button } from "@/components/ui";
 import { TableSkeleton } from "@/components/common";
 import { ArrowUpRight, ArrowDownLeft, ChevronRight } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -59,12 +60,7 @@ export function RecentTransactions({
   onTransactionClick,
   className,
 }: RecentTransactionsProps): React.ReactNode {
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   if (isLoading) {
     return <TableSkeleton className={className} rows={5} columns={4} />;

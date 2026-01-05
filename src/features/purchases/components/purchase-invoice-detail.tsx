@@ -10,7 +10,9 @@ import {
   FileText,
   Clock,
   DollarSign,
+  Download,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { PurchaseInvoice, PurchaseInvoiceStatus } from "../types";
 
 // ============================================================================
@@ -23,6 +25,7 @@ export interface PurchaseInvoiceDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onPrint?: () => void;
+  onDownload?: () => void;
   onRecordPayment?: () => void;
   onStatusChange?: (newStatus: PurchaseInvoiceStatus) => void;
   className?: string;
@@ -73,16 +76,12 @@ export function PurchaseInvoiceDetail({
   onEdit,
   onDelete,
   onPrint,
+  onDownload,
   onRecordPayment,
   onStatusChange,
   className,
 }: PurchaseInvoiceDetailProps): React.ReactNode {
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
@@ -108,6 +107,9 @@ export function PurchaseInvoiceDetail({
           <p className="text-sm text-slate-500">Purchase Invoice</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onDownload}>
+            <Download className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={onPrint}>
             <Printer className="h-4 w-4" />
           </Button>

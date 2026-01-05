@@ -12,6 +12,7 @@ import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
 import type { DateRange } from "../types";
 import { useTaxSummaryReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -28,12 +29,7 @@ export function TaxSummaryReport(): React.ReactNode {
   // Fetch data from PowerSync
   const { summary, isLoading } = useTaxSummaryReport(dateRange);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading || !summary) {

@@ -24,6 +24,7 @@ import type {
 } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -48,6 +49,7 @@ interface LineItem {
   unitPrice: number;
   discountPercent: number;
   taxPercent: number;
+  batchNumber: string;
   amount: number;
 }
 
@@ -112,6 +114,7 @@ export function PurchaseInvoiceForm({
       unitPrice: 0,
       discountPercent: 0,
       taxPercent: 0,
+      batchNumber: "",
       amount: 0,
     };
     setLineItems([...lineItems, newItem]);
@@ -137,6 +140,7 @@ export function PurchaseInvoiceForm({
             updated.unit = selectedItem.unit;
             updated.unitPrice = selectedItem.purchasePrice; // Use purchase price
             updated.taxPercent = selectedItem.taxRate ?? 0;
+            updated.batchNumber = selectedItem.batchNumber ?? "";
           }
         }
 
@@ -186,12 +190,7 @@ export function PurchaseInvoiceForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {
@@ -361,22 +360,22 @@ export function PurchaseInvoiceForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Price
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Amount
                         </th>
                         <th className="w-12"></th>

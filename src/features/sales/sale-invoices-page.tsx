@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Button,
   Modal,
@@ -168,12 +169,7 @@ export function SaleInvoicesPage(): React.ReactNode {
     );
   }, [filteredInvoices]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Linked items for delete dialog
   const linkedItems = useSaleInvoiceLinkedItems(invoiceToDelete?.id ?? null);
@@ -299,9 +295,11 @@ export function SaleInvoicesPage(): React.ReactNode {
         return {
           itemId: formItem.itemId,
           itemName: item?.name ?? "Unknown Item",
+          batchNumber: formItem.batchNumber,
           quantity: formItem.quantity,
           unit: item?.unit ?? "pcs",
           unitPrice: formItem.unitPrice,
+          mrp: formItem.mrp,
           discountPercent: discountPct,
           taxPercent: taxPct,
           amount,
@@ -595,9 +593,11 @@ export function SaleInvoicesPage(): React.ReactNode {
         return {
           itemId: formItem.itemId,
           itemName: item?.name ?? "Unknown Item",
+          batchNumber: formItem.batchNumber,
           quantity: formItem.quantity,
           unit: item?.unit ?? "pcs",
           unitPrice: formItem.unitPrice,
+          mrp: formItem.mrp,
           discountPercent: discountPct,
           taxPercent: taxPct,
           amount,

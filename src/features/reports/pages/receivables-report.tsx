@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, Input, Badge } from "@/components/ui";
 import { Search, Users, AlertCircle } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { useReceivablesReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -37,12 +38,7 @@ export function ReceivablesReport(): React.ReactNode {
     );
   }, [filteredData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Loading state
   if (isLoading) {

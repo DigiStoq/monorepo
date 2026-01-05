@@ -10,7 +10,9 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText } from "lucide-react";
+import { Plus, Trash2, Calendar, User, FileText, Truck } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useInvoiceSettings, useTaxRates } from "@/hooks/useSettings";
 import type { SaleInvoiceFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
@@ -35,9 +37,11 @@ interface LineItem {
   id: string;
   itemId: string;
   itemName: string;
+  batchNumber: string;
   quantity: number;
   unit: string;
   unitPrice: number;
+  mrp: number;
   discountPercent: number;
   taxPercent: number;
   amount: number;
@@ -68,6 +72,15 @@ export function InvoiceForm({
   const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [terms, setTerms] = useState(initialData?.terms ?? "");
+  const [transportName, setTransportName] = useState(
+    initialData?.transportName ?? ""
+  );
+  const [deliveryDate, setDeliveryDate] = useState(
+    initialData?.deliveryDate ?? ""
+  );
+  const [deliveryLocation, setDeliveryLocation] = useState(
+    initialData?.deliveryLocation ?? ""
+  );
   const [discountPercent, setDiscountPercent] = useState(
     initialData?.discountPercent ?? 0
   );
@@ -90,9 +103,14 @@ export function InvoiceForm({
         id: `line-${Date.now()}-${index}`,
         itemId: formItem.itemId,
         itemName: selectedItem?.name ?? "Unknown",
+        batchNumber:
+          (formItem as { batchNumber?: string }).batchNumber ??
+          selectedItem?.batchNumber ??
+          "",
         quantity: formItem.quantity,
         unit: selectedItem?.unit ?? "pcs",
         unitPrice: formItem.unitPrice,
+        mrp: (formItem as { mrp?: number }).mrp ?? 0,
         discountPercent: discountPct,
         taxPercent: taxPct,
         amount,
@@ -124,17 +142,26 @@ export function InvoiceForm({
     [items]
   );
 
+  const { settings: invoiceSettings } = useInvoiceSettings();
+  const { taxRates } = useTaxRates();
+
   // Add line item
   const handleAddItem = (): void => {
+    const defaultTaxRate = taxRates.find((r) => r.isDefault)?.rate ?? 0;
+    const taxEnabled = invoiceSettings?.taxEnabled ?? false;
+    const effectiveTaxRate = taxEnabled ? defaultTaxRate : 0;
+
     const newItem: LineItem = {
       id: `line-${Date.now()}`,
       itemId: "",
       itemName: "",
+      batchNumber: "",
       quantity: 1,
       unit: "pcs",
       unitPrice: 0,
+      mrp: 0,
       discountPercent: 0,
-      taxPercent: 0,
+      taxPercent: effectiveTaxRate,
       amount: 0,
     };
     setLineItems([...lineItems, newItem]);
@@ -160,6 +187,7 @@ export function InvoiceForm({
             updated.unit = selectedItem.unit;
             updated.unitPrice = selectedItem.salePrice;
             updated.taxPercent = selectedItem.taxRate ?? 0;
+            updated.batchNumber = selectedItem.batchNumber ?? "";
           }
         }
 
@@ -209,12 +237,8 @@ export function InvoiceForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  // Format currency
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {
@@ -226,14 +250,19 @@ export function InvoiceForm({
       dueDate: dueDate || undefined,
       items: lineItems.map((item) => ({
         itemId: item.itemId,
+        batchNumber: item.batchNumber || undefined,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        mrp: item.mrp || undefined,
         discountPercent: item.discountPercent || undefined,
         taxPercent: item.taxPercent || undefined,
       })),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
       terms: terms || undefined,
+      transportName: transportName || undefined,
+      deliveryDate: deliveryDate || undefined,
+      deliveryLocation: deliveryLocation || undefined,
     };
 
     onSubmit(formData);
@@ -338,6 +367,56 @@ export function InvoiceForm({
             </CardBody>
           </Card>
 
+          {/* Transport Details */}
+          <Card>
+            <CardHeader title="Transport Details" />
+            <CardBody>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <Truck className="h-4 w-4 inline mr-1" />
+                    Transport Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={transportName}
+                    onChange={(e) => {
+                      setTransportName(e.target.value);
+                    }}
+                    placeholder="e.g. FedEx"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <Calendar className="h-4 w-4 inline mr-1" />
+                    Delivery Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => {
+                      setDeliveryDate(e.target.value);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <Truck className="h-4 w-4 inline mr-1" />
+                    Delivery Location
+                  </label>
+                  <Input
+                    type="text"
+                    value={deliveryLocation}
+                    onChange={(e) => {
+                      setDeliveryLocation(e.target.value);
+                    }}
+                    placeholder="e.g. New York"
+                  />
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
           {/* Line Items */}
           <Card>
             <CardHeader
@@ -374,25 +453,31 @@ export function InvoiceForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[120px]">
+                          Batch No.
+                        </th>
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
+                          MRP
+                        </th>
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
-                          Price
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
+                          Rate
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Amount
                         </th>
-                        <th className="w-12"></th>
+                        <th className="w-10"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -406,6 +491,38 @@ export function InvoiceForm({
                                 handleUpdateLineItem(item.id, "itemId", value);
                               }}
                               size="sm"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Input
+                              type="text"
+                              value={item.batchNumber}
+                              onChange={(e) => {
+                                handleUpdateLineItem(
+                                  item.id,
+                                  "batchNumber",
+                                  e.target.value
+                                );
+                              }}
+                              size="sm"
+                              placeholder="Batch"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.mrp}
+                              onChange={(e) => {
+                                handleUpdateLineItem(
+                                  item.id,
+                                  "mrp",
+                                  parseFloat(e.target.value) || 0
+                                );
+                              }}
+                              size="sm"
+                              className="text-right"
                             />
                           </td>
                           <td className="px-4 py-3">

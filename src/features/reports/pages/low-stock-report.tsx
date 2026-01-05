@@ -5,6 +5,7 @@ import { Search, Package, AlertTriangle, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import type { StockSummaryItem } from "../types";
 import { useLowStockReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
@@ -38,12 +39,7 @@ export function LowStockReport(): React.ReactNode {
     return { outOfStock, criticalLow, total: filteredData.length, totalValue };
   }, [filteredData]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const getStockStatus = (
     item: StockSummaryItem

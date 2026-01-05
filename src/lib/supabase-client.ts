@@ -20,4 +20,10 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   );
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: false, // We handle persistence in Tauri store
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});

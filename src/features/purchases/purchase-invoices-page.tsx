@@ -42,6 +42,7 @@ import type {
   PaymentOutMode,
 } from "./types";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export function PurchaseInvoicesPage(): React.ReactNode {
   // Data from PowerSync
@@ -60,7 +61,11 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   const { createAccount: createBankAccount } = useBankAccountMutations();
 
   // PDF Generator
-  const { printPurchaseInvoice, isReady: pdfReady } = usePDFGenerator();
+  const {
+    printPurchaseInvoice,
+    downloadPurchaseInvoice,
+    isReady: pdfReady,
+  } = usePDFGenerator();
 
   // State
   const [selectedPurchase, setSelectedPurchase] =
@@ -298,12 +303,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
     );
   }, [filteredInvoices]);
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   const handleDeleteClick = (): void => {
     if (currentSelectedPurchase) {
@@ -484,6 +484,15 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   };
 
   // PDF handlers
+  const handleDownloadPurchase = (): void => {
+    if (currentSelectedPurchase && pdfReady) {
+      const supplier = customers.find(
+        (c) => c.id === currentSelectedPurchase.customerId
+      );
+      downloadPurchaseInvoice(currentSelectedPurchase, supplier);
+    }
+  };
+
   const handlePrintPurchase = (): void => {
     if (currentSelectedPurchase && pdfReady) {
       // Note: suppliers are stored in customers table with customerId
@@ -644,6 +653,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
                         setIsFormOpen(true);
                       }}
                       onDelete={handleDeleteClick}
+                      onDownload={handleDownloadPurchase}
                       onPrint={handlePrintPurchase}
                       onRecordPayment={handleRecordPayment}
                       onStatusChange={(status) => {

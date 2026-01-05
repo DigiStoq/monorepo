@@ -46,9 +46,11 @@ function itemsToPDFLineItems(
   items: {
     itemName: string;
     description?: string;
+    batchNumber?: string;
     quantity: number;
     unit?: string;
     unitPrice: number;
+    mrp?: number;
     discountPercent?: number;
     taxPercent?: number;
     amount: number;
@@ -64,6 +66,8 @@ function itemsToPDFLineItems(
       amount: item.amount,
     };
     if (item.description) lineItem.description = item.description;
+    if (item.batchNumber) lineItem.batchNumber = item.batchNumber;
+    if (item.mrp !== undefined) lineItem.mrp = item.mrp;
     if (item.discountPercent !== undefined)
       lineItem.discountPercent = item.discountPercent;
     if (item.taxPercent !== undefined) lineItem.taxPercent = item.taxPercent;
@@ -214,17 +218,27 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
       data.amountPaid = invoice.amountPaid;
       data.amountDue = invoice.amountDue;
       if (invoice.notes) data.notes = invoice.notes;
-      if (invoice.terms) data.terms = invoice.terms;
+
+      // Use invoice terms if present, otherwise fall back to default settings
+      if (invoice.terms) {
+        data.terms = invoice.terms;
+      } else if (invoiceSettings?.termsAndConditions) {
+        data.terms = invoiceSettings.termsAndConditions;
+      }
+      if (invoice.transportName) data.transportName = invoice.transportName;
+      if (invoice.deliveryDate) data.deliveryDate = invoice.deliveryDate;
+      if (invoice.deliveryLocation)
+        data.deliveryLocation = invoice.deliveryLocation;
 
       return data;
     },
-    []
+    [invoiceSettings]
   );
 
   const downloadSaleInvoice = useCallback(
     (invoice: SaleInvoice, customer?: Customer | null) => {
       const data = prepareSaleInvoiceData(invoice, customer);
-      generator.download(data, `${invoice.invoiceNumber}.pdf`);
+      void generator.download(data, `${invoice.invoiceNumber}.pdf`);
     },
     [generator, prepareSaleInvoiceData]
   );
@@ -232,7 +246,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const printSaleInvoice = useCallback(
     (invoice: SaleInvoice, customer?: Customer | null) => {
       const data = prepareSaleInvoiceData(invoice, customer);
-      generator.print(data);
+      void generator.print(data);
     },
     [generator, prepareSaleInvoiceData]
   );
@@ -240,7 +254,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const openSaleInvoice = useCallback(
     (invoice: SaleInvoice, customer?: Customer | null) => {
       const data = prepareSaleInvoiceData(invoice, customer);
-      generator.open(data);
+      void generator.open(data);
     },
     [generator, prepareSaleInvoiceData]
   );
@@ -266,17 +280,23 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
 
       if (estimate.validUntil) data.validUntil = estimate.validUntil;
       if (estimate.notes) data.notes = estimate.notes;
-      if (estimate.terms) data.terms = estimate.terms;
+
+      // Use estimate terms if present, otherwise fall back to default settings
+      if (estimate.terms) {
+        data.terms = estimate.terms;
+      } else if (invoiceSettings?.termsAndConditions) {
+        data.terms = invoiceSettings.termsAndConditions;
+      }
 
       return data;
     },
-    []
+    [invoiceSettings]
   );
 
   const downloadEstimate = useCallback(
     (estimate: Estimate, customer?: Customer | null) => {
       const data = prepareEstimateData(estimate, customer);
-      generator.download(data, `${estimate.estimateNumber}.pdf`);
+      void generator.download(data, `${estimate.estimateNumber}.pdf`);
     },
     [generator, prepareEstimateData]
   );
@@ -284,7 +304,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const printEstimate = useCallback(
     (estimate: Estimate, customer?: Customer | null) => {
       const data = prepareEstimateData(estimate, customer);
-      generator.print(data);
+      void generator.print(data);
     },
     [generator, prepareEstimateData]
   );
@@ -292,7 +312,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const openEstimate = useCallback(
     (estimate: Estimate, customer?: Customer | null) => {
       const data = prepareEstimateData(estimate, customer);
-      generator.open(data);
+      void generator.open(data);
     },
     [generator, prepareEstimateData]
   );
@@ -329,7 +349,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const downloadPurchaseInvoice = useCallback(
     (invoice: PurchaseInvoice, supplier?: Customer | null) => {
       const data = preparePurchaseInvoiceData(invoice, supplier);
-      generator.download(data, `${invoice.invoiceNumber}.pdf`);
+      void generator.download(data, `${invoice.invoiceNumber}.pdf`);
     },
     [generator, preparePurchaseInvoiceData]
   );
@@ -337,7 +357,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const printPurchaseInvoice = useCallback(
     (invoice: PurchaseInvoice, supplier?: Customer | null) => {
       const data = preparePurchaseInvoiceData(invoice, supplier);
-      generator.print(data);
+      void generator.print(data);
     },
     [generator, preparePurchaseInvoiceData]
   );
@@ -345,7 +365,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const openPurchaseInvoice = useCallback(
     (invoice: PurchaseInvoice, supplier?: Customer | null) => {
       const data = preparePurchaseInvoiceData(invoice, supplier);
-      generator.open(data);
+      void generator.open(data);
     },
     [generator, preparePurchaseInvoiceData]
   );
@@ -381,7 +401,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const downloadCreditNote = useCallback(
     (note: CreditNote, customer?: Customer | null) => {
       const data = prepareCreditNoteData(note, customer);
-      generator.download(data, `${note.creditNoteNumber}.pdf`);
+      void generator.download(data, `${note.creditNoteNumber}.pdf`);
     },
     [generator, prepareCreditNoteData]
   );
@@ -389,7 +409,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const printCreditNote = useCallback(
     (note: CreditNote, customer?: Customer | null) => {
       const data = prepareCreditNoteData(note, customer);
-      generator.print(data);
+      void generator.print(data);
     },
     [generator, prepareCreditNoteData]
   );
@@ -397,7 +417,7 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
   const openCreditNote = useCallback(
     (note: CreditNote, customer?: Customer | null) => {
       const data = prepareCreditNoteData(note, customer);
-      generator.open(data);
+      void generator.open(data);
     },
     [generator, prepareCreditNoteData]
   );

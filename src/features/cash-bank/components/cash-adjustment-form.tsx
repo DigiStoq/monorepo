@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Card, CardBody, Button, Input, Textarea } from "@/components/ui";
 import { ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { CashAdjustmentFormData } from "../types";
 
 // ============================================================================
@@ -39,12 +40,7 @@ export function CashAdjustmentForm({
     type === "add" ? currentBalance + amount : currentBalance - amount;
 
   // Format currency
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {
