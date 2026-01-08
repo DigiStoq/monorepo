@@ -344,7 +344,7 @@ export function EstimateForm({
                         <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Qty
                         </th>
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
@@ -379,12 +379,12 @@ export function EstimateForm({
                             <Input
                               type="number"
                               min="1"
-                              value={item.quantity}
+                              value={item.quantity || ""}
                               onChange={(e) => {
                                 handleUpdateLineItem(
                                   item.id,
                                   "quantity",
-                                  parseInt(e.target.value) || 1
+                                  parseInt(e.target.value) || 0
                                 );
                               }}
                               size="sm"
