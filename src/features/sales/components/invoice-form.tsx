@@ -462,7 +462,7 @@ export function InvoiceForm({
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           MRP
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Qty
                         </th>
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
@@ -529,12 +529,12 @@ export function InvoiceForm({
                             <Input
                               type="number"
                               min="1"
-                              value={item.quantity}
+                              value={item.quantity || ""}
                               onChange={(e) => {
                                 handleUpdateLineItem(
                                   item.id,
                                   "quantity",
-                                  parseInt(e.target.value) || 1
+                                  parseInt(e.target.value) || 0
                                 );
                               }}
                               size="sm"
