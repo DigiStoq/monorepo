@@ -18,7 +18,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
-    project: ["./tsconfig.json", "./tsconfig.node.json"],
+    project: ["./tsconfig.json", "./tsconfig.node.json", "./mobile/tsconfig.json"],
     tsconfigRootDir: __dirname,
   },
   plugins: ["react", "@typescript-eslint", "react-hooks"],
@@ -75,4 +75,21 @@ module.exports = {
     "prefer-const": "error",
     eqeqeq: ["error", "always"],
   },
+  overrides: [
+    {
+      files: ["mobile/**/*.{ts,tsx}"],
+      rules: {
+        "@typescript-eslint/prefer-nullish-coalescing": "off",
+        "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
+        "@typescript-eslint/no-unnecessary-condition": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-misused-promises": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+        "no-console": "off",
+      },
+    },
+  ],
 };
