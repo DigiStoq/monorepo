@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, FileText, Filter } from "lucide-react-native";
+import { Plus, Search, FileText, Filter, ChevronRight, CreditCard } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 
 // Types
@@ -24,6 +24,64 @@ interface PurchaseInvoice {
   amount_due: number;
 }
 
+function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
+  const navigation = useNavigation();
+  
+  const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+    draft: { bg: "#f1f5f9", text: "#64748b", border: "#e2e8f0" },
+    unpaid: { bg: "#fef2f2", text: "#ef4444", border: "#fee2e2" },
+    paid: { bg: "#f0fdf4", text: "#22c55e", border: "#dcfce7" },
+    partial: { bg: "#fffbeb", text: "#f59e0b", border: "#fef3c7" },
+    overdue: { bg: "#fef2f2", text: "#ef4444", border: "#fee2e2" },
+  };
+
+  const statusStyle = statusColors[item.status?.toLowerCase()] || statusColors.draft;
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.7}
+      onPress={() => {
+        (navigation as any).navigate("PurchaseInvoiceForm", { id: item.id });
+      }}
+    >
+      <View style={styles.cardMain}>
+        <View style={styles.billIconBox}>
+          <CreditCard size={20} color="#ef4444" />
+        </View>
+        <View style={styles.billMainInfo}>
+          <View style={styles.billHeaderRow}>
+            <Text style={styles.billNumber}>{item.invoice_number || "Draft"}</Text>
+            <Text style={styles.totalValue}>
+              ${item.total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+          </View>
+          <Text style={styles.vendorName}>{item.customer_name || "Unknown Supplier"}</Text>
+          <View style={styles.billFooterRow}>
+            <Text style={styles.dateValue}>{formatDate(item.date)}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
+               <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                {item.status}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <ChevronRight size={18} color="#cbd5e1" style={{ marginLeft: 8 }} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export function PurchaseInvoicesScreen() {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,7 +92,7 @@ export function PurchaseInvoicesScreen() {
         ORDER BY date DESC, created_at DESC
     `);
 
-  const filteredInvoices = invoices.filter(
+  const filteredInvoices = (invoices || []).filter(
     (inv) =>
       inv.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -42,90 +100,35 @@ export function PurchaseInvoicesScreen() {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // PowerSync is reactive, but we can simulate refresh or just wait
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
   }, []);
 
-  const renderItem = ({ item }: { item: PurchaseInvoice }) => (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.7}
-      onPress={() => {
-        navigation.navigate("PurchaseInvoiceForm", { id: item.id } as any);
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.invoiceInfo}>
-          <Text style={styles.invoiceNumber}>
-            {item.invoice_number || "Draft"}
-          </Text>
-          <Text style={styles.customerName}>{item.customer_name}</Text>
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status).bg },
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              { color: getStatusColor(item.status).text },
-            ]}
-          >
-            {item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.cardFooter}>
-        <View style={styles.dateInfo}>
-          <Text style={styles.dateLabel}>Date</Text>
-          <Text style={styles.dateValue}>{item.date}</Text>
-        </View>
-        <View style={styles.amountInfo}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>
-            ${item.total?.toFixed(2) || "0.00"}
-          </Text>
-          {item.amount_due > 0 && (
-            <Text style={styles.dueAmount}>
-              Due: ${item.amount_due.toFixed(2)}
-            </Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search purchases..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#94a3b8"
-        />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            navigation.navigate("PurchaseInvoiceForm" as any);
-          }}
-        >
-          <Plus color="#ffffff" size={24} />
+      <View style={styles.searchContainer}>
+        <View style={styles.searchWrapper}>
+          <Search size={18} color="#94a3b8" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search bills..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity style={styles.filterButton}>
+          <Filter size={20} color="#64748b" />
         </TouchableOpacity>
       </View>
 
       <FlatList
         data={filteredInvoices}
-        renderItem={renderItem}
+        renderItem={({ item }) => <PurchaseInvoiceCard item={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -136,32 +139,32 @@ export function PurchaseInvoicesScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <FileText size={48} color="#cbd5e1" style={styles.emptyIcon} />
-              <Text style={styles.emptyText}>No purchase invoices found</Text>
+              <View style={styles.emptyIconContainer}>
+                <CreditCard size={48} color="#cbd5e1" />
+              </View>
+              <Text style={styles.emptyText}>No bills found</Text>
               <Text style={styles.emptySubtext}>
-                Create a new invoice to get started
+                Record your purchases and keep track of your expenses.
               </Text>
+              <TouchableOpacity 
+                style={styles.emptyAddButton}
+                onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
+              >
+                <Text style={styles.emptyAddButtonText}>Add New Bill</Text>
+              </TouchableOpacity>
             </View>
           ) : null
         }
       />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
+      >
+        <Plus size={24} color="#fff" strokeWidth={3} />
+      </TouchableOpacity>
     </View>
   );
-}
-
-function getStatusColor(status: string) {
-  switch (status?.toLowerCase()) {
-    case "paid":
-      return { bg: "#dcfce7", text: "#166534" };
-    case "partial":
-      return { bg: "#fef9c3", text: "#854d0e" };
-    case "overdue":
-      return { bg: "#fee2e2", text: "#991b1b" };
-    case "draft":
-      return { bg: "#f1f5f9", text: "#475569" };
-    default:
-      return { bg: "#f3f4f6", text: "#374151" };
-  }
 }
 
 const styles = StyleSheet.create({
@@ -169,122 +172,170 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8fafc",
   },
-  header: {
+  searchContainer: {
     flexDirection: "row",
-    padding: wp(4),
-    gap: wp(3),
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
     alignItems: "center",
+  },
+  searchWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: wp(3),
-    fontSize: 16,
+    fontSize: 15,
     color: "#0f172a",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    height: hp(6),
   },
-  addButton: {
-    width: hp(6),
-    height: hp(6),
-    backgroundColor: "#6366f1",
+  filterButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: "#fff",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   list: {
-    padding: wp(4),
-    paddingTop: 0,
-    gap: hp(1.5),
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 12,
   },
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: wp(4),
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#f1f5f9",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  cardMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  invoiceInfo: {
+  billIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#fff1f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  billMainInfo: {
     flex: 1,
   },
-  invoiceNumber: {
-    fontSize: 16,
-    fontWeight: "600",
+  billHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  billNumber: {
+    fontSize: 15,
+    fontWeight: "700",
     color: "#0f172a",
-  },
-  customerName: {
-    fontSize: 14,
-    color: "#64748b",
-    marginTop: 2,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginTop: hp(2),
-    paddingTop: hp(1.5),
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-  },
-  dateInfo: {},
-  dateLabel: {
-    fontSize: 12,
-    color: "#64748b",
-  },
-  dateValue: {
-    fontSize: 14,
-    color: "#0f172a",
-    marginTop: 2,
-  },
-  amountInfo: {
-    alignItems: "flex-end",
-  },
-  totalLabel: {
-    fontSize: 12,
-    color: "#64748b",
   },
   totalValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#ef4444",
   },
-  dueAmount: {
+  vendorName: {
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 8,
+  },
+  billFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateValue: {
     fontSize: 12,
-    color: "#f59e0b",
-    marginTop: 2,
+    color: "#94a3b8",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#6366f1",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#6366f1",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   empty: {
     alignItems: "center",
-    paddingVertical: hp(8),
+    paddingVertical: 80,
   },
-  emptyIcon: {
-    marginBottom: 16,
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#0f172a",
+    marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
     color: "#64748b",
-    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    marginBottom: 24,
   },
+  emptyAddButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#6366f1',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyAddButtonText: {
+    color: '#6366f1',
+    fontWeight: '700',
+    fontSize: 15,
+  }
 });

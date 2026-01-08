@@ -1,6 +1,6 @@
 import "react-native-get-random-values";
 import { useState, useEffect } from "react";
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { PowerSyncContext } from "@powersync/react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
@@ -66,18 +66,29 @@ function AppContent(): JSX.Element | null {
   );
 }
 
-import { SafeAreaProvider } from "react-native-safe-area-context";
-
-// ...
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function App(): JSX.Element {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="light" />
-        <AppContent />
+        <AppWrapper />
       </AuthProvider>
     </SafeAreaProvider>
+  );
+}
+
+function AppWrapper() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+      <StatusBar style="light" backgroundColor="#000000" translucent={false} />
+      <View style={{ height: insets.top, backgroundColor: "#000000" }} />
+      <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+        <AppContent />
+      </View>
+    </View>
   );
 }
 

@@ -9,14 +9,10 @@ import {
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useQuery } from "@powersync/react-native";
+import { useCompanySettings } from "../hooks/useSettings";
+import { useNavigation } from "@react-navigation/native";
 
-interface CompanySettings {
-  id: string;
-  name: string;
-  contact_email: string;
-  contact_phone: string;
-  currency: string;
-}
+
 
 function SettingsItem({
   icon,
@@ -45,12 +41,8 @@ function SettingsItem({
 
 export function SettingsScreen() {
   const { user, signOut } = useAuth();
-
-  const { data: companySettings } = useQuery<CompanySettings>(
-    "SELECT * FROM company_settings LIMIT 1"
-  );
-
-  const company = companySettings?.[0];
+  const navigation = useNavigation();
+  const { settings: company } = useCompanySettings();
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -65,7 +57,10 @@ export function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Company</Text>
         <View style={styles.card}>
-          <View style={styles.companyHeader}>
+          <TouchableOpacity 
+            style={styles.companyHeader}
+            onPress={() => navigation.navigate("CompanySettings" as any)}
+          >
             <View style={styles.companyLogo}>
               <Text style={styles.companyLogoText}>
                 {company?.name?.charAt(0) || "D"}
@@ -73,13 +68,14 @@ export function SettingsScreen() {
             </View>
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>
-                {company?.name || "DigiStoq"}
+                {company?.name || "My Company"}
               </Text>
               <Text style={styles.companyEmail}>
-                {company?.contact_email || "Not set"}
+                {company?.contact?.email || user?.email || "Not set"}
               </Text>
             </View>
-          </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -91,21 +87,25 @@ export function SettingsScreen() {
             icon="🏢"
             title="Company Profile"
             subtitle="Name, logo, address"
+            onPress={() => navigation.navigate("CompanySettings" as any)}
           />
           <SettingsItem
             icon="📄"
             title="Invoice Settings"
             subtitle="Templates, numbering"
+            onPress={() => navigation.navigate("InvoiceSettings" as any)}
           />
           <SettingsItem
             icon="💰"
             title="Tax Configuration"
             subtitle="Manage tax rates"
+            onPress={() => navigation.navigate("TaxSettings" as any)}
           />
           <SettingsItem
             icon="🏦"
             title="Bank Accounts"
             subtitle="Payment details"
+            onPress={() => navigation.navigate("BankAccounts" as any)}
           />
         </View>
       </View>
@@ -124,6 +124,7 @@ export function SettingsScreen() {
             icon="🌍"
             title="Regional"
             subtitle={company?.currency || "USD"}
+            onPress={() => navigation.navigate("CompanySettings" as any)}
           />
         </View>
       </View>

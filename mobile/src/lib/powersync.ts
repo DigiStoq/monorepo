@@ -204,6 +204,35 @@ const invoice_history = new Table({
 // PURCHASE TABLES
 // ============================================================================
 
+const purchase_orders = new Table({
+  user_id: column.text,
+  po_number: column.text,
+  supplier_id: column.text,
+  supplier_name: column.text,
+  date: column.text,
+  expected_date: column.text,
+  status: column.text, // 'draft' | 'sent' | 'received' | 'cancelled'
+  subtotal: column.real,
+  tax_amount: column.real,
+  total: column.real,
+  notes: column.text,
+  created_at: column.text,
+  updated_at: column.text,
+});
+
+const purchase_order_items = new Table({
+  user_id: column.text,
+  po_id: column.text,
+  item_id: column.text,
+  item_name: column.text,
+  description: column.text,
+  quantity: column.real,
+  unit: column.text,
+  unit_price: column.real,
+  tax_percent: column.real,
+  amount: column.real,
+});
+
 const purchase_invoices = new Table({
   user_id: column.text,
   invoice_number: column.text,
@@ -549,6 +578,8 @@ export const AppSchema = new Schema({
   credit_note_items,
   invoice_history,
   // Purchases
+  purchase_orders,
+  purchase_order_items,
   purchase_invoices,
   purchase_invoice_items,
   payment_outs,
