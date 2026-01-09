@@ -82,9 +82,9 @@ function AppWrapper() {
   const insets = useSafeAreaInsets();
   
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
-      <StatusBar style="light" backgroundColor="#000000" translucent={false} />
-      <View style={{ height: insets.top, backgroundColor: "#000000" }} />
+    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
+      <View style={{ height: insets.top, backgroundColor: "#ffffff" }} />
       <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
         <AppContent />
       </View>

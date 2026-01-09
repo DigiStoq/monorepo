@@ -7,10 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { BankAccountRecord } from "../lib/powersync";
+import { Search, ChevronRight, Landmark } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { CustomHeader } from "../components/CustomHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function BankAccountCard({ account }: { account: BankAccountRecord }) {
   const navigation = useNavigation();
@@ -38,6 +43,7 @@ function BankAccountCard({ account }: { account: BankAccountRecord }) {
             </View>
           </View>
         </View>
+        <ChevronRight size={18} color={colors.textMuted} />
       </View>
       <View style={styles.cardFooter}>
         <Text style={styles.cardDetail}>
@@ -46,7 +52,7 @@ function BankAccountCard({ account }: { account: BankAccountRecord }) {
         <Text
           style={[
             styles.balance,
-            { color: (account.current_balance || 0) >= 0 ? "#22c55e" : "#ef4444" },
+            { color: (account.current_balance || 0) >= 0 ? colors.success : colors.danger },
           ]}
         >
           ${Math.abs(account.current_balance || 0).toFixed(2)}
@@ -58,6 +64,7 @@ function BankAccountCard({ account }: { account: BankAccountRecord }) {
 
 export function BankAccountsScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -77,22 +84,19 @@ export function BankAccountsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search bank accounts..."
-          placeholderTextColor="#64748b"
-          value={search}
-          onChangeText={setSearch}
-        />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            navigation.navigate("BankAccountForm" as any);
-          }}
-        >
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+      <CustomHeader />
+      
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchText}
+            placeholder="Search bank accounts..."
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
       </View>
 
       <FlatList
@@ -100,23 +104,41 @@ export function BankAccountsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <BankAccountCard account={item} />}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🏦</Text>
-            <Text style={styles.emptyText}>No bank accounts found</Text>
-            <Text style={styles.emptySubtext}>
-              Add your first bank account to get started
-            </Text>
-          </View>
+          !isLoading ? (
+            <View style={styles.empty}>
+              <Landmark size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No bank accounts</Text>
+              <Text style={styles.emptySubtext}>
+                Add your first bank account
+              </Text>
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => (navigation as any).navigate("BankAccountForm")}
+              >
+                <Text style={styles.addBtnText}>+ Add Account</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
         }
       />
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
+        onPress={() => (navigation as any).navigate("BankAccountForm")}
+      >
+        <Text style={styles.fabText}>+ Add</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -124,129 +146,142 @@ export function BankAccountsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: "row",
-    padding: 16,
-    gap: 12,
+  searchBar: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
   searchInput: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    color: "#0f172a",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
   },
-  addButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#6366f1",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  addButtonText: {
-    fontSize: 24,
-    color: "#fff",
-    fontWeight: "600",
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
   },
   list: {
-    padding: 16,
-    paddingTop: 0,
-    gap: 12,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.sm,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
   },
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: "#e0e7ff",
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#4338ca",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.textOnAccent,
   },
   cardInfo: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   bankName: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
   },
   cardMeta: {
     flexDirection: "row",
     marginTop: 4,
-    gap: 8,
   },
   badge: {
-    backgroundColor: "#f1f5f9",
-    paddingHorizontal: 8,
+    backgroundColor: colors.surfaceHover,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#475569",
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.textSecondary,
     textTransform: "capitalize",
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: colors.border,
   },
   cardDetail: {
-    fontSize: 14,
-    color: "#64748b",
-    fontFamily: "monospace",
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    fontFamily: Platform.OS === 'ios' ? "Courier" : "monospace",
   },
   balance: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
   },
   empty: {
     alignItems: "center",
     paddingVertical: 60,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+    gap: spacing.sm,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginTop: spacing.md,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#64748b",
-    marginTop: 4,
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  addBtn: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    marginTop: spacing.md,
+  },
+  addBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.textOnAccent,
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.xl,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    ...shadows.md,
+  },
+  fabText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.textOnAccent,
   },
 });

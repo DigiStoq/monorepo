@@ -1,139 +1,224 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  RefreshControl,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
-import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react-native";
-import { CashTransactionRecord } from "../lib/powersync";
+import { Search, ChevronRight, Wallet } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { CustomHeader } from "../components/CustomHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Define local interface for CashRecord
+interface CashRecord {
+  id: string;
+  name: string;
+  current_balance: number;
+  description: string;
+}
+
+function CashAccountCard({ account }: { account: CashRecord }) {
+  const navigation = useNavigation();
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.7}
+      onPress={() => {
+        navigation.navigate("CashTransactionForm", { accountId: account.id } as any);
+      }}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.avatar}>
+          <Wallet size={24} color={colors.textOnAccent} />
+        </View>
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardTitle}>{account.name}</Text>
+          <Text style={styles.description} numberOfLines={1}>{account.description || "No description"}</Text>
+        </View>
+        <ChevronRight size={18} color={colors.textMuted} />
+      </View>
+      <View style={styles.cardFooter}>
+        <Text style={styles.cardDetail}>Current Balance</Text>
+        <Text
+          style={[
+            styles.balance,
+            { color: (account.current_balance || 0) >= 0 ? colors.success : colors.danger },
+          ]}
+        >
+          ${Math.abs(account.current_balance || 0).toFixed(2)}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export function CashInHandScreen() {
-    const navigation = useNavigation();
-    const [refreshing, setRefreshing] = useState(false);
-    
-    // Balance Query
-    const { data: balanceData } = useQuery<{ total: number }>(
-        `SELECT SUM(CASE WHEN type = 'in' THEN amount WHEN type = 'out' THEN -amount ELSE 0 END) as total FROM cash_transactions`
-    );
-    const balance = balanceData?.[0]?.total || 0;
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const [search, setSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-    // Transactions Query
-    const { data: transactions } = useQuery<CashTransactionRecord>(
-        `SELECT * FROM cash_transactions ORDER BY date DESC, created_at DESC LIMIT 50`
-    );
+  // This is a placeholder as the exact schema for cash_accounts isn't visible
+  // Assuming a similar structure or a single record for main cash
+  const { data: accounts, isLoading } = useQuery<CashRecord>(
+    `SELECT * FROM cash_accounts 
+     WHERE ($1 IS NULL OR name LIKE $1) 
+     ORDER BY name ASC`,
+    [search ? `%${search}%` : null]
+  );
 
-    const onRefresh = useCallback(() => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1000);
-    }, []);
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
 
-    return (
-        <View style={styles.container}>
-            {/* Header / Balance Card */}
-            <View style={styles.headerCard}>
-                <Text style={styles.balanceLabel}>Current Cash Balance</Text>
-                <Text style={styles.balanceValue}>
-                    ${balance.toFixed(2)}
-                </Text>
-                <TouchableOpacity 
-                    style={styles.addButton}
-                    onPress={() => navigation.navigate("CashTransactionForm" as any)}
-                >
-                    <Plus color="white" size={24} />
-                    <Text style={styles.addButtonText}>Record Transaction</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Transactions List */}
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <FlatList
-                data={transactions || []}
-                keyExtractor={(item) => item.id || item.created_at}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
-                }
-                renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        style={styles.transactionCard}
-                        onPress={() => navigation.navigate("CashTransactionForm" as any, { id: item.id })}
-                    >
-                        <View style={styles.iconContainer}>
-                            {item.type === 'in' ? (
-                                <View style={[styles.iconCircle, { backgroundColor: '#dcfce7' }]}>
-                                    <ArrowDownLeft color="#16a34a" size={20} />
-                                </View>
-                            ) : (
-                                <View style={[styles.iconCircle, { backgroundColor: '#fee2e2' }]}>
-                                    <ArrowUpRight color="#dc2626" size={20} />
-                                </View>
-                            )}
-                        </View>
-                        <View style={styles.txInfo}>
-                            <Text style={styles.txDesc}>{item.description || "No Description"}</Text>
-                            <Text style={styles.txDate}>{item.date}</Text>
-                        </View>
-                        <Text style={[
-                            styles.txAmount,
-                            { color: item.type === 'in' ? '#16a34a' : '#dc2626' }
-                        ]}>
-                            {item.type === 'in' ? '+' : '-'}${Math.abs(item.amount).toFixed(2)}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-                ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyText}>No transactions found</Text>
-                    </View>
-                }
-                contentContainerStyle={styles.listContent}
-            />
+  return (
+    <View style={styles.container}>
+      <CustomHeader />
+      
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
+          <TextInput
+            style={styles.searchText}
+            placeholder="Search cash accounts..."
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
-    );
+      </View>
+
+      <FlatList
+        data={accounts || []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <CashAccountCard account={item} />}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+          />
+        }
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.empty}>
+              <Wallet size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No cash accounts</Text>
+              <Text style={styles.emptySubtext}>
+                Managed your cash in hand here
+              </Text>
+            </View>
+          ) : null
+        }
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    headerCard: {
-        backgroundColor: "#6366f1",
-        padding: 24,
-        paddingTop: 32,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        alignItems: 'center',
-        shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    balanceLabel: { color: "#e0e7ff", fontSize: 16, marginBottom: 8 },
-    balanceValue: { color: "white", fontSize: 36, fontWeight: "bold", marginBottom: 24 },
-    addButton: {
-        flexDirection: "row",
-        backgroundColor: "rgba(255,255,255,0.2)",
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 30,
-        alignItems: "center",
-        gap: 8,
-    },
-    addButtonText: { color: "white", fontWeight: "600", fontSize: 16 },
-    sectionTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a", margin: 16, marginBottom: 8 },
-    listContent: { paddingHorizontal: 16, paddingBottom: 20 },
-    transactionCard: {
-        flexDirection: "row",
-        backgroundColor: "white",
-        padding: 16,
-        borderRadius: 16,
-        alignItems: "center",
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: "#e2e8f0",
-    },
-    iconContainer: { marginRight: 16 },
-    iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-    txInfo: { flex: 1 },
-    txDesc: { fontSize: 16, fontWeight: "500", color: "#0f172a", marginBottom: 4 },
-    txDate: { fontSize: 12, color: "#64748b" },
-    txAmount: { fontSize: 16, fontWeight: "600" },
-    emptyState: { alignItems: "center", padding: 40 },
-    emptyText: { color: "#94a3b8" }
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  searchBar: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  searchInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
+  },
+  list: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.sm,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.accent,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  description: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  cardDetail: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  balance: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  empty: {
+    alignItems: "center",
+    paddingVertical: 60,
+    gap: spacing.sm,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginTop: spacing.md,
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
 });

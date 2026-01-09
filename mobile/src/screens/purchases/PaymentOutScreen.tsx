@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
-import { wp, hp } from "../../lib/responsive";
+import { ArrowUpRight } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 interface PaymentOut {
   id: string;
@@ -44,13 +45,18 @@ function PaymentOutCard({ payment }: { payment: PaymentOut }) {
       }
     >
       <View style={styles.cardHeader}>
+        <View style={styles.iconBox}>
+          <ArrowUpRight size={22} color={colors.danger} />
+        </View>
         <View style={styles.info}>
-          <Text style={styles.customerName}>
-            {payment.customer_name || "Unknown Supplier"}
-          </Text>
+          <View style={styles.row}>
+            <Text style={styles.customerName}>
+              {payment.customer_name || "Unknown Supplier"}
+            </Text>
+            <Text style={styles.amount}>${payment.amount?.toFixed(2)}</Text>
+          </View>
           <Text style={styles.date}>{formatDate(payment.date)}</Text>
         </View>
-        <Text style={styles.amount}>${payment.amount?.toFixed(2)}</Text>
       </View>
       <View style={styles.cardFooter}>
         <Text style={styles.mode}>{payment.payment_mode?.toUpperCase()}</Text>
@@ -74,12 +80,12 @@ export function PaymentOutScreen() {
     [search ? `%${search}%` : null]
   );
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
-  };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -87,7 +93,7 @@ export function PaymentOutScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search payments..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
@@ -108,17 +114,22 @@ export function PaymentOutScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>💸</Text>
-            <Text style={styles.emptyText}>No payments found</Text>
-            <Text style={styles.emptySubtext}>
-              Record your first payment to a supplier
-            </Text>
-          </View>
+          !isLoading ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIconContainer}>
+                <ArrowUpRight size={48} color={colors.textMuted} />
+              </View>
+              <Text style={styles.emptyText}>No payments found</Text>
+              <Text style={styles.emptySubtext}>
+                Record your first payment to a supplier
+              </Text>
+            </View>
+          ) : null
         }
       />
     </View>
@@ -126,120 +137,123 @@ export function PaymentOutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
-    padding: wp(4),
-    gap: wp(3),
+    padding: spacing.xl,
+    gap: spacing.sm,
     alignItems: "center",
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 44,
-    color: "#0f172a",
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    color: colors.text,
+    fontSize: fontSize.md,
   },
   addButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#6366f1",
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
   },
   addButtonText: {
-    color: "#ffffff",
+    color: colors.textOnAccent,
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: fontWeight.semibold,
   },
   list: {
-    padding: wp(4),
-    paddingTop: 0,
-    paddingBottom: hp(10),
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.md,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#64748b",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
   },
   cardHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.dangerMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
   info: {
     flex: 1,
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   customerName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: 2,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   date: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   amount: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ef4444", // Red for payment out
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: colors.danger,
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: spacing.xs,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "#f8fafc",
-    paddingTop: 8,
-    marginTop: 4,
+    borderTopColor: colors.borderLight,
   },
   mode: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#64748b",
-    paddingHorizontal: 8,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.textSecondary,
+    backgroundColor: colors.surfaceHover,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    backgroundColor: "#f1f5f9",
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
   },
   ref: {
-    fontSize: 12,
-    color: "#94a3b8",
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: hp(10),
+    marginTop: 80,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  emptyIconContainer: {
+    marginBottom: spacing.md,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: 8,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
 });

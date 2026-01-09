@@ -182,15 +182,15 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                       }}
                     >
                       <View style={[styles.menuItemIcon, (expanded || active) && styles.iconActive]}>
-                        <item.icon size={20} color={(expanded || active) ? "#6366f1" : "#64748b"} />
+                        <item.icon size={20} color={(expanded || active) ? "#C4A484" : "#64748b"} />
                       </View>
                       <Text style={[styles.menuItemLabel, (expanded || active) && styles.labelActive]}>
                           {item.label}
                       </Text>
                       {expanded ? (
-                        <ChevronDown size={16} color="#6366f1" />
+                        <ChevronDown size={16} color="#C4A484" />
                       ) : (
-                        <ChevronRight size={16} color={active ? "#6366f1" : "#94a3b8"} />
+                        <ChevronRight size={16} color={active ? "#C4A484" : "#94a3b8"} />
                       )}
                     </TouchableOpacity>
 
@@ -209,7 +209,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                             >
                               <Text style={[
                                 styles.subMenuItemLabel,
-                                isChildActive && { color: "#6366f1", fontWeight: "700" }
+                                isChildActive && { color: "#C4A484", fontWeight: "700" }
                               ]}>
                                 {child.label}
                               </Text>
@@ -227,7 +227,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                     }}
                   >
                     <View style={[styles.menuItemIcon, active && styles.iconActive]}>
-                      <item.icon size={20} color={active ? "#6366f1" : "#64748b"} />
+                      <item.icon size={20} color={active ? "#C4A484" : "#64748b"} />
                     </View>
                     <Text style={[styles.menuItemLabel, active && styles.labelActive]}>{item.label}</Text>
                   </TouchableOpacity>
@@ -270,10 +270,10 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: "#6366f1",
+    backgroundColor: "#C4A484",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6366f1",
+    shadowColor: "#C4A484",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   menuItemActive: {
-    backgroundColor: "#f5f3ff",
+    backgroundColor: "#f5f0eb",
   },
   menuItemIcon: {
     width: 36,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   iconActive: {
-    backgroundColor: "#ede9fe",
+    backgroundColor: "#f5f0eb",
   },
   menuItemLabel: {
     flex: 1,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   labelActive: {
-    color: "#6366f1",
+    color: "#C4A484",
   },
   subMenuContainer: {
     paddingLeft: 48,

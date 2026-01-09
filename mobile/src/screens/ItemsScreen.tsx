@@ -9,9 +9,10 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@powersync/react-native";
-import { Search, Plus, Filter, Package, ChevronRight, AlertCircle, Box } from "lucide-react-native";
-import { wp, hp } from "../lib/responsive";
+import { Search, ChevronRight, AlertCircle, Box, Package } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
 
 interface Item {
   id: string;
@@ -37,44 +38,31 @@ function ItemCard({ item }: { item: Item }) {
         (navigation as any).navigate("ItemForm", { id: item.id });
       }}
     >
-      <View style={styles.cardMain}>
-        <View style={[styles.itemIconBox, { backgroundColor: item.type === 'service' ? '#ecfdf5' : '#eff6ff' }]}>
-          {item.type === 'service' ? (
-            <Package size={22} color="#10b981" />
-          ) : (
-            <Box size={22} color="#3b82f6" />
-          )}
-        </View>
-        <View style={styles.itemMainInfo}>
-          <View style={styles.itemHeaderRow}>
-            <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-            <Text style={styles.priceValue}>
-              ${item.sale_price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Text>
-          </View>
-          <View style={styles.itemSubRow}>
-            <Text style={styles.skuText}>{item.sku || "No SKU"}</Text>
-            {item.type !== 'service' && (
-              <View style={styles.stockContainer}>
-                <Text style={[styles.stockText, isLowStock && styles.lowStockText]}>
-                  {item.stock_quantity || 0} in stock
-                </Text>
-                {isLowStock && <AlertCircle size={14} color="#ef4444" style={{ marginLeft: 4 }} />}
-              </View>
-            )}
-            {item.type === 'service' && (
-              <Text style={styles.serviceTag}>Service</Text>
-            )}
-          </View>
-        </View>
-        <ChevronRight size={18} color="#cbd5e1" style={{ marginLeft: 8 }} />
+      <View style={styles.thumbnail}>
+        <Box size={20} color={colors.textMuted} />
       </View>
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.itemMeta}>
+          {item.sku || "No SKU"} • ${item.sale_price?.toFixed(2)}
+        </Text>
+        {item.type !== 'service' && (
+          <View style={styles.stockRow}>
+            <Text style={[styles.stockText, isLowStock && styles.lowStockText]}>
+              {item.stock_quantity || 0} in stock
+            </Text>
+            {isLowStock && <AlertCircle size={12} color={colors.danger} style={{ marginLeft: 4 }} />}
+          </View>
+        )}
+      </View>
+      <ChevronRight size={18} color={colors.textMuted} />
     </TouchableOpacity>
   );
 }
 
 export function ItemsScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -94,61 +82,57 @@ export function ItemsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <View style={styles.searchWrapper}>
-          <Search size={18} color="#94a3b8" style={styles.searchIcon} />
+      {/* Search Bar */}
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search products & services..."
-            placeholderTextColor="#94a3b8"
+            style={styles.searchText}
+            placeholder="Search items..."
+            placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#64748b" />
-        </TouchableOpacity>
       </View>
 
       <FlatList
-        data={items || []}
-        keyExtractor={(item) => item.id}
+        data={items}
         renderItem={({ item }) => <ItemCard item={item} />}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <View style={styles.emptyIconContainer}>
-                <Package size={48} color="#cbd5e1" />
-              </View>
-              <Text style={styles.emptyText}>No items found</Text>
-              <Text style={styles.emptySubtext}>
-                Start building your catalog. Add products or services you offer.
-              </Text>
-              <TouchableOpacity 
-                style={styles.emptyAddButton}
+              <Package size={48} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No items yet</Text>
+              <Text style={styles.emptyText}>Add your first product or service</Text>
+              <TouchableOpacity
+                style={styles.addBtn}
                 onPress={() => (navigation as any).navigate("ItemForm")}
               >
-                <Text style={styles.emptyAddButtonText}>Add New Item</Text>
+                <Text style={styles.addBtnText}>+ Add Item</Text>
               </TouchableOpacity>
             </View>
           ) : null
         }
       />
 
+      {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
         onPress={() => (navigation as any).navigate("ItemForm")}
       >
-        <Plus size={24} color="#fff" strokeWidth={3} />
+        <Text style={styles.fabText}>+ Add</Text>
       </TouchableOpacity>
     </View>
   );
@@ -157,178 +141,114 @@ export function ItemsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
-  searchContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-    alignItems: "center",
-  },
-  searchWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
+  searchBar: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
   searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: "#0f172a",
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
   },
   list: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    gap: 12,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.sm,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#0f172a",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardMain: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.md,
+    ...shadows.sm,
   },
-  itemIconBox: {
+  thumbnail: {
     width: 48,
     height: 48,
-    borderRadius: 14,
+    backgroundColor: colors.surfaceHover,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
   },
-  itemMainInfo: {
+  itemInfo: {
     flex: 1,
-  },
-  itemHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
   },
   itemName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f172a",
-    flex: 1,
-    marginRight: 8,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: 2,
   },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#10b981",
+  itemMeta: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
   },
-  itemSubRow: {
+  stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  skuText: {
-    fontSize: 13,
-    color: "#94a3b8",
-  },
-  stockContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 2,
   },
   stockText: {
-    fontSize: 13,
-    color: "#64748b",
-    fontWeight: '500',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lowStockText: {
-    color: "#ef4444",
+    color: colors.danger,
   },
-  serviceTag: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#10b981',
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    textTransform: 'uppercase',
+  empty: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginTop: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  addBtn: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    marginTop: spacing.md,
+  },
+  addBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.textOnAccent,
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#6366f1",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    right: spacing.xl,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    ...shadows.md,
   },
-  empty: {
-    alignItems: "center",
-    paddingVertical: 80,
+  fabText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.textOnAccent,
   },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#f1f5f9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    marginBottom: 24,
-  },
-  emptyAddButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#6366f1',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  emptyAddButtonText: {
-    color: '#6366f1',
-    fontWeight: '700',
-    fontSize: 15,
-  }
 });

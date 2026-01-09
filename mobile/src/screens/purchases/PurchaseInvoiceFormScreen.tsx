@@ -9,6 +9,7 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
@@ -24,6 +25,7 @@ import {
 import { Plus, Trash2, Save, X } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -112,7 +114,7 @@ export function PurchaseInvoiceFormScreen() {
             setDueDate(data.due_date || "");
             setDiscountPercent(
               data.discount_amount ? String(data.discount_amount) : ""
-            ); // Note: schema stores amount, UI uses %. Need to check logic. Web form uses %. Simple MVP: store % in separate field or implied. Schema has discount_amount. Let's stick to simple % input but calculate amount.
+            ); 
             setNotes(data.notes || "");
           }
         }
@@ -155,8 +157,6 @@ export function PurchaseInvoiceFormScreen() {
     const taxable = subtotal - totalDiscount;
     const totalTax = lineItems.reduce((sum, item) => {
       // Simplified tax calc: (Item Amount - Item Discount) * Tax %
-      // Web app might apply tax AFTER global discount? Usually line tax is on line total.
-      // Let's assume tax is per line.
       const base =
         item.quantity * item.unitPrice * (1 - item.discountPercent / 100);
       return sum + base * (item.taxPercent / 100);
@@ -290,9 +290,6 @@ export function PurchaseInvoiceFormScreen() {
               item.amount,
             ]
           );
-          // Note: Schema for purchase_invoice_items might be missing batch_number? Checked previously it was added to sale_invoice_items.
-          // Let's check schema. If missing, we skip saving batch_number for now or update schema.
-          // For now, UI has it.
         }
       });
 
@@ -319,7 +316,7 @@ export function PurchaseInvoiceFormScreen() {
             navigation.goBack();
           }}
         >
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>
@@ -332,7 +329,7 @@ export function PurchaseInvoiceFormScreen() {
           onPress={handleSubmit}
           disabled={isLoading}
         >
-          <Save size={24} color="#6366f1" />
+            {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
         </Button>
       </View>
 
@@ -380,7 +377,7 @@ export function PurchaseInvoiceFormScreen() {
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color="#0f172a" />}
+            leftIcon={<Plus size={16} color={colors.text} />}
           >
             Add Item
           </Button>
@@ -410,7 +407,7 @@ export function PurchaseInvoiceFormScreen() {
                       }}
                       style={{ marginLeft: 8 }}
                     >
-                      <Trash2 size={18} color="#ef4444" />
+                      <Trash2 size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -503,7 +500,7 @@ export function PurchaseInvoiceFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color="#64748b" />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.modalBody}>
@@ -603,7 +600,7 @@ export function PurchaseInvoiceFormScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -611,9 +608,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
     marginTop: Platform.OS === "android" ? 24 : 0,
   },
   titleContainer: {
@@ -621,9 +618,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   content: {
     padding: wp(4),
@@ -641,16 +638,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   itemCard: {
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    backgroundColor: "#white",
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface,
   },
   itemHeader: {
     flexDirection: "row",
@@ -658,18 +655,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemNumber: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   itemSummary: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
   },
   itemMeta: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   summaryRow: {
     flexDirection: "row",
@@ -677,29 +674,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   summaryValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#0f172a",
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.text,
   },
   totalRow: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: colors.border,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
   },
   totalValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#6366f1",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
   },
   modalOverlay: {
     flex: 1,
@@ -707,7 +704,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "90%",
@@ -718,12 +715,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   modalBody: {
     padding: 16,

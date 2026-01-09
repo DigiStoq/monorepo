@@ -2,13 +2,17 @@ import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
-import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react-native";
+import { Plus, ArrowUpRight, ArrowDownLeft, Trash2 } from "lucide-react-native";
 import { ChequeRecord } from "../lib/powersync";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { CustomHeader } from "../components/CustomHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function ChequesScreen() {
     const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'received' | 'issued'>('all');
+    const insets = useSafeAreaInsets();
     
     // Cheques Query
     const query = filterType === 'all' 
@@ -25,17 +29,18 @@ export function ChequesScreen() {
     // Helper to get status color
     const getStatusColor = (status: string) => {
         switch(status) {
-            case 'cleared': return '#16a34a'; // green
-            case 'bounced': return '#dc2626'; // red
-            case 'cancelled': return '#64748b'; // gray
-            default: return '#eab308'; // yellow/pending
+            case 'cleared': return colors.success;
+            case 'bounced': return colors.danger;
+            case 'cancelled': return colors.textMuted;
+            default: return colors.warning;
         }
     };
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
+            <CustomHeader />
+            
+            <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>
                     {['all', 'received', 'issued'].map((type) => (
                         <TouchableOpacity 
@@ -55,13 +60,6 @@ export function ChequesScreen() {
                         </TouchableOpacity>
                     ))}
                 </View>
-
-                <TouchableOpacity 
-                    style={styles.addButton}
-                    onPress={() => navigation.navigate("ChequeForm" as any)}
-                >
-                    <Plus color="white" size={24} />
-                </TouchableOpacity>
             </View>
 
             {/* List */}
@@ -69,19 +67,20 @@ export function ChequesScreen() {
                 data={cheques || []}
                 keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
                 }
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
                     <TouchableOpacity 
                         style={styles.card}
                         onPress={() => navigation.navigate("ChequeForm" as any, { id: item.id })}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
-                            <View style={[styles.iconBox, { backgroundColor: item.type === 'received' ? '#dcfce7' : '#fee2e2' }]}>
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'received' ? colors.successMuted : colors.dangerMuted }]}>
                                 {item.type === 'received' 
-                                    ? <ArrowDownLeft color="#16a34a" size={20} />
-                                    : <ArrowUpRight color="#dc2626" size={20} />
+                                    ? <ArrowDownLeft color={colors.success} size={20} />
+                                    : <ArrowUpRight color={colors.danger} size={20} />
                                 }
                             </View>
                             <View style={styles.headerInfo}>
@@ -106,62 +105,65 @@ export function ChequesScreen() {
                     </View>
                 }
             />
+            
+           {/* FAB */}
+           <TouchableOpacity
+             style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
+             onPress={() => (navigation as any).navigate("ChequeForm")}
+           >
+             <Text style={styles.fabText}>+ Add</Text>
+           </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        padding: 16,
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderColor: '#e2e8f0'
+    container: { flex: 1, backgroundColor: colors.background },
+    subHeader: { 
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
     },
-    filterContainer: { flexDirection: 'row', gap: 8 },
+    filterContainer: { flexDirection: 'row', gap: spacing.sm },
     filterPill: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: '#f1f5f9',
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.surfaceHover,
     },
-    filterPillActive: { backgroundColor: '#6366f1' },
-    filterText: { color: '#64748b', fontSize: 13, fontWeight: '500' },
-    filterTextActive: { color: 'white' },
-    addButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#6366f1',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    listContent: { padding: 16, paddingBottom: 30, gap: 12 },
+    filterPillActive: { backgroundColor: colors.accent },
+    filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
+    filterTextActive: { color: colors.textOnAccent },
+    listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
     card: {
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
     },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    iconBox: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+    iconBox: { width: 40, height: 40, borderRadius: borderRadius.full, alignItems: 'center', justifyContent: 'center' },
     headerInfo: { flex: 1 },
-    customerName: { fontSize: 15, fontWeight: '600', color: '#0f172a' },
-    bankName: { fontSize: 12, color: '#64748b', marginTop: 2 },
-    badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-    badgeText: { fontSize: 11, fontWeight: '600', textTransform: 'capitalize' },
-    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderColor: '#f1f5f9' },
-    date: { fontSize: 13, color: '#64748b' },
-    amount: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
+    customerName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    bankName: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
+    badge: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.sm },
+    badgeText: { fontSize: fontSize.xs, fontWeight: fontWeight.semibold, textTransform: 'capitalize' },
+    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.md, borderTopWidth: 1, borderColor: colors.border },
+    date: { fontSize: fontSize.sm, color: colors.textMuted },
+    amount: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
     emptyState: { alignItems: 'center', padding: 40 },
-    emptyText: { color: '#94a3b8' }
+    emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+    fab: {
+        position: 'absolute',
+        right: spacing.xl,
+        backgroundColor: colors.accent,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.full,
+        ...shadows.md,
+    },
+    fabText: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.semibold,
+        color: colors.textOnAccent,
+    },
 });

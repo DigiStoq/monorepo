@@ -25,6 +25,7 @@ import {
 import { Plus, Trash2, Save, X, Send } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 // Inline Types
 interface CustomerData {
@@ -288,11 +289,11 @@ export function PurchaseOrderFormScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
       <View style={styles.header}>
         <Button variant="ghost" size="icon" onPress={() => navigation.goBack()}>
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <Text style={styles.title}>{isEditing ? "Edit Order" : "New Purchase Order"}</Text>
         <Button variant="ghost" size="icon" onPress={() => handleSubmit()} disabled={isLoading}>
-          {isLoading ? <ActivityIndicator color="#6366f1" /> : <Save size={24} color="#6366f1" />}
+          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
         </Button>
       </View>
 
@@ -320,7 +321,7 @@ export function PurchaseOrderFormScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Items</Text>
-          <Button size="sm" variant="outline" onPress={() => openItemModal()} leftIcon={<Plus size={16} color="#0f172a" />}>Add Item</Button>
+          <Button size="sm" variant="outline" onPress={() => openItemModal()} leftIcon={<Plus size={16} color={colors.text} />}>Add Item</Button>
         </View>
 
         {lineItems.map((item, index) => (
@@ -332,7 +333,7 @@ export function PurchaseOrderFormScreen() {
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <Text style={styles.itemSummary}>${item.amount.toFixed(2)}</Text>
                     <TouchableOpacity onPress={(e) => { e.stopPropagation(); setLineItems((p) => p.filter((i) => i.id !== item.id)); }} style={{ marginLeft: 8 }}>
-                      <Trash2 size={18} color="#ef4444" />
+                      <Trash2 size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -375,7 +376,7 @@ export function PurchaseOrderFormScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editingItemId ? "Edit Item" : "Add Item"}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={24} color="#64748b" />
+                <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.modalBody}>
@@ -398,27 +399,27 @@ export function PurchaseOrderFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: wp(4), paddingVertical: hp(1.5), backgroundColor: "#ffffff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0", marginTop: Platform.OS === "android" ? 24 : 0 },
-  title: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: wp(4), paddingVertical: hp(1.5), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, marginTop: Platform.OS === "android" ? 24 : 0 },
+  title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
   content: { padding: wp(4), paddingBottom: hp(5) },
   row: { flexDirection: "row", marginBottom: 8 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", color: "#0f172a" },
-  itemCard: { marginBottom: 8, borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, backgroundColor: "white" },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+  itemCard: { marginBottom: 8, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.md, backgroundColor: colors.surface },
   itemHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  itemNumber: { fontSize: 14, fontWeight: "600", color: "#0f172a" },
-  itemSummary: { fontSize: 14, fontWeight: "600", color: "#0f172a" },
-  itemMeta: { fontSize: 13, color: "#64748b" },
+  itemNumber: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+  itemSummary: { fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.text },
+  itemMeta: { fontSize: fontSize.xs, color: colors.textSecondary },
   summaryRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  summaryLabel: { fontSize: 14, color: "#64748b" },
-  summaryValue: { fontSize: 14, fontWeight: "500", color: "#0f172a" },
-  totalRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#e2e8f0" },
-  totalLabel: { fontSize: 18, fontWeight: "bold", color: "#0f172a" },
-  totalValue: { fontSize: 18, fontWeight: "bold", color: "#6366f1" },
+  summaryLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
+  summaryValue: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text },
+  totalRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
+  totalLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text },
+  totalValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.primary },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: "#ffffff", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "90%" },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
-  modalTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+  modalContent: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "90%" },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  modalTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
   modalBody: { padding: 16, paddingBottom: 40 },
 });

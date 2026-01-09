@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft, Calendar } from "lucide-react-native";
+import { Calendar } from "lucide-react-native";
 import { usePurchasesBySupplierReport, DateRange } from "../../hooks/useReports";
+import { CustomHeader } from "../../components/CustomHeader";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function PurchasesBySupplierScreen() {
     const navigation = useNavigation();
@@ -32,18 +34,11 @@ export function PurchasesBySupplierScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color="#0f172a" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Purchases By Supplier</Text>
-                 <TouchableOpacity style={styles.iconBtn}>
-                    <Calendar color="#64748b" size={24} />
-                </TouchableOpacity>
-            </View>
-
+            <CustomHeader />
+            
             <View style={styles.content}>
                 <View style={styles.dateDisplay}>
+                    <Calendar color={colors.textMuted} size={16} style={{marginRight: 6}} />
                     <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
                 </View>
 
@@ -64,19 +59,16 @@ export function PurchasesBySupplierScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
-    iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+    container: { flex: 1, backgroundColor: colors.background },
     content: { flex: 1 },
-    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: '#f1f5f9' },
-    dateText: { fontSize: 14, color: '#64748b', fontWeight: '500' },
-    list: { padding: 16, gap: 12 },
-    loadingText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    emptyText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    card: { backgroundColor: 'white', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+    dateDisplay: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: spacing.md, backgroundColor: colors.surfaceHover },
+    dateText: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: fontWeight.medium },
+    list: { padding: spacing.lg, gap: spacing.md },
+    loadingText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    emptyText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    card: { backgroundColor: colors.surface, padding: spacing.md, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.borderLight, ...shadows.sm },
     cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-    name: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-    amount: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-    count: { fontSize: 12, color: '#64748b' },
+    name: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    amount: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
+    count: { fontSize: fontSize.sm, color: colors.textMuted },
 });

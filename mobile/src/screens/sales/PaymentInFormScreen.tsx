@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react"; 
 import {
   View,
   StyleSheet,
@@ -7,9 +7,11 @@ import {
   Platform,
   KeyboardAvoidingView,
   Text,
+  ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../../lib/powersync";
+import { useQuery } from "@powersync/react-native";
 import {
   Button,
   Input,
@@ -21,6 +23,7 @@ import {
 import { Save, X } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 interface CustomerData {
   id: string;
@@ -160,7 +163,7 @@ export function PaymentInFormScreen() {
             navigation.goBack();
           }}
         >
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>
@@ -171,9 +174,9 @@ export function PaymentInFormScreen() {
           variant="ghost"
           size="icon"
           onPress={handleSubmit}
-          isLoading={isLoading}
+          disabled={isLoading}
         >
-          <Save size={24} color="#6366f1" />
+          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
         </Button>
       </View>
 
@@ -241,13 +244,10 @@ export function PaymentInFormScreen() {
   );
 }
 
-// Helper for useQuery since I forgot to import it
-import { useQuery } from "@powersync/react-native";
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -255,9 +255,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
     marginTop: Platform.OS === "android" ? 24 : 0,
   },
   titleContainer: {
@@ -265,9 +265,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   content: {
     padding: wp(4),
@@ -278,6 +278,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   submitButton: {
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
 });

@@ -4,15 +4,17 @@ import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Plus, HandCoins, ArrowRight } from "lucide-react-native";
 import { LoanRecord } from "../lib/powersync";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { CustomHeader } from "../components/CustomHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function LoansScreen() {
     const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'given' | 'taken'>('all');
+    const insets = useSafeAreaInsets();
     
     // Loans Query
-    // 'taken' = I borrowed money (Liability)
-    // 'given' = I lent money (Asset)
     const query = filterType === 'all' 
         ? `SELECT * FROM loans ORDER BY start_date DESC, created_at DESC`
         : `SELECT * FROM loans WHERE type = '${filterType}' ORDER BY start_date DESC, created_at DESC`;
@@ -26,16 +28,17 @@ export function LoansScreen() {
 
     const getStatusColor = (status: string) => {
         switch(status) {
-            case 'closed': return '#16a34a'; // green
-            case 'defaulted': return '#dc2626'; // red
-            default: return '#3b82f6'; // blue (active)
+            case 'closed': return colors.success;
+            case 'defaulted': return colors.danger;
+            default: return colors.info; // blue (active)
         }
     };
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
+            <CustomHeader />
+            
+            <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>
                     {['all', 'given', 'taken'].map((type) => (
                         <TouchableOpacity 
@@ -55,13 +58,6 @@ export function LoansScreen() {
                         </TouchableOpacity>
                     ))}
                 </View>
-
-                <TouchableOpacity 
-                    style={styles.addButton}
-                    onPress={() => navigation.navigate("LoanForm" as any)}
-                >
-                    <Plus color="white" size={24} />
-                </TouchableOpacity>
             </View>
 
             {/* List */}
@@ -69,17 +65,18 @@ export function LoansScreen() {
                 data={loans || []}
                 keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
                 }
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
                     <TouchableOpacity 
                         style={styles.card}
                         onPress={() => navigation.navigate("LoanForm" as any, { id: item.id })}
+                        activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
-                            <View style={[styles.iconBox, { backgroundColor: item.type === 'given' ? '#dcfce7' : '#fee2e2' }]}>
-                                <HandCoins color={item.type === 'given' ? '#16a34a' : '#dc2626'} size={20} />
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'given' ? colors.successMuted : colors.dangerMuted }]}>
+                                <HandCoins color={item.type === 'given' ? colors.success : colors.danger} size={20} />
                             </View>
                             <View style={styles.headerInfo}>
                                 <Text style={styles.partyName}>{item.type === 'given' ? item.customer_name : item.lender_name}</Text>
@@ -99,7 +96,7 @@ export function LoansScreen() {
                              </View>
                              <View style={{ alignItems: 'flex-end' }}>
                                 <Text style={styles.label}>Outstanding</Text>
-                                <Text style={[styles.value, { color: (item.outstanding_amount || 0) > 0 ? '#ea580c' : '#16a34a' }]}>
+                                <Text style={[styles.value, { color: (item.outstanding_amount || 0) > 0 ? colors.warning : colors.success }]}>
                                     ${(item.outstanding_amount || 0).toFixed(2)}
                                 </Text>
                              </View>
@@ -118,71 +115,74 @@ export function LoansScreen() {
                     </View>
                 }
             />
+            
+           {/* FAB */}
+           <TouchableOpacity
+             style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
+             onPress={() => (navigation as any).navigate("LoanForm")}
+           >
+             <Text style={styles.fabText}>+ Add</Text>
+           </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { 
-        padding: 16,
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderColor: '#e2e8f0',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
+    container: { flex: 1, backgroundColor: colors.background },
+    subHeader: { 
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md, 
     },
-    filterContainer: { flexDirection: 'row', gap: 8, flex: 1, marginRight: 8, overflow: 'hidden' },
+    filterContainer: { flexDirection: 'row', gap: spacing.sm, flex: 1 },
     filterPill: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: '#f1f5f9',
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.surfaceHover,
     },
-    filterPillActive: { backgroundColor: '#6366f1' },
-    filterText: { color: '#64748b', fontSize: 12, fontWeight: '500' },
-    filterTextActive: { color: 'white' },
-    addButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#6366f1',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    listContent: { padding: 16, paddingBottom: 30, gap: 12 },
+    filterPillActive: { backgroundColor: colors.accent },
+    filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
+    filterTextActive: { color: colors.textOnAccent },
+    listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
     card: {
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
     },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-    iconBox: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+    iconBox: { width: 44, height: 44, borderRadius: borderRadius.full, alignItems: 'center', justifyContent: 'center' },
     headerInfo: { flex: 1 },
-    partyName: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-    loanType: { fontSize: 12, color: '#64748b', marginTop: 2 },
-    badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-    badgeText: { fontSize: 11, fontWeight: '600', textTransform: 'capitalize' },
-    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 },
-    label: { fontSize: 12, color: '#64748b', marginBottom: 2 },
-    value: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
+    partyName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    loanType: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
+    badge: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.sm },
+    badgeText: { fontSize: fontSize.xs, fontWeight: fontWeight.semibold, textTransform: 'capitalize' },
+    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md, paddingHorizontal: 4 },
+    label: { fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 2 },
+    value: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
     progressContainer: { 
-        backgroundColor: '#f8fafc', 
-        padding: 8, 
-        borderRadius: 8, 
+        backgroundColor: colors.background, 
+        padding: spacing.sm, 
+        borderRadius: borderRadius.md, 
         alignItems: 'center', 
         borderWidth: 1, 
-        borderColor: '#f1f5f9' 
+        borderColor: colors.border
     },
-    progressText: { fontSize: 12, color: '#475569', fontWeight: '500' },
+    progressText: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: fontWeight.medium },
     emptyState: { alignItems: 'center', padding: 40 },
-    emptyText: { color: '#94a3b8' }
+    emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+    fab: {
+        position: 'absolute',
+        right: spacing.xl,
+        backgroundColor: colors.accent,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.full,
+        ...shadows.md,
+    },
+    fabText: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.semibold,
+        color: colors.textOnAccent,
+    },
 });

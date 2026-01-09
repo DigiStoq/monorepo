@@ -6,9 +6,9 @@ import {
   Modal,
   FlatList,
   StyleSheet,
-  SafeAreaView,
 } from "react-native";
 import { ChevronDown, X, Check } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 export interface SelectOption {
   value: string;
@@ -22,7 +22,7 @@ interface SelectProps {
   placeholder?: string;
   label?: string;
   disabled?: boolean;
-  containerStyle?: any; // or StyleProp<ViewStyle>
+  containerStyle?: any;
 }
 
 export function Select({
@@ -56,7 +56,7 @@ export function Select({
         <Text style={[styles.valueText, !selectedOption && styles.placeholder]}>
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
-        <ChevronDown size={20} color="#94a3b8" />
+        <ChevronDown size={20} color={colors.textMuted} />
       </TouchableOpacity>
 
       <Modal
@@ -76,7 +76,7 @@ export function Select({
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color="#64748b" />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -100,7 +100,7 @@ export function Select({
                   >
                     {item.label}
                   </Text>
-                  {item.value === value && <Check size={20} color="#6366f1" />}
+                  {item.value === value && <Check size={20} color={colors.primary} />}
                 </TouchableOpacity>
               )}
               style={styles.list}
@@ -114,36 +114,36 @@ export function Select({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#334155",
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   trigger: {
-    height: 44,
-    backgroundColor: "#ffffff",
+    height: 48,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   disabled: {
-    backgroundColor: "#f1f5f9",
+    backgroundColor: colors.surfaceHover,
     opacity: 0.7,
   },
   valueText: {
-    fontSize: 14,
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    color: colors.text,
     flex: 1,
   },
   placeholder: {
-    color: "#94a3b8",
+    color: colors.textMuted,
   },
   modalOverlay: {
     flex: 1,
@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
     maxHeight: "80%",
     paddingBottom: 40,
   },
@@ -161,34 +161,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   list: {
-    padding: 8,
+    padding: spacing.sm,
   },
   optionItem: {
-    padding: 16,
-    borderRadius: 8,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   optionSelected: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: colors.surfaceHover,
   },
   optionText: {
-    fontSize: 14,
-    color: "#334155",
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
   },
   optionTextSelected: {
-    color: "#6366f1",
-    fontWeight: "500",
+    color: colors.primary,
+    fontWeight: fontWeight.medium,
   },
 });

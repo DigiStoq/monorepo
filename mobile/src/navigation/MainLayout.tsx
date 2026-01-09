@@ -8,7 +8,7 @@ import { SalesNavigator } from "./SalesNavigator";
 import { PurchasesNavigator } from "./PurchasesNavigator";
 import { ItemsScreen } from "../screens/ItemsScreen";
 import { ReportsScreen } from "../screens/reports/ReportsScreen";
-import { colors } from "../lib/theme";
+import { colors, borderRadius } from "../lib/theme";
 
 const Stack = createNativeStackNavigator();
 
@@ -58,13 +58,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: colors.sidebar,
+    backgroundColor: colors.backgroundLight,
   },
   content: {
     flex: 1,
     backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: Platform.OS === "ios" ? 24 : 0,
+    borderTopLeftRadius: borderRadius.xxl,
+    borderBottomLeftRadius: Platform.OS === "ios" ? borderRadius.xxl : 0,
     overflow: "hidden",
   },
 });

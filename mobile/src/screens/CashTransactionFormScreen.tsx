@@ -1,9 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  Alert, 
+  KeyboardAvoidingView, 
+  Platform,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator
+} from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { usePowerSync } from "@powersync/react-native";
 import { generateUUID } from "../lib/utils";
-import { X, Save } from "lucide-react-native";
+import { X, Save, Trash2 } from "lucide-react-native";
+import { 
+    Button, 
+    Input,
+    Card,
+    CardHeader,
+    CardBody
+} from "../components/ui";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { wp, hp } from "../lib/responsive";
 
 export function CashTransactionFormScreen() {
     const navigation = useNavigation();
@@ -90,13 +109,15 @@ export function CashTransactionFormScreen() {
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
             <View style={styles.header}>
-                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <X color="#0f172a" size={24} />
-                 </TouchableOpacity>
-                 <Text style={styles.headerTitle}>{isEditing ? "Edit Transaction" : "New Cash Transaction"}</Text>
-                 <TouchableOpacity onPress={handleSave} style={styles.iconBtn} disabled={loading}>
-                    <Save color="#6366f1" size={24} />
-                 </TouchableOpacity>
+                <Button variant="ghost" size="icon" onPress={() => navigation.goBack()}>
+                    <X color={colors.text} size={24} />
+                </Button>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>{isEditing ? "Edit Transaction" : "New Cash Transaction"}</Text>
+                </View>
+                <Button variant="ghost" size="icon" onPress={handleSave} disabled={loading}>
+                    {loading ? <ActivityIndicator color={colors.primary} /> : <Save color={colors.primary} size={24} />}
+                </Button>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -115,52 +136,48 @@ export function CashTransactionFormScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Amount</Text>
-                    <TextInput 
-                        style={styles.inputBig}
-                        value={amount}
-                        onChangeText={setAmount}
-                        keyboardType="numeric"
-                        placeholder="0.00"
-                        autoFocus={!isEditing}
-                    />
-                </View>
-
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Date</Text>
-                    <TextInput 
-                        style={styles.input}
-                        value={date}
-                        onChangeText={setDate}
-                        placeholder="YYYY-MM-DD"
-                    />
-                </View>
-
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Description</Text>
-                    <TextInput 
-                        style={styles.input}
-                        value={description}
-                        onChangeText={setDescription}
-                        placeholder="e.g. Sales, Office Supplies"
-                    />
-                </View>
-
-                 <View style={styles.formGroup}>
-                    <Text style={styles.label}>Category (Optional)</Text>
-                    <TextInput 
-                        style={styles.input}
-                        value={category}
-                        onChangeText={setCategory}
-                        placeholder="e.g. Food, Transport"
-                    />
-                </View>
+                <Card>
+                    <CardHeader title="Details" />
+                    <CardBody>
+                        <Input 
+                            label="Amount"
+                            value={amount}
+                            onChangeText={setAmount}
+                            keyboardType="numeric"
+                            placeholder="0.00"
+                            style={styles.inputBig}
+                            autoFocus={!isEditing}
+                        />
+                        <Input 
+                            label="Date"
+                            value={date}
+                            onChangeText={setDate}
+                            placeholder="YYYY-MM-DD"
+                        />
+                         <Input 
+                            label="Description"
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="e.g. Sales, Office Supplies"
+                        />
+                         <Input 
+                            label="Category (Optional)"
+                            value={category}
+                            onChangeText={setCategory}
+                            placeholder="e.g. Food, Transport"
+                        />
+                    </CardBody>
+                </Card>
 
                 {isEditing && (
-                    <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-                        <Text style={styles.deleteText}>Delete Transaction</Text>
-                    </TouchableOpacity>
+                     <Button
+                        variant="outline"
+                        style={{ marginTop: 24, borderColor: colors.danger }}
+                        onPress={handleDelete}
+                        leftIcon={<Trash2 size={18} color={colors.danger} />}
+                     >
+                        <Text style={{ color: colors.danger }}>Delete Transaction</Text>
+                     </Button>
                 )}
             </ScrollView>
         </KeyboardAvoidingView>
@@ -168,21 +185,26 @@ export function CashTransactionFormScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
-    iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
-    content: { padding: 20 },
-    switchContainer: { flexDirection: "row", backgroundColor: "#e2e8f0", borderRadius: 12, padding: 4, marginBottom: 24 },
-    switchOption: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: 10 },
-    switchActiveIn: { backgroundColor: "#16a34a" },
-    switchActiveOut: { backgroundColor: "#dc2626" },
-    switchText: { fontWeight: "600", color: "#64748b" },
-    switchTextActive: { color: "white" },
-    formGroup: { marginBottom: 20 },
-    label: { fontSize: 14, fontWeight: "500", color: "#64748b", marginBottom: 8 },
-    input: { backgroundColor: "white", borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 12, padding: 14, fontSize: 16, color: "#0f172a" },
-    inputBig: { backgroundColor: "white", borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 12, padding: 16, fontSize: 32, fontWeight: "bold", color: "#0f172a", textAlign: "center" },
-    deleteBtn: { marginTop: 24, backgroundColor: "#fee2e2", padding: 16, borderRadius: 12, alignItems: "center" },
-    deleteText: { color: "#dc2626", fontWeight: "600", fontSize: 16 }
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1.5),
+        backgroundColor: colors.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+        marginTop: Platform.OS === "android" ? 24 : 0,
+    },
+    titleContainer: { flex: 1, alignItems: "center" },
+    title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
+    content: { padding: wp(4) },
+    switchContainer: { flexDirection: "row", backgroundColor: colors.border, borderRadius: borderRadius.md, padding: 4, marginBottom: 24 },
+    switchOption: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: borderRadius.sm },
+    switchActiveIn: { backgroundColor: colors.success },
+    switchActiveOut: { backgroundColor: colors.danger },
+    switchText: { fontWeight: fontWeight.medium, color: colors.textSecondary },
+    switchTextActive: { color: "#fff", fontWeight: fontWeight.bold },
+    inputBig: { fontSize: 24, fontWeight: "bold", textAlign: "center" },
 });

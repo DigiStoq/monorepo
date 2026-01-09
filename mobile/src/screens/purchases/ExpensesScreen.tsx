@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
-import { wp, hp } from "../../lib/responsive";
+import { Receipt } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 interface Expense {
   id: string;
@@ -44,6 +45,9 @@ function ExpenseCard({ expense }: { expense: Expense }) {
       }
     >
       <View style={styles.cardHeader}>
+        <View style={styles.iconBox}>
+           <Receipt size={20} color={colors.textSecondary} />
+        </View>
         <View style={styles.info}>
           <Text style={styles.category}>
             {expense.category?.toUpperCase() || "UNCATEGORIZED"}
@@ -76,12 +80,12 @@ export function ExpensesScreen() {
     [search ? `%${search}%` : null]
   );
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
-  };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -89,7 +93,7 @@ export function ExpensesScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search expenses..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
@@ -110,12 +114,15 @@ export function ExpensesScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>💸</Text>
+            <View style={styles.emptyIconContainer}>
+               <Receipt size={48} color={colors.textMuted} />
+            </View>
             <Text style={styles.emptyText}>No expenses yet</Text>
             <Text style={styles.emptySubtext}>
               Record your business expenses here
@@ -128,105 +135,105 @@ export function ExpensesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
-    padding: wp(4),
-    gap: wp(3),
+    padding: spacing.xl,
+    gap: spacing.sm,
     alignItems: "center",
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 44,
-    color: "#0f172a",
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    color: colors.text,
+    fontSize: fontSize.md,
   },
   addButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#6366f1",
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
   },
   addButtonText: {
-    color: "#ffffff",
+    color: colors.textOnAccent,
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: fontWeight.semibold,
   },
   list: {
-    padding: wp(4),
-    paddingTop: 0,
-    paddingBottom: hp(10),
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.md,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#64748b",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
   },
   cardHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceHover,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
   info: {
     flex: 1,
   },
   category: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: 2,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   date: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   amount: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ef4444",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
   },
   cardFooter: {
-    marginTop: 4,
+    marginTop: 0,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
   paidTo: {
-    fontSize: 13,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: hp(10),
+    marginTop: 80,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  emptyIconContainer: {
+    marginBottom: spacing.md,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: 8,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
 });

@@ -13,24 +13,24 @@ export function PurchasesNavigator() {
       screenOptions={{
         tabBarLabelStyle: {
           fontSize: 13,
-          fontWeight: "700",
+          fontWeight: "600",
           textTransform: "capitalize",
         },
-        tabBarActiveTintColor: "#6366f1",
+        tabBarActiveTintColor: "#C4A484",
         tabBarInactiveTintColor: "#94a3b8",
         tabBarIndicatorStyle: { 
-          backgroundColor: "#6366f1",
+          backgroundColor: "#C4A484",
           height: 3,
           borderRadius: 3,
         },
         tabBarStyle: {
-          backgroundColor: "#f8fafc",
+          backgroundColor: "#ffffff",
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 1,
           borderBottomColor: "#e2e8f0",
         },
-        tabBarPressColor: "#6366f120",
+        tabBarPressColor: "#C4A48420",
       }}
     >
       <Tab.Screen

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, FileText, Filter, ChevronRight, CreditCard } from "lucide-react-native";
-import { wp, hp } from "../../lib/responsive";
+import { Plus, Search, Filter, ChevronRight, CreditCard } from "lucide-react-native";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 // Types
 interface PurchaseInvoice {
@@ -27,12 +27,12 @@ interface PurchaseInvoice {
 function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
   const navigation = useNavigation();
   
-  const statusColors: Record<string, { bg: string; text: string; border: string }> = {
-    draft: { bg: "#f1f5f9", text: "#64748b", border: "#e2e8f0" },
-    unpaid: { bg: "#fef2f2", text: "#ef4444", border: "#fee2e2" },
-    paid: { bg: "#f0fdf4", text: "#22c55e", border: "#dcfce7" },
-    partial: { bg: "#fffbeb", text: "#f59e0b", border: "#fef3c7" },
-    overdue: { bg: "#fef2f2", text: "#ef4444", border: "#fee2e2" },
+  const statusColors: Record<string, { bg: string; text: string }> = {
+    draft: { bg: colors.surfaceHover, text: colors.textSecondary },
+    unpaid: { bg: colors.dangerMuted, text: colors.danger },
+    paid: { bg: colors.successMuted, text: colors.success },
+    partial: { bg: colors.warningMuted, text: colors.warning },
+    overdue: { bg: colors.dangerMuted, text: colors.danger },
   };
 
   const statusStyle = statusColors[item.status?.toLowerCase()] || statusColors.draft;
@@ -55,11 +55,11 @@ function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
         (navigation as any).navigate("PurchaseInvoiceForm", { id: item.id });
       }}
     >
-      <View style={styles.cardMain}>
-        <View style={styles.billIconBox}>
-          <CreditCard size={20} color="#ef4444" />
+      <View style={styles.cardHeader}>
+        <View style={styles.iconBox}>
+          <CreditCard size={22} color={colors.accent} />
         </View>
-        <View style={styles.billMainInfo}>
+        <View style={styles.info}>
           <View style={styles.billHeaderRow}>
             <Text style={styles.billNumber}>{item.invoice_number || "Draft"}</Text>
             <Text style={styles.totalValue}>
@@ -69,14 +69,13 @@ function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
           <Text style={styles.vendorName}>{item.customer_name || "Unknown Supplier"}</Text>
           <View style={styles.billFooterRow}>
             <Text style={styles.dateValue}>{formatDate(item.date)}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
                <Text style={[styles.statusText, { color: statusStyle.text }]}>
                 {item.status}
               </Text>
             </View>
           </View>
         </View>
-        <ChevronRight size={18} color="#cbd5e1" style={{ marginLeft: 8 }} />
       </View>
     </TouchableOpacity>
   );
@@ -98,7 +97,7 @@ export function PurchaseInvoicesScreen() {
       inv.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
@@ -107,19 +106,19 @@ export function PurchaseInvoicesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <View style={styles.searchWrapper}>
-          <Search size={18} color="#94a3b8" style={styles.searchIcon} />
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
           <TextInput
-            style={styles.searchInput}
+            style={styles.searchText}
             placeholder="Search bills..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
         <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#64748b" />
+          <Filter size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -133,14 +132,15 @@ export function PurchaseInvoicesScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
               <View style={styles.emptyIconContainer}>
-                <CreditCard size={48} color="#cbd5e1" />
+                <CreditCard size={48} color={colors.textMuted} />
               </View>
               <Text style={styles.emptyText}>No bills found</Text>
               <Text style={styles.emptySubtext}>
@@ -161,84 +161,73 @@ export function PurchaseInvoicesScreen() {
         style={styles.fab}
         onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
       >
-        <Plus size={24} color="#fff" strokeWidth={3} />
+        <Plus size={24} color={colors.textOnAccent} />
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  searchContainer: {
+  container: { flex: 1, backgroundColor: colors.background },
+  searchBar: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
     alignItems: "center",
-  },
-  searchWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
-    color: "#0f172a",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
+    marginLeft: spacing.sm,
   },
   filterButton: {
     width: 48,
     height: 48,
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   list: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    gap: 12,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.md,
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#0f172a",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
   },
-  cardMain: {
+  cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  billIconBox: {
+  iconBox: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#fff1f2',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceHover,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
   },
-  billMainInfo: {
+  info: {
     flex: 1,
   },
   billHeaderRow: {
@@ -248,19 +237,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   billNumber: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   totalValue: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#ef4444",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
   },
   vendorName: {
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 8,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   billFooterRow: {
     flexDirection: 'row',
@@ -268,36 +257,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateValue: {
-    fontSize: 12,
-    color: "#94a3b8",
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: borderRadius.sm,
   },
   statusText: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
+    bottom: spacing.xl,
+    right: spacing.xl,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#6366f1",
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...shadows.md,
   },
   empty: {
     alignItems: "center",
@@ -307,35 +290,35 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.surfaceHover,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 8,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 40,
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   emptyAddButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#6366f1',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
+    borderColor: colors.accent,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
   },
   emptyAddButtonText: {
-    color: '#6366f1',
-    fontWeight: '700',
-    fontSize: 15,
+    color: colors.accent,
+    fontWeight: fontWeight.bold,
+    fontSize: fontSize.md,
   }
 });

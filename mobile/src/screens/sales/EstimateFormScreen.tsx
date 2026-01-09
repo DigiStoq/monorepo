@@ -9,6 +9,7 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
@@ -24,6 +25,7 @@ import {
 import { Plus, Trash2, Save, X, FileCheck2 } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -93,6 +95,26 @@ export function EstimateFormScreen() {
     amount: 0,
   });
 
+  const statusOptions = [
+    { label: "Draft", value: "draft" },
+    { label: "Sent", value: "sent" },
+    { label: "Accepted", value: "accepted" },
+    { label: "Declined", value: "declined" },
+    { label: "Converted", value: "converted" },
+  ];
+
+  const totals = useMemo(() => {
+    let subtotal = 0;
+    let tax = 0;
+    let total = 0;
+    lineItems.forEach(i => {
+        subtotal += i.quantity * i.unitPrice;
+        tax += i.quantity * i.unitPrice * (i.taxPercent / 100);
+        total += i.amount;
+    });
+    return { subtotal, tax, total };
+  }, [lineItems]);
+
   useEffect(() => {
     if (id) {
       db.execute("SELECT * FROM estimates WHERE id = ?", [id]).then((res) => {
@@ -129,7 +151,55 @@ export function EstimateFormScreen() {
     }
   }, [id]);
 
-  // ... (keeping existing code)
+  const openItemModal = (item?: LineItem) => {
+    if (item) {
+        setEditingItemId(item.id);
+        setTempItem({...item});
+    } else {
+        setEditingItemId(null);
+        setTempItem({
+            id: generateUUID(),
+            itemId: "",
+            itemName: "",
+            quantity: 1,
+            unit: "pcs",
+            unitPrice: 0,
+            taxPercent: 0,
+            discountPercent: 0,
+            amount: 0,
+        });
+    }
+    setModalVisible(true);
+  };
+
+  const saveItem = () => {
+    const base = tempItem.quantity * tempItem.unitPrice;
+    const disc = base * (tempItem.discountPercent / 100);
+    const taxable = base - disc;
+    const tax = taxable * (tempItem.taxPercent / 100);
+    const total = taxable + tax;
+
+    const FinalItem = { ...tempItem, amount: total };
+    if (editingItemId)
+      setLineItems((prev) =>
+        prev.map((i) => (i.id === editingItemId ? FinalItem : i))
+      );
+    else setLineItems((prev) => [...prev, FinalItem]);
+    setModalVisible(false);
+  };
+
+  const handleItemSelect = (val: string) => {
+    const selected = items.find((i) => i.id === val);
+    if (selected)
+      setTempItem((prev) => ({
+        ...prev,
+        itemId: val,
+        itemName: selected.name,
+        unitPrice: selected.sale_price || 0,
+        unit: selected.unit || "pcs",
+        taxPercent: selected.tax_rate || 0,
+      }));
+  };
 
   const handleSubmit = async () => {
     if (!customerId || lineItems.length === 0) {
@@ -281,7 +351,7 @@ export function EstimateFormScreen() {
             navigation.goBack();
           }}
         >
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>
@@ -290,17 +360,17 @@ export function EstimateFormScreen() {
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
             {isEditing && status !== 'converted' && (
-                <Button variant="ghost" size="icon" onPress={handleConvertToInvoice} isLoading={isLoading}>
-                     <FileCheck2 size={24} color="#16a34a" />
+                <Button variant="ghost" size="icon" onPress={handleConvertToInvoice} disabled={isLoading}>
+                     <FileCheck2 size={24} color={colors.success} />
                 </Button>
             )}
             <Button
             variant="ghost"
             size="icon"
             onPress={handleSubmit}
-            isLoading={isLoading}
+            disabled={isLoading}
             >
-            <Save size={24} color="#6366f1" />
+            {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
             </Button>
         </View>
       </View>
@@ -352,7 +422,7 @@ export function EstimateFormScreen() {
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color="#0f172a" />}
+            leftIcon={<Plus size={16} color={colors.text} />}
           >
             Add Item
           </Button>
@@ -426,7 +496,7 @@ export function EstimateFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color="#64748b" />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.modalBody}>
@@ -474,20 +544,20 @@ export function EstimateFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
     marginTop: Platform.OS === "android" ? 24 : 0,
   },
   titleContainer: { flex: 1, alignItems: "center" },
-  title: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+  title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
   content: { padding: wp(4), paddingBottom: hp(5) },
   row: { flexDirection: "row", marginBottom: 8 },
   sectionHeader: {
@@ -497,11 +567,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 8,
   },
-  sectionTitle: { fontSize: 16, fontWeight: "600", color: "#0f172a" },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
   itemCard: {
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
     borderRadius: 8,
   },
   itemHeader: {
@@ -509,9 +579,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 4,
   },
-  itemNumber: { fontSize: 14, fontWeight: "600", color: "#0f172a" },
-  itemSummary: { fontSize: 14, fontWeight: "600", color: "#0f172a" },
-  itemMeta: { fontSize: 13, color: "#64748b" },
+  itemNumber: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+  itemSummary: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+  itemMeta: { fontSize: 13, color: colors.textSecondary },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -521,17 +591,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: colors.border,
   },
-  totalLabel: { fontSize: 18, fontWeight: "bold", color: "#0f172a" },
-  totalValue: { fontSize: 18, fontWeight: "bold", color: "#6366f1" },
+  totalLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text },
+  totalValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.primary },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "90%",
@@ -542,8 +612,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: colors.border,
   },
-  modalTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+  modalTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
   modalBody: { padding: 16, paddingBottom: 40 },
 });

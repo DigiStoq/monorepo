@@ -9,6 +9,7 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
@@ -24,6 +25,7 @@ import {
 import { Plus, Trash2, Save, X, Truck, Calendar } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
 
 // Types
 interface CustomerData {
@@ -378,7 +380,7 @@ export function SaleInvoiceFormScreen() {
             navigation.goBack();
           }}
         >
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>
@@ -391,7 +393,7 @@ export function SaleInvoiceFormScreen() {
           onPress={handleSubmit}
           disabled={isLoading}
         >
-          <Save size={24} color="#6366f1" />
+          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
         </Button>
       </View>
 
@@ -464,7 +466,7 @@ export function SaleInvoiceFormScreen() {
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color="#0f172a" />}
+            leftIcon={<Plus size={16} color={colors.text} />}
           >
             Add Item
           </Button>
@@ -490,7 +492,7 @@ export function SaleInvoiceFormScreen() {
                       }}
                       style={{ marginLeft: 8 }}
                     >
-                      <Trash2 size={18} color="#ef4444" />
+                      <Trash2 size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -587,7 +589,7 @@ export function SaleInvoiceFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color="#64748b" />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.modalBody}>
@@ -688,7 +690,7 @@ export function SaleInvoiceFormScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -696,9 +698,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
     marginTop: Platform.OS === "android" ? 24 : 0,
   },
   titleContainer: {
@@ -706,9 +708,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   content: {
     padding: wp(4),
@@ -726,9 +728,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#334155",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   itemCard: {
     marginBottom: 12,
@@ -740,14 +742,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   itemAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   itemActions: {
     flexDirection: "row",
@@ -759,8 +761,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   metaText: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   summaryRow: {
     flexDirection: "row",
@@ -768,32 +770,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 14,
-    color: "#64748b",
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   summaryValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#0f172a",
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.text,
   },
   totalRow: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: colors.border,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
   },
   totalValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#6366f1",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
   },
   submitButton: {
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
   // Modal Styles
   modalOverlay: {
@@ -802,7 +804,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "85%",
@@ -813,12 +815,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   modalBody: {
     padding: 16,

@@ -1,48 +1,49 @@
 /**
- * DigiStoq Design System Theme
- * Centralized design tokens for consistent styling
+ * DigiStoq Light Theme Design System
+ * Clean white theme with warm accents
  */
 
 export const colors = {
-  // Primary
-  primary: "#6366f1",
-  primaryLight: "#818cf8",
-  primaryDark: "#4f46e5",
-  primaryMuted: "#e0e7ff",
-  
-  // Secondary
-  secondary: "#f59e0b",
-  secondaryLight: "#fbbf24",
-  secondaryMuted: "#fef3c7",
-  
-  // Success
-  success: "#22c55e",
-  successLight: "#4ade80",
-  successMuted: "#dcfce7",
-  
-  // Danger
-  danger: "#ef4444",
-  dangerLight: "#f87171",
-  dangerMuted: "#fee2e2",
-  
-  // Neutral
-  text: "#0f172a",
-  textSecondary: "#64748b",
-  textMuted: "#94a3b8",
-  
-  // Backgrounds
+  // Light Background
   background: "#f8fafc",
+  backgroundLight: "#ffffff",
+  backgroundCard: "#ffffff",
+  
+  // Primary Accent
+  accent: "#C4A484",
+  accentLight: "#d4b494",
+  accentDark: "#a48a6a",
+  
+  // Surface Colors
   surface: "#ffffff",
   surfaceHover: "#f1f5f9",
+  surfaceActive: "#e2e8f0",
+  
+  // Text Colors
+  text: "#0f172a",
+  textSecondary: "#475569",
+  textMuted: "#94a3b8",
+  textOnAccent: "#ffffff",
+  
+  // Status Colors
+  success: "#22c55e",
+  successMuted: "#dcfce7",
+  warning: "#f59e0b",
+  warningMuted: "#fef3c7",
+  danger: "#ef4444",
+  dangerMuted: "#fee2e2",
+  info: "#3b82f6",
+  infoMuted: "#dbeafe",
   
   // Borders
   border: "#e2e8f0",
   borderLight: "#f1f5f9",
   
-  // Sidebar
-  sidebar: "#1e1b4b",
-  sidebarText: "#c7d2fe",
-  sidebarActive: "#6366f1",
+  // Legacy compatibility
+  primary: "#C4A484",
+  primaryLight: "#d4b494",
+  primaryMuted: "#f5f0eb",
+  secondary: "#6366f1",
 } as const;
 
 export const spacing = {
@@ -60,6 +61,7 @@ export const borderRadius = {
   md: 12,
   lg: 16,
   xl: 20,
+  xxl: 24,
   full: 9999,
 } as const;
 
@@ -94,14 +96,14 @@ export const shadows = {
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   lg: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 5,
   },
 } as const;
 

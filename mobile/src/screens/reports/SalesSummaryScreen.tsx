@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft, Calendar, DollarSign, FileText, TrendingUp, TrendingDown, Users, Package } from "lucide-react-native";
+import { Calendar, DollarSign, FileText, TrendingUp, TrendingDown, Users, Package } from "lucide-react-native";
 import { useSalesSummaryReport, DateRange } from "../../hooks/useReports";
+import { CustomHeader } from "../../components/CustomHeader";
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 function Card({ children, style }: { children: React.ReactNode; style?: any }) {
     return <View style={[styles.card, style]}>{children}</View>;
@@ -40,19 +42,12 @@ export function SalesSummaryScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color="#0f172a" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Sales Summary</Text>
-                <TouchableOpacity style={styles.iconBtn}>
-                    <Calendar color="#64748b" size={24} />
-                </TouchableOpacity>
-            </View>
+            <CustomHeader />
 
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Date Display */}
                 <View style={styles.dateDisplay}>
+                    <Calendar color={colors.textMuted} size={16} style={{marginRight: 6}} />
                     <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
                 </View>
 
@@ -68,8 +63,8 @@ export function SalesSummaryScreen() {
                             <Card style={styles.summaryCard}>
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.cardLabel}>Total Sales</Text>
-                                    <View style={[styles.iconBox, { backgroundColor: '#dcfce7' }]}>
-                                        <DollarSign size={16} color="#15803d" />
+                                    <View style={[styles.iconBox, { backgroundColor: colors.successMuted }]}>
+                                        <DollarSign size={16} color={colors.success} />
                                     </View>
                                 </View>
                                 <Text style={styles.bigValue}>{formatCurrency(summary.totalSales)}</Text>
@@ -80,11 +75,11 @@ export function SalesSummaryScreen() {
                              <Card style={styles.summaryCard}>
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.cardLabel}>Amount Due</Text>
-                                    <View style={[styles.iconBox, { backgroundColor: '#fee2e2' }]}>
-                                        <TrendingDown size={16} color="#dc2626" />
+                                    <View style={[styles.iconBox, { backgroundColor: colors.dangerMuted }]}>
+                                        <TrendingDown size={16} color={colors.danger} />
                                     </View>
                                 </View>
-                                <Text style={[styles.bigValue, { color: '#dc2626' }]}>{formatCurrency(summary.totalDue)}</Text>
+                                <Text style={[styles.bigValue, { color: colors.danger }]}>{formatCurrency(summary.totalDue)}</Text>
                                 <Text style={styles.subText}>{outstandingPercent}% outstanding</Text>
                             </Card>
                         </View>
@@ -94,11 +89,11 @@ export function SalesSummaryScreen() {
                             <Card style={styles.summaryCard}>
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.cardLabel}>Received</Text>
-                                    <View style={[styles.iconBox, { backgroundColor: '#ccfbf1' }]}>
-                                        <TrendingUp size={16} color="#0f766e" />
+                                    <View style={[styles.iconBox, { backgroundColor: colors.infoMuted }]}>
+                                        <TrendingUp size={16} color={colors.info} />
                                     </View>
                                 </View>
-                                <Text style={[styles.bigValue, { color: '#16a34a' }]}>{formatCurrency(summary.totalPaid)}</Text>
+                                <Text style={[styles.bigValue, { color: colors.success }]}>{formatCurrency(summary.totalPaid)}</Text>
                                 <Text style={styles.subText}>{collectionPercent}% collected</Text>
                             </Card>
 
@@ -106,8 +101,8 @@ export function SalesSummaryScreen() {
                              <Card style={styles.summaryCard}>
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.cardLabel}>Avg Order</Text>
-                                    <View style={[styles.iconBox, { backgroundColor: '#dbeafe' }]}>
-                                        <FileText size={16} color="#1d4ed8" />
+                                    <View style={[styles.iconBox, { backgroundColor: colors.primaryMuted }]}>
+                                        <FileText size={16} color={colors.primary} />
                                     </View>
                                 </View>
                                 <Text style={styles.bigValue}>{formatCurrency(summary.averageOrderValue)}</Text>
@@ -133,7 +128,7 @@ export function SalesSummaryScreen() {
                          <Card style={styles.sectionCard}>
                             <View style={styles.cardHeader}>
                                 <Text style={styles.sectionTitle}>Top Customers</Text>
-                                <Users size={16} color="#94a3b8" />
+                                <Users size={16} color={colors.textMuted} />
                             </View>
                             <View style={styles.list}>
                                 {summary.topCustomers.length === 0 ? <Text style={styles.noData}>No customers found</Text> :
@@ -155,7 +150,7 @@ export function SalesSummaryScreen() {
                         <Card style={styles.sectionCard}>
                             <View style={styles.cardHeader}>
                                 <Text style={styles.sectionTitle}>Top Selling Items</Text>
-                                <Package size={16} color="#94a3b8" />
+                                <Package size={16} color={colors.textMuted} />
                             </View>
                              <View style={styles.list}>
                                 {summary.topItems.length === 0 ? <Text style={styles.noData}>No items sold</Text> :
@@ -178,34 +173,31 @@ export function SalesSummaryScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
-    iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
-    content: { padding: 16, paddingBottom: 40 },
-    dateDisplay: { alignItems: 'center', marginBottom: 16 },
-    dateText: { fontSize: 14, color: '#64748b', fontWeight: '500' },
-    loadingText: { textAlign: 'center', color: '#94a3b8', marginTop: 40 },
-    grid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-    card: { backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', padding: 16 },
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: spacing.lg, paddingBottom: 40 },
+    dateDisplay: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md, padding: spacing.sm, backgroundColor: colors.surfaceHover, borderRadius: borderRadius.md, alignSelf: 'center' },
+    dateText: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: fontWeight.medium },
+    loadingText: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
+    grid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+    card: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.borderLight, padding: spacing.md, ...shadows.sm },
     summaryCard: { flex: 1 },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-    cardLabel: { fontSize: 13, color: '#64748b', fontWeight: '500' },
-    iconBox: { padding: 6, borderRadius: 8 },
-    bigValue: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginBottom: 2 },
-    subText: { fontSize: 11, color: '#94a3b8' },
-    sectionCard: { marginBottom: 16 },
-    sectionTitle: { fontSize: 16, fontWeight: '600', color: '#0f172a', marginBottom: 12 },
-    chartContainer: { flexDirection: 'row', height: 120, alignItems: 'flex-end', gap: 8, paddingTop: 10 },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+    cardLabel: { fontSize: fontSize.xs, color: colors.textSecondary, fontWeight: fontWeight.medium },
+    iconBox: { padding: 6, borderRadius: borderRadius.sm },
+    bigValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text, marginBottom: 2 },
+    subText: { fontSize: 10, color: colors.textMuted },
+    sectionCard: { marginBottom: spacing.md },
+    sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm },
+    chartContainer: { flexDirection: 'row', height: 120, alignItems: 'flex-end', gap: spacing.sm, paddingTop: 10 },
     barGroup: { flex: 1, alignItems: 'center', gap: 4 },
-    bar: { width: 12, backgroundColor: '#6366f1', borderRadius: 4 },
-    barLabel: { fontSize: 10, color: '#64748b' },
-    list: { gap: 12 },
-    listItem: { gap: 6 },
+    bar: { width: 12, backgroundColor: colors.accent, borderRadius: 4 },
+    barLabel: { fontSize: 10, color: colors.textMuted },
+    list: { gap: spacing.sm },
+    listItem: { gap: 4 },
     listRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    listName: { fontSize: 14, color: '#334155', fontWeight: '500', flex: 1 },
-    listValue: { fontSize: 14, color: '#0f172a', fontWeight: '600' },
-    progressBarBg: { height: 6, backgroundColor: '#f1f5f9', borderRadius: 3, overflow: 'hidden' },
-    progressBarFill: { height: '100%', backgroundColor: '#3b82f6', borderRadius: 3 },
-    noData: { textAlign: 'center', color: '#cbd5e1', padding: 20 },
+    listName: { fontSize: fontSize.sm, color: colors.text, fontWeight: fontWeight.medium, flex: 1 },
+    listValue: { fontSize: fontSize.sm, color: colors.text, fontWeight: fontWeight.bold },
+    progressBarBg: { height: 6, backgroundColor: colors.surfaceHover, borderRadius: 3, overflow: 'hidden' },
+    progressBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
+    noData: { textAlign: 'center', color: colors.textMuted, padding: 20 },
 });

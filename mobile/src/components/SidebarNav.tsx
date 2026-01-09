@@ -1,7 +1,7 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -9,7 +9,6 @@ import {
   PieChart,
   Settings,
   Bell,
-  LogOut,
 } from "lucide-react-native";
 import { colors, spacing, borderRadius } from "../lib/theme";
 
@@ -41,7 +40,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
       {/* Logo Area */}
       <View style={styles.logoArea}>
         <View style={styles.logo}>
-          <Package size={24} color={colors.primary} />
+          <Package size={24} color={colors.accent} />
         </View>
       </View>
 
@@ -59,7 +58,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
             >
               <Icon
                 size={22}
-                color={isActive ? colors.primary : colors.sidebarText}
+                color={isActive ? colors.accent : colors.textMuted}
                 strokeWidth={isActive ? 2.5 : 2}
               />
             </TouchableOpacity>
@@ -70,7 +69,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
       {/* Bottom Navigation */}
       <View style={[styles.bottomSection, { paddingBottom: insets.bottom + spacing.lg }]}>
         <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Bell size={22} color={colors.sidebarText} strokeWidth={2} />
+          <Bell size={22} color={colors.textMuted} strokeWidth={2} />
         </TouchableOpacity>
         {bottomItems.map((item) => {
           const Icon = item.icon;
@@ -81,7 +80,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
               onPress={() => navigation.navigate(item.route)}
               activeOpacity={0.7}
             >
-              <Icon size={22} color={colors.sidebarText} strokeWidth={2} />
+              <Icon size={22} color={colors.textMuted} strokeWidth={2} />
             </TouchableOpacity>
           );
         })}
@@ -93,7 +92,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
 const styles = StyleSheet.create({
   container: {
     width: 60,
-    backgroundColor: colors.sidebar,
+    backgroundColor: colors.backgroundLight,
     alignItems: "center",
     justifyContent: "space-between",
   },
@@ -120,7 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   navItemActive: {
-    backgroundColor: "rgba(99, 102, 241, 0.2)",
+    backgroundColor: colors.surfaceActive,
   },
   bottomSection: {
     gap: spacing.sm,

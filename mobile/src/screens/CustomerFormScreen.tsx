@@ -20,6 +20,7 @@ import {
 } from "../components/ui";
 import { Save, X } from "lucide-react-native";
 import { wp, hp } from "../lib/responsive";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
 
 export function CustomerFormScreen() {
   const navigation = useNavigation();
@@ -176,7 +177,7 @@ export function CustomerFormScreen() {
             navigation.goBack();
           }}
         >
-          <X size={24} color="#0f172a" />
+          <X size={24} color={colors.text} />
         </Button>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>
@@ -189,7 +190,7 @@ export function CustomerFormScreen() {
           onPress={handleSubmit}
           isLoading={isLoading}
         >
-          <Save size={24} color="#6366f1" />
+          <Save size={24} color={colors.primary} />
         </Button>
       </View>
 
@@ -321,7 +322,7 @@ export function CustomerFormScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -329,9 +330,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
     marginTop: Platform.OS === "android" ? 24 : 0,
   },
   titleContainer: {
@@ -339,9 +340,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
   content: {
     padding: wp(4),
@@ -351,6 +352,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   submitButton: {
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
 });

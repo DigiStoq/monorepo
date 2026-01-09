@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
+  KeyboardAvoidingView,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { usePowerSync } from "@powersync/react-native";
 import { generateUUID } from "../lib/utils";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardBody,
+  Select,
+} from "../components/ui";
+import { Save, X, Trash2 } from "lucide-react-native";
+import { wp, hp } from "../lib/responsive";
+import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
 
 export function BankAccountFormScreen() {
   const navigation = useNavigation();
@@ -26,7 +39,7 @@ export function BankAccountFormScreen() {
     account_number: "",
     account_type: "savings", // default
     opening_balance: "",
-    current_balance: "", // Usually calculated, but for simplicity we sync them for now or let user edit if manual
+    current_balance: "", 
     notes: "",
   });
 
@@ -88,7 +101,7 @@ export function BankAccountFormScreen() {
             formData.account_number,
             formData.account_type,
             balance,
-            balance, // Reset current to opening, ideally current is transaction derived but for setup it's opening
+            balance, 
             formData.notes,
             now,
             id,
@@ -133,7 +146,6 @@ export function BankAccountFormScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-             // In a real app we might soft delete or check for transactions first
             try {
               await db.execute("DELETE FROM bank_accounts WHERE id = ?", [id]);
               navigation.goBack();
@@ -147,212 +159,126 @@ export function BankAccountFormScreen() {
     );
   }
 
+  const accountTypeOptions = [
+    { label: "Savings", value: "savings" },
+    { label: "Checking", value: "checking" },
+    { label: "Credit", value: "credit" },
+    { label: "Other", value: "other" },
+  ];
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
+        <Button
+          variant="ghost"
+          size="icon"
           onPress={() => navigation.goBack()}
-          style={styles.backButton}
         >
-          <Text style={styles.backButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {isEditing ? "Edit Bank Account" : "New Bank Account"}
-        </Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{isEditing ? "Edit Bank Account" : "New Bank Account"}</Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
+        </Button>
       </View>
 
-      <ScrollView style={styles.form}>
-        <View style={styles.section}>
-          <Text style={styles.label}>Account Name</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.name}
-            onChangeText={(t) => setFormData({ ...formData, name: t })}
-            placeholder="e.g. Main Business Account"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Bank Name</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.bank_name}
-            onChangeText={(t) => setFormData({ ...formData, bank_name: t })}
-            placeholder="e.g. Chase, Wells Fargo"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Account Number</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.account_number}
-            onChangeText={(t) => setFormData({ ...formData, account_number: t })}
-            placeholder="Account Number"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Opening Balance</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.opening_balance}
-            onChangeText={(t) => setFormData({ ...formData, opening_balance: t })}
-            placeholder="0.00"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Account Type</Text>
-          <View style={styles.typeContainer}>
-            {["savings", "checking", "credit", "other"].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.typeButton,
-                  formData.account_type === type && styles.typeButtonActive,
-                ]}
-                onPress={() => setFormData({ ...formData, account_type: type })}
-              >
-                <Text
-                  style={[
-                    styles.typeText,
-                    formData.account_type === type && styles.typeTextActive,
-                  ]}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Notes</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={formData.notes}
-            onChangeText={(t) => setFormData({ ...formData, notes: t })}
-            placeholder="Additional notes..."
-            multiline
-            numberOfLines={4}
-          />
-        </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Card>
+            <CardHeader title="Account Details" />
+            <CardBody>
+                <Input
+                    label="Account Name"
+                    value={formData.name}
+                    onChangeText={(t) => setFormData({ ...formData, name: t })}
+                    placeholder="e.g. Main Business Account"
+                />
+                <Input
+                    label="Bank Name"
+                    value={formData.bank_name}
+                    onChangeText={(t) => setFormData({ ...formData, bank_name: t })}
+                    placeholder="e.g. Chase, Wells Fargo"
+                />
+                <Input
+                    label="Account Number"
+                    value={formData.account_number}
+                    onChangeText={(t) => setFormData({ ...formData, account_number: t })}
+                    placeholder="Account Number"
+                    keyboardType="numeric"
+                />
+                 <Input
+                    label="Opening Balance"
+                    value={formData.opening_balance}
+                    onChangeText={(t) => setFormData({ ...formData, opening_balance: t })}
+                    placeholder="0.00"
+                    keyboardType="numeric"
+                />
+                <Select
+                    label="Account Type"
+                    options={accountTypeOptions}
+                    value={formData.account_type}
+                    onChange={(val) => setFormData({...formData, account_type: val})}
+                />
+                 <Input
+                    label="Notes"
+                    value={formData.notes}
+                    onChangeText={(t) => setFormData({ ...formData, notes: t })}
+                    placeholder="Additional notes..."
+                    multiline
+                    numberOfLines={4}
+                />
+            </CardBody>
+        </Card>
 
         {isEditing && (
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Delete Bank Account</Text>
-          </TouchableOpacity>
+             <Button
+                variant="outline"
+                style={{ marginTop: 24, borderColor: colors.danger }}
+                onPress={handleDelete}
+                leftIcon={<Trash2 size={18} color={colors.danger} />}
+             >
+                <Text style={{ color: colors.danger }}>Delete Bank Account</Text>
+             </Button>
         )}
         
         <View style={{ height: 40 }} /> 
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#fff",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
   },
-  backButton: {
-    padding: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: "#64748b",
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
   },
-  saveButton: {
-    padding: 8,
-    backgroundColor: "#6366f1",
-    borderRadius: 8,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "600",
-  },
-  form: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#475569",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: "#0f172a",
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
-  typeContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  typeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    backgroundColor: "#fff",
-  },
-  typeButtonActive: {
-    backgroundColor: "#6366f1",
-    borderColor: "#6366f1",
-  },
-  typeText: {
-    fontSize: 14,
-    color: "#64748b",
-  },
-  typeTextActive: {
-    color: "#fff",
-    fontWeight: "500",
-  },
-  deleteButton: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: "#fee2e2",
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "#ef4444",
-    fontSize: 16,
-    fontWeight: "600",
+  content: {
+    padding: wp(4),
   },
 });

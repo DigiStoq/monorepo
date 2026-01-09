@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { DrawerContent } from "./DrawerContent";
-import { MainLayout } from "./MainLayout";
+import { MainTabs } from "./MainTabs";
 import { SyncStatus } from "../components/SyncStatus";
 
 // Screens
@@ -73,54 +73,55 @@ function AppDrawer() {
         headerShown: true,
         headerStatusBarHeight: 0,
         headerStyle: {
-          backgroundColor: "#f8fafc",
+          backgroundColor: "#ffffff",
           elevation: 0,
           shadowOpacity: 0,
-          borderBottomWidth: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: "#e2e8f0",
         },
         headerTitleAlign: 'left',
         headerTitleStyle: {
-          fontSize: 18,
-          fontWeight: '800',
-          color: '#1e293b',
+          fontSize: 17,
+          fontWeight: '600',
+          color: '#0f172a',
         },
-        headerRight: () => <SyncStatus />,
+        headerTintColor: '#C4A484',
       }}
       id="AppDrawer"
     >
       <Drawer.Screen
         name="Main"
-        component={MainLayout}
+        component={MainTabs}
         options={{
           headerShown: false, 
         }}
       />
-      <Drawer.Screen name="Customers" component={CustomersScreen} />
+      <Drawer.Screen name="Customers" component={CustomersScreen} options={{ headerShown: false }} />
 
       {/* Cash & Bank Module */}
       <Drawer.Screen
         name="BankAccounts"
         component={BankAccountsScreen}
-        options={{ title: "Bank Accounts" }}
+        options={{ headerShown: false }}
       />
       <Drawer.Screen
         name="CashInHand"
         component={CashInHandScreen}
-        options={{ title: "Cash In Hand" }}
+        options={{ headerShown: false }}
       />
       <Drawer.Screen
         name="Cheques"
         component={ChequesScreen}
-        options={{ title: "Cheques" }}
+        options={{ headerShown: false }}
       />
       <Drawer.Screen
         name="Loans"
         component={LoansScreen}
-        options={{ title: "Loans" }}
+        options={{ headerShown: false }}
       />
 
       {/* Settings */}
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
     </Drawer.Navigator>
   );
 }
@@ -128,8 +129,27 @@ function AppDrawer() {
 export function AppNavigator() {
   return (
     <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }} id="RootStack">
-          <Stack.Screen name="AppDrawer" component={AppDrawer} />
+        <Stack.Navigator 
+          screenOptions={{ 
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: '#ffffff',
+            },
+            headerTitleStyle: {
+              fontSize: 17,
+              fontWeight: '600',
+              color: '#0f172a',
+            },
+            headerTintColor: '#C4A484',
+            headerShadowVisible: false,
+            headerBackTitleVisible: false,
+            contentStyle: {
+              backgroundColor: '#f8fafc',
+            },
+          }} 
+          id="RootStack"
+        >
+          <Stack.Screen name="AppDrawer" component={AppDrawer} options={{ headerShown: false }} />
           <Stack.Screen
             name="SaleInvoiceForm"
             component={SaleInvoiceFormScreen}
@@ -200,27 +220,29 @@ export function AppNavigator() {
             component={LoanFormScreen}
             options={{ presentation: "modal" }}
           />
-          <Stack.Screen name="SalesSummary" component={SalesSummaryScreen} />
-          <Stack.Screen name="SalesRegister" component={SalesRegisterScreen} />
-          <Stack.Screen name="SalesByCustomer" component={SalesByCustomerScreen} />
-          <Stack.Screen name="ProfitLoss" component={ProfitLossScreen} />
-          <Stack.Screen name="StockSummary" component={StockSummaryScreen} />
-          <Stack.Screen name="CashFlow" component={CashFlowScreen} />
-          <Stack.Screen name="CustomerStatement" component={CustomerStatementScreen} />
-          <Stack.Screen name="PurchaseSummary" component={PurchaseSummaryScreen} />
-          <Stack.Screen name="PurchaseRegister" component={PurchaseRegisterScreen} />
-          <Stack.Screen name="ReceivablesAging" component={ReceivablesAgingScreen} />
-          <Stack.Screen name="PayablesAging" component={PayablesAgingScreen} />
-          <Stack.Screen name="ExpenseReport" component={ExpenseReportScreen} />
-          <Stack.Screen name="SalesByItem" component={SalesByItemScreen} />
-          <Stack.Screen name="CustomerBalance" component={CustomerBalanceScreen} />
-          <Stack.Screen name="PurchasesBySupplier" component={PurchasesBySupplierScreen} />
-          <Stack.Screen name="LowStock" component={LowStockScreen} />
-          <Stack.Screen name="ItemProfitability" component={ItemProfitabilityScreen} />
-          <Stack.Screen name="StockMovement" component={StockMovementScreen} />
-          <Stack.Screen name="CashMovement" component={CashMovementScreen} />
-          <Stack.Screen name="DayBook" component={DayBookScreen} />
-          <Stack.Screen name="TaxSummary" component={TaxSummaryScreen} />
+          <Stack.Group screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="SalesSummary" component={SalesSummaryScreen} />
+            <Stack.Screen name="SalesRegister" component={SalesRegisterScreen} />
+            <Stack.Screen name="SalesByCustomer" component={SalesByCustomerScreen} />
+            <Stack.Screen name="ProfitLoss" component={ProfitLossScreen} />
+            <Stack.Screen name="StockSummary" component={StockSummaryScreen} />
+            <Stack.Screen name="CashFlow" component={CashFlowScreen} />
+            <Stack.Screen name="CustomerStatement" component={CustomerStatementScreen} />
+            <Stack.Screen name="PurchaseSummary" component={PurchaseSummaryScreen} />
+            <Stack.Screen name="PurchaseRegister" component={PurchaseRegisterScreen} />
+            <Stack.Screen name="ReceivablesAging" component={ReceivablesAgingScreen} />
+            <Stack.Screen name="PayablesAging" component={PayablesAgingScreen} />
+            <Stack.Screen name="ExpenseReport" component={ExpenseReportScreen} />
+            <Stack.Screen name="SalesByItem" component={SalesByItemScreen} />
+            <Stack.Screen name="CustomerBalance" component={CustomerBalanceScreen} />
+            <Stack.Screen name="PurchasesBySupplier" component={PurchasesBySupplierScreen} />
+            <Stack.Screen name="LowStock" component={LowStockScreen} />
+            <Stack.Screen name="ItemProfitability" component={ItemProfitabilityScreen} />
+            <Stack.Screen name="StockMovement" component={StockMovementScreen} />
+            <Stack.Screen name="CashMovement" component={CashMovementScreen} />
+            <Stack.Screen name="DayBook" component={DayBookScreen} />
+            <Stack.Screen name="TaxSummary" component={TaxSummaryScreen} />
+          </Stack.Group>
           
           {/* Settings Sub-screens */}
           <Stack.Screen name="CompanySettings" component={CompanySettingsScreen} />
