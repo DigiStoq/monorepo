@@ -2,8 +2,9 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
+import { readTextFile, readFile } from "@tauri-apps/plugin-fs";
 import { parseCSV } from "@/lib/csv-parser";
+import { read, utils } from "xlsx";
 import {
   Modal,
   Button,
@@ -103,20 +104,8 @@ export function ImportWizard({
 
   const targetFields = entityType === "customers" ? customerFields : itemFields;
 
-  // Helper to process file content (Text)
-  const processFileContent = (content: string): void => {
-    const rawData = parseCSV(content); // simple parsing
-
-    if (rawData.length === 0) {
-      alert("No records found in CSV");
-      return;
-    }
-
-    const detectedColumns = Object.keys(rawData[0]);
-    setColumns(detectedColumns);
-    setFileData(rawData as unknown as Record<string, unknown>[]); // simple cast for now
-
-    // Auto-suggest mappings
+  // Helper to auto-map columns
+  const performAutoMapping = (detectedColumns: string[]) => {
     const autoMappings = detectedColumns.map((col) => {
       const normalized = col.toLowerCase().replace(/[^a-z]/g, "");
       const match = targetFields.find((f) => {
@@ -135,30 +124,69 @@ export function ImportWizard({
     setMappings(autoMappings);
   };
 
+  // Helper to standardise data setting
+  const setParsedData = (data: Record<string, unknown>[]) => {
+    if (data.length === 0) {
+      alert("No records found in file");
+      return;
+    }
+
+    const detectedColumns = Object.keys(data[0]);
+    setColumns(detectedColumns);
+    setFileData(data);
+    performAutoMapping(detectedColumns);
+  };
+
+  // Process CSV Content
+  const processFileContent = (content: string): void => {
+    const rawData = parseCSV(content);
+    setParsedData(rawData as unknown as Record<string, unknown>[]);
+  };
+
+  // Process Excel Content
+  const processExcelFile = (buffer: ArrayBuffer | Uint8Array): void => {
+    try {
+      const workbook = read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = utils.sheet_to_json<Record<string, unknown>>(worksheet);
+      setParsedData(jsonData);
+    } catch (error) {
+      console.error("Error parsing Excel file:", error);
+      alert("Failed to parse Excel file");
+    }
+  };
+
   const handleNativeFileUpload = async (): Promise<void> => {
     try {
       const selected = await open({
         multiple: false,
         filters: [
           {
-            name: "CSV File",
-            extensions: ["csv"],
+            name: "Spreadsheet",
+            extensions: ["csv", "xlsx", "xls"],
           },
         ],
       });
 
       if (typeof selected === "string") {
-        const contents = await readTextFile(selected);
-        // Derive filename from path (windows vs unix)
-        const name = selected.split(/[\\/]/).pop() ?? "imported_file.csv";
+        const name = selected.split(/[\\/]/).pop() ?? "imported_file";
+        const isExcel = /\.(xlsx|xls)$/i.test(name);
 
-        // Set file object mock for UI display
-        // We can't create a real File object from path easily without reading into blob,
-        // but we only need name and size for UI.
-        const size = new Blob([contents]).size; // approximation
+        let fileSize = 0;
 
-        setFile({ name, size } as File);
-        processFileContent(contents);
+        // Handling file reading based on type
+        if (isExcel) {
+          const contents = await readFile(selected);
+          fileSize = contents.byteLength;
+          setFile({ name, size: fileSize } as File);
+          processExcelFile(contents);
+        } else {
+          const contents = await readTextFile(selected);
+          fileSize = new Blob([contents]).size; // approximation
+          setFile({ name, size: fileSize } as File);
+          processFileContent(contents);
+        }
       }
     } catch (err) {
       console.error("Failed to open file", err);
@@ -172,15 +200,26 @@ export function ImportWizard({
     if (!uploadedFile) return;
 
     setFile(uploadedFile);
+    const isExcel = /\.(xlsx|xls)$/i.test(uploadedFile.name);
 
     const reader = new FileReader();
+
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (text) {
-        processFileContent(text);
+      const result = event.target?.result;
+      if (result) {
+        if (isExcel && result instanceof ArrayBuffer) {
+          processExcelFile(result);
+        } else if (typeof result === "string") {
+          processFileContent(result);
+        }
       }
     };
-    reader.readAsText(uploadedFile);
+
+    if (isExcel) {
+      reader.readAsArrayBuffer(uploadedFile);
+    } else {
+      reader.readAsText(uploadedFile);
+    }
   };
 
   const handleMappingChange = (
@@ -427,11 +466,11 @@ export function ImportWizard({
                       <Upload className="h-12 w-12 mx-auto text-slate-400" />
                       <p className="text-sm text-slate-600">
                         <span className="text-primary font-medium">
-                          Click to select CSV file
+                          Click to select file
                         </span>
                       </p>
                       <p className="text-xs text-slate-400">
-                        CSV files supported
+                        CSV & Excel files supported
                       </p>
                     </div>
                   ) : (
@@ -439,7 +478,7 @@ export function ImportWizard({
                       <input
                         type="file"
                         className="hidden"
-                        accept=".csv"
+                        accept=".csv, .xlsx, .xls"
                         onChange={handleWebFileUpload}
                       />
                       <div className="space-y-2">
@@ -451,7 +490,7 @@ export function ImportWizard({
                           or drag and drop
                         </p>
                         <p className="text-xs text-slate-400">
-                          CSV files up to 10MB
+                          CSV, Excel files up to 10MB
                         </p>
                       </div>
                     </label>
