@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useState,
 } from "react";
+import * as React from "react";
 import { cn } from "@/lib/cn";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
@@ -332,12 +333,48 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       label,
       fullWidth = true,
       id,
+      onChange,
+      value,
       ...props
     },
     ref
   ) => {
     const inputId = id ?? `textarea-${Math.random().toString(36).slice(2, 9)}`;
     const computedState = error ? "error" : state;
+    const internalRef = React.useRef<HTMLTextAreaElement>(null);
+
+    // Merge refs
+    const setRef = React.useCallback(
+      (node: HTMLTextAreaElement | null) => {
+        // internal ref
+        internalRef.current = node;
+
+        // forwarded ref
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          (
+            ref as unknown as React.MutableRefObject<HTMLTextAreaElement | null>
+          ).current = node;
+        }
+      },
+      [ref]
+    );
+
+    // Auto-resize
+    React.useLayoutEffect(() => {
+      if (internalRef.current) {
+        internalRef.current.style.height = "inherit"; // Reset to recalculate
+        // Get compute styles to calculate paddings
+        const computed = window.getComputedStyle(internalRef.current);
+        // Calculate min height based on size prop
+        const minHeight = parseInt(computed.minHeight) || 0;
+
+        const scrollHeight = internalRef.current.scrollHeight;
+
+        internalRef.current.style.height = `${Math.max(minHeight, scrollHeight)}px`;
+      }
+    }, [value]);
 
     const textareaSizeStyles: Record<InputSize, string> = {
       sm: "px-3 py-2 text-xs min-h-[80px]",
@@ -354,13 +391,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
 
         <textarea
-          ref={ref}
+          ref={setRef}
           id={inputId}
+          value={value}
+          onChange={onChange}
           className={cn(
             baseInputStyles,
             textareaSizeStyles[size],
             stateStyles[computedState],
-            "resize-y",
+            "resize-none overflow-hidden", // Disable manual resize and scrollbar
             className
           )}
           {...props}

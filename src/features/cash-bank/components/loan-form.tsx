@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Button,
   Input,
+  NumberInput,
   Select,
   Textarea,
   type SelectOption,
@@ -205,32 +206,24 @@ export function LoanForm({
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Principal Amount <span className="text-error">*</span>
           </label>
-          <Input
-            type="number"
-            value={formData.principalAmount || ""}
-            onChange={(e) => {
-              handleChange("principalAmount", parseFloat(e.target.value) || 0);
+          <NumberInput
+            value={formData.principalAmount}
+            onChange={(val) => {
+              handleChange("principalAmount", val);
             }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.principalAmount}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Interest Rate (% per annum)
           </label>
-          <Input
-            type="number"
-            value={formData.interestRate || ""}
-            onChange={(e) => {
-              handleChange("interestRate", parseFloat(e.target.value) || 0);
+          <NumberInput
+            value={formData.interestRate}
+            onChange={(val) => {
+              handleChange("interestRate", val);
             }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.interestRate}
           />
         </div>
       </div>
@@ -288,18 +281,12 @@ export function LoanForm({
             <label className="block text-xs text-slate-500 mb-1">
               EMI Amount
             </label>
-            <Input
-              type="number"
-              value={formData.emiAmount ?? ""}
-              onChange={(e) => {
-                handleChange(
-                  "emiAmount",
-                  e.target.value ? parseFloat(e.target.value) : undefined
-                );
+            <NumberInput
+              value={formData.emiAmount}
+              onChange={(val) => {
+                handleChange("emiAmount", val || undefined);
               }}
               placeholder="0.00"
-              min={0}
-              step={0.01}
             />
           </div>
           <div>

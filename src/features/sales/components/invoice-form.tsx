@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  TableNumberInput,
   Textarea,
   Select,
   type SelectOption,
@@ -509,87 +510,66 @@ export function InvoiceForm({
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
+                            <TableNumberInput
                               value={item.mrp}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "mrp",
-                                  parseFloat(e.target.value) || 0
-                                );
+                              onChange={(val) => {
+                                handleUpdateLineItem(item.id, "mrp", val);
                               }}
                               size="sm"
-                              className="text-right"
+                              className="text-right min-w-[80px]"
+                              placeholder="0.00"
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantity || ""}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "quantity",
-                                  parseInt(e.target.value) || 0
-                                );
+                            <TableNumberInput
+                              value={item.quantity}
+                              onChange={(val) => {
+                                handleUpdateLineItem(item.id, "quantity", val);
                               }}
                               size="sm"
-                              className="text-right"
+                              className="text-right min-w-[60px]"
+                              placeholder="0"
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
+                            <TableNumberInput
                               value={item.unitPrice}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "unitPrice",
-                                  parseFloat(e.target.value) || 0
-                                );
+                              onChange={(val) => {
+                                handleUpdateLineItem(item.id, "unitPrice", val);
                               }}
                               size="sm"
-                              className="text-right"
+                              className="text-right min-w-[80px]"
+                              placeholder="0.00"
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
+                            <TableNumberInput
                               value={item.discountPercent}
-                              onChange={(e) => {
+                              onChange={(val) => {
                                 handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
-                                  parseFloat(e.target.value) || 0
+                                  val
                                 );
                               }}
                               size="sm"
-                              className="text-right"
+                              className="text-right min-w-[60px]"
+                              placeholder="0"
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
+                            <TableNumberInput
                               value={item.taxPercent}
-                              onChange={(e) => {
+                              onChange={(val) => {
                                 handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
-                                  parseFloat(e.target.value) || 0
+                                  val
                                 );
                               }}
                               size="sm"
-                              className="text-right"
+                              className="text-right min-w-[60px]"
+                              placeholder="0"
                             />
                           </td>
                           <td className="px-4 py-3 text-right font-medium">

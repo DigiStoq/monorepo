@@ -4,10 +4,17 @@
 
 // Button
 export { Button, IconButton } from "./button";
-export type { ButtonProps, IconButtonProps, ButtonVariant, ButtonSize } from "./button";
+export type {
+  ButtonProps,
+  IconButtonProps,
+  ButtonVariant,
+  ButtonSize,
+} from "./button";
 
 // Input
 export { Input, SearchInput, Textarea } from "./input";
+export { NumberInput } from "./number-input";
+export { TableInput, TableNumberInput } from "./table-input";
 export type {
   InputProps,
   SearchInputProps,
@@ -15,6 +22,7 @@ export type {
   InputSize,
   InputState,
 } from "./input";
+export type { NumberInputProps } from "./number-input";
 
 // Card
 export { Card, CardHeader, CardBody, CardFooter, MetricCard } from "./card";
@@ -59,7 +67,10 @@ export type {
 
 // Confirm Delete Dialog
 export { ConfirmDeleteDialog } from "./confirm-delete-dialog";
-export type { ConfirmDeleteDialogProps, LinkedItem } from "./confirm-delete-dialog";
+export type {
+  ConfirmDeleteDialogProps,
+  LinkedItem,
+} from "./confirm-delete-dialog";
 
 // Select
 export { Select, MultiSelect } from "./select";

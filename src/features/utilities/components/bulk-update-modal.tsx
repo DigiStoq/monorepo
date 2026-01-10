@@ -431,7 +431,7 @@ export function BulkUpdateModal({
                     </label>
                     <Input
                       type="number"
-                      value={priceValue}
+                      value={priceValue || ""}
                       onChange={(e) => {
                         setPriceValue(parseFloat(e.target.value) || 0);
                       }}
@@ -516,7 +516,7 @@ export function BulkUpdateModal({
                   </label>
                   <Input
                     type="number"
-                    value={stockValue}
+                    value={stockValue || ""}
                     onChange={(e) => {
                       setStockValue(parseInt(e.target.value) || 0);
                     }}
