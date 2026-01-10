@@ -100,7 +100,6 @@ export function buildItemsTable(
 
   // Data rows
   let totalQty = 0;
-  let totalMRP = 0;
   let totalAmount = 0;
 
   items.forEach((item, index) => {
@@ -108,7 +107,6 @@ export function buildItemsTable(
     const bgColor = isAlternate ? LIGHT_PURPLE : undefined;
 
     totalQty += item.quantity;
-    totalMRP += (item.mrp ?? item.unitPrice) * item.quantity;
     totalAmount += item.amount;
 
     const row: TableCell[] = [
@@ -212,12 +210,8 @@ export function buildItemsTable(
       border: [false, true, false, true],
     },
     {
-      text: formatCurrency(totalMRP, currency, locale),
-      alignment: "right" as const,
-      bold: true,
-      fontSize: FONT_SIZES.small,
+      text: "",
       fillColor: LIGHT_PURPLE,
-      margin: [0, 6, 0, 6] as [number, number, number, number],
       border: [false, true, false, true],
     },
     {
