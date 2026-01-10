@@ -212,24 +212,29 @@ export function InvoiceForm({
   // Calculate totals
   const totals = useMemo(() => {
     const subtotal = lineItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice;
+      return sum + (item.quantity || 0) * (item.unitPrice || 0);
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
       return (
-        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
+        sum +
+        (item.quantity || 0) *
+          (item.unitPrice || 0) *
+          ((item.discountPercent || 0) / 100)
       );
     }, 0);
 
     const invoiceDiscount =
-      (subtotal - itemDiscounts) * (discountPercent / 100);
+      (subtotal - itemDiscounts) * ((discountPercent || 0) / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
     const taxAmount = lineItems.reduce((sum, item) => {
-      const itemSubtotal = item.quantity * item.unitPrice;
-      const itemDiscount = itemSubtotal * (item.discountPercent / 100);
-      return sum + (itemSubtotal - itemDiscount) * (item.taxPercent / 100);
+      const itemSubtotal = (item.quantity || 0) * (item.unitPrice || 0);
+      const itemDiscount = itemSubtotal * ((item.discountPercent || 0) / 100);
+      return (
+        sum + (itemSubtotal - itemDiscount) * ((item.taxPercent || 0) / 100)
+      );
     }, 0);
 
     const total = taxableAmount + taxAmount;
