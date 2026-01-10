@@ -35,23 +35,23 @@ export function useDataImport(): {
             try {
               if (entityType === "customers") {
                 // Basic validation
-                if (!row.Name) {
+                if (!row.name) {
                   skippedCount++;
                   continue;
                 }
 
                 // Check for duplicates (Name)
-                const existing = await tx.get(
+                const existing = await tx.getAll(
                   `SELECT id FROM customers WHERE user_id = ? AND name = ?`,
-                  [user.id, row.Name]
+                  [user.id, row.name]
                 );
 
-                if (existing) {
+                if (existing.length > 0) {
                   errors.push({
                     row: rowIndex,
-                    field: "Name",
+                    field: "name",
                     message: "Skipped: Customer with this name already exists",
-                    value: row.Name,
+                    value: row.name,
                   });
                   skippedCount++;
                   continue;
@@ -64,14 +64,25 @@ export function useDataImport(): {
                   [
                     user.id,
                     crypto.randomUUID(),
-                    row.Name,
-                    (row.Phone as string) || null,
-                    (row.Email as string) || null,
-                    (row.Type as string) || "customer",
-                    (row.Address as string) || null,
-                    (row.City as string) || null,
-                    (row.State as string) || null,
-                    (row["ZIP Code"] as string) || null,
+                    row.name,
+                    (row.phone as string) || null,
+                    (row.email as string) || null,
+                    (() => {
+                      const t = (typeof row.type === "string" ? row.type : "")
+                        .toLowerCase()
+                        .trim();
+                      if (
+                        t.includes("both") ||
+                        (t.includes("customer") && t.includes("supplier"))
+                      )
+                        return "both";
+                      if (t.includes("supplier")) return "supplier";
+                      return "customer";
+                    })(),
+                    (row.address as string) || null,
+                    (row.city as string) || null,
+                    (row.state as string) || null,
+                    (row.zipCode as string) || null,
                     new Date().toISOString(),
                     new Date().toISOString(),
                   ]
@@ -79,32 +90,32 @@ export function useDataImport(): {
                 importedCount++;
               } else if (entityType === "items") {
                 // Basic validation
-                if (!row.Name) {
+                if (!row.name) {
                   skippedCount++;
                   continue;
                 }
 
                 // Check for duplicates (Name or SKU)
                 let existing;
-                if (row.SKU) {
-                  existing = await tx.get(
+                if (row.sku) {
+                  existing = await tx.getAll(
                     `SELECT id FROM items WHERE user_id = ? AND (name = ? OR sku = ?)`,
-                    [user.id, row.Name, row.SKU]
+                    [user.id, row.name, row.sku]
                   );
                 } else {
-                  existing = await tx.get(
+                  existing = await tx.getAll(
                     `SELECT id FROM items WHERE user_id = ? AND name = ?`,
-                    [user.id, row.Name]
+                    [user.id, row.name]
                   );
                 }
 
-                if (existing) {
+                if (existing.length > 0) {
                   errors.push({
                     row: rowIndex,
                     field: "Name/SKU",
                     message:
                       "Skipped: Item with this Name or SKU already exists",
-                    value: `${String(row.Name as string | null)} / ${(row.SKU as string | null) ?? ""}`,
+                    value: `${String(row.name as string | null)} / ${(row.sku as string | null) ?? ""}`,
                   });
                   skippedCount++;
                   continue;
@@ -117,13 +128,13 @@ export function useDataImport(): {
                   [
                     user.id,
                     crypto.randomUUID(),
-                    row.Name,
-                    (row.SKU as string) || null,
-                    (row.Description as string) || null,
-                    parseFloat((row["Sale Price"] as string) || "0"),
-                    parseFloat((row["Purchase Price"] as string) || "0"),
-                    parseFloat((row["Opening Stock"] as string) || "0"),
-                    (row.Unit as string) || "pc",
+                    row.name,
+                    (row.sku as string) || null,
+                    (row.description as string) || null,
+                    parseFloat((row.salePrice as string) || "0"),
+                    parseFloat((row.purchasePrice as string) || "0"),
+                    parseFloat((row.openingStock as string) || "0"),
+                    (row.unit as string) || "pc",
                     "product",
                     1,
                     new Date().toISOString(),
