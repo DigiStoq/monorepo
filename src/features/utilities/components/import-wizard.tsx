@@ -105,7 +105,7 @@ export function ImportWizard({
   const targetFields = entityType === "customers" ? customerFields : itemFields;
 
   // Helper to auto-map columns
-  const performAutoMapping = (detectedColumns: string[]) => {
+  const performAutoMapping = (detectedColumns: string[]): void => {
     const autoMappings = detectedColumns.map((col) => {
       const normalized = col.toLowerCase().replace(/[^a-z]/g, "");
       const match = targetFields.find((f) => {
@@ -125,7 +125,7 @@ export function ImportWizard({
   };
 
   // Helper to standardise data setting
-  const setParsedData = (data: Record<string, unknown>[]) => {
+  const setParsedData = (data: Record<string, unknown>[]): void => {
     if (data.length === 0) {
       alert("No records found in file");
       return;
@@ -707,6 +707,22 @@ export function ImportWizard({
                     </Badge>
                   )}
                 </div>
+                {result.errors.length > 0 && (
+                  <Card className="bg-warning-light text-left mt-6">
+                    <CardBody>
+                      <p className="text-sm font-medium text-warning-dark mb-2">
+                        Skipped Items Details
+                      </p>
+                      <ul className="text-sm text-warning-dark space-y-1 max-h-40 overflow-y-auto">
+                        {result.errors.map((err, idx) => (
+                          <li key={idx}>
+                            Row {err.row}: {err.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardBody>
+                  </Card>
+                )}
               </>
             ) : (
               <>
