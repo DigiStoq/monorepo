@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { Card, CardBody, Button, Input, Textarea } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  Button,
+  Input,
+  NumberInput,
+  Textarea,
+} from "@/components/ui";
 import { ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { CashAdjustmentFormData } from "../types";
@@ -115,14 +122,9 @@ export function CashAdjustmentForm({
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Amount
             </label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
+            <NumberInput
               value={amount}
-              onChange={(e) => {
-                setAmount(parseFloat(e.target.value) || 0);
-              }}
+              onChange={setAmount}
               placeholder="0.00"
             />
           </div>

@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  NumberInput,
   Textarea,
   Select,
   type SelectOption,
@@ -184,14 +185,9 @@ export function PaymentOutForm({
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Amount
                 </label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <NumberInput
                   value={amount}
-                  onChange={(e) => {
-                    setAmount(parseFloat(e.target.value) || 0);
-                  }}
+                  onChange={setAmount}
                   placeholder="0.00"
                 />
               </div>

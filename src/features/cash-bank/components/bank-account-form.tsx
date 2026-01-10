@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  NumberInput,
   Textarea,
   Select,
   type SelectOption,
@@ -383,13 +384,9 @@ export function BankAccountForm({
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Current Balance
                 </label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumberInput
                   value={openingBalance}
-                  onChange={(e) => {
-                    setOpeningBalance(parseFloat(e.target.value) || 0);
-                  }}
+                  onChange={setOpeningBalance}
                   placeholder="0.00"
                 />
                 <p className="mt-1 text-xs text-slate-500">

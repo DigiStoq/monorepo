@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Button,
   Input,
+  NumberInput,
   Select,
   Textarea,
   type SelectOption,
@@ -143,32 +144,24 @@ export function LoanPaymentForm({
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Principal Amount
           </label>
-          <Input
-            type="number"
-            value={formData.principalAmount || ""}
-            onChange={(e) => {
-              handleChange("principalAmount", parseFloat(e.target.value) || 0);
+          <NumberInput
+            value={formData.principalAmount}
+            onChange={(val) => {
+              handleChange("principalAmount", val);
             }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.principalAmount}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Interest Amount
           </label>
-          <Input
-            type="number"
-            value={formData.interestAmount || ""}
-            onChange={(e) => {
-              handleChange("interestAmount", parseFloat(e.target.value) || 0);
+          <NumberInput
+            value={formData.interestAmount}
+            onChange={(val) => {
+              handleChange("interestAmount", val);
             }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.interestAmount}
           />
         </div>
       </div>
