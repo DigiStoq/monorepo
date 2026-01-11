@@ -14,23 +14,9 @@ import { LoginPage, SignupPage, ForgotPasswordPage } from "@/features/auth";
 import { DashboardPage } from "@/features/dashboard";
 import { CustomersPage } from "@/features/customers";
 import { ItemsPage } from "@/features/inventory";
-import {
-  SaleInvoicesPage,
-  PaymentInPage,
-  CreditNotesPage,
-  EstimatesPage,
-} from "@/features/sales";
-import {
-  PurchaseInvoicesPage,
-  PaymentOutPage,
-  ExpensesPage,
-} from "@/features/purchases";
-import {
-  BankAccountsPage,
-  CashInHandPage,
-  ChequesPage,
-  LoansPage,
-} from "@/features/cash-bank";
+import { SaleInvoicesPage, PaymentInPage, CreditNotesPage, EstimatesPage } from "@/features/sales";
+import { PurchaseInvoicesPage, PaymentOutPage, ExpensesPage } from "@/features/purchases";
+import { BankAccountsPage, CashInHandPage, ChequesPage, LoansPage } from "@/features/cash-bank";
 import {
   ReportsHubPage,
   SalesSummaryReport,
@@ -52,7 +38,6 @@ import {
   DayBookReport,
   ProfitLossReportPage,
   CashFlowReportPage,
-  CashMovementReportPage,
   TaxSummaryReport,
 } from "@/features/reports";
 import {
@@ -67,7 +52,7 @@ import {
 import { UtilitiesPage } from "@/features/utilities";
 
 // Placeholder pages (will be replaced with actual implementations)
-function PlaceholderPage({ title }: { title: string }): React.ReactNode {
+function PlaceholderPage({ title }: { title: string }) {
   return (
     <div className="p-6">
       <div className="max-w-2xl mx-auto text-center py-16">
@@ -86,7 +71,7 @@ function PlaceholderPage({ title }: { title: string }): React.ReactNode {
 // ============================================================================
 
 // Check if user is authenticated - redirect to login if not
-function requireAuth(): void {
+function requireAuth() {
   const { isAuthenticated, isInitialized } = useAuthStore.getState();
 
   // If not initialized, we're still loading - don't redirect yet
@@ -95,13 +80,12 @@ function requireAuth(): void {
   }
 
   if (!isAuthenticated) {
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router redirect pattern
     throw redirect({ to: "/login" });
   }
 }
 
 // Redirect authenticated users away from auth pages
-function redirectIfAuthenticated(): void {
+function redirectIfAuthenticated() {
   const { isAuthenticated, isInitialized } = useAuthStore.getState();
 
   if (!isInitialized) {
@@ -109,7 +93,6 @@ function redirectIfAuthenticated(): void {
   }
 
   if (isAuthenticated) {
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router redirect pattern
     throw redirect({ to: "/" });
   }
 }
@@ -371,12 +354,6 @@ const cashFlowReportRoute = createRoute({
   component: CashFlowReportPage,
 });
 
-const cashMovementReportRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: "/reports/financial/cash-movement",
-  component: CashMovementReportPage,
-});
-
 const taxSummaryReportRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/reports/financial/tax-summary",
@@ -503,7 +480,6 @@ const protectedRoutes = protectedLayoutRoute.addChildren([
   dayBookReportRoute,
   profitLossReportRoute,
   cashFlowReportRoute,
-  cashMovementReportRoute,
   taxSummaryReportRoute,
   // Settings
   settingsRoute,

@@ -1,5 +1,4 @@
-import type { Store } from "@tauri-apps/plugin-store";
-import { load } from "@tauri-apps/plugin-store";
+import { load, Store } from "@tauri-apps/plugin-store";
 import type { Session } from "@supabase/supabase-js";
 
 // ============================================================================
@@ -23,12 +22,8 @@ const STORE_NAME = "auth.json";
 const SESSION_KEY = "supabase_session";
 
 async function getStore(): Promise<Store> {
-  if (store) return store;
-  try {
+  if (!store) {
     store = await load(STORE_NAME);
-  } catch (e) {
-    console.error("[token-storage] Failed to load store:", e);
-    throw e;
   }
   return store;
 }
@@ -138,7 +133,7 @@ export async function hasStoredSession(): Promise<boolean> {
     try {
       const s = await getStore();
       const session = await s.get<StoredSession>(SESSION_KEY);
-      return session !== undefined;
+      return session !== null && session !== undefined;
     } catch {
       // Fallback to localStorage check
       return localStorage.getItem(SESSION_KEY) !== null;

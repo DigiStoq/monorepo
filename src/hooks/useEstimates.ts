@@ -1,7 +1,6 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import { useAuthStore } from "@/stores/auth-store";
 import type { Estimate, EstimateItem } from "@/features/sales/types";
 
 // Database row types (snake_case columns from SQLite)
@@ -46,8 +45,7 @@ function mapRowToEstimate(row: EstimateRow): Estimate {
     customerName: row.customer_name,
     date: row.date,
     validUntil: row.valid_until,
-    status: row.status as Estimate["status"],
-    items: [], // Items are fetched separately via useEstimateById
+    status: row.status,
     subtotal: row.subtotal,
     taxAmount: row.tax_amount,
     discountAmount: row.discount_amount,
@@ -83,26 +81,11 @@ export function useEstimates(filters?: {
   dateTo?: string;
   search?: string;
 }): { estimates: Estimate[]; isLoading: boolean; error: Error | undefined } {
-  const params = useMemo(() => {
-    const statusFilter = filters?.status ?? null;
-    const customerFilter = filters?.customerId ?? null;
-    const dateFromFilter = filters?.dateFrom ?? null;
-    const dateToFilter = filters?.dateTo ?? null;
-    const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [
-      statusFilter,
-      customerFilter,
-      dateFromFilter,
-      dateToFilter,
-      searchFilter,
-    ];
-  }, [
-    filters?.status,
-    filters?.customerId,
-    filters?.dateFrom,
-    filters?.dateTo,
-    filters?.search,
-  ]);
+  const statusFilter = filters?.status ?? null;
+  const customerFilter = filters?.customerId ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
   const { data, isLoading, error } = useQuery<EstimateRow>(
     `SELECT * FROM estimates
@@ -112,10 +95,10 @@ export function useEstimates(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR estimate_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    params
+    [statusFilter, customerFilter, dateFromFilter, dateToFilter, searchFilter]
   );
 
-  const estimates = useMemo(() => data.map(mapRowToEstimate), [data]);
+  const estimates = data.map(mapRowToEstimate);
 
   return { estimates, isLoading, error };
 }
@@ -125,21 +108,17 @@ export function useEstimateById(id: string | null): {
   items: EstimateItem[];
   isLoading: boolean;
 } {
-  const { data: estimateData, isLoading: estimateLoading } =
-    useQuery<EstimateRow>(
-      id
-        ? `SELECT * FROM estimates WHERE id = ?`
-        : `SELECT * FROM estimates WHERE 1 = 0`,
-      id ? [id] : []
-    );
+  const { data: estimateData, isLoading: estimateLoading } = useQuery<EstimateRow>(
+    id ? `SELECT * FROM estimates WHERE id = ?` : `SELECT * FROM estimates WHERE 1 = 0`,
+    id ? [id] : []
+  );
 
-  const { data: itemsData, isLoading: itemsLoading } =
-    useQuery<EstimateItemRow>(
-      id
-        ? `SELECT * FROM estimate_items WHERE estimate_id = ?`
-        : `SELECT * FROM estimate_items WHERE 1 = 0`,
-      id ? [id] : []
-    );
+  const { data: itemsData, isLoading: itemsLoading } = useQuery<EstimateItemRow>(
+    id
+      ? `SELECT * FROM estimate_items WHERE estimate_id = ?`
+      : `SELECT * FROM estimate_items WHERE 1 = 0`,
+    id ? [id] : []
+  );
 
   const estimate = estimateData[0] ? mapRowToEstimate(estimateData[0]) : null;
   const items = itemsData.map(mapRowToEstimateItem);
@@ -167,11 +146,7 @@ interface EstimateMutations {
     items: Omit<EstimateItem, "id" | "estimateId">[]
   ) => Promise<string>;
   updateEstimateStatus: (id: string, status: string) => Promise<void>;
-  convertEstimateToInvoice: (
-    estimate: Estimate,
-    items: EstimateItem[],
-    dueDate: string
-  ) => Promise<string>;
+  convertToInvoice: (id: string, invoiceId: string) => Promise<void>;
   deleteEstimate: (id: string) => Promise<void>;
 }
 
@@ -196,13 +171,9 @@ export function useEstimateMutations(): EstimateMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      const subtotal = items.reduce(
-        (sum: number, item) => sum + item.amount,
-        0
-      );
+      const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
       const taxAmount = items.reduce(
-        (sum: number, item) =>
-          sum + (item.amount * (item.taxPercent ?? 0)) / 100,
+        (sum, item) => sum + (item.amount * (item.taxPercent ?? 0)) / 100,
         0
       );
       const total = subtotal + taxAmount - (data.discountAmount ?? 0);
@@ -263,167 +234,29 @@ export function useEstimateMutations(): EstimateMutations {
   const updateEstimateStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(
-        `UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`,
-        [status, now, id]
-      );
+      await db.execute(`UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`, [
+        status,
+        now,
+        id,
+      ]);
     },
     [db]
   );
 
-  // Helper to add history entry for the invoice
-  const addInvoiceHistoryEntry = useCallback(
-    async (entry: {
-      invoiceId: string;
-      action: string;
-      description: string;
-      oldValues?: Record<string, unknown>;
-      newValues?: Record<string, unknown>;
-    }) => {
-      const id = crypto.randomUUID();
+  const convertToInvoice = useCallback(
+    async (id: string, invoiceId: string): Promise<void> => {
       const now = new Date().toISOString();
-
-      const { user } = useAuthStore.getState();
-      const userId = user?.id ?? null;
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
-
-      await db.execute(
-        `INSERT INTO invoice_history (
-          id, invoice_id, invoice_type, action, description,
-          old_values, new_values, user_id, user_name, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          entry.invoiceId,
-          "sale",
-          entry.action,
-          entry.description,
-          entry.oldValues ? JSON.stringify(entry.oldValues) : null,
-          entry.newValues ? JSON.stringify(entry.newValues) : null,
-          userId,
-          userName,
-          now,
-        ]
-      );
-    },
-    [db]
-  );
-
-  const convertEstimateToInvoice = useCallback(
-    async (
-      estimate: Estimate,
-      items: EstimateItem[],
-      dueDate: string
-    ): Promise<string> => {
-      const invoiceId = crypto.randomUUID();
-      const now = new Date().toISOString();
-
-      // Generate invoice number from sequence
-      const seqResult = await db.execute(
-        `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
-        ["sale_invoice"]
-      );
-      const seqRows = (seqResult.rows?._array ?? []) as {
-        prefix: string;
-        next_number: number;
-        padding: number;
-      }[];
-      const seq = seqRows[0];
-
-      if (seqRows.length === 0) {
-        throw new Error("Invoice sequence counter not found");
-      }
-
-      const invoiceNumber = `${seq.prefix}-${String(seq.next_number).padStart(seq.padding, "0")}`;
-
-      // Increment the sequence counter
-      await db.execute(
-        `UPDATE sequence_counters SET next_number = next_number + 1, updated_at = ? WHERE id = ?`,
-        [now, "sale_invoice"]
-      );
-
-      // Create the sale invoice
-      await db.execute(
-        `INSERT INTO sale_invoices (
-          id, invoice_number, customer_id, customer_name, date, due_date, status,
-          subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-          notes, terms, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          invoiceId,
-          invoiceNumber,
-          estimate.customerId,
-          estimate.customerName,
-          now.split("T")[0], // Today's date for the invoice
-          dueDate,
-          "unpaid",
-          estimate.subtotal,
-          estimate.taxAmount,
-          estimate.discountAmount,
-          estimate.total,
-          0, // amount_paid
-          estimate.total, // amount_due
-          estimate.notes ?? null,
-          estimate.terms ?? null,
-          now,
-          now,
-        ]
-      );
-
-      // Copy estimate items to invoice items
-      for (const item of items) {
-        const itemId = crypto.randomUUID();
-        await db.execute(
-          `INSERT INTO sale_invoice_items (
-            id, invoice_id, item_id, item_name, description, quantity, unit,
-            unit_price, discount_percent, tax_percent, amount
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            itemId,
-            invoiceId,
-            item.itemId ?? null,
-            item.itemName,
-            item.description ?? null,
-            item.quantity,
-            item.unit ?? "pcs",
-            item.unitPrice,
-            item.discountPercent ?? 0,
-            item.taxPercent ?? 0,
-            item.amount,
-          ]
-        );
-      }
-
-      // Update estimate status to converted
       await db.execute(
         `UPDATE estimates SET status = 'converted', converted_to_invoice_id = ?, updated_at = ? WHERE id = ?`,
-        [invoiceId, now, estimate.id]
+        [invoiceId, now, id]
       );
-
-      // Add history entry for the new invoice
-      await addInvoiceHistoryEntry({
-        invoiceId,
-        action: "created",
-        description: `Invoice ${invoiceNumber} created from Estimate ${estimate.estimateNumber}`,
-        newValues: {
-          total: estimate.total,
-          status: "unpaid",
-          itemCount: items.length,
-          convertedFromEstimate: estimate.estimateNumber,
-        },
-      });
-
-      return invoiceId;
     },
-    [db, addInvoiceHistoryEntry]
+    [db]
   );
 
   const deleteEstimate = useCallback(
     async (id: string): Promise<void> => {
-      await db.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [
-        id,
-      ]);
+      await db.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [id]);
       await db.execute(`DELETE FROM estimates WHERE id = ?`, [id]);
     },
     [db]
@@ -432,7 +265,7 @@ export function useEstimateMutations(): EstimateMutations {
   return {
     createEstimate,
     updateEstimateStatus,
-    convertEstimateToInvoice,
+    convertToInvoice,
     deleteEstimate,
   };
 }

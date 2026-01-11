@@ -37,7 +37,7 @@ export function ReportLayout({
   filters,
   children,
   className,
-}: ReportLayoutProps): React.ReactNode {
+}: ReportLayoutProps) {
   return (
     <div className={cn("h-full flex flex-col", className)}>
       {/* Header */}
@@ -57,15 +57,8 @@ export function ReportLayout({
 
           <div className="flex items-center gap-2">
             {onRefresh && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={cn("h-4 w-4", isLoading && "animate-spin")}
-                />
+              <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isLoading}>
+                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
               </Button>
             )}
             {onPrint && (
@@ -85,12 +78,16 @@ export function ReportLayout({
 
         {/* Filters */}
         {filters && (
-          <div className="mt-4 pt-4 border-t border-slate-100">{filters}</div>
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            {filters}
+          </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-50">{children}</div>
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+        {children}
+      </div>
     </div>
   );
 }

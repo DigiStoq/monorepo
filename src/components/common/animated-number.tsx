@@ -15,7 +15,7 @@ export function AnimatedNumber({
   formatValue = (v) => v.toLocaleString(),
   className,
   animateOnView = true,
-}: AnimatedNumberProps): React.ReactNode {
+}: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -25,9 +25,7 @@ export function AnimatedNumber({
     duration: duration * 1000,
   });
 
-  const display = useTransform(spring, (current) =>
-    formatValue(Math.round(current))
-  );
+  const display = useTransform(spring, (current) => formatValue(Math.round(current)));
 
   useEffect(() => {
     if (animateOnView) {

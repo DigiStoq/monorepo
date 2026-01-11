@@ -1,7 +1,12 @@
 import { cn } from "@/lib/cn";
-import { Card, CardHeader, CardBody, Button, Badge } from "@/components/ui";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  Badge,
+} from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
-import { useItemHistory, type ItemHistoryAction } from "@/hooks/useItemHistory";
 import {
   Package,
   Layers,
@@ -12,13 +17,7 @@ import {
   AlertTriangle,
   TrendingUp,
   TrendingDown,
-  PlusCircle,
-  RefreshCw,
-  PackagePlus,
-  Power,
-  History,
 } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
 import type { Item } from "../types";
 
 // ============================================================================
@@ -45,22 +44,17 @@ interface InfoItemProps {
   valueColor?: string;
 }
 
-function InfoItem({
-  icon,
-  label,
-  value,
-  valueColor,
-}: InfoItemProps): React.ReactNode | null {
+function InfoItem({ icon, label, value, valueColor }: InfoItemProps) {
   if (value === undefined || value === null || value === "") return null;
 
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-slate-100 rounded-lg shrink-0">{icon}</div>
+      <div className="p-2 bg-slate-100 rounded-lg shrink-0">
+        {icon}
+      </div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
-        <p
-          className={cn("text-sm font-medium", valueColor ?? "text-slate-900")}
-        >
+        <p className={cn("text-sm font-medium", valueColor || "text-slate-900")}>
           {value}
         </p>
       </div>
@@ -79,33 +73,13 @@ export function ItemDetail({
   onDelete,
   onAdjustStock,
   className,
-}: ItemDetailProps): React.ReactNode {
-  // Fetch item history
-  const { history, isLoading: historyLoading } = useItemHistory(
-    item?.id ?? null
-  );
-
-  const { formatCurrency } = useCurrency();
-
-  const formatDateTime = (dateStr: string): string =>
-    new Date(dateStr).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-
-  const getActionIcon = (action: ItemHistoryAction): React.ReactNode => {
-    const iconMap: Record<ItemHistoryAction, React.ReactNode> = {
-      created: <PlusCircle className="h-4 w-4 text-success" />,
-      updated: <RefreshCw className="h-4 w-4 text-primary-600" />,
-      stock_adjusted: <PackagePlus className="h-4 w-4 text-info" />,
-      activated: <Power className="h-4 w-4 text-success" />,
-      deactivated: <Power className="h-4 w-4 text-slate-400" />,
-      deleted: <Trash2 className="h-4 w-4 text-error" />,
-    };
-    return iconMap[action] ?? <History className="h-4 w-4 text-slate-400" />;
-  };
+}: ItemDetailProps) {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   if (isLoading) {
     return (
@@ -126,13 +100,11 @@ export function ItemDetail({
     );
   }
 
-  const isLowStock =
-    item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
+  const isLowStock = item.stockQuantity <= item.lowStockAlert && item.stockQuantity > 0;
   const isOutOfStock = item.stockQuantity === 0;
-  const profitMargin =
-    item.purchasePrice > 0
-      ? ((item.salePrice - item.purchasePrice) / item.salePrice) * 100
-      : null;
+  const profitMargin = item.purchasePrice > 0
+    ? ((item.salePrice - item.purchasePrice) / item.salePrice) * 100
+    : null;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -154,9 +126,7 @@ export function ItemDetail({
                 )}
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {item.name}
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">{item.name}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={item.type === "service" ? "info" : "primary"}>
                     {item.type === "service" ? "Service" : "Product"}
@@ -263,8 +233,8 @@ export function ItemDetail({
                       isOutOfStock
                         ? "text-error"
                         : isLowStock
-                          ? "text-warning"
-                          : "text-slate-900"
+                        ? "text-warning"
+                        : "text-slate-900"
                     )}
                   >
                     {item.stockQuantity} {item.unit}
@@ -315,51 +285,19 @@ export function ItemDetail({
         </CardBody>
       </Card>
 
-      {/* Item History Card */}
-      <Card>
-        <CardHeader title="History" />
-        <CardBody>
-          {historyLoading ? (
-            <div className="text-center text-slate-500 py-4">
-              Loading history...
-            </div>
-          ) : history.length === 0 ? (
+      {/* Stock History Card (Placeholder) */}
+      {item.type === "product" && (
+        <Card>
+          <CardHeader title="Stock History" />
+          <CardBody>
             <EmptyState
-              title="No history yet"
-              description="Stock adjustments and changes will appear here"
+              title="No stock movements"
+              description="Stock adjustments and transactions will appear here"
               compact
             />
-          ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {history.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg"
-                >
-                  <div className="p-2 bg-white rounded-lg shrink-0">
-                    {getActionIcon(entry.action)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">
-                      {entry.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs text-slate-500">
-                        {formatDateTime(entry.createdAt)}
-                      </p>
-                      {entry.userName && (
-                        <p className="text-xs text-slate-400">
-                          by {entry.userName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }

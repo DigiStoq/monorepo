@@ -1,13 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ConfirmDeleteDialog,
-} from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import {
@@ -17,35 +10,20 @@ import {
   BankTransactionForm,
   type BankTransactionFormData,
 } from "./components";
-import {
-  useBankAccounts,
-  useBankAccountMutations,
-} from "@/hooks/useBankAccounts";
-import {
-  useBankTransactions,
-  useBankTransactionMutations,
-} from "@/hooks/useBankTransactions";
+import { useBankAccounts, useBankAccountMutations } from "@/hooks/useBankAccounts";
+import { useBankTransactions, useBankTransactionMutations } from "@/hooks/useBankTransactions";
 import type { BankAccount, BankAccountFormData } from "./types";
 
-export function BankAccountsPage(): React.ReactNode {
+export function BankAccountsPage() {
   // Data from PowerSync
   const { accounts, isLoading, error } = useBankAccounts();
   const { createAccount, deleteAccount } = useBankAccountMutations();
   const { createTransaction } = useBankTransactionMutations();
 
   // State
-  const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(
-    null
-  );
+  const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Delete confirmation state
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(
-    null
-  );
 
   // Update selected account when data changes
   const currentSelectedAccount = useMemo(() => {
@@ -55,9 +33,7 @@ export function BankAccountsPage(): React.ReactNode {
 
   // Get transactions for selected account
   const { transactions: accountTransactions } = useBankTransactions(
-    currentSelectedAccount
-      ? { accountId: currentSelectedAccount.id }
-      : undefined
+    currentSelectedAccount ? { accountId: currentSelectedAccount.id } : undefined
   );
 
   // Build account options for transfer (exclude current account)
@@ -68,25 +44,23 @@ export function BankAccountsPage(): React.ReactNode {
     : [];
 
   // Handlers
-  const handleAccountClick = (account: BankAccount): void => {
+  const handleAccountClick = (account: BankAccount) => {
     setSelectedAccount(account);
   };
 
-  const handleCloseDetail = (): void => {
+  const handleCloseDetail = () => {
     setSelectedAccount(null);
   };
 
-  const handleCreateAccount = (): void => {
+  const handleCreateAccount = () => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = (): void => {
+  const handleCloseForm = () => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitAccount = async (
-    data: BankAccountFormData
-  ): Promise<void> => {
+  const handleSubmitAccount = async (data: BankAccountFormData) => {
     try {
       await createAccount({
         name: data.name,
@@ -102,40 +76,26 @@ export function BankAccountsPage(): React.ReactNode {
     }
   };
 
-  const handleDeleteClick = (): void => {
+  const handleDeleteAccount = async () => {
     if (currentSelectedAccount) {
-      setAccountToDelete(currentSelectedAccount);
-      setIsDeleteModalOpen(true);
-    }
-  };
-
-  const handleConfirmDelete = async (): Promise<void> => {
-    if (accountToDelete) {
-      setIsSubmitting(true);
       try {
-        await deleteAccount(accountToDelete.id);
+        await deleteAccount(currentSelectedAccount.id);
         setSelectedAccount(null);
-        setIsDeleteModalOpen(false);
-        setAccountToDelete(null);
       } catch (err) {
         console.error("Failed to delete account:", err);
-      } finally {
-        setIsSubmitting(false);
       }
     }
   };
 
-  const handleOpenTransactionForm = (): void => {
+  const handleOpenTransactionForm = () => {
     setIsTransactionFormOpen(true);
   };
 
-  const handleCloseTransactionForm = (): void => {
+  const handleCloseTransactionForm = () => {
     setIsTransactionFormOpen(false);
   };
 
-  const handleSubmitTransaction = async (
-    data: BankTransactionFormData
-  ): Promise<void> => {
+  const handleSubmitTransaction = async (data: BankTransactionFormData) => {
     if (!currentSelectedAccount) return;
 
     try {
@@ -171,10 +131,7 @@ export function BankAccountsPage(): React.ReactNode {
         title="Bank Accounts"
         description="Manage your bank accounts and track balances"
         actions={
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleCreateAccount}
-          >
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateAccount}>
             Add Account
           </Button>
         }
@@ -202,10 +159,8 @@ export function BankAccountsPage(): React.ReactNode {
               account={currentSelectedAccount}
               transactions={accountTransactions}
               onClose={handleCloseDetail}
-              onEdit={() => {
-                setIsFormOpen(true);
-              }}
-              onDelete={handleDeleteClick}
+              onEdit={() => setIsFormOpen(true)}
+              onDelete={handleDeleteAccount}
               onAddTransaction={handleOpenTransactionForm}
             />
           </div>
@@ -215,12 +170,12 @@ export function BankAccountsPage(): React.ReactNode {
       {/* Account Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>Add Bank Account</ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>
+            Add Bank Account
+          </ModalHeader>
           <ModalBody>
             <BankAccountForm
-              onSubmit={(data) => {
-                void handleSubmitAccount(data);
-              }}
+              onSubmit={handleSubmitAccount}
               onCancel={handleCloseForm}
             />
           </ModalBody>
@@ -228,11 +183,7 @@ export function BankAccountsPage(): React.ReactNode {
       </Modal>
 
       {/* Transaction Form Modal */}
-      <Modal
-        isOpen={isTransactionFormOpen}
-        onClose={handleCloseTransactionForm}
-        size="lg"
-      >
+      <Modal isOpen={isTransactionFormOpen} onClose={handleCloseTransactionForm} size="lg">
         <ModalContent>
           <ModalHeader onClose={handleCloseTransactionForm}>
             Add Transaction - {currentSelectedAccount?.name}
@@ -240,42 +191,12 @@ export function BankAccountsPage(): React.ReactNode {
           <ModalBody>
             <BankTransactionForm
               bankAccounts={transferAccountOptions}
-              onSubmit={(data) => {
-                void handleSubmitTransaction(data);
-              }}
+              onSubmit={handleSubmitTransaction}
               onCancel={handleCloseTransactionForm}
             />
           </ModalBody>
         </ModalContent>
       </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmDeleteDialog
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setAccountToDelete(null);
-        }}
-        onConfirm={() => {
-          void handleConfirmDelete();
-        }}
-        title="Delete Bank Account"
-        itemName={accountToDelete?.name ?? ""}
-        itemType="Bank Account"
-        warningMessage="This will permanently delete this bank account and all its transaction history."
-        linkedItems={
-          accountTransactions.length > 0
-            ? [
-                {
-                  type: "Transaction",
-                  count: accountTransactions.length,
-                  description: "Will be deleted",
-                },
-              ]
-            : []
-        }
-        isLoading={isSubmitting}
-      />
     </div>
   );
 }

@@ -33,7 +33,7 @@ export function useSequenceCounter(type: SequenceType): SequenceCounterResult {
     [type]
   );
 
-  const counter = data.length > 0 ? data[0] : undefined;
+  const counter = data[0];
 
   return {
     prefix: counter?.prefix ?? "",
@@ -64,10 +64,10 @@ export function useSequenceMutations(): SequenceMutations {
         `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
         [type]
       );
-      const rows = (result.rows?._array ?? []) as SequenceCounter[];
+      const rows = result.rows._array as SequenceCounter[];
       const counter = rows[0];
 
-      if (rows.length === 0) {
+      if (!counter) {
         throw new Error(`Sequence counter not found for type: ${type}`);
       }
 
@@ -115,10 +115,7 @@ export function useSequenceMutations(): SequenceMutations {
       values.push(type);
 
       if (fields.length > 1) {
-        await db.execute(
-          `UPDATE sequence_counters SET ${fields.join(", ")} WHERE id = ?`,
-          values
-        );
+        await db.execute(`UPDATE sequence_counters SET ${fields.join(", ")} WHERE id = ?`, values);
       }
     },
     [db]
@@ -131,10 +128,7 @@ export function useSequenceMutations(): SequenceMutations {
 }
 
 // Helper hook to preview the next number without incrementing
-export function useNextSequencePreview(type: SequenceType): {
-  preview: string;
-  isLoading: boolean;
-} {
+export function useNextSequencePreview(type: SequenceType): { preview: string; isLoading: boolean } {
   const { prefix, nextNumber, padding, isLoading } = useSequenceCounter(type);
 
   const preview = `${prefix}-${String(nextNumber).padStart(padding, "0")}`;

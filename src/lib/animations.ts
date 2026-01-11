@@ -110,8 +110,7 @@ export const cardHoverVariants = {
   },
   hover: {
     scale: 1.01,
-    boxShadow:
-      "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
     transition: {
       duration: 0.2,
       ease: "easeOut",
@@ -305,9 +304,7 @@ export const badgePulseVariants: Variants = {
 // NUMBER COUNTER ANIMATION HELPER
 // ============================================================================
 
-export const getCounterSpringConfig = (
-  duration = 0.8
-): { type: string; stiffness: number; damping: number; duration: number } => ({
+export const getCounterSpringConfig = (duration: number = 0.8) => ({
   type: "spring",
   stiffness: 100,
   damping: 20,

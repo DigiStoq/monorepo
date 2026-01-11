@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { Card, CardBody, Button, Input, Textarea } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  Button,
+  Input,
+  Textarea,
+} from "@/components/ui";
 import { ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
 import type { CashAdjustmentFormData } from "../types";
 
 // ============================================================================
@@ -27,7 +32,7 @@ export function CashAdjustmentForm({
   onSubmit,
   onCancel,
   className,
-}: CashAdjustmentFormProps): React.ReactNode {
+}: CashAdjustmentFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState<"add" | "subtract">("add");
@@ -36,14 +41,20 @@ export function CashAdjustmentForm({
   const [description, setDescription] = useState("");
 
   // Calculate new balance
-  const newBalance =
-    type === "add" ? currentBalance + amount : currentBalance - amount;
+  const newBalance = type === "add"
+    ? currentBalance + amount
+    : currentBalance - amount;
 
   // Format currency
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Handle submit
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (amount <= 0 || !description) return;
 
     const formData: CashAdjustmentFormData = {
@@ -64,9 +75,7 @@ export function CashAdjustmentForm({
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={() => {
-            setType("add");
-          }}
+          onClick={() => setType("add")}
           className={cn(
             "flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all",
             type === "add"
@@ -79,9 +88,7 @@ export function CashAdjustmentForm({
         </button>
         <button
           type="button"
-          onClick={() => {
-            setType("subtract");
-          }}
+          onClick={() => setType("subtract")}
           className={cn(
             "flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all",
             type === "subtract"
@@ -105,9 +112,7 @@ export function CashAdjustmentForm({
             <Input
               type="date"
               value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-              }}
+              onChange={(e) => setDate(e.target.value)}
             />
           </div>
 
@@ -120,9 +125,7 @@ export function CashAdjustmentForm({
               min="0"
               step="0.01"
               value={amount}
-              onChange={(e) => {
-                setAmount(parseFloat(e.target.value) || 0);
-              }}
+              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
               placeholder="0.00"
             />
           </div>
@@ -133,9 +136,7 @@ export function CashAdjustmentForm({
               placeholder="Reason for this adjustment..."
               rows={3}
               value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-              }}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
         </CardBody>
@@ -146,30 +147,17 @@ export function CashAdjustmentForm({
         <CardBody className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">Current Balance</span>
-            <span className="font-medium">
-              {formatCurrency(currentBalance)}
-            </span>
+            <span className="font-medium">{formatCurrency(currentBalance)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">Adjustment</span>
-            <span
-              className={cn(
-                "font-medium",
-                type === "add" ? "text-success" : "text-error"
-              )}
-            >
-              {type === "add" ? "+" : "-"}
-              {formatCurrency(amount)}
+            <span className={cn("font-medium", type === "add" ? "text-success" : "text-error")}>
+              {type === "add" ? "+" : "-"}{formatCurrency(amount)}
             </span>
           </div>
           <div className="pt-2 border-t border-slate-200 flex justify-between">
             <span className="font-semibold text-slate-900">New Balance</span>
-            <span
-              className={cn(
-                "font-bold",
-                newBalance >= 0 ? "text-primary-600" : "text-error"
-              )}
-            >
+            <span className={cn("font-bold", newBalance >= 0 ? "text-primary-600" : "text-error")}>
               {formatCurrency(newBalance)}
             </span>
           </div>

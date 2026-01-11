@@ -13,7 +13,6 @@ export type {
   SaleInvoiceItem,
   SaleInvoiceFormData,
   SaleInvoiceItemFormData,
-  InvoiceFormData,
   SaleFilters,
   InvoiceStatus,
   PaymentIn,

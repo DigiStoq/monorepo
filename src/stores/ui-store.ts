@@ -147,13 +147,13 @@ export const useUIStore = create<UIState>()(
             state: {
               ...value.state,
               sidebarExpandedIds: Array.from(
-                value.state.sidebarExpandedIds
+                value.state.sidebarExpandedIds || []
               ),
             },
           };
           localStorage.setItem(name, JSON.stringify(toStore));
         },
-        removeItem: (name) => { localStorage.removeItem(name); },
+        removeItem: (name) => localStorage.removeItem(name),
       },
     }
   )

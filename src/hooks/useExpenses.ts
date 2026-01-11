@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Expense } from "@/features/purchases/types";
 
@@ -22,13 +22,11 @@ interface ExpenseRow {
   category: ExpenseCategory;
   customer_id: string | null;
   customer_name: string | null;
-  paid_to_name: string | null;
-  paid_to_details: string | null;
   date: string;
   amount: number;
   payment_mode: string;
   reference_number: string | null;
-  description: string | null;
+  description: string;
   notes: string | null;
   attachment_url: string | null;
   created_at: string;
@@ -40,15 +38,13 @@ function mapRowToExpense(row: ExpenseRow): Expense {
     id: row.id,
     expenseNumber: row.expense_number,
     category: row.category,
-    customerId: row.customer_id ?? undefined,
-    customerName: row.customer_name ?? undefined,
-    paidToName: row.paid_to_name ?? undefined,
-    paidToDetails: row.paid_to_details ?? undefined,
+    supplierId: row.customer_id ?? undefined,
+    supplierName: row.customer_name ?? undefined,
     date: row.date,
     amount: row.amount,
-    paymentMode: row.payment_mode as Expense["paymentMode"],
+    paymentMode: row.payment_mode,
     referenceNumber: row.reference_number ?? undefined,
-    description: row.description ?? undefined,
+    description: row.description,
     notes: row.notes ?? undefined,
     attachmentUrl: row.attachment_url ?? undefined,
     createdAt: row.created_at,
@@ -64,15 +60,12 @@ export function useExpenses(filters?: {
   dateTo?: string;
   search?: string;
 }): { expenses: Expense[]; isLoading: boolean; error: Error | undefined } {
-  const params = useMemo(() => {
-    const categoryFilter = filters?.category ?? null;
-    const supplierFilter = filters?.supplierId ?? null;
-    const modeFilter = filters?.paymentMode ?? null;
-    const dateFromFilter = filters?.dateFrom ?? null;
-    const dateToFilter = filters?.dateTo ?? null;
-    const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter];
-  }, [filters?.category, filters?.supplierId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
+  const categoryFilter = filters?.category ?? null;
+  const supplierFilter = filters?.supplierId ?? null;
+  const modeFilter = filters?.paymentMode ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
   const { data, isLoading, error } = useQuery<ExpenseRow>(
     `SELECT * FROM expenses
@@ -83,10 +76,10 @@ export function useExpenses(filters?: {
      AND ($5 IS NULL OR date <= $5)
      AND ($6 IS NULL OR expense_number LIKE $6 OR description LIKE $6)
      ORDER BY date DESC, created_at DESC`,
-    params
+    [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
   );
 
-  const expenses = useMemo(() => data.map(mapRowToExpense), [data]);
+  const expenses = data.map(mapRowToExpense);
 
   return { expenses, isLoading, error };
 }
@@ -110,15 +103,13 @@ interface ExpenseMutations {
   createExpense: (data: {
     expenseNumber: string;
     category: ExpenseCategory;
-    customerId?: string;
-    customerName?: string;
-    paidToName?: string;
-    paidToDetails?: string;
+    supplierId?: string;
+    supplierName?: string;
     date: string;
     amount: number;
     paymentMode: string;
     referenceNumber?: string;
-    description?: string;
+    description: string;
     notes?: string;
     attachmentUrl?: string;
   }) => Promise<string>;
@@ -126,10 +117,8 @@ interface ExpenseMutations {
     id: string,
     data: Partial<{
       category: ExpenseCategory;
-      customerId: string;
-      customerName: string;
-      paidToName: string;
-      paidToDetails: string;
+      supplierId: string;
+      supplierName: string;
       date: string;
       amount: number;
       paymentMode: string;
@@ -149,15 +138,13 @@ export function useExpenseMutations(): ExpenseMutations {
     async (data: {
       expenseNumber: string;
       category: ExpenseCategory;
-      customerId?: string;
-      customerName?: string;
-      paidToName?: string;
-      paidToDetails?: string;
+      supplierId?: string;
+      supplierName?: string;
       date: string;
       amount: number;
       paymentMode: string;
       referenceNumber?: string;
-      description?: string;
+      description: string;
       notes?: string;
       attachmentUrl?: string;
     }): Promise<string> => {
@@ -166,24 +153,21 @@ export function useExpenseMutations(): ExpenseMutations {
 
       await db.execute(
         `INSERT INTO expenses (
-          id, expense_number, category, customer_id, customer_name,
-          paid_to_name, paid_to_details, date, amount,
+          id, expense_number, category, customer_id, customer_name, date, amount,
           payment_mode, reference_number, description, notes, attachment_url,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.expenseNumber,
           data.category,
-          data.customerId ?? null,
-          data.customerName ?? null,
-          data.paidToName ?? null,
-          data.paidToDetails ?? null,
+          data.supplierId ?? null,
+          data.supplierName ?? null,
           data.date,
           data.amount,
           data.paymentMode,
           data.referenceNumber ?? null,
-          data.description ?? null,
+          data.description,
           data.notes ?? null,
           data.attachmentUrl ?? null,
           now,
@@ -201,10 +185,8 @@ export function useExpenseMutations(): ExpenseMutations {
       id: string,
       data: Partial<{
         category: ExpenseCategory;
-        customerId: string;
-        customerName: string;
-        paidToName: string;
-        paidToDetails: string;
+        supplierId: string;
+        supplierName: string;
         date: string;
         amount: number;
         paymentMode: string;
@@ -222,21 +204,13 @@ export function useExpenseMutations(): ExpenseMutations {
         fields.push("category = ?");
         values.push(data.category);
       }
-      if (data.customerId !== undefined) {
+      if (data.supplierId !== undefined) {
         fields.push("customer_id = ?");
-        values.push(data.customerId);
+        values.push(data.supplierId);
       }
-      if (data.customerName !== undefined) {
+      if (data.supplierName !== undefined) {
         fields.push("customer_name = ?");
-        values.push(data.customerName);
-      }
-      if (data.paidToName !== undefined) {
-        fields.push("paid_to_name = ?");
-        values.push(data.paidToName);
-      }
-      if (data.paidToDetails !== undefined) {
-        fields.push("paid_to_details = ?");
-        values.push(data.paidToDetails);
+        values.push(data.supplierName);
       }
       if (data.date !== undefined) {
         fields.push("date = ?");
@@ -295,7 +269,7 @@ export function useExpenseMutations(): ExpenseMutations {
 interface ExpenseStats {
   totalExpenses: number;
   thisMonthExpenses: number;
-  byCategory: { category: string; sum: number }[];
+  byCategory: Array<{ category: string; sum: number }>;
 }
 
 export function useExpenseStats(): ExpenseStats {

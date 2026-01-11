@@ -57,10 +57,6 @@ export type {
   ModalSize,
 } from "./modal";
 
-// Confirm Delete Dialog
-export { ConfirmDeleteDialog } from "./confirm-delete-dialog";
-export type { ConfirmDeleteDialogProps, LinkedItem } from "./confirm-delete-dialog";
-
 // Select
 export { Select, MultiSelect } from "./select";
 export type {

@@ -1,9 +1,17 @@
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { Button, Badge } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  SearchInput,
+  Button,
+  Badge,
+  Select,
+  type SelectOption,
+} from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import { Plus, Phone, Mail, ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
-import type { Customer } from "../types";
+import type { Customer, CustomerType, CustomerFilters } from "../types";
 
 // ============================================================================
 // TYPES
@@ -15,8 +23,24 @@ export interface CustomerListProps {
   onCustomerClick?: (customer: Customer) => void;
   onAddCustomer?: () => void;
   className?: string;
-  hasActiveFilters?: boolean;
 }
+
+// ============================================================================
+// FILTER OPTIONS
+// ============================================================================
+
+const typeOptions: SelectOption[] = [
+  { value: "all", label: "All Customers" },
+  { value: "customer", label: "Customers" },
+  { value: "supplier", label: "Suppliers" },
+  { value: "both", label: "Both" },
+];
+
+const balanceOptions: SelectOption[] = [
+  { value: "all", label: "All Balances" },
+  { value: "receivable", label: "To Receive" },
+  { value: "payable", label: "To Pay" },
+];
 
 // ============================================================================
 // CUSTOMER CARD COMPONENT
@@ -27,14 +51,16 @@ interface CustomerCardProps {
   onClick?: () => void;
 }
 
-function CustomerCard({
-  customer,
-  onClick,
-}: CustomerCardProps): React.ReactNode {
+function CustomerCard({ customer, onClick }: CustomerCardProps) {
   const isReceivable = customer.currentBalance > 0;
   const hasBalance = customer.currentBalance !== 0;
 
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(Math.abs(value));
 
   return (
     <button
@@ -59,14 +85,12 @@ function CustomerCard({
                 customer.type === "customer"
                   ? "success"
                   : customer.type === "supplier"
-                    ? "warning"
-                    : "info"
+                  ? "warning"
+                  : "info"
               }
               size="sm"
             >
-              {customer.type === "both"
-                ? "C/S"
-                : customer.type.charAt(0).toUpperCase()}
+              {customer.type === "both" ? "C/S" : customer.type.charAt(0).toUpperCase()}
             </Badge>
           </div>
 
@@ -107,7 +131,7 @@ function CustomerCard({
               ) : (
                 <ArrowUpRight className="h-4 w-4" />
               )}
-              {formatCurrency(Math.abs(customer.currentBalance))}
+              {formatCurrency(customer.currentBalance)}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               {isReceivable ? "To Receive" : "To Pay"}
@@ -129,11 +153,95 @@ export function CustomerList({
   onCustomerClick,
   onAddCustomer,
   className,
-  hasActiveFilters = false,
-}: CustomerListProps): React.ReactNode {
+}: CustomerListProps) {
+  const [filters, setFilters] = useState<CustomerFilters>({
+    search: "",
+    type: "all",
+    balanceType: "all",
+    sortBy: "name",
+    sortOrder: "asc",
+  });
+
+  // Filter and sort customers
+  const filteredCustomers = useMemo(() => {
+    if (!customers) return [];
+
+    return customers
+      .filter((customer) => {
+        // Search filter
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const matchesName = customer.name.toLowerCase().includes(searchLower);
+          const matchesPhone = customer.phone?.includes(filters.search);
+          const matchesEmail = customer.email?.toLowerCase().includes(searchLower);
+          if (!matchesName && !matchesPhone && !matchesEmail) return false;
+        }
+
+        // Type filter
+        if (filters.type !== "all" && customer.type !== filters.type) {
+          return false;
+        }
+
+        // Balance filter
+        if (filters.balanceType === "receivable" && customer.currentBalance <= 0) {
+          return false;
+        }
+        if (filters.balanceType === "payable" && customer.currentBalance >= 0) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+
+        switch (filters.sortBy) {
+          case "name":
+            comparison = a.name.localeCompare(b.name);
+            break;
+          case "balance":
+            comparison = Math.abs(b.currentBalance) - Math.abs(a.currentBalance);
+            break;
+          case "recent":
+            comparison = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            break;
+        }
+
+        return filters.sortOrder === "desc" ? -comparison : comparison;
+      });
+  }, [customers, filters]);
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    if (!filteredCustomers.length) return { receivable: 0, payable: 0 };
+
+    return filteredCustomers.reduce(
+      (acc, customer) => {
+        if (customer.currentBalance > 0) {
+          acc.receivable += customer.currentBalance;
+        } else {
+          acc.payable += Math.abs(customer.currentBalance);
+        }
+        return acc;
+      },
+      { receivable: 0, payable: 0 }
+    );
+  }, [filteredCustomers]);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
   if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
+        <div className="flex gap-4">
+          <div className="flex-1 h-10 bg-slate-200 rounded-lg animate-pulse" />
+          <div className="w-32 h-10 bg-slate-200 rounded-lg animate-pulse" />
+        </div>
         {Array.from({ length: 5 }).map((_, i) => (
           <CardSkeleton key={i} hasHeader={false} bodyLines={2} />
         ))}
@@ -141,27 +249,79 @@ export function CustomerList({
     );
   }
 
-  // Items are already filtered by parent
-  const displayCustomers = customers ?? [];
-
   return (
     <div className={className}>
+      {/* Header with Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <SearchInput
+          placeholder="Search customers..."
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          className="flex-1"
+        />
+
+        <div className="flex gap-2">
+          <Select
+            options={typeOptions}
+            value={filters.type}
+            onChange={(value) =>
+              setFilters((f) => ({ ...f, type: value as CustomerType | "all" }))
+            }
+            size="md"
+          />
+
+          <Select
+            options={balanceOptions}
+            value={filters.balanceType}
+            onChange={(value) =>
+              setFilters((f) => ({
+                ...f,
+                balanceType: value as "all" | "receivable" | "payable",
+              }))
+            }
+            size="md"
+          />
+
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddCustomer}>
+            Add Customer
+          </Button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <Card className="bg-success-light border-success/20">
+          <CardBody className="py-3">
+            <p className="text-xs text-success-dark font-medium">To Receive</p>
+            <p className="text-lg font-bold text-success">
+              {formatCurrency(totals.receivable)}
+            </p>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-error-light border-error/20">
+          <CardBody className="py-3">
+            <p className="text-xs text-error-dark font-medium">To Pay</p>
+            <p className="text-lg font-bold text-error">
+              {formatCurrency(totals.payable)}
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+
       {/* Customer List */}
-      {displayCustomers.length === 0 ? (
+      {filteredCustomers.length === 0 ? (
         <EmptyState
-          variant={hasActiveFilters ? "search" : "empty"}
-          title={hasActiveFilters ? "No customers found" : "No customers yet"}
+          variant={filters.search ? "search" : "empty"}
+          title={filters.search ? "No customers found" : "No customers yet"}
           description={
-            hasActiveFilters
+            filters.search
               ? "Try adjusting your search or filters"
               : "Add your first customer or supplier to get started"
           }
           action={
-            !hasActiveFilters && (
-              <Button
-                leftIcon={<Plus className="h-4 w-4" />}
-                onClick={onAddCustomer}
-              >
+            !filters.search && (
+              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onAddCustomer}>
                 Add Customer
               </Button>
             )
@@ -169,12 +329,11 @@ export function CustomerList({
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2 px-1">
-            {displayCustomers.length}{" "}
-            {displayCustomers.length === 1 ? "customer" : "customers"}
+          <p className="text-sm text-slate-500 mb-2">
+            {filteredCustomers.length} {filteredCustomers.length === 1 ? "customer" : "customers"}
           </p>
 
-          {displayCustomers.map((customer) => (
+          {filteredCustomers.map((customer) => (
             <CustomerCard
               key={customer.id}
               customer={customer}

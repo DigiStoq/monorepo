@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-} from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Settings2 } from "lucide-react";
 import { CashTransactionList, CashAdjustmentForm } from "./components";
-import {
-  useCashTransactions,
-  useCashBalance,
-  useCashTransactionMutations,
-} from "@/hooks/useCashTransactions";
+import { useCashTransactions, useCashBalance, useCashTransactionMutations } from "@/hooks/useCashTransactions";
 import type { CashAdjustmentFormData } from "./types";
 
-export function CashInHandPage(): React.ReactNode {
+export function CashInHandPage() {
   // Data from PowerSync
   const { transactions, isLoading, error } = useCashTransactions();
   const { balance: currentBalance } = useCashBalance();
@@ -27,17 +17,15 @@ export function CashInHandPage(): React.ReactNode {
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
   // Handlers
-  const handleOpenAdjustment = (): void => {
+  const handleOpenAdjustment = () => {
     setIsAdjustmentOpen(true);
   };
 
-  const handleCloseAdjustment = (): void => {
+  const handleCloseAdjustment = () => {
     setIsAdjustmentOpen(false);
   };
 
-  const handleSubmitAdjustment = async (
-    data: CashAdjustmentFormData
-  ): Promise<void> => {
+  const handleSubmitAdjustment = async (data: CashAdjustmentFormData) => {
     try {
       await createTransaction({
         date: data.date,
@@ -94,11 +82,7 @@ export function CashInHandPage(): React.ReactNode {
       </div>
 
       {/* Adjustment Form Modal */}
-      <Modal
-        isOpen={isAdjustmentOpen}
-        onClose={handleCloseAdjustment}
-        size="md"
-      >
+      <Modal isOpen={isAdjustmentOpen} onClose={handleCloseAdjustment} size="md">
         <ModalContent>
           <ModalHeader onClose={handleCloseAdjustment}>
             Adjust Cash Balance
@@ -106,9 +90,7 @@ export function CashInHandPage(): React.ReactNode {
           <ModalBody>
             <CashAdjustmentForm
               currentBalance={currentBalance}
-              onSubmit={(data) => {
-                void handleSubmitAdjustment(data);
-              }}
+              onSubmit={handleSubmitAdjustment}
               onCancel={handleCloseAdjustment}
             />
           </ModalBody>

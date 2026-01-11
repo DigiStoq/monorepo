@@ -9,7 +9,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { X } from "lucide-react";
-import { IconButton, Button } from "./button";
+import { IconButton } from "./button";
 
 // ============================================================================
 // TYPES
@@ -44,10 +44,7 @@ export interface ModalProps {
   preventBodyScroll?: boolean;
 }
 
-export interface ModalHeaderProps extends Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "title"
-> {
+export interface ModalHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   /** Title text */
   title?: ReactNode;
   /** Description text */
@@ -58,7 +55,7 @@ export interface ModalHeaderProps extends Omit<
   onClose?: () => void;
 }
 
-export type ModalBodyProps = HTMLAttributes<HTMLDivElement>;
+export interface ModalBodyProps extends HTMLAttributes<HTMLDivElement> {}
 
 export interface ModalFooterProps extends HTMLAttributes<HTMLDivElement> {
   /** Alignment */
@@ -165,7 +162,7 @@ export function Modal({
   }, [isOpen, handleEscape]);
 
   // Handle backdrop click
-  const handleBackdropClick = (e: React.MouseEvent): void => {
+  const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget && closeOnBackdrop) {
       onClose();
     }
@@ -206,16 +203,14 @@ export function Modal({
               initial="hidden"
               animate="visible"
               exit="exit"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+              onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby={title ? "modal-title" : undefined}
               aria-describedby={description ? "modal-description" : undefined}
             >
               {/* Header */}
-              {(title ?? description ?? showCloseButton) && (
+              {(title || description || showCloseButton) && (
                 <ModalHeader
                   title={title}
                   description={description}
@@ -243,18 +238,7 @@ export function Modal({
 // ============================================================================
 
 export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
-  (
-    {
-      className,
-      title,
-      description,
-      showCloseButton,
-      onClose,
-      children,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, title, description, showCloseButton, onClose, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -275,7 +259,10 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
             </h2>
           )}
           {description && (
-            <p id="modal-description" className="mt-1 text-sm text-slate-500">
+            <p
+              id="modal-description"
+              className="mt-1 text-sm text-slate-500"
+            >
               {description}
             </p>
           )}
@@ -354,7 +341,7 @@ ModalFooter.displayName = "ModalFooter";
 // MODAL CONTENT (Wrapper for compound pattern)
 // ============================================================================
 
-export type ModalContentProps = HTMLAttributes<HTMLDivElement>;
+export interface ModalContentProps extends HTMLAttributes<HTMLDivElement> {}
 
 export const ModalContent = forwardRef<HTMLDivElement, ModalContentProps>(
   ({ className, children, ...props }, ref) => {
@@ -404,6 +391,9 @@ export function ConfirmDialog({
   danger = false,
   isLoading = false,
 }: ConfirmDialogProps): JSX.Element {
+  // Import Button here to avoid circular dependency
+  const { Button } = require("./button");
+
   return (
     <Modal
       isOpen={isOpen}

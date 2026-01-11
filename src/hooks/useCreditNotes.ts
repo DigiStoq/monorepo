@@ -1,11 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type {
-  CreditNote,
-  CreditNoteItem,
-  CreditNoteReason,
-} from "@/features/sales/types";
+import type { CreditNote, CreditNoteItem } from "@/features/sales/types";
 
 // Database row types (snake_case columns from SQLite)
 interface CreditNoteRow {
@@ -47,8 +43,7 @@ function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
     date: row.date,
     invoiceId: row.invoice_id ?? undefined,
     invoiceNumber: row.invoice_number ?? undefined,
-    reason: row.reason as CreditNoteReason,
-    items: [], // Items are fetched separately
+    reason: row.reason,
     subtotal: row.subtotal,
     taxAmount: row.tax_amount,
     total: row.total,
@@ -79,31 +74,12 @@ export function useCreditNotes(filters?: {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-}): {
-  creditNotes: CreditNote[];
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const params = useMemo(() => {
-    const customerFilter = filters?.customerId ?? null;
-    const reasonFilter = filters?.reason ?? null;
-    const dateFromFilter = filters?.dateFrom ?? null;
-    const dateToFilter = filters?.dateTo ?? null;
-    const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [
-      customerFilter,
-      reasonFilter,
-      dateFromFilter,
-      dateToFilter,
-      searchFilter,
-    ];
-  }, [
-    filters?.customerId,
-    filters?.reason,
-    filters?.dateFrom,
-    filters?.dateTo,
-    filters?.search,
-  ]);
+}): { creditNotes: CreditNote[]; isLoading: boolean; error: Error | undefined } {
+  const customerFilter = filters?.customerId ?? null;
+  const reasonFilter = filters?.reason ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
   const { data, isLoading, error } = useQuery<CreditNoteRow>(
     `SELECT * FROM credit_notes
@@ -113,10 +89,10 @@ export function useCreditNotes(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR credit_note_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    params
+    [customerFilter, reasonFilter, dateFromFilter, dateToFilter, searchFilter]
   );
 
-  const creditNotes = useMemo(() => data.map(mapRowToCreditNote), [data]);
+  const creditNotes = data.map(mapRowToCreditNote);
 
   return { creditNotes, isLoading, error };
 }
@@ -127,19 +103,16 @@ export function useCreditNoteById(id: string | null): {
   isLoading: boolean;
 } {
   const { data: noteData, isLoading: noteLoading } = useQuery<CreditNoteRow>(
-    id
-      ? `SELECT * FROM credit_notes WHERE id = ?`
-      : `SELECT * FROM credit_notes WHERE 1 = 0`,
+    id ? `SELECT * FROM credit_notes WHERE id = ?` : `SELECT * FROM credit_notes WHERE 1 = 0`,
     id ? [id] : []
   );
 
-  const { data: itemsData, isLoading: itemsLoading } =
-    useQuery<CreditNoteItemRow>(
-      id
-        ? `SELECT * FROM credit_note_items WHERE credit_note_id = ?`
-        : `SELECT * FROM credit_note_items WHERE 1 = 0`,
-      id ? [id] : []
-    );
+  const { data: itemsData, isLoading: itemsLoading } = useQuery<CreditNoteItemRow>(
+    id
+      ? `SELECT * FROM credit_note_items WHERE credit_note_id = ?`
+      : `SELECT * FROM credit_note_items WHERE 1 = 0`,
+    id ? [id] : []
+  );
 
   const creditNote = noteData[0] ? mapRowToCreditNote(noteData[0]) : null;
   const items = itemsData.map(mapRowToCreditNoteItem);
@@ -193,13 +166,9 @@ export function useCreditNoteMutations(): CreditNoteMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      const subtotal = items.reduce(
-        (sum: number, item) => sum + item.amount,
-        0
-      );
+      const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
       const taxAmount = items.reduce(
-        (sum: number, item) =>
-          sum + (item.amount * (item.taxPercent ?? 0)) / 100,
+        (sum, item) => sum + (item.amount * (item.taxPercent ?? 0)) / 100,
         0
       );
       const total = subtotal + taxAmount;
@@ -267,10 +236,10 @@ export function useCreditNoteMutations(): CreditNoteMutations {
         `SELECT customer_id, total FROM credit_notes WHERE id = ?`,
         [id]
       );
-      const rows = (result.rows?._array ?? []) as CreditNoteQueryRow[];
+      const rows = result.rows._array as CreditNoteQueryRow[];
+      const note = rows[0];
 
-      if (rows.length > 0) {
-        const note = rows[0];
+      if (note) {
         const now = new Date().toISOString();
         await db.execute(
           `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
@@ -278,10 +247,7 @@ export function useCreditNoteMutations(): CreditNoteMutations {
         );
       }
 
-      await db.execute(
-        `DELETE FROM credit_note_items WHERE credit_note_id = ?`,
-        [id]
-      );
+      await db.execute(`DELETE FROM credit_note_items WHERE credit_note_id = ?`, [id]);
       await db.execute(`DELETE FROM credit_notes WHERE id = ?`, [id]);
     },
     [db]

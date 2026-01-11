@@ -39,7 +39,7 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
   const day = today.getDate();
   const dayOfWeek = today.getDay();
 
-  const formatDate = (date: Date): string => date.toISOString().slice(0, 10);
+  const formatDate = (date: Date) => date.toISOString().slice(0, 10);
 
   switch (period) {
     case "today":
@@ -58,10 +58,7 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
     case "last_week": {
       const startOfLastWeek = new Date(year, month, day - dayOfWeek - 7);
       const endOfLastWeek = new Date(year, month, day - dayOfWeek - 1);
-      return {
-        from: formatDate(startOfLastWeek),
-        to: formatDate(endOfLastWeek),
-      };
+      return { from: formatDate(startOfLastWeek), to: formatDate(endOfLastWeek) };
     }
 
     case "this_month": {
@@ -72,10 +69,7 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
     case "last_month": {
       const startOfLastMonth = new Date(year, month - 1, 1);
       const endOfLastMonth = new Date(year, month, 0);
-      return {
-        from: formatDate(startOfLastMonth),
-        to: formatDate(endOfLastMonth),
-      };
+      return { from: formatDate(startOfLastMonth), to: formatDate(endOfLastMonth) };
     }
 
     case "this_quarter": {
@@ -88,10 +82,7 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
       const currentQuarterStart = Math.floor(month / 3) * 3;
       const startOfLastQuarter = new Date(year, currentQuarterStart - 3, 1);
       const endOfLastQuarter = new Date(year, currentQuarterStart, 0);
-      return {
-        from: formatDate(startOfLastQuarter),
-        to: formatDate(endOfLastQuarter),
-      };
+      return { from: formatDate(startOfLastQuarter), to: formatDate(endOfLastQuarter) };
     }
 
     case "this_year": {
@@ -102,10 +93,7 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
     case "last_year": {
       const startOfLastYear = new Date(year - 1, 0, 1);
       const endOfLastYear = new Date(year - 1, 11, 31);
-      return {
-        from: formatDate(startOfLastYear),
-        to: formatDate(endOfLastYear),
-      };
+      return { from: formatDate(startOfLastYear), to: formatDate(endOfLastYear) };
     }
 
     default:
@@ -115,16 +103,9 @@ function getDateRangeForPeriod(period: ReportPeriod): DateRange {
 
 function detectPeriodFromRange(range: DateRange): ReportPeriod {
   const periods: ReportPeriod[] = [
-    "today",
-    "yesterday",
-    "this_week",
-    "last_week",
-    "this_month",
-    "last_month",
-    "this_quarter",
-    "last_quarter",
-    "this_year",
-    "last_year",
+    "today", "yesterday", "this_week", "last_week",
+    "this_month", "last_month", "this_quarter", "last_quarter",
+    "this_year", "last_year"
   ];
 
   for (const period of periods) {
@@ -141,15 +122,11 @@ function detectPeriodFromRange(range: DateRange): ReportPeriod {
 // COMPONENT
 // ============================================================================
 
-export function DateRangeFilter({
-  value,
-  onChange,
-  className,
-}: DateRangeFilterProps): React.ReactNode {
+export function DateRangeFilter({ value, onChange, className }: DateRangeFilterProps) {
   const detectedPeriod = useMemo(() => detectPeriodFromRange(value), [value]);
   const [showCustom, setShowCustom] = useState(detectedPeriod === "custom");
 
-  const handlePeriodChange = (period: string): void => {
+  const handlePeriodChange = (period: string) => {
     if (period === "custom") {
       setShowCustom(true);
     } else {
@@ -159,7 +136,7 @@ export function DateRangeFilter({
     }
   };
 
-  const formatDisplayDate = (dateStr: string): string => {
+  const formatDisplayDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -187,18 +164,14 @@ export function DateRangeFilter({
           <Input
             type="date"
             value={value.from}
-            onChange={(e) => {
-              onChange({ ...value, from: e.target.value });
-            }}
+            onChange={(e) => onChange({ ...value, from: e.target.value })}
             className="w-36"
           />
           <span className="text-slate-400">to</span>
           <Input
             type="date"
             value={value.to}
-            onChange={(e) => {
-              onChange({ ...value, to: e.target.value });
-            }}
+            onChange={(e) => onChange({ ...value, to: e.target.value })}
             className="w-36"
           />
         </>

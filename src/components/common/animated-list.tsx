@@ -16,7 +16,7 @@ export function AnimatedList<T>({
   keyExtractor,
   className,
   itemClassName,
-}: AnimatedListProps<T>): React.ReactNode {
+}: AnimatedListProps<T>) {
   return (
     <motion.div
       initial="hidden"

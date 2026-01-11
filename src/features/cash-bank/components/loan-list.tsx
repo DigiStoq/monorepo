@@ -1,15 +1,7 @@
 import { useState, useMemo } from "react";
-import {
-  Card,
-  CardBody,
-  Input,
-  Select,
-  Badge,
-  type SelectOption,
-} from "@/components/ui";
+import { Card, CardBody, Input, Select, Badge, type SelectOption } from "@/components/ui";
 import { Search, Landmark, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useCurrency } from "@/hooks/useCurrency";
 import type { Loan, LoanFilters, LoanType, LoanStatus } from "../types";
 
 // ============================================================================
@@ -38,10 +30,7 @@ const statusOptions: SelectOption[] = [
   { value: "defaulted", label: "Defaulted" },
 ];
 
-const statusConfig: Record<
-  LoanStatus,
-  { label: string; variant: "success" | "warning" | "error" | "default" }
-> = {
+const statusConfig: Record<LoanStatus, { label: string; variant: "success" | "warning" | "error" | "default" }> = {
   active: { label: "Active", variant: "success" },
   closed: { label: "Closed", variant: "default" },
   defaulted: { label: "Defaulted", variant: "error" },
@@ -51,10 +40,7 @@ const statusConfig: Record<
 // COMPONENT
 // ============================================================================
 
-export function LoanList({
-  loans,
-  onLoanClick,
-}: LoanListProps): React.ReactNode {
+export function LoanList({ loans, onLoanClick }: LoanListProps) {
   const [filters, setFilters] = useState<LoanFilters>({
     search: "",
     type: "all",
@@ -66,17 +52,10 @@ export function LoanList({
     return loans.filter((loan) => {
       const matchesSearch =
         loan.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (loan.customerName
-          ?.toLowerCase()
-          .includes(filters.search.toLowerCase()) ??
-          false) ||
-        (loan.lenderName
-          ?.toLowerCase()
-          .includes(filters.search.toLowerCase()) ??
-          false);
+        (loan.customerName?.toLowerCase().includes(filters.search.toLowerCase()) ?? false) ||
+        (loan.lenderName?.toLowerCase().includes(filters.search.toLowerCase()) ?? false);
       const matchesType = filters.type === "all" || loan.type === filters.type;
-      const matchesStatus =
-        filters.status === "all" || loan.status === filters.status;
+      const matchesStatus = filters.status === "all" || loan.status === filters.status;
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [loans, filters]);
@@ -92,7 +71,12 @@ export function LoanList({
     return { taken, given, net: given - taken };
   }, [filteredLoans]);
 
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   return (
     <div className="space-y-4">
@@ -106,9 +90,7 @@ export function LoanList({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Loans Taken (Payable)</p>
-                <p className="text-xl font-bold text-red-600">
-                  {formatCurrency(totals.taken)}
-                </p>
+                <p className="text-xl font-bold text-red-600">{formatCurrency(totals.taken)}</p>
               </div>
             </div>
           </CardBody>
@@ -120,12 +102,8 @@ export function LoanList({
                 <ArrowUpRight className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-xs text-slate-500">
-                  Loans Given (Receivable)
-                </p>
-                <p className="text-xl font-bold text-green-600">
-                  {formatCurrency(totals.given)}
-                </p>
+                <p className="text-xs text-slate-500">Loans Given (Receivable)</p>
+                <p className="text-xl font-bold text-green-600">{formatCurrency(totals.given)}</p>
               </div>
             </div>
           </CardBody>
@@ -138,16 +116,9 @@ export function LoanList({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Net Position</p>
-                <p
-                  className={cn(
-                    "text-xl font-bold",
-                    totals.net >= 0 ? "text-green-600" : "text-red-600"
-                  )}
-                >
+                <p className={cn("text-xl font-bold", totals.net >= 0 ? "text-green-600" : "text-red-600")}>
                   {formatCurrency(Math.abs(totals.net))}
-                  <span className="text-sm ml-1">
-                    {totals.net >= 0 ? "Receivable" : "Payable"}
-                  </span>
+                  <span className="text-sm ml-1">{totals.net >= 0 ? "Receivable" : "Payable"}</span>
                 </p>
               </div>
             </div>
@@ -162,32 +133,20 @@ export function LoanList({
             type="text"
             placeholder="Search loans..."
             value={filters.search}
-            onChange={(e) => {
-              setFilters((prev) => ({ ...prev, search: e.target.value }));
-            }}
+            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Select
           options={typeOptions}
           value={filters.type}
-          onChange={(value) => {
-            setFilters((prev) => ({
-              ...prev,
-              type: value as LoanType | "all",
-            }));
-          }}
+          onChange={(value) => setFilters((prev) => ({ ...prev, type: value as LoanType | "all" }))}
           className="w-40"
         />
         <Select
           options={statusOptions}
           value={filters.status}
-          onChange={(value) => {
-            setFilters((prev) => ({
-              ...prev,
-              status: value as LoanStatus | "all",
-            }));
-          }}
+          onChange={(value) => setFilters((prev) => ({ ...prev, status: value as LoanStatus | "all" }))}
           className="w-36"
         />
       </div>
@@ -197,29 +156,21 @@ export function LoanList({
         <Card>
           <CardBody className="py-12 text-center">
             <Landmark className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-slate-900 mb-1">
-              No loans found
-            </h3>
-            <p className="text-slate-500">
-              Try adjusting your filters or add a new loan
-            </p>
+            <h3 className="text-lg font-medium text-slate-900 mb-1">No loans found</h3>
+            <p className="text-slate-500">Try adjusting your filters or add a new loan</p>
           </CardBody>
         </Card>
       ) : (
         <div className="grid gap-3">
           {filteredLoans.map((loan) => {
             const config = statusConfig[loan.status];
-            const progress = loan.totalEmis
-              ? (loan.paidEmis / loan.totalEmis) * 100
-              : 0;
+            const progress = loan.totalEmis ? (loan.paidEmis / loan.totalEmis) * 100 : 0;
 
             return (
               <Card
                 key={loan.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  onLoanClick(loan);
-                }}
+                onClick={() => onLoanClick(loan)}
               >
                 <CardBody className="p-4">
                   <div className="flex items-start justify-between">
@@ -231,23 +182,15 @@ export function LoanList({
                         )}
                       >
                         {loan.type === "taken" ? (
-                          <ArrowDownLeft
-                            className={cn("h-5 w-5", "text-red-600")}
-                          />
+                          <ArrowDownLeft className={cn("h-5 w-5", "text-red-600")} />
                         ) : (
-                          <ArrowUpRight
-                            className={cn("h-5 w-5", "text-green-600")}
-                          />
+                          <ArrowUpRight className={cn("h-5 w-5", "text-green-600")} />
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium text-slate-900">
-                          {loan.name}
-                        </h3>
+                        <h3 className="font-medium text-slate-900">{loan.name}</h3>
                         <p className="text-sm text-slate-500">
-                          {loan.type === "taken"
-                            ? loan.lenderName
-                            : loan.customerName}
+                          {loan.type === "taken" ? loan.lenderName : loan.customerName}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-slate-400">
@@ -266,9 +209,7 @@ export function LoanList({
                       <p
                         className={cn(
                           "text-lg font-bold mt-1",
-                          loan.type === "taken"
-                            ? "text-red-600"
-                            : "text-green-600"
+                          loan.type === "taken" ? "text-red-600" : "text-green-600"
                         )}
                       >
                         {formatCurrency(loan.outstandingAmount)}
@@ -292,9 +233,7 @@ export function LoanList({
                         <div
                           className={cn(
                             "h-full rounded-full transition-all",
-                            loan.type === "taken"
-                              ? "bg-red-500"
-                              : "bg-green-500"
+                            loan.type === "taken" ? "bg-red-500" : "bg-green-500"
                           )}
                           style={{ width: `${progress}%` }}
                         />

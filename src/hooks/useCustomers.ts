@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { Customer, CustomerFormData, CustomerType, CustomerTransaction } from "@/features/customers/types";
+import type { Customer, CustomerFormData, CustomerType } from "@/features/customers/types";
 
 // Database row type (snake_case columns from SQLite)
 interface CustomerRow {
@@ -26,30 +26,26 @@ interface CustomerRow {
 }
 
 function mapRowToCustomer(row: CustomerRow): Customer {
-  const customer: Customer = {
+  return {
     id: row.id,
     name: row.name,
     type: row.type,
+    phone: row.phone ?? undefined,
+    email: row.email ?? undefined,
+    taxId: row.tax_id ?? undefined,
+    address: row.address ?? undefined,
+    city: row.city ?? undefined,
+    state: row.state ?? undefined,
+    zipCode: row.zip_code ?? undefined,
     openingBalance: row.opening_balance,
     currentBalance: row.current_balance,
+    creditLimit: row.credit_limit ?? undefined,
+    creditDays: row.credit_days ?? undefined,
+    notes: row.notes ?? undefined,
     isActive: row.is_active === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-
-  // Only set optional properties if they have values
-  if (row.phone) customer.phone = row.phone;
-  if (row.email) customer.email = row.email;
-  if (row.tax_id) customer.taxId = row.tax_id;
-  if (row.address) customer.address = row.address;
-  if (row.city) customer.city = row.city;
-  if (row.state) customer.state = row.state;
-  if (row.zip_code) customer.zipCode = row.zip_code;
-  if (row.credit_limit !== null) customer.creditLimit = row.credit_limit;
-  if (row.credit_days !== null) customer.creditDays = row.credit_days;
-  if (row.notes) customer.notes = row.notes;
-
-  return customer;
 }
 
 export function useCustomers(filters?: {
@@ -57,43 +53,20 @@ export function useCustomers(filters?: {
   isActive?: boolean;
   search?: string;
 }): { customers: Customer[]; isLoading: boolean; error: Error | undefined } {
-  // Memoize query and params to ensure stable references for PowerSync reactivity
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
+  const typeFilter = filters?.type ?? null;
+  const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
-    // Type filter - include "both" type when filtering for customer or supplier
-    if (filters?.type === "customer") {
-      conditions.push("type IN ('customer', 'both')");
-    } else if (filters?.type === "supplier") {
-      conditions.push("type IN ('supplier', 'both')");
-    } else if (filters?.type === "both") {
-      conditions.push("type = 'both'");
-    }
+  const { data, isLoading, error } = useQuery<CustomerRow>(
+    `SELECT * FROM customers
+     WHERE ($1 IS NULL OR type = $1)
+     AND ($2 IS NULL OR is_active = $2)
+     AND ($3 IS NULL OR name LIKE $3 OR phone LIKE $3 OR email LIKE $3)
+     ORDER BY name`,
+    [typeFilter, activeFilter, searchFilter]
+  );
 
-    // Active filter
-    if (filters?.isActive !== undefined) {
-      conditions.push("is_active = ?");
-      params.push(filters.isActive ? 1 : 0);
-    }
-
-    // Search filter
-    if (filters?.search) {
-      conditions.push("(name LIKE ? OR phone LIKE ? OR email LIKE ?)");
-      const searchPattern = `%${filters.search}%`;
-      params.push(searchPattern, searchPattern, searchPattern);
-    }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
-      params,
-    };
-  }, [filters?.type, filters?.isActive, filters?.search]);
-
-  const { data, isLoading, error } = useQuery<CustomerRow>(query, params);
-
-  const customers = useMemo(() => data.map(mapRowToCustomer), [data]);
+  const customers = data.map(mapRowToCustomer);
 
   return { customers, isLoading, error };
 }
@@ -297,71 +270,4 @@ export function useCustomerStats(): CustomerStats {
     totalReceivable: totalReceivable[0]?.sum ?? 0,
     totalPayable: totalPayable[0]?.sum ?? 0,
   };
-}
-
-// Transaction row type from combined query
-interface TransactionRow {
-  id: string;
-  customer_id: string;
-  type: string;
-  invoice_number: string | null;
-  date: string;
-  amount: number;
-  description: string | null;
-}
-
-export function useCustomerTransactions(customerId: string | null): {
-  transactions: CustomerTransaction[];
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<TransactionRow>(
-    customerId
-      ? `SELECT id, customer_id, 'sale' as type, invoice_number, date, total as amount, notes as description
-         FROM sale_invoices WHERE customer_id = $1
-         UNION ALL
-         SELECT id, customer_id, 'payment-in' as type, reference_number as invoice_number, date, amount, notes as description
-         FROM payment_ins WHERE customer_id = $1
-         UNION ALL
-         SELECT id, customer_id, 'credit-note' as type, credit_note_number as invoice_number, date, total as amount, notes as description
-         FROM credit_notes WHERE customer_id = $1
-         ORDER BY date DESC`
-      : `SELECT '' as id, '' as customer_id, '' as type, '' as invoice_number, '' as date, 0 as amount, '' as description WHERE 1 = 0`,
-    customerId ? [customerId] : []
-  );
-
-  const transactions = useMemo(() => {
-    let runningBalance = 0;
-    // Sort by date ascending to calculate running balance, then reverse for display
-    const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    const mapped = sortedData.map((row): CustomerTransaction => {
-      // Sales increase balance (customer owes), payments decrease it
-      if (row.type === "sale") {
-        runningBalance += row.amount;
-      } else if (row.type === "payment-in" || row.type === "credit-note") {
-        runningBalance -= row.amount;
-      }
-
-      const transaction: CustomerTransaction = {
-        id: row.id,
-        customerId: row.customer_id,
-        type: row.type as CustomerTransaction["type"],
-        date: row.date,
-        amount: row.amount,
-        balance: runningBalance,
-      };
-
-      // Only set optional properties if they have values
-      if (row.invoice_number) transaction.invoiceNumber = row.invoice_number;
-      if (row.description) transaction.description = row.description;
-
-      return transaction;
-    });
-
-    // Return in reverse chronological order for display
-    return mapped.reverse();
-  }, [data]);
-
-  return { transactions, isLoading, error };
 }

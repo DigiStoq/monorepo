@@ -6,7 +6,6 @@
 // Core
 export * from "./useCustomers";
 export * from "./useItems";
-export * from "./useItemHistory";
 export * from "./useCategories";
 
 // Sales
@@ -30,14 +29,6 @@ export * from "./useLoanPayments";
 
 // Settings
 export * from "./useSettings";
-export * from "./useUserSettings";
-export * from "./useSecuritySettings";
-export * from "./useBackupSettings";
-
-// Utilities
-export * from "./useDataExport";
-export * from "./useDataImport";
-export * from "./useBulkActions";
 export * from "./useSequence";
 
 // Dashboard

@@ -1,12 +1,6 @@
 import { forwardRef, type ReactNode, type HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
-import {
-  FileQuestion,
-  Search,
-  Inbox,
-  AlertCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { FileQuestion, Search, Inbox, AlertCircle, type LucideIcon } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -65,7 +59,7 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
     },
     ref
   ) => {
-    const Icon = icon ?? variantIcons[variant];
+    const Icon = icon || variantIcons[variant];
     const iconColor = variantColors[variant];
 
     return (

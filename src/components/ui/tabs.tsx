@@ -30,10 +30,7 @@ export interface Tab {
 export type TabsVariant = "default" | "pills" | "underline" | "enclosed";
 export type TabsSize = "sm" | "md" | "lg";
 
-export interface TabsProps extends Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "onChange"
-> {
+export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   /** Available tabs */
   tabs?: Tab[];
   /** Currently active tab id */
@@ -85,7 +82,7 @@ interface TabsContextValue {
 
 const TabsContext = createContext<TabsContextValue | null>(null);
 
-function useTabsContext(): TabsContextValue {
+function useTabsContext() {
   const context = useContext(TabsContext);
   if (!context) {
     throw new Error("Tabs components must be used within a Tabs provider");
@@ -129,15 +126,13 @@ const variantStyles = {
     list: "border-b border-slate-200 gap-0",
     trigger: "rounded-none border-b-2 -mb-px",
     active: "border-primary-600 text-primary-600",
-    inactive:
-      "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300",
+    inactive: "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300",
   },
   enclosed: {
     list: "border-b border-slate-200",
     trigger: "rounded-t-lg border border-b-0 -mb-px",
     active: "bg-white border-slate-200 text-slate-900",
-    inactive:
-      "bg-slate-50 border-transparent text-slate-600 hover:text-slate-900",
+    inactive: "bg-slate-50 border-transparent text-slate-600 hover:text-slate-900",
   },
 };
 
@@ -162,12 +157,12 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     ref
   ) => {
     const [internalValue, setInternalValue] = useState(
-      defaultValue ?? tabs?.[0]?.id ?? ""
+      defaultValue || tabs?.[0]?.id || ""
     );
 
     const value = controlledValue ?? internalValue;
 
-    const handleChange = (newValue: string): void => {
+    const handleChange = (newValue: string) => {
       if (onChange) {
         onChange(newValue);
       } else {
@@ -179,9 +174,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     if (tabs && !children) {
       return (
         <div ref={ref} className={cn("w-full", className)} {...props}>
-          <TabsContext.Provider
-            value={{ value, onChange: handleChange, variant, size }}
-          >
+          <TabsContext.Provider value={{ value, onChange: handleChange, variant, size }}>
             <TabsList className={cn(fullWidth && "w-full")}>
               {tabs.map((tab) => (
                 <TabsTrigger
@@ -204,9 +197,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     // Compound component mode
     return (
       <div ref={ref} className={cn("w-full", className)} {...props}>
-        <TabsContext.Provider
-          value={{ value, onChange: handleChange, variant, size }}
-        >
+        <TabsContext.Provider value={{ value, onChange: handleChange, variant, size }}>
           {children}
         </TabsContext.Provider>
       </div>
@@ -229,7 +220,11 @@ export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
       <div
         ref={ref}
         role="tablist"
-        className={cn("inline-flex items-center", styles.list, className)}
+        className={cn(
+          "inline-flex items-center",
+          styles.list,
+          className
+        )}
         {...props}
       >
         {children}
@@ -245,10 +240,7 @@ TabsList.displayName = "TabsList";
 // ============================================================================
 
 export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
-  (
-    { value: tabValue, icon, badge, disabled, className, children, ...props },
-    ref
-  ) => {
+  ({ value: tabValue, icon, badge, disabled, className, children, ...props }, ref) => {
     const { value, onChange, variant, size } = useTabsContext();
     const isActive = value === tabValue;
     const styles = variantStyles[variant];
@@ -262,9 +254,7 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         aria-selected={isActive}
         aria-controls={`tabpanel-${tabValue}`}
         disabled={disabled}
-        onClick={() => {
-          onChange(tabValue);
-        }}
+        onClick={() => onChange(tabValue)}
         className={cn(
           "relative inline-flex items-center justify-center font-medium",
           "transition-all duration-200",
@@ -277,7 +267,11 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         )}
         {...props}
       >
-        {icon && <span className={cn("shrink-0", sizeStyle.icon)}>{icon}</span>}
+        {icon && (
+          <span className={cn("shrink-0", sizeStyle.icon)}>
+            {icon}
+          </span>
+        )}
         <span>{children}</span>
         {badge && (
           <span className="ml-1.5 shrink-0 px-1.5 py-0.5 text-xs font-medium bg-slate-200 text-slate-700 rounded-full">

@@ -3,13 +3,7 @@
 // ============================================================================
 
 export type ImportEntityType = "customers" | "items" | "invoices";
-export type ExportEntityType =
-  | "customers"
-  | "items"
-  | "sale-invoices"
-  | "purchase-invoices"
-  | "payments"
-  | "expenses";
+export type ExportEntityType = "customers" | "items" | "sale-invoices" | "purchase-invoices" | "payments" | "expenses";
 export type ExportFormat = "csv" | "xlsx" | "pdf";
 
 export interface ImportField {
@@ -95,7 +89,7 @@ export interface BulkUpdateResult {
   success: boolean;
   updated: number;
   failed: number;
-  errors: { id: string; message: string }[];
+  errors: Array<{ id: string; message: string }>;
 }
 
 // ============================================================================
@@ -116,57 +110,4 @@ export interface DataCleanupResult {
   transactionsDeleted: number;
   archiveCreated: boolean;
   archivePath?: string;
-}
-
-// ============================================================================
-// BACKUP TYPES
-// ============================================================================
-
-export interface BackupOptions {
-  destination: "local" | "cloud";
-  cloudProvider?: "google-drive" | "dropbox" | "onedrive" | undefined;
-  includeAttachments: boolean;
-  compress: boolean;
-}
-
-export interface BackupResult {
-  success: boolean;
-  filename: string;
-  size: number;
-  timestamp: string;
-  destination: string;
-}
-
-export interface BackupRecord {
-  timestamp: string;
-  size: number;
-  destination: string;
-  status: "success" | "failed";
-}
-
-// ============================================================================
-// RESTORE TYPES
-// ============================================================================
-
-export interface RestoreOptions {
-  source: "local" | "cloud";
-  backupId?: string | undefined;
-  file?: File | undefined;
-  overwriteExisting: boolean;
-}
-
-export interface RestoreResult {
-  success: boolean;
-  recordsRestored: number;
-  timestamp: string;
-  errors?: string[];
-}
-
-export interface BackupFile {
-  id: string;
-  filename: string;
-  size: number;
-  createdAt: string;
-  source: "local" | "cloud";
-  provider?: string;
 }

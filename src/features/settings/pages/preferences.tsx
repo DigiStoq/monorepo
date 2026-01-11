@@ -1,22 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
-import {
-  Settings,
-  Palette,
-  Calendar,
-  Hash,
-  FileText,
-  Save,
-  Monitor,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { Settings, Palette, Calendar, Hash, FileText, Save, Monitor, Sun, Moon } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import {
-  SettingsCard,
-  SettingsRow,
-  SettingsGroup,
-} from "../components/settings-card";
+import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { AppPreferences, DateFormat, DashboardWidget } from "../types";
 
@@ -55,15 +41,13 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}): React.ReactNode {
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => {
-        onChange(!checked);
-      }}
+      onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
         checked ? "bg-teal-600" : "bg-slate-200"
       }`}
@@ -77,21 +61,13 @@ function Toggle({
   );
 }
 
-const themeOptions: {
-  value: AppPreferences["theme"];
-  label: string;
-  icon: typeof Sun;
-}[] = [
+const themeOptions: { value: AppPreferences["theme"]; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
 ];
 
-const dateFormatOptions: {
-  value: DateFormat;
-  label: string;
-  example: string;
-}[] = [
+const dateFormatOptions: { value: DateFormat; label: string; example: string }[] = [
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
   { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
@@ -109,12 +85,11 @@ const widgetOptions: { id: DashboardWidget; label: string }[] = [
   { id: "monthly-comparison", label: "Monthly Comparison" },
 ];
 
-export function PreferencesPage(): React.ReactNode {
-  const [preferences, setPreferences] =
-    useState<AppPreferences>(mockPreferences);
+export function PreferencesPage() {
+  const [preferences, setPreferences] = useState<AppPreferences>(mockPreferences);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async (): Promise<void> => {
+  const handleSave = async () => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
@@ -123,11 +98,11 @@ export function PreferencesPage(): React.ReactNode {
   const updateField = <K extends keyof AppPreferences>(
     field: K,
     value: AppPreferences[K]
-  ): void => {
+  ) => {
     setPreferences((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleWidget = (widgetId: DashboardWidget): void => {
+  const toggleWidget = (widgetId: DashboardWidget) => {
     setPreferences((prev) => ({
       ...prev,
       showDashboardWidgets: prev.showDashboardWidgets.includes(widgetId)
@@ -141,13 +116,7 @@ export function PreferencesPage(): React.ReactNode {
       title="Preferences"
       description="Customize your app experience"
       actions={
-        <Button
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={isSaving}
-          className="gap-2"
-        >
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -161,10 +130,7 @@ export function PreferencesPage(): React.ReactNode {
           icon={Palette}
         >
           <SettingsGroup>
-            <SettingsRow
-              label="Theme"
-              description="Choose your preferred color scheme"
-            >
+            <SettingsRow label="Theme" description="Choose your preferred color scheme">
               <div className="flex gap-2">
                 {themeOptions.map((option) => {
                   const Icon = option.icon;
@@ -172,9 +138,7 @@ export function PreferencesPage(): React.ReactNode {
                   return (
                     <button
                       key={option.value}
-                      onClick={() => {
-                        updateField("theme", option.value);
-                      }}
+                      onClick={() => updateField("theme", option.value)}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
                         isActive
@@ -183,23 +147,16 @@ export function PreferencesPage(): React.ReactNode {
                       )}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {option.label}
-                      </span>
+                      <span className="text-sm font-medium">{option.label}</span>
                     </button>
                   );
                 })}
               </div>
             </SettingsRow>
-            <SettingsRow
-              label="Compact Mode"
-              description="Use smaller spacing and fonts"
-            >
+            <SettingsRow label="Compact Mode" description="Use smaller spacing and fonts">
               <Toggle
                 checked={preferences.compactMode}
-                onChange={(v) => {
-                  updateField("compactMode", v);
-                }}
+                onChange={(v) => updateField("compactMode", v)}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -215,9 +172,7 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Date Format">
               <select
                 value={preferences.dateFormat}
-                onChange={(e) => {
-                  updateField("dateFormat", e.target.value as DateFormat);
-                }}
+                onChange={(e) => updateField("dateFormat", e.target.value as DateFormat)}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {dateFormatOptions.map((opt) => (
@@ -230,15 +185,15 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Decimal Separator">
               <select
                 value={preferences.numberFormat.decimalSeparator}
-                onChange={(e) => {
+                onChange={(e) =>
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalSeparator: e.target.value as "." | ",",
                     },
-                  }));
-                }}
+                  }))
+                }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value=".">Period (.)</option>
@@ -248,15 +203,15 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Thousands Separator">
               <select
                 value={preferences.numberFormat.thousandsSeparator}
-                onChange={(e) => {
+                onChange={(e) =>
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       thousandsSeparator: e.target.value as "," | "." | " ",
                     },
-                  }));
-                }}
+                  }))
+                }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value=",">Comma (,)</option>
@@ -267,15 +222,15 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Decimal Places">
               <select
                 value={preferences.numberFormat.decimalPlaces}
-                onChange={(e) => {
+                onChange={(e) =>
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalPlaces: parseInt(e.target.value),
                     },
-                  }));
-                }}
+                  }))
+                }
                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value={0}>0</option>
@@ -294,15 +249,12 @@ export function PreferencesPage(): React.ReactNode {
           icon={Hash}
         >
           <SettingsGroup>
-            <SettingsRow
-              label="Default Invoice Terms"
-              description="Days until payment is due"
-            >
+            <SettingsRow label="Default Invoice Terms" description="Days until payment is due">
               <select
                 value={preferences.defaultInvoiceTerms}
-                onChange={(e) => {
-                  updateField("defaultInvoiceTerms", parseInt(e.target.value));
-                }}
+                onChange={(e) =>
+                  updateField("defaultInvoiceTerms", parseInt(e.target.value))
+                }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value={7}>7 days</option>
@@ -317,9 +269,7 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Payment Terms Text">
               <select
                 value={preferences.defaultPaymentTerms}
-                onChange={(e) => {
-                  updateField("defaultPaymentTerms", e.target.value);
-                }}
+                onChange={(e) => updateField("defaultPaymentTerms", e.target.value)}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="Due on Receipt">Due on Receipt</option>
@@ -330,15 +280,10 @@ export function PreferencesPage(): React.ReactNode {
                 <option value="Net 60">Net 60</option>
               </select>
             </SettingsRow>
-            <SettingsRow
-              label="Auto-Save"
-              description="Automatically save changes"
-            >
+            <SettingsRow label="Auto-Save" description="Automatically save changes">
               <Toggle
                 checked={preferences.autoSave}
-                onChange={(v) => {
-                  updateField("autoSave", v);
-                }}
+                onChange={(v) => updateField("autoSave", v)}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -352,15 +297,11 @@ export function PreferencesPage(): React.ReactNode {
         >
           <div className="grid grid-cols-2 gap-3">
             {widgetOptions.map((widget) => {
-              const isActive = preferences.showDashboardWidgets.includes(
-                widget.id
-              );
+              const isActive = preferences.showDashboardWidgets.includes(widget.id);
               return (
                 <button
                   key={widget.id}
-                  onClick={() => {
-                    toggleWidget(widget.id);
-                  }}
+                  onClick={() => toggleWidget(widget.id)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left",
                     isActive
@@ -416,15 +357,15 @@ export function PreferencesPage(): React.ReactNode {
             <SettingsRow label="Paper Size">
               <select
                 value={preferences.printSettings.paperSize}
-                onChange={(e) => {
+                onChange={(e) =>
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: {
                       ...prev.printSettings,
                       paperSize: e.target.value as "A4" | "Letter" | "Legal",
                     },
-                  }));
-                }}
+                  }))
+                }
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="A4">A4</option>
@@ -432,18 +373,15 @@ export function PreferencesPage(): React.ReactNode {
                 <option value="Legal">Legal</option>
               </select>
             </SettingsRow>
-            <SettingsRow
-              label="Show Company Logo"
-              description="Include logo on printed documents"
-            >
+            <SettingsRow label="Show Company Logo" description="Include logo on printed documents">
               <Toggle
                 checked={preferences.printSettings.showLogo}
-                onChange={(v) => {
+                onChange={(v) =>
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showLogo: v },
-                  }));
-                }}
+                  }))
+                }
               />
             </SettingsRow>
             <SettingsRow
@@ -452,12 +390,12 @@ export function PreferencesPage(): React.ReactNode {
             >
               <Toggle
                 checked={preferences.printSettings.showSignature}
-                onChange={(v) => {
+                onChange={(v) =>
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showSignature: v },
-                  }));
-                }}
+                  }))
+                }
               />
             </SettingsRow>
             <SettingsRow
@@ -466,12 +404,12 @@ export function PreferencesPage(): React.ReactNode {
             >
               <Toggle
                 checked={preferences.printSettings.showTerms}
-                onChange={(v) => {
+                onChange={(v) =>
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showTerms: v },
-                  }));
-                }}
+                  }))
+                }
               />
             </SettingsRow>
           </SettingsGroup>

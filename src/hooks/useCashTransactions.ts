@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { CashTransaction } from "@/features/cash-bank/types";
 
@@ -42,40 +42,22 @@ export function useCashTransactions(filters?: {
   dateFrom?: string;
   dateTo?: string;
 }): { transactions: CashTransaction[]; isLoading: boolean; error: Error | undefined } {
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
+  const typeFilter = filters?.type ?? null;
+  const categoryFilter = filters?.category ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
 
-    if (filters?.type) {
-      conditions.push("type = ?");
-      params.push(filters.type);
-    }
+  const { data, isLoading, error } = useQuery<CashTransactionRow>(
+    `SELECT * FROM cash_transactions
+     WHERE ($1 IS NULL OR type = $1)
+     AND ($2 IS NULL OR category = $2)
+     AND ($3 IS NULL OR date >= $3)
+     AND ($4 IS NULL OR date <= $4)
+     ORDER BY date DESC, created_at DESC`,
+    [typeFilter, categoryFilter, dateFromFilter, dateToFilter]
+  );
 
-    if (filters?.category) {
-      conditions.push("category = ?");
-      params.push(filters.category);
-    }
-
-    if (filters?.dateFrom) {
-      conditions.push("date >= ?");
-      params.push(filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      conditions.push("date <= ?");
-      params.push(filters.dateTo);
-    }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM cash_transactions ${whereClause} ORDER BY date DESC, created_at DESC`,
-      params,
-    };
-  }, [filters?.type, filters?.category, filters?.dateFrom, filters?.dateTo]);
-
-  const { data, isLoading, error } = useQuery<CashTransactionRow>(query, params);
-
-  const transactions = useMemo(() => data.map(mapRowToTransaction), [data]);
+  const transactions = data.map(mapRowToTransaction);
 
   return { transactions, isLoading, error };
 }
@@ -125,7 +107,7 @@ export function useCashTransactionMutations(): CashTransactionMutations {
       const result = await db.execute(
         `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
       );
-      const rows = (result.rows?._array ?? []) as { balance: number }[];
+      const rows = result.rows._array as { balance: number }[];
       const currentBalance: number = rows[0]?.balance ?? 0;
 
       // Calculate new balance

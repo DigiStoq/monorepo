@@ -67,11 +67,9 @@ export function CustomerFormModal({
   onSubmit,
   customer,
   isLoading,
-}: CustomerFormModalProps): React.ReactNode {
+}: CustomerFormModalProps) {
   const isEditing = Boolean(customer);
-  const [activeTab, setActiveTab] = useState<"basic" | "details" | "credit">(
-    "basic"
-  );
+  const [activeTab, setActiveTab] = useState<"basic" | "details" | "credit">("basic");
 
   const {
     register,
@@ -107,17 +105,17 @@ export function CustomerFormModal({
       reset({
         name: customer.name,
         type: customer.type,
-        phone: customer.phone ?? "",
-        email: customer.email ?? "",
-        taxId: customer.taxId ?? "",
-        address: customer.address ?? "",
-        city: customer.city ?? "",
-        state: customer.state ?? "",
-        zipCode: customer.zipCode ?? "",
+        phone: customer.phone || "",
+        email: customer.email || "",
+        taxId: customer.taxId || "",
+        address: customer.address || "",
+        city: customer.city || "",
+        state: customer.state || "",
+        zipCode: customer.zipCode || "",
         openingBalance: customer.openingBalance,
-        creditLimit: customer.creditLimit ?? 0,
-        creditDays: customer.creditDays ?? 0,
-        notes: customer.notes ?? "",
+        creditLimit: customer.creditLimit || 0,
+        creditDays: customer.creditDays || 0,
+        notes: customer.notes || "",
       });
     } else {
       reset({
@@ -139,17 +137,17 @@ export function CustomerFormModal({
     setActiveTab("basic");
   }, [customer, reset, isOpen]);
 
-  const handleFormSubmit = (data: CustomerSchemaType): void => {
+  const handleFormSubmit = (data: CustomerSchemaType) => {
     onSubmit({
       ...data,
-      phone: data.phone ?? undefined,
-      email: data.email ?? undefined,
-      taxId: data.taxId ?? undefined,
-      address: data.address ?? undefined,
-      city: data.city ?? undefined,
-      state: data.state ?? undefined,
-      zipCode: data.zipCode ?? undefined,
-      notes: data.notes ?? undefined,
+      phone: data.phone || undefined,
+      email: data.email || undefined,
+      taxId: data.taxId || undefined,
+      address: data.address || undefined,
+      city: data.city || undefined,
+      state: data.state || undefined,
+      zipCode: data.zipCode || undefined,
+      notes: data.notes || undefined,
     });
   };
 
@@ -165,18 +163,14 @@ export function CustomerFormModal({
       onClose={onClose}
       size="lg"
       title={isEditing ? "Edit Customer" : "Add New Customer"}
-      description={
-        isEditing ? `Update ${customer?.name}` : "Add a customer or supplier"
-      }
+      description={isEditing ? `Update ${customer?.name}` : "Add a customer or supplier"}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              void handleSubmit(handleFormSubmit)();
-            }}
+            onClick={handleSubmit(handleFormSubmit)}
             isLoading={isLoading}
           >
             {isEditing ? "Update Customer" : "Add Customer"}
@@ -190,9 +184,7 @@ export function CustomerFormModal({
           <button
             key={tab.id}
             type="button"
-            onClick={() => {
-              setActiveTab(tab.id);
-            }}
+            onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === tab.id
                 ? "bg-white text-slate-900 shadow-sm"
@@ -220,9 +212,7 @@ export function CustomerFormModal({
               label="Customer Type"
               options={typeOptions}
               value={selectedType}
-              onChange={(value) => {
-                setValue("type", value as CustomerType);
-              }}
+              onChange={(value) => setValue("type", value as CustomerType)}
             />
 
             <div className="grid grid-cols-2 gap-4">

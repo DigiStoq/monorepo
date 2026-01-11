@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import type { PaymentInFormData, PaymentMode, SaleInvoice } from "../types";
 import type { Customer } from "@/features/customers";
-import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -61,28 +60,24 @@ export function PaymentInForm({
   onSubmit,
   onCancel,
   className,
-}: PaymentInFormProps): React.ReactNode {
+}: PaymentInFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(
-    initialData?.customerId ?? ""
-  );
-  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
+  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
   const [amount, setAmount] = useState(initialData?.amount ?? 0);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>(
-    initialData?.paymentMode ?? "cash"
-  );
-  const [referenceNumber, setReferenceNumber] = useState(
-    initialData?.referenceNumber ?? ""
-  );
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>(initialData?.paymentMode ?? "cash");
+  const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
   const [invoiceId, setInvoiceId] = useState(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
-  // Customer options - hook already filters by type
+  // Customer options
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a customer..." },
-      ...customers.map((c) => ({ value: c.id, label: c.name })),
+      ...customers
+        .filter((c) => c.type === "customer" || c.type === "both")
+        .map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
@@ -104,10 +99,15 @@ export function PaymentInForm({
   const selectedInvoice = invoices.find((inv) => inv.id === invoiceId);
 
   // Format currency
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Handle submit
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (!customerId || amount <= 0) return;
 
     const formData: PaymentInFormData = {
@@ -131,9 +131,7 @@ export function PaymentInForm({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Record Payment</h1>
-          <p className="text-slate-500">
-            Record a payment received from customer
-          </p>
+          <p className="text-slate-500">Record a payment received from customer</p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
@@ -180,22 +178,16 @@ export function PaymentInForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">
-                    {selectedCustomer.name}
-                  </p>
+                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">
-                      {selectedCustomer.phone}
-                    </p>
+                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
                   )}
                 </div>
               )}
@@ -217,9 +209,7 @@ export function PaymentInForm({
                     min="0"
                     step="0.01"
                     value={amount}
-                    onChange={(e) => {
-                      setAmount(parseFloat(e.target.value) || 0);
-                    }}
+                    onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
                   />
                 </div>
@@ -232,9 +222,7 @@ export function PaymentInForm({
                   <Select
                     options={paymentModeOptions}
                     value={paymentMode}
-                    onChange={(value) => {
-                      setPaymentMode(value as PaymentMode);
-                    }}
+                    onChange={(value) => setPaymentMode(value as PaymentMode)}
                   />
                 </div>
 
@@ -246,9 +234,7 @@ export function PaymentInForm({
                   <Input
                     type="text"
                     value={referenceNumber}
-                    onChange={(e) => {
-                      setReferenceNumber(e.target.value);
-                    }}
+                    onChange={(e) => setReferenceNumber(e.target.value)}
                     placeholder="Transaction ID, Check #, etc."
                   />
                 </div>
@@ -300,9 +286,7 @@ export function PaymentInForm({
                 placeholder="Add any notes about this payment..."
                 rows={3}
                 value={notes}
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                }}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </CardBody>
           </Card>
@@ -315,9 +299,7 @@ export function PaymentInForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Customer</span>
-                <span className="font-medium">
-                  {selectedCustomer?.name ?? "-"}
-                </span>
+                <span className="font-medium">{selectedCustomer?.name || "-"}</span>
               </div>
 
               <div className="flex justify-between text-sm">
@@ -328,17 +310,13 @@ export function PaymentInForm({
               {selectedInvoice && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Invoice</span>
-                  <span className="font-medium">
-                    {selectedInvoice.invoiceNumber}
-                  </span>
+                  <span className="font-medium">{selectedInvoice.invoiceNumber}</span>
                 </div>
               )}
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">
-                    Amount
-                  </span>
+                  <span className="text-lg font-semibold text-slate-900">Amount</span>
                   <span className="text-lg font-bold text-success">
                     {formatCurrency(amount)}
                   </span>
@@ -350,9 +328,7 @@ export function PaymentInForm({
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Remaining Due</span>
                     <span className="font-medium text-error">
-                      {formatCurrency(
-                        Math.max(0, selectedInvoice.amountDue - amount)
-                      )}
+                      {formatCurrency(Math.max(0, selectedInvoice.amountDue - amount))}
                     </span>
                   </div>
                 </div>

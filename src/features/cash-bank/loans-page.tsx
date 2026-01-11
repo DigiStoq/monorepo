@@ -1,25 +1,16 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-} from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { LoanList, LoanDetail, LoanForm, LoanPaymentForm } from "./components";
 import { useLoans, useLoanMutations } from "@/hooks/useLoans";
-import {
-  useLoanPayments,
-  useLoanPaymentMutations,
-} from "@/hooks/useLoanPayments";
+import { useLoanPayments, useLoanPaymentMutations } from "@/hooks/useLoanPayments";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import type { Loan, LoanFormData, LoanPaymentFormData } from "./types";
 
-export function LoansPage(): React.ReactNode {
+export function LoansPage() {
   // Data from PowerSync
   const { loans, isLoading, error } = useLoans();
   const { customers } = useCustomers();
@@ -44,28 +35,26 @@ export function LoansPage(): React.ReactNode {
   );
 
   // Handlers
-  const handleLoanClick = (loan: Loan): void => {
+  const handleLoanClick = (loan: Loan) => {
     setSelectedLoan(loan);
   };
 
-  const handleCloseDetail = (): void => {
+  const handleCloseDetail = () => {
     setSelectedLoan(null);
   };
 
-  const handleCreateLoan = (): void => {
+  const handleCreateLoan = () => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = (): void => {
+  const handleCloseForm = () => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitLoan = async (data: LoanFormData): Promise<void> => {
+  const handleSubmitLoan = async (data: LoanFormData) => {
     try {
       // Find customer name if customer ID is provided
-      const customer = data.customerId
-        ? customers.find((c) => c.id === data.customerId)
-        : null;
+      const customer = data.customerId ? customers.find((c) => c.id === data.customerId) : null;
       await createLoan({
         name: data.name,
         type: data.type,
@@ -88,7 +77,7 @@ export function LoansPage(): React.ReactNode {
     }
   };
 
-  const handleDeleteLoan = async (): Promise<void> => {
+  const handleDeleteLoan = async () => {
     if (currentSelectedLoan) {
       try {
         await deleteLoan(currentSelectedLoan.id);
@@ -99,17 +88,15 @@ export function LoansPage(): React.ReactNode {
     }
   };
 
-  const handleOpenPaymentForm = (): void => {
+  const handleOpenPaymentForm = () => {
     setIsPaymentFormOpen(true);
   };
 
-  const handleClosePaymentForm = (): void => {
+  const handleClosePaymentForm = () => {
     setIsPaymentFormOpen(false);
   };
 
-  const handleSubmitPayment = async (
-    data: LoanPaymentFormData
-  ): Promise<void> => {
+  const handleSubmitPayment = async (data: LoanPaymentFormData) => {
     if (!currentSelectedLoan) return;
 
     try {
@@ -147,10 +134,7 @@ export function LoansPage(): React.ReactNode {
         title="Loans"
         description="Manage loans taken and given"
         actions={
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleCreateLoan}
-          >
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateLoan}>
             Add Loan
           </Button>
         }
@@ -164,7 +148,10 @@ export function LoansPage(): React.ReactNode {
               <Spinner size="lg" />
             </div>
           ) : (
-            <LoanList loans={loans} onLoanClick={handleLoanClick} />
+            <LoanList
+              loans={loans}
+              onLoanClick={handleLoanClick}
+            />
           )}
         </div>
 
@@ -175,12 +162,8 @@ export function LoansPage(): React.ReactNode {
               loan={currentSelectedLoan}
               payments={loanPayments}
               onClose={handleCloseDetail}
-              onEdit={() => {
-                setIsFormOpen(true);
-              }}
-              onDelete={() => {
-                void handleDeleteLoan();
-              }}
+              onEdit={() => setIsFormOpen(true)}
+              onDelete={handleDeleteLoan}
               onAddPayment={handleOpenPaymentForm}
             />
           </div>
@@ -190,14 +173,14 @@ export function LoansPage(): React.ReactNode {
       {/* Loan Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>Add Loan</ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>
+            Add Loan
+          </ModalHeader>
           <ModalBody>
             <LoanForm
               customers={customers}
               bankAccounts={bankAccounts}
-              onSubmit={(data) => {
-                void handleSubmitLoan(data);
-              }}
+              onSubmit={handleSubmitLoan}
               onCancel={handleCloseForm}
             />
           </ModalBody>
@@ -205,11 +188,7 @@ export function LoansPage(): React.ReactNode {
       </Modal>
 
       {/* Payment Form Modal */}
-      <Modal
-        isOpen={isPaymentFormOpen}
-        onClose={handleClosePaymentForm}
-        size="md"
-      >
+      <Modal isOpen={isPaymentFormOpen} onClose={handleClosePaymentForm} size="md">
         <ModalContent>
           <ModalHeader onClose={handleClosePaymentForm}>
             Record Loan Payment
@@ -220,9 +199,7 @@ export function LoansPage(): React.ReactNode {
                 loanName={currentSelectedLoan.name}
                 outstandingAmount={currentSelectedLoan.outstandingAmount}
                 suggestedEmiAmount={currentSelectedLoan.emiAmount}
-                onSubmit={(data) => {
-                  void handleSubmitPayment(data);
-                }}
+                onSubmit={handleSubmitPayment}
                 onCancel={handleClosePaymentForm}
               />
             )}

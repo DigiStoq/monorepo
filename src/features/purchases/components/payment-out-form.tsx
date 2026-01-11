@@ -11,12 +11,7 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { Building2, Calendar, CreditCard, FileText, Hash } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
-import type {
-  PaymentOutFormData,
-  PaymentOutMode,
-  PurchaseInvoice,
-} from "../types";
+import type { PaymentOutFormData, PaymentOutMode, PurchaseInvoice } from "../types";
 import type { Customer } from "@/features/customers";
 
 // ============================================================================
@@ -58,39 +53,31 @@ export function PaymentOutForm({
   onSubmit,
   onCancel,
   className,
-}: PaymentOutFormProps): React.ReactNode {
+}: PaymentOutFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(
-    initialData?.customerId ?? ""
-  );
-  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
+  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
   const [amount, setAmount] = useState<number>(initialData?.amount ?? 0);
-  const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(
-    initialData?.paymentMode ?? "cash"
-  );
-  const [referenceNumber, setReferenceNumber] = useState(
-    initialData?.referenceNumber ?? ""
-  );
-  const [invoiceId, setInvoiceId] = useState<string>(
-    initialData?.invoiceId ?? ""
-  );
+  const [paymentMode, setPaymentMode] = useState<PaymentOutMode>(initialData?.paymentMode ?? "cash");
+  const [referenceNumber, setReferenceNumber] = useState(initialData?.referenceNumber ?? "");
+  const [invoiceId, setInvoiceId] = useState<string>(initialData?.invoiceId !== undefined ? initialData.invoiceId : "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
-  // Customer options - hook already filters by type (suppliers)
+  // Customer options (suppliers only)
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a supplier..." },
-      ...customers.map((c) => ({ value: c.id, label: c.name })),
+      ...customers
+        .filter((c) => c.type === "supplier" || c.type === "both")
+        .map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
   // Invoice options (filtered by customer)
   const invoiceOptions: SelectOption[] = useMemo(() => {
     const filteredInvoices = customerId
-      ? invoices.filter(
-          (inv) => inv.customerId === customerId && inv.amountDue > 0
-        )
+      ? invoices.filter((inv) => inv.customerId === customerId && inv.amountDue > 0)
       : invoices.filter((inv) => inv.amountDue > 0);
 
     return [
@@ -106,10 +93,15 @@ export function PaymentOutForm({
   const selectedInvoice = invoices.find((inv) => inv.id === invoiceId);
 
   // Format currency
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Handle invoice selection
-  const handleInvoiceChange = (value: string): void => {
+  const handleInvoiceChange = (value: string) => {
     setInvoiceId(value);
     if (value) {
       const invoice = invoices.find((inv) => inv.id === value);
@@ -121,7 +113,7 @@ export function PaymentOutForm({
   };
 
   // Handle submit
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (!customerId || amount <= 0) return;
 
     const formData: PaymentOutFormData = {
@@ -160,8 +152,7 @@ export function PaymentOutForm({
                 />
                 {selectedCustomer && (
                   <p className="mt-1 text-sm text-slate-500">
-                    Current Balance:{" "}
-                    {formatCurrency(selectedCustomer.currentBalance)}
+                    Current Balance: {formatCurrency(selectedCustomer.currentBalance)}
                   </p>
                 )}
               </div>
@@ -174,9 +165,7 @@ export function PaymentOutForm({
                 <Input
                   type="date"
                   value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                  }}
+                  onChange={(e) => setDate(e.target.value)}
                 />
               </div>
 
@@ -189,9 +178,7 @@ export function PaymentOutForm({
                   min="0"
                   step="0.01"
                   value={amount}
-                  onChange={(e) => {
-                    setAmount(parseFloat(e.target.value) || 0);
-                  }}
+                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
                 />
               </div>
@@ -204,9 +191,7 @@ export function PaymentOutForm({
                 <Select
                   options={paymentModeOptions}
                   value={paymentMode}
-                  onChange={(value) => {
-                    setPaymentMode(value as PaymentOutMode);
-                  }}
+                  onChange={(value) => setPaymentMode(value as PaymentOutMode)}
                 />
               </div>
 
@@ -218,9 +203,7 @@ export function PaymentOutForm({
                 <Input
                   type="text"
                   value={referenceNumber}
-                  onChange={(e) => {
-                    setReferenceNumber(e.target.value);
-                  }}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
                   placeholder="Transaction ID, cheque number, etc."
                 />
               </div>
@@ -250,23 +233,15 @@ export function PaymentOutForm({
                 <div className="p-3 bg-slate-50 rounded-lg space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Invoice Total</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.total)}
-                    </span>
+                    <span className="font-medium">{formatCurrency(selectedInvoice.total)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Already Paid</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.amountPaid)}
-                    </span>
+                    <span className="font-medium">{formatCurrency(selectedInvoice.amountPaid)}</span>
                   </div>
                   <div className="flex justify-between text-sm border-t border-slate-200 pt-2">
-                    <span className="text-slate-700 font-medium">
-                      Amount Due
-                    </span>
-                    <span className="font-bold text-error">
-                      {formatCurrency(selectedInvoice.amountDue)}
-                    </span>
+                    <span className="text-slate-700 font-medium">Amount Due</span>
+                    <span className="font-bold text-error">{formatCurrency(selectedInvoice.amountDue)}</span>
                   </div>
                 </div>
               )}
@@ -280,9 +255,7 @@ export function PaymentOutForm({
                 placeholder="Add any notes about this payment..."
                 rows={4}
                 value={notes}
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                }}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </CardBody>
           </Card>
@@ -291,9 +264,7 @@ export function PaymentOutForm({
           <Card className="bg-gradient-to-br from-red-50 to-orange-50 border-red-100">
             <CardBody className="text-center py-6">
               <p className="text-sm text-slate-600 mb-1">Payment Amount</p>
-              <p className="text-3xl font-bold text-error">
-                {formatCurrency(amount)}
-              </p>
+              <p className="text-3xl font-bold text-error">{formatCurrency(amount)}</p>
             </CardBody>
           </Card>
         </div>

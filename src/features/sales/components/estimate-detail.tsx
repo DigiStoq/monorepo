@@ -17,7 +17,6 @@ import {
   Send,
   FileCheck,
 } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
 import type { Estimate, EstimateStatus } from "../types";
 
 // ============================================================================
@@ -42,24 +41,13 @@ export interface EstimateDetailProps {
 // STATUS CONFIG
 // ============================================================================
 
-const statusConfig: Record<
-  EstimateStatus,
-  {
-    label: string;
-    variant: "success" | "warning" | "error" | "info" | "secondary";
-    icon: typeof CheckCircle;
-  }
-> = {
+const statusConfig: Record<EstimateStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
   sent: { label: "Sent", variant: "info", icon: Clock },
   accepted: { label: "Accepted", variant: "success", icon: CheckCircle },
   rejected: { label: "Rejected", variant: "error", icon: XCircle },
   expired: { label: "Expired", variant: "warning", icon: AlertCircle },
-  converted: {
-    label: "Converted to Invoice",
-    variant: "success",
-    icon: ArrowRightCircle,
-  },
+  converted: { label: "Converted to Invoice", variant: "success", icon: ArrowRightCircle },
 };
 
 // ============================================================================
@@ -78,13 +66,18 @@ export function EstimateDetail({
   onMarkAccepted,
   onMarkRejected,
   className,
-}: EstimateDetailProps): React.ReactNode {
+}: EstimateDetailProps) {
   const status = statusConfig[estimate.status];
   const StatusIcon = status.icon;
 
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
-  const formatDate = (dateStr: string): string =>
+  const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
@@ -92,14 +85,9 @@ export function EstimateDetail({
       year: "numeric",
     });
 
-  const isExpired = (): boolean => {
+  const isExpired = () => {
     if (estimate.status === "expired") return true;
-    if (
-      estimate.status === "converted" ||
-      estimate.status === "accepted" ||
-      estimate.status === "rejected"
-    )
-      return false;
+    if (estimate.status === "converted" || estimate.status === "accepted" || estimate.status === "rejected") return false;
     return new Date(estimate.validUntil) < new Date();
   };
 
@@ -134,28 +122,20 @@ export function EstimateDetail({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Status Card */}
-        <Card
-          className={cn(
-            estimate.status === "accepted" || estimate.status === "converted"
-              ? "bg-success-light border-success/20"
-              : estimate.status === "rejected"
-                ? "bg-error-light border-error/20"
-                : estimate.status === "expired"
-                  ? "bg-warning-light border-warning/20"
-                  : "bg-slate-50"
-          )}
-        >
+        <Card className={cn(
+          estimate.status === "accepted" || estimate.status === "converted" ? "bg-success-light border-success/20" :
+          estimate.status === "rejected" ? "bg-error-light border-error/20" :
+          estimate.status === "expired" ? "bg-warning-light border-warning/20" :
+          "bg-slate-50"
+        )}>
           <CardBody className="text-center py-6">
             <Badge variant={status.variant} size="lg" className="mb-3">
               <StatusIcon className="h-4 w-4 mr-1" />
               {status.label}
             </Badge>
-            <p className="text-3xl font-bold text-slate-900">
-              {formatCurrency(estimate.total)}
-            </p>
+            <p className="text-3xl font-bold text-slate-900">{formatCurrency(estimate.total)}</p>
             <p className="text-sm text-slate-500 mt-1">
-              {estimate.items.length}{" "}
-              {estimate.items.length === 1 ? "item" : "items"}
+              {estimate.items.length} {estimate.items.length === 1 ? "item" : "items"}
             </p>
           </CardBody>
         </Card>
@@ -165,42 +145,22 @@ export function EstimateDetail({
           <Card>
             <CardBody className="space-y-2">
               {canSend && (
-                <Button
-                  fullWidth
-                  variant="primary"
-                  leftIcon={<Send className="h-4 w-4" />}
-                  onClick={onSend}
-                >
+                <Button fullWidth variant="primary" leftIcon={<Send className="h-4 w-4" />} onClick={onSend}>
                   Send to Customer
                 </Button>
               )}
               {canAcceptReject && (
                 <>
-                  <Button
-                    fullWidth
-                    variant="primary"
-                    leftIcon={<CheckCircle className="h-4 w-4" />}
-                    onClick={onMarkAccepted}
-                  >
+                  <Button fullWidth variant="primary" leftIcon={<CheckCircle className="h-4 w-4" />} onClick={onMarkAccepted}>
                     Mark as Accepted
                   </Button>
-                  <Button
-                    fullWidth
-                    variant="outline"
-                    leftIcon={<XCircle className="h-4 w-4" />}
-                    onClick={onMarkRejected}
-                  >
+                  <Button fullWidth variant="outline" leftIcon={<XCircle className="h-4 w-4" />} onClick={onMarkRejected}>
                     Mark as Rejected
                   </Button>
                 </>
               )}
               {canConvert && (
-                <Button
-                  fullWidth
-                  variant="primary"
-                  leftIcon={<FileCheck className="h-4 w-4" />}
-                  onClick={onConvertToInvoice}
-                >
+                <Button fullWidth variant="primary" leftIcon={<FileCheck className="h-4 w-4" />} onClick={onConvertToInvoice}>
                   Convert to Invoice
                 </Button>
               )}
@@ -218,9 +178,7 @@ export function EstimateDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-medium text-slate-900">
-                  {estimate.customerName}
-                </p>
+                <p className="font-medium text-slate-900">{estimate.customerName}</p>
               </div>
             </div>
 
@@ -230,34 +188,20 @@ export function EstimateDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date Created</p>
-                <p className="font-medium text-slate-900">
-                  {formatDate(estimate.date)}
-                </p>
+                <p className="font-medium text-slate-900">{formatDate(estimate.date)}</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <div
-                className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                  isExpired() ? "bg-error-light" : "bg-slate-100"
-                )}
-              >
-                <Clock
-                  className={cn(
-                    "h-4 w-4",
-                    isExpired() ? "text-error" : "text-slate-500"
-                  )}
-                />
+              <div className={cn(
+                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                isExpired() ? "bg-error-light" : "bg-slate-100"
+              )}>
+                <Clock className={cn("h-4 w-4", isExpired() ? "text-error" : "text-slate-500")} />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Valid Until</p>
-                <p
-                  className={cn(
-                    "font-medium",
-                    isExpired() ? "text-error" : "text-slate-900"
-                  )}
-                >
+                <p className={cn("font-medium", isExpired() ? "text-error" : "text-slate-900")}>
                   {formatDate(estimate.validUntil)}
                   {isExpired() && estimate.status !== "expired" && " (Expired)"}
                 </p>
@@ -286,17 +230,12 @@ export function EstimateDetail({
               {estimate.items.map((item) => (
                 <div key={item.id} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium text-slate-900">
-                      {item.itemName}
-                    </p>
+                    <p className="font-medium text-slate-900">{item.itemName}</p>
                     <p className="text-sm text-slate-500">
-                      {item.quantity} {item.unit} ×{" "}
-                      {formatCurrency(item.unitPrice)}
+                      {item.quantity} {item.unit} × {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className="font-medium text-slate-900">
-                    {formatCurrency(item.amount)}
-                  </p>
+                  <p className="font-medium text-slate-900">{formatCurrency(item.amount)}</p>
                 </div>
               ))}
             </div>
@@ -308,43 +247,33 @@ export function EstimateDetail({
           <CardBody className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium">
-                {formatCurrency(estimate.subtotal)}
-              </span>
+              <span className="font-medium">{formatCurrency(estimate.subtotal)}</span>
             </div>
             {estimate.discountAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Discount</span>
-                <span className="font-medium text-success">
-                  -{formatCurrency(estimate.discountAmount)}
-                </span>
+                <span className="font-medium text-success">-{formatCurrency(estimate.discountAmount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Tax</span>
-              <span className="font-medium">
-                {formatCurrency(estimate.taxAmount)}
-              </span>
+              <span className="font-medium">{formatCurrency(estimate.taxAmount)}</span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
               <span className="font-semibold text-slate-900">Total</span>
-              <span className="font-bold text-primary-600">
-                {formatCurrency(estimate.total)}
-              </span>
+              <span className="font-bold text-primary-600">{formatCurrency(estimate.total)}</span>
             </div>
           </CardBody>
         </Card>
 
         {/* Notes & Terms */}
-        {(estimate.notes ?? estimate.terms) && (
+        {(estimate.notes || estimate.terms) && (
           <Card>
             {estimate.notes && (
               <>
                 <CardHeader title="Notes" />
                 <CardBody>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap">
-                    {estimate.notes}
-                  </p>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{estimate.notes}</p>
                 </CardBody>
               </>
             )}
@@ -352,9 +281,7 @@ export function EstimateDetail({
               <>
                 <CardHeader title="Terms & Conditions" />
                 <CardBody>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap">
-                    {estimate.terms}
-                  </p>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{estimate.terms}</p>
                 </CardBody>
               </>
             )}
@@ -373,12 +300,7 @@ export function EstimateDetail({
       {/* Footer Actions */}
       <div className="p-4 border-t border-slate-200 space-y-2">
         {canEdit && (
-          <Button
-            fullWidth
-            variant="outline"
-            leftIcon={<Edit className="h-4 w-4" />}
-            onClick={onEdit}
-          >
+          <Button fullWidth variant="outline" leftIcon={<Edit className="h-4 w-4" />} onClick={onEdit}>
             Edit Estimate
           </Button>
         )}

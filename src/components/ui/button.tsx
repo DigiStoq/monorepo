@@ -123,7 +123,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           fullWidth && "w-full",
           className
         )}
-        disabled={(disabled ?? false) || isLoading}
+        disabled={disabled || isLoading}
         {...props}
       >
         {isLoading ? (
@@ -153,10 +153,8 @@ Button.displayName = "Button";
 // ICON BUTTON VARIANT
 // ============================================================================
 
-export interface IconButtonProps extends Omit<
-  ButtonProps,
-  "leftIcon" | "rightIcon" | "children"
-> {
+export interface IconButtonProps
+  extends Omit<ButtonProps, "leftIcon" | "rightIcon" | "children"> {
   /** Icon to display */
   icon: ReactNode;
   /** Accessible label */

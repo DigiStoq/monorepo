@@ -1,5 +1,4 @@
 import { useQuery } from "@powersync/react";
-import { useMemo } from "react";
 
 export interface DashboardMetrics {
   totalReceivable: number;
@@ -15,7 +14,7 @@ export interface DashboardMetrics {
 export interface DashboardTransaction {
   id: string;
   type: "sale" | "purchase" | "payment-in" | "payment-out";
-  name: string;
+  partyName: string;
   amount: number;
   date: string;
   invoiceNumber?: string;
@@ -40,14 +39,14 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
   const { data: todaySalesData, isLoading: todaySalesLoading } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM sale_invoices
-     WHERE date = date('now') AND status != 'returned'`
+     WHERE date = date('now') AND status != 'cancelled'`
   );
 
   // Today's Purchases
   const { data: todayPurchasesData, isLoading: todayPurchasesLoading } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM purchase_invoices
-     WHERE date = date('now') AND status != 'returned'`
+     WHERE date = date('now') AND status != 'cancelled'`
   );
 
   // Last month receivable (for change calculation)
@@ -56,7 +55,7 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
      FROM sale_invoices
      WHERE date >= date('now', 'start of month', '-1 month')
      AND date < date('now', 'start of month')
-     AND status IN ('draft', 'unpaid') AND amount_due > 0`
+     AND status IN ('sent', 'partial', 'overdue')`
   );
 
   // Last month payable (for change calculation)
@@ -65,21 +64,21 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
      FROM purchase_invoices
      WHERE date >= date('now', 'start of month', '-1 month')
      AND date < date('now', 'start of month')
-     AND status IN ('draft', 'ordered', 'received') AND amount_due > 0`
+     AND status IN ('received', 'partial', 'overdue')`
   );
 
   // Yesterday's sales (for change calculation)
   const { data: yesterdaySales } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM sale_invoices
-     WHERE date = date('now', '-1 day') AND status != 'returned'`
+     WHERE date = date('now', '-1 day') AND status != 'cancelled'`
   );
 
   // Yesterday's purchases (for change calculation)
   const { data: yesterdayPurchases } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM purchase_invoices
-     WHERE date = date('now', '-1 day') AND status != 'returned'`
+     WHERE date = date('now', '-1 day') AND status != 'cancelled'`
   );
 
   // Calculate percentage changes
@@ -119,12 +118,12 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'sale' as type,
-       customer_name as name,
+       customer_name as partyName,
        total as amount,
        date,
        invoice_number as invoiceNumber
      FROM sale_invoices
-     WHERE status != 'returned'
+     WHERE status != 'cancelled'
      ORDER BY created_at DESC
      LIMIT ?`,
     [Math.ceil(limit / 4)]
@@ -134,12 +133,12 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'purchase' as type,
-       customer_name as name,
+       customer_name as partyName,
        total as amount,
        date,
        invoice_number as invoiceNumber
      FROM purchase_invoices
-     WHERE status != 'returned'
+     WHERE status != 'cancelled'
      ORDER BY created_at DESC
      LIMIT ?`,
     [Math.ceil(limit / 4)]
@@ -149,7 +148,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'payment-in' as type,
-       customer_name as name,
+       customer_name as partyName,
        amount,
        date,
        receipt_number as invoiceNumber
@@ -163,7 +162,7 @@ export function useRecentTransactions(limit = 10): {
     `SELECT
        id,
        'payment-out' as type,
-       customer_name as name,
+       customer_name as partyName,
        amount,
        date,
        payment_number as invoiceNumber
@@ -175,10 +174,10 @@ export function useRecentTransactions(limit = 10): {
 
   // Combine and sort all transactions
   const transactions = [
-    ...salesData,
-    ...purchasesData,
-    ...paymentInsData,
-    ...paymentOutsData,
+    ...(salesData ?? []),
+    ...(purchasesData ?? []),
+    ...(paymentInsData ?? []),
+    ...(paymentOutsData ?? []),
   ]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit)
@@ -219,44 +218,31 @@ export function useSalesChartData(days = 7): {
   chartData: ChartDataPoint[];
   isLoading: boolean;
 } {
-  const { data: salesData, isLoading: salesLoading } = useQuery<{ date: string; total: number }>(
+  const { data, isLoading } = useQuery<{ date: string; total: number }>(
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM sale_invoices
      WHERE date >= date('now', '-${days} days')
-     AND status != 'returned'
+     AND status != 'cancelled'
      GROUP BY date
      ORDER BY date ASC`
   );
 
-  const { data: purchaseData, isLoading: purchaseLoading } = useQuery<{ date: string; total: number }>(
-    `SELECT date, COALESCE(SUM(total), 0) as total
-     FROM purchase_invoices
-     WHERE date >= date('now', '-${days} days')
-     AND status != 'returned'
-     GROUP BY date
-     ORDER BY date ASC`
-  );
+  // Fill in missing dates with 0
+  const chartData: ChartDataPoint[] = [];
+  const today = new Date();
 
-  const chartData = useMemo(() => {
-    const result: ChartDataPoint[] = [];
-    const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split("T")[0];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
+    const dayData = data?.find((d) => d.date === dateStr);
+    chartData.push({
+      date: date.toLocaleDateString("en-US", { weekday: "short" }),
+      sales: dayData?.total ?? 0,
+      purchases: 0, // TODO: Add purchase data
+    });
+  }
 
-      const daySales = salesData.find((d) => d.date === dateStr);
-      const dayPurchases = purchaseData.find((d) => d.date === dateStr);
-      result.push({
-        date: date.toLocaleDateString("en-US", { weekday: "short" }),
-        sales: daySales?.total ?? 0,
-        purchases: dayPurchases?.total ?? 0,
-      });
-    }
-
-    return result;
-  }, [salesData, purchaseData, days]);
-
-  return { chartData, isLoading: salesLoading || purchaseLoading };
+  return { chartData, isLoading };
 }

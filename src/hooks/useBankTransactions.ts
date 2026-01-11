@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { BankTransaction } from "@/features/cash-bank/types";
 
@@ -43,49 +43,23 @@ export function useBankTransactions(filters?: {
   type?: "deposit" | "withdrawal" | "transfer";
   dateFrom?: string;
   dateTo?: string;
-}): {
-  transactions: BankTransaction[];
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
-
-    if (filters?.accountId) {
-      conditions.push("account_id = ?");
-      params.push(filters.accountId);
-    }
-
-    if (filters?.type) {
-      conditions.push("type = ?");
-      params.push(filters.type);
-    }
-
-    if (filters?.dateFrom) {
-      conditions.push("date >= ?");
-      params.push(filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      conditions.push("date <= ?");
-      params.push(filters.dateTo);
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM bank_transactions ${whereClause} ORDER BY date DESC, created_at DESC`,
-      params,
-    };
-  }, [filters?.accountId, filters?.type, filters?.dateFrom, filters?.dateTo]);
+}): { transactions: BankTransaction[]; isLoading: boolean; error: Error | undefined } {
+  const accountFilter = filters?.accountId ?? null;
+  const typeFilter = filters?.type ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
 
   const { data, isLoading, error } = useQuery<BankTransactionRow>(
-    query,
-    params
+    `SELECT * FROM bank_transactions
+     WHERE ($1 IS NULL OR account_id = $1)
+     AND ($2 IS NULL OR type = $2)
+     AND ($3 IS NULL OR date >= $3)
+     AND ($4 IS NULL OR date <= $4)
+     ORDER BY date DESC, created_at DESC`,
+    [accountFilter, typeFilter, dateFromFilter, dateToFilter]
   );
 
-  const transactions = useMemo(() => data.map(mapRowToTransaction), [data]);
+  const transactions = data.map(mapRowToTransaction);
 
   return { transactions, isLoading, error };
 }
@@ -140,12 +114,11 @@ export function useBankTransactionMutations(): BankTransactionMutations {
         `SELECT current_balance FROM bank_accounts WHERE id = ?`,
         [data.accountId]
       );
-      const rows = (result.rows?._array ?? []) as BalanceQueryRow[];
+      const rows = result.rows._array as BalanceQueryRow[];
       const currentBalance = rows[0]?.current_balance ?? 0;
 
       // Calculate new balance
-      const balanceChange =
-        data.type === "deposit" ? data.amount : -data.amount;
+      const balanceChange = data.type === "deposit" ? data.amount : -data.amount;
       const newBalance = currentBalance + balanceChange;
 
       await db.execute(
@@ -189,10 +162,9 @@ export function useBankTransactionMutations(): BankTransactionMutations {
         `SELECT account_id, type, amount FROM bank_transactions WHERE id = ?`,
         [id]
       );
-      const rows = (result.rows?._array ?? []) as TransactionQueryRow[];
+      const tx = (result.rows._array as TransactionQueryRow[])[0];
 
-      if (rows.length > 0) {
-        const tx = rows[0];
+      if (tx) {
         const now = new Date().toISOString();
         // Reverse the balance change
         const reverseAmount = tx.type === "deposit" ? -tx.amount : tx.amount;

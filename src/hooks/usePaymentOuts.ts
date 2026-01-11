@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { PaymentOut, PaymentOutMode } from "@/features/purchases/types";
+import type { PaymentOut } from "@/features/purchases/types";
 
 // Database row type (snake_case columns from SQLite)
 interface PaymentOutRow {
@@ -30,11 +30,11 @@ function mapRowToPaymentOut(row: PaymentOutRow): PaymentOut {
   return {
     id: row.id,
     paymentNumber: row.payment_number,
-    customerId: row.customer_id,
-    customerName: row.customer_name,
+    supplierId: row.customer_id,
+    supplierName: row.customer_name,
     date: row.date,
     amount: row.amount,
-    paymentMode: row.payment_mode as PaymentOutMode,
+    paymentMode: row.payment_mode,
     referenceNumber: row.reference_number ?? undefined,
     invoiceId: row.invoice_id ?? undefined,
     invoiceNumber: row.invoice_number ?? undefined,
@@ -51,53 +51,24 @@ export function usePaymentOuts(filters?: {
   dateTo?: string;
   search?: string;
 }): { payments: PaymentOut[]; isLoading: boolean; error: Error | undefined } {
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: string[] = [];
+  const supplierFilter = filters?.supplierId ?? null;
+  const modeFilter = filters?.paymentMode ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
-    if (filters?.supplierId) {
-      conditions.push("customer_id = ?");
-      params.push(filters.supplierId);
-    }
+  const { data, isLoading, error } = useQuery<PaymentOutRow>(
+    `SELECT * FROM payment_outs
+     WHERE ($1 IS NULL OR customer_id = $1)
+     AND ($2 IS NULL OR payment_mode = $2)
+     AND ($3 IS NULL OR date >= $3)
+     AND ($4 IS NULL OR date <= $4)
+     AND ($5 IS NULL OR payment_number LIKE $5 OR customer_name LIKE $5)
+     ORDER BY date DESC, created_at DESC`,
+    [supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
+  );
 
-    if (filters?.paymentMode) {
-      conditions.push("payment_mode = ?");
-      params.push(filters.paymentMode);
-    }
-
-    if (filters?.dateFrom) {
-      conditions.push("date >= ?");
-      params.push(filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      conditions.push("date <= ?");
-      params.push(filters.dateTo);
-    }
-
-    if (filters?.search) {
-      conditions.push("(payment_number LIKE ? OR customer_name LIKE ?)");
-      const searchPattern = `%${filters.search}%`;
-      params.push(searchPattern, searchPattern);
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM payment_outs ${whereClause} ORDER BY date DESC, created_at DESC`,
-      params,
-    };
-  }, [
-    filters?.supplierId,
-    filters?.paymentMode,
-    filters?.dateFrom,
-    filters?.dateTo,
-    filters?.search,
-  ]);
-
-  const { data, isLoading, error } = useQuery<PaymentOutRow>(query, params);
-
-  const payments = useMemo(() => data.map(mapRowToPaymentOut), [data]);
+  const payments = data.map(mapRowToPaymentOut);
 
   return { payments, isLoading, error };
 }
@@ -108,9 +79,7 @@ export function usePaymentOutById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<PaymentOutRow>(
-    id
-      ? `SELECT * FROM payment_outs WHERE id = ?`
-      : `SELECT * FROM payment_outs WHERE 1 = 0`,
+    id ? `SELECT * FROM payment_outs WHERE id = ?` : `SELECT * FROM payment_outs WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -183,7 +152,7 @@ export function usePaymentOutMutations(): PaymentOutMutations {
           `UPDATE purchase_invoices
            SET amount_paid = amount_paid + ?,
                amount_due = amount_due - ?,
-               status = CASE WHEN amount_due <= ? THEN 'paid' ELSE status END,
+               status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE 'partial' END,
                updated_at = ?
            WHERE id = ?`,
           [data.amount, data.amount, data.amount, now, data.invoiceId]
@@ -209,10 +178,10 @@ export function usePaymentOutMutations(): PaymentOutMutations {
         `SELECT customer_id, invoice_id, amount FROM payment_outs WHERE id = ?`,
         [id]
       );
-      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
+      const rows = result.rows._array as PaymentQueryRow[];
+      const payment = rows[0];
 
-      if (rows.length > 0) {
-        const payment = rows[0];
+      if (payment) {
         const now = new Date().toISOString();
 
         // Reverse supplier balance
@@ -229,16 +198,10 @@ export function usePaymentOutMutations(): PaymentOutMutations {
             `UPDATE purchase_invoices
              SET amount_paid = amount_paid - ?,
                  amount_due = amount_due + ?,
-                 status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE status END,
+                 status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE 'partial' END,
                  updated_at = ?
              WHERE id = ?`,
-            [
-              payment.amount,
-              payment.amount,
-              payment.amount,
-              now,
-              payment.invoice_id,
-            ]
+            [payment.amount, payment.amount, payment.amount, now, payment.invoice_id]
           );
         }
       }

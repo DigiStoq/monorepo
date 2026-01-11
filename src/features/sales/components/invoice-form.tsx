@@ -10,9 +10,7 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText, Truck } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
-import { useInvoiceSettings, useTaxRates } from "@/hooks/useSettings";
+import { Plus, Trash2, Calendar, User, FileText } from "lucide-react";
 import type { SaleInvoiceFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
@@ -26,8 +24,6 @@ export interface InvoiceFormProps {
   items: Item[];
   initialData?: Partial<SaleInvoiceFormData>;
   isLoading?: boolean;
-  isSubmitting?: boolean;
-  isEditing?: boolean;
   onSubmit: (data: SaleInvoiceFormData) => void;
   onCancel: () => void;
   className?: string;
@@ -37,11 +33,9 @@ interface LineItem {
   id: string;
   itemId: string;
   itemName: string;
-  batchNumber: string;
   quantity: number;
   unit: string;
   unitPrice: number;
-  mrp: number;
   discountPercent: number;
   taxPercent: number;
   amount: number;
@@ -56,123 +50,61 @@ export function InvoiceForm({
   items,
   initialData,
   isLoading,
-  isSubmitting,
-  isEditing,
   onSubmit,
   onCancel,
   className,
-}: InvoiceFormProps): React.ReactNode {
-  const formLoading = isLoading ?? isSubmitting;
+}: InvoiceFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(
-    initialData?.customerId ?? ""
-  );
-  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
-  const [notes, setNotes] = useState(initialData?.notes ?? "");
-  const [terms, setTerms] = useState(initialData?.terms ?? "");
-  const [transportName, setTransportName] = useState(
-    initialData?.transportName ?? ""
-  );
-  const [deliveryDate, setDeliveryDate] = useState(
-    initialData?.deliveryDate ?? ""
-  );
-  const [deliveryLocation, setDeliveryLocation] = useState(
-    initialData?.deliveryLocation ?? ""
-  );
-  const [discountPercent, setDiscountPercent] = useState(
-    initialData?.discountPercent ?? 0
-  );
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
+  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate !== undefined ? initialData.dueDate : "");
+  const [notes, setNotes] = useState(initialData?.notes || "");
+  const [terms, setTerms] = useState(initialData?.terms || "");
+  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent || 0);
 
-  // Initialize line items from initialData if editing
-  const getInitialLineItems = (): LineItem[] => {
-    if (!initialData?.items || initialData.items.length === 0) return [];
+  // Line items state
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-    return initialData.items.map((formItem, index) => {
-      const selectedItem = items.find((i) => i.id === formItem.itemId);
-      const subtotal = formItem.quantity * formItem.unitPrice;
-      const discountPct = formItem.discountPercent ?? 0;
-      const taxPct = formItem.taxPercent ?? 0;
-      const discountAmount = subtotal * (discountPct / 100);
-      const taxableAmount = subtotal - discountAmount;
-      const taxAmount = taxableAmount * (taxPct / 100);
-      const amount = taxableAmount + taxAmount;
-
-      return {
-        id: `line-${Date.now()}-${index}`,
-        itemId: formItem.itemId,
-        itemName: selectedItem?.name ?? "Unknown",
-        batchNumber:
-          (formItem as { batchNumber?: string }).batchNumber ??
-          selectedItem?.batchNumber ??
-          "",
-        quantity: formItem.quantity,
-        unit: selectedItem?.unit ?? "pcs",
-        unitPrice: formItem.unitPrice,
-        mrp: (formItem as { mrp?: number }).mrp ?? 0,
-        discountPercent: discountPct,
-        taxPercent: taxPct,
-        amount,
-      };
-    });
-  };
-
-  // Line items state - initialize from initialData if editing
-  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems);
-
-  // Customer options - hook already filters by type, no need to filter again
-  const customerOptions: SelectOption[] = useMemo(
-    () => [
+  // Customer options
+  const customerOptions: SelectOption[] = useMemo(() => {
+    return [
       { value: "", label: "Select a customer..." },
-      ...customers.map((c) => ({ value: c.id, label: c.name })),
-    ],
-    [customers]
-  );
+      ...customers
+        .filter((c) => c.type === "customer" || c.type === "both")
+        .map((c) => ({ value: c.id, label: c.name })),
+    ];
+  }, [customers]);
 
-  // Item options - hook already filters by isActive, no need to filter again
-  const itemOptions: SelectOption[] = useMemo(
-    () => [
+  // Item options
+  const itemOptions: SelectOption[] = useMemo(() => {
+    return [
       { value: "", label: "Select an item..." },
-      ...items.map((i) => ({
+      ...items.filter((i) => i.isActive).map((i) => ({
         value: i.id,
         label: `${i.name} - $${i.salePrice.toFixed(2)}`,
       })),
-    ],
-    [items]
-  );
-
-  const { settings: invoiceSettings } = useInvoiceSettings();
-  const { taxRates } = useTaxRates();
+    ];
+  }, [items]);
 
   // Add line item
-  const handleAddItem = (): void => {
-    const defaultTaxRate = taxRates.find((r) => r.isDefault)?.rate ?? 0;
-    const taxEnabled = invoiceSettings?.taxEnabled ?? false;
-    const effectiveTaxRate = taxEnabled ? defaultTaxRate : 0;
-
+  const handleAddItem = () => {
     const newItem: LineItem = {
       id: `line-${Date.now()}`,
       itemId: "",
       itemName: "",
-      batchNumber: "",
       quantity: 1,
       unit: "pcs",
       unitPrice: 0,
-      mrp: 0,
       discountPercent: 0,
-      taxPercent: effectiveTaxRate,
+      taxPercent: 0,
       amount: 0,
     };
     setLineItems([...lineItems, newItem]);
   };
 
   // Update line item
-  const handleUpdateLineItem = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ): void => {
+  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
     setLineItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -186,8 +118,7 @@ export function InvoiceForm({
             updated.itemName = selectedItem.name;
             updated.unit = selectedItem.unit;
             updated.unitPrice = selectedItem.salePrice;
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-            updated.batchNumber = selectedItem.batchNumber ?? "";
+            updated.taxPercent = selectedItem.taxRate || 0;
           }
         }
 
@@ -204,7 +135,7 @@ export function InvoiceForm({
   };
 
   // Remove line item
-  const handleRemoveLineItem = (id: string): void => {
+  const handleRemoveLineItem = (id: string) => {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -215,13 +146,10 @@ export function InvoiceForm({
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
-      return (
-        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
-      );
+      return sum + item.quantity * item.unitPrice * (item.discountPercent / 100);
     }, 0);
 
-    const invoiceDiscount =
-      (subtotal - itemDiscounts) * (discountPercent / 100);
+    const invoiceDiscount = (subtotal - itemDiscounts) * (discountPercent / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
@@ -237,11 +165,15 @@ export function InvoiceForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  // Format currency
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Handle submit
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (!customerId || lineItems.length === 0) return;
 
     const formData: SaleInvoiceFormData = {
@@ -250,19 +182,14 @@ export function InvoiceForm({
       dueDate: dueDate || undefined,
       items: lineItems.map((item) => ({
         itemId: item.itemId,
-        batchNumber: item.batchNumber || undefined,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        mrp: item.mrp || undefined,
         discountPercent: item.discountPercent || undefined,
         taxPercent: item.taxPercent || undefined,
       })),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
       terms: terms || undefined,
-      transportName: transportName || undefined,
-      deliveryDate: deliveryDate || undefined,
-      deliveryLocation: deliveryLocation || undefined,
     };
 
     onSubmit(formData);
@@ -275,25 +202,19 @@ export function InvoiceForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            {isEditing ? "Edit Sale Invoice" : "New Sale Invoice"}
-          </h1>
-          <p className="text-slate-500">
-            {isEditing
-              ? "Update invoice details"
-              : "Create a new invoice for your customer"}
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900">New Sale Invoice</h1>
+          <p className="text-slate-500">Create a new invoice for your customer</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={onCancel} disabled={formLoading}>
+          <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!customerId || lineItems.length === 0}
-            isLoading={formLoading}
+            isLoading={isLoading}
           >
-            {isEditing ? "Save Changes" : "Create Invoice"}
+            Create Invoice
           </Button>
         </div>
       </div>
@@ -326,9 +247,7 @@ export function InvoiceForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
 
@@ -340,80 +259,22 @@ export function InvoiceForm({
                   <Input
                     type="date"
                     value={dueDate}
-                    onChange={(e) => {
-                      setDueDate(e.target.value);
-                    }}
+                    onChange={(e) => setDueDate(e.target.value)}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">
-                    {selectedCustomer.name}
-                  </p>
+                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">
-                      {selectedCustomer.phone}
-                    </p>
+                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
                   )}
                   {selectedCustomer.email && (
-                    <p className="text-xs text-slate-500">
-                      {selectedCustomer.email}
-                    </p>
+                    <p className="text-xs text-slate-500">{selectedCustomer.email}</p>
                   )}
                 </div>
               )}
-            </CardBody>
-          </Card>
-
-          {/* Transport Details */}
-          <Card>
-            <CardHeader title="Transport Details" />
-            <CardBody>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Truck className="h-4 w-4 inline mr-1" />
-                    Transport Name
-                  </label>
-                  <Input
-                    type="text"
-                    value={transportName}
-                    onChange={(e) => {
-                      setTransportName(e.target.value);
-                    }}
-                    placeholder="e.g. FedEx"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Delivery Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={deliveryDate}
-                    onChange={(e) => {
-                      setDeliveryDate(e.target.value);
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Truck className="h-4 w-4 inline mr-1" />
-                    Delivery Location
-                  </label>
-                  <Input
-                    type="text"
-                    value={deliveryLocation}
-                    onChange={(e) => {
-                      setDeliveryLocation(e.target.value);
-                    }}
-                    placeholder="e.g. New York"
-                  />
-                </div>
-              </div>
             </CardBody>
           </Card>
 
@@ -421,7 +282,6 @@ export function InvoiceForm({
           <Card>
             <CardHeader
               title="Items"
-              className="pb-4"
               action={
                 <Button
                   variant="outline"
@@ -453,31 +313,25 @@ export function InvoiceForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
                           Item
                         </th>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[120px]">
-                          Batch No.
-                        </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
-                          MRP
-                        </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
-                          Rate
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                          Price
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
                           Amount
                         </th>
-                        <th className="w-10"></th>
+                        <th className="w-12"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -487,42 +341,10 @@ export function InvoiceForm({
                             <Select
                               options={itemOptions}
                               value={item.itemId}
-                              onChange={(value) => {
-                                handleUpdateLineItem(item.id, "itemId", value);
-                              }}
+                              onChange={(value) =>
+                                handleUpdateLineItem(item.id, "itemId", value)
+                              }
                               size="sm"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="text"
-                              value={item.batchNumber}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "batchNumber",
-                                  e.target.value
-                                );
-                              }}
-                              size="sm"
-                              placeholder="Batch"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.mrp}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "mrp",
-                                  parseFloat(e.target.value) || 0
-                                );
-                              }}
-                              size="sm"
-                              className="text-right"
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -530,13 +352,13 @@ export function InvoiceForm({
                               type="number"
                               min="1"
                               value={item.quantity}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -547,13 +369,13 @@ export function InvoiceForm({
                               min="0"
                               step="0.01"
                               value={item.unitPrice}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -564,13 +386,13 @@ export function InvoiceForm({
                               min="0"
                               max="100"
                               value={item.discountPercent}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -581,13 +403,13 @@ export function InvoiceForm({
                               min="0"
                               max="100"
                               value={item.taxPercent}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -599,9 +421,7 @@ export function InvoiceForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                handleRemoveLineItem(item.id);
-                              }}
+                              onClick={() => handleRemoveLineItem(item.id)}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -624,18 +444,14 @@ export function InvoiceForm({
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
-                  onChange={(e) => {
-                    setNotes(e.target.value);
-                  }}
+                  onChange={(e) => setNotes(e.target.value)}
                 />
                 <Textarea
                   label="Terms & Conditions"
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
-                  onChange={(e) => {
-                    setTerms(e.target.value);
-                  }}
+                  onChange={(e) => setTerms(e.target.value)}
                 />
               </div>
             </CardBody>
@@ -649,9 +465,7 @@ export function InvoiceForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="font-medium">
-                  {formatCurrency(totals.subtotal)}
-                </span>
+                <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -661,9 +475,7 @@ export function InvoiceForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => {
-                    setDiscountPercent(parseFloat(e.target.value) || 0);
-                  }}
+                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
                   size="sm"
                   className="w-16 text-right"
                 />
@@ -675,16 +487,12 @@ export function InvoiceForm({
 
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tax</span>
-                <span className="font-medium">
-                  {formatCurrency(totals.taxAmount)}
-                </span>
+                <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
               </div>
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">
-                    Total
-                  </span>
+                  <span className="text-lg font-semibold text-slate-900">Total</span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatCurrency(totals.total)}
                   </span>
@@ -696,18 +504,16 @@ export function InvoiceForm({
           {/* Quick Actions */}
           <Card>
             <CardBody className="space-y-2">
-              {!isEditing && (
-                <Button variant="outline" fullWidth disabled>
-                  Save as Draft
-                </Button>
-              )}
+              <Button variant="outline" fullWidth disabled>
+                Save as Draft
+              </Button>
               <Button
                 fullWidth
                 disabled={!customerId || lineItems.length === 0}
                 onClick={handleSubmit}
-                isLoading={formLoading}
+                isLoading={isLoading}
               >
-                {isEditing ? "Save Changes" : "Create & Send"}
+                Create & Send
               </Button>
             </CardBody>
           </Card>

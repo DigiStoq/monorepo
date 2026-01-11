@@ -15,7 +15,6 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
 import type { PaymentIn, PaymentMode } from "../types";
 
 // ============================================================================
@@ -36,31 +35,12 @@ export interface PaymentInDetailProps {
 // PAYMENT MODE CONFIG
 // ============================================================================
 
-const paymentModeConfig: Record<
-  PaymentMode,
-  { label: string; icon: typeof Banknote; color: string }
-> = {
+const paymentModeConfig: Record<PaymentMode, { label: string; icon: typeof Banknote; color: string }> = {
   cash: { label: "Cash", icon: Banknote, color: "text-green-600 bg-green-100" },
-  bank: {
-    label: "Bank Transfer",
-    icon: Building2,
-    color: "text-blue-600 bg-blue-100",
-  },
-  card: {
-    label: "Card",
-    icon: CreditCard,
-    color: "text-purple-600 bg-purple-100",
-  },
-  ach: {
-    label: "ACH Transfer",
-    icon: Building2,
-    color: "text-teal-600 bg-teal-100",
-  },
-  cheque: {
-    label: "Cheque",
-    icon: FileText,
-    color: "text-slate-600 bg-slate-100",
-  },
+  bank: { label: "Bank Transfer", icon: Building2, color: "text-blue-600 bg-blue-100" },
+  card: { label: "Card", icon: CreditCard, color: "text-purple-600 bg-purple-100" },
+  ach: { label: "ACH Transfer", icon: Building2, color: "text-teal-600 bg-teal-100" },
+  cheque: { label: "Cheque", icon: FileText, color: "text-slate-600 bg-slate-100" },
   other: { label: "Other", icon: Wallet, color: "text-gray-600 bg-gray-100" },
 };
 
@@ -76,13 +56,18 @@ export function PaymentInDetail({
   onPrint,
   onShare,
   className,
-}: PaymentInDetailProps): React.ReactNode {
+}: PaymentInDetailProps) {
   const mode = paymentModeConfig[payment.paymentMode];
   const ModeIcon = mode.icon;
 
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
-  const formatDate = (dateStr: string): string =>
+  const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
@@ -118,12 +103,8 @@ export function PaymentInDetail({
         {/* Amount Card */}
         <Card className="bg-success-light border-success/20">
           <CardBody className="text-center py-6">
-            <p className="text-sm text-success-dark font-medium mb-1">
-              Amount Received
-            </p>
-            <p className="text-3xl font-bold text-success">
-              {formatCurrency(payment.amount)}
-            </p>
+            <p className="text-sm text-success-dark font-medium mb-1">Amount Received</p>
+            <p className="text-3xl font-bold text-success">{formatCurrency(payment.amount)}</p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <Badge variant="success" size="md">
                 <ModeIcon className="h-4 w-4 mr-1" />
@@ -143,9 +124,7 @@ export function PaymentInDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-medium text-slate-900">
-                  {payment.customerName}
-                </p>
+                <p className="font-medium text-slate-900">{payment.customerName}</p>
               </div>
             </div>
 
@@ -155,19 +134,12 @@ export function PaymentInDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date</p>
-                <p className="font-medium text-slate-900">
-                  {formatDate(payment.date)}
-                </p>
+                <p className="font-medium text-slate-900">{formatDate(payment.date)}</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <div
-                className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                  mode.color
-                )}
-              >
+              <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", mode.color)}>
                 <ModeIcon className="h-4 w-4" />
               </div>
               <div>
@@ -183,9 +155,7 @@ export function PaymentInDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Reference Number</p>
-                  <p className="font-medium text-slate-900">
-                    {payment.referenceNumber}
-                  </p>
+                  <p className="font-medium text-slate-900">{payment.referenceNumber}</p>
                 </div>
               </div>
             )}
@@ -197,9 +167,7 @@ export function PaymentInDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Against Invoice</p>
-                  <p className="font-medium text-primary-600">
-                    {payment.invoiceNumber}
-                  </p>
+                  <p className="font-medium text-primary-600">{payment.invoiceNumber}</p>
                 </div>
               </div>
             )}
@@ -211,9 +179,7 @@ export function PaymentInDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">
-                {payment.notes}
-              </p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">{payment.notes}</p>
             </CardBody>
           </Card>
         )}
@@ -229,12 +195,7 @@ export function PaymentInDetail({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-slate-200 space-y-2">
-        <Button
-          fullWidth
-          variant="outline"
-          leftIcon={<Edit className="h-4 w-4" />}
-          onClick={onEdit}
-        >
+        <Button fullWidth variant="outline" leftIcon={<Edit className="h-4 w-4" />} onClick={onEdit}>
           Edit Payment
         </Button>
         <Button

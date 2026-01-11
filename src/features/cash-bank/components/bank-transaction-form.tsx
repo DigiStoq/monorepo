@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Button,
-  Input,
-  Select,
-  Textarea,
-  type SelectOption,
-} from "@/components/ui";
+import { Button, Input, Select, Textarea, type SelectOption } from "@/components/ui";
 import type { Customer } from "@/features/customers";
 
 // ============================================================================
@@ -25,7 +19,7 @@ export interface BankTransactionFormData {
 
 interface BankTransactionFormProps {
   customers?: Customer[];
-  bankAccounts?: { id: string; name: string }[];
+  bankAccounts?: Array<{ id: string; name: string }>;
   onSubmit: (data: BankTransactionFormData) => void;
   onCancel: () => void;
 }
@@ -49,7 +43,7 @@ export function BankTransactionForm({
   bankAccounts = [],
   onSubmit,
   onCancel,
-}: BankTransactionFormProps): React.ReactNode {
+}: BankTransactionFormProps) {
   const today = new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<BankTransactionFormData>({
@@ -66,15 +60,13 @@ export function BankTransactionForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Handlers
-  const handleChange = (
-    field: keyof BankTransactionFormData,
-    value: string | number
-  ): void => {
+  const handleChange = (field: keyof BankTransactionFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
-        const { [field]: _, ...rest } = prev;
-        return rest;
+        const next = { ...prev };
+        delete next[field];
+        return next;
       });
     }
   };
@@ -99,7 +91,7 @@ export function BankTransactionForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
       onSubmit(formData);
@@ -128,9 +120,7 @@ export function BankTransactionForm({
         <Select
           options={transactionTypeOptions}
           value={formData.type}
-          onChange={(value) => {
-            handleChange("type", value);
-          }}
+          onChange={(value) => handleChange("type", value)}
         />
       </div>
 
@@ -143,9 +133,7 @@ export function BankTransactionForm({
           <Input
             type="date"
             value={formData.date}
-            onChange={(e) => {
-              handleChange("date", e.target.value);
-            }}
+            onChange={(e) => handleChange("date", e.target.value)}
             error={errors.date}
           />
         </div>
@@ -156,9 +144,7 @@ export function BankTransactionForm({
           <Input
             type="number"
             value={formData.amount || ""}
-            onChange={(e) => {
-              handleChange("amount", parseFloat(e.target.value) || 0);
-            }}
+            onChange={(e) => handleChange("amount", parseFloat(e.target.value) || 0)}
             placeholder="0.00"
             min={0}
             step={0.01}
@@ -175,15 +161,11 @@ export function BankTransactionForm({
           </label>
           <Select
             options={accountOptions}
-            value={formData.transferToAccountId ?? ""}
-            onChange={(value) => {
-              handleChange("transferToAccountId", value);
-            }}
+            value={formData.transferToAccountId || ""}
+            onChange={(value) => handleChange("transferToAccountId", value)}
           />
           {errors.transferToAccountId && (
-            <p className="mt-1 text-sm text-error">
-              {errors.transferToAccountId}
-            </p>
+            <p className="mt-1 text-sm text-error">{errors.transferToAccountId}</p>
           )}
         </div>
       )}
@@ -195,10 +177,8 @@ export function BankTransactionForm({
         </label>
         <Input
           type="text"
-          value={formData.referenceNumber ?? ""}
-          onChange={(e) => {
-            handleChange("referenceNumber", e.target.value);
-          }}
+          value={formData.referenceNumber || ""}
+          onChange={(e) => handleChange("referenceNumber", e.target.value)}
           placeholder="e.g., CHK-1234, TRF-001"
         />
       </div>
@@ -211,10 +191,8 @@ export function BankTransactionForm({
           </label>
           <Select
             options={customerOptions}
-            value={formData.relatedCustomerId ?? ""}
-            onChange={(value) => {
-              handleChange("relatedCustomerId", value);
-            }}
+            value={formData.relatedCustomerId || ""}
+            onChange={(value) => handleChange("relatedCustomerId", value)}
           />
         </div>
       )}
@@ -227,10 +205,8 @@ export function BankTransactionForm({
           </label>
           <Input
             type="text"
-            value={formData.relatedInvoiceNumber ?? ""}
-            onChange={(e) => {
-              handleChange("relatedInvoiceNumber", e.target.value);
-            }}
+            value={formData.relatedInvoiceNumber || ""}
+            onChange={(e) => handleChange("relatedInvoiceNumber", e.target.value)}
             placeholder="e.g., INV-1234"
           />
         </div>
@@ -243,9 +219,7 @@ export function BankTransactionForm({
         </label>
         <Textarea
           value={formData.description}
-          onChange={(e) => {
-            handleChange("description", e.target.value);
-          }}
+          onChange={(e) => handleChange("description", e.target.value)}
           placeholder="Enter transaction description..."
           rows={2}
         />

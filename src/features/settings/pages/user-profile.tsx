@@ -1,18 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button, Input } from "@/components/ui";
 import { User, Bell, Lock, Save, Upload, Camera } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import {
-  SettingsCard,
-  SettingsRow,
-  SettingsGroup,
-} from "../components/settings-card";
+import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
 import type { UserProfile, NotificationPreferences } from "../types";
-import {
-  useUserProfile,
-  useUserProfileMutations,
-} from "@/hooks/useUserSettings";
-import { Spinner } from "@/components/common";
+
+// Mock data
+const mockUserProfile: UserProfile = {
+  id: "1",
+  firstName: "John",
+  lastName: "Doe",
+  email: "john.doe@acmecorp.com",
+  phone: "+91 98765 43210",
+  role: "admin",
+  language: "en",
+  notifications: {
+    email: true,
+    push: true,
+    sms: false,
+    invoiceReminders: true,
+    paymentAlerts: true,
+    lowStockAlerts: true,
+    weeklyReports: false,
+  },
+  createdAt: "2024-01-15T10:00:00Z",
+  lastLogin: "2024-01-20T14:30:00Z",
+};
 
 function Toggle({
   checked,
@@ -20,15 +33,13 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}): React.ReactNode {
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => {
-        onChange(!checked);
-      }}
+      onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
         checked ? "bg-teal-600" : "bg-slate-200"
       }`}
@@ -42,57 +53,29 @@ function Toggle({
   );
 }
 
-export function UserProfilePage(): React.ReactNode {
-  const { profile: data, isLoading } = useUserProfile();
-  const { updateUserProfile } = useUserProfileMutations();
-
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+export function UserProfilePage() {
+  const [profile, setProfile] = useState<UserProfile>(mockUserProfile);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
-  // Sync data to local state
-  useEffect(() => {
-    if (data) {
-      setProfile(data);
-    }
-  }, [data]);
-
-  const handleSave = async (): Promise<void> => {
-    if (!profile) return;
+  const handleSave = async () => {
     setIsSaving(true);
-    try {
-      await updateUserProfile(profile);
-    } catch (err) {
-      console.error("Failed to save profile:", err);
-    } finally {
-      setIsSaving(false);
-    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setIsSaving(false);
   };
 
-  const updateField = <K extends keyof UserProfile>(
-    field: K,
-    value: UserProfile[K]
-  ): void => {
-    if (!profile) return;
-    setProfile((prev) => (prev ? { ...prev, [field]: value } : null));
+  const updateField = <K extends keyof UserProfile>(field: K, value: UserProfile[K]) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateNotification = (
-    field: keyof NotificationPreferences,
-    value: boolean
-  ): void => {
-    if (!profile) return;
-    setProfile((prev) =>
-      prev
-        ? {
-            ...prev,
-            notifications: { ...prev.notifications, [field]: value },
-          }
-        : null
-    );
+  const updateNotification = (field: keyof NotificationPreferences, value: boolean) => {
+    setProfile((prev) => ({
+      ...prev,
+      notifications: { ...prev.notifications, [field]: value },
+    }));
   };
 
-  const roleLabels: Record<string, string> = {
+  const roleLabels: Record<UserProfile["role"], string> = {
     owner: "Owner",
     admin: "Administrator",
     manager: "Manager",
@@ -100,45 +83,12 @@ export function UserProfilePage(): React.ReactNode {
     accountant: "Accountant",
   };
 
-  if (isLoading && !profile) {
-    return (
-      <SettingsLayout
-        title="User Profile"
-        description="Manage your personal account settings"
-      >
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      </SettingsLayout>
-    );
-  }
-
-  // Fallback if no profile and not loading (should be handled by creating default in hook, but safeguard)
-  if (!profile) {
-    return (
-      <SettingsLayout
-        title="User Profile"
-        description="Manage your personal account settings"
-      >
-        <div className="text-center py-12">
-          <p>Profile not found.</p>
-        </div>
-      </SettingsLayout>
-    );
-  }
-
   return (
     <SettingsLayout
       title="User Profile"
       description="Manage your personal account settings"
       actions={
-        <Button
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={isSaving}
-          className="gap-2"
-        >
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -164,8 +114,8 @@ export function UserProfilePage(): React.ReactNode {
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white">
-                      {profile.firstName[0] || "U"}
-                      {profile.lastName[0] || ""}
+                      {profile.firstName[0]}
+                      {profile.lastName[0]}
                     </span>
                   )}
                 </div>
@@ -177,14 +127,8 @@ export function UserProfilePage(): React.ReactNode {
                 <p className="font-medium text-slate-900">
                   {profile.firstName} {profile.lastName}
                 </p>
-                <p className="text-sm text-slate-500">
-                  {roleLabels[profile.role] || profile.role}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1 gap-2 text-xs"
-                >
+                <p className="text-sm text-slate-500">{roleLabels[profile.role]}</p>
+                <Button variant="ghost" size="sm" className="mt-1 gap-2 text-xs">
                   <Upload className="h-3 w-3" />
                   Change Photo
                 </Button>
@@ -196,9 +140,7 @@ export function UserProfilePage(): React.ReactNode {
                 <Input
                   type="text"
                   value={profile.firstName}
-                  onChange={(e) => {
-                    updateField("firstName", e.target.value);
-                  }}
+                  onChange={(e) => updateField("firstName", e.target.value)}
                   className="w-48"
                 />
               </SettingsRow>
@@ -206,39 +148,30 @@ export function UserProfilePage(): React.ReactNode {
                 <Input
                   type="text"
                   value={profile.lastName}
-                  onChange={(e) => {
-                    updateField("lastName", e.target.value);
-                  }}
+                  onChange={(e) => updateField("lastName", e.target.value)}
                   className="w-48"
                 />
               </SettingsRow>
-              <SettingsRow
-                label="Email Address"
-                description="Used for login and notifications"
-              >
+              <SettingsRow label="Email Address" description="Used for login and notifications">
                 <Input
                   type="email"
                   value={profile.email}
-                  disabled // Email usually can't be changed directly here
-                  className="w-64 bg-slate-50"
+                  onChange={(e) => updateField("email", e.target.value)}
+                  className="w-64"
                 />
               </SettingsRow>
               <SettingsRow label="Phone Number">
                 <Input
                   type="tel"
                   value={profile.phone ?? ""}
-                  onChange={(e) => {
-                    updateField("phone", e.target.value);
-                  }}
+                  onChange={(e) => updateField("phone", e.target.value)}
                   className="w-48"
                 />
               </SettingsRow>
               <SettingsRow label="Language">
                 <select
                   value={profile.language}
-                  onChange={(e) => {
-                    updateField("language", e.target.value);
-                  }}
+                  onChange={(e) => updateField("language", e.target.value)}
                   className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="en">English</option>
@@ -262,9 +195,7 @@ export function UserProfilePage(): React.ReactNode {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => {
-                  setShowPasswordForm(true);
-                }}
+                onClick={() => setShowPasswordForm(true)}
               >
                 Change Password
               </Button>
@@ -274,33 +205,16 @@ export function UserProfilePage(): React.ReactNode {
           {showPasswordForm ? (
             <div className="space-y-4">
               <SettingsRow label="Current Password">
-                <Input
-                  type="password"
-                  className="w-64"
-                  placeholder="Enter current password"
-                />
+                <Input type="password" className="w-64" placeholder="Enter current password" />
               </SettingsRow>
               <SettingsRow label="New Password">
-                <Input
-                  type="password"
-                  className="w-64"
-                  placeholder="Enter new password"
-                />
+                <Input type="password" className="w-64" placeholder="Enter new password" />
               </SettingsRow>
               <SettingsRow label="Confirm Password">
-                <Input
-                  type="password"
-                  className="w-64"
-                  placeholder="Confirm new password"
-                />
+                <Input type="password" className="w-64" placeholder="Confirm new password" />
               </SettingsRow>
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                  }}
-                >
+                <Button variant="ghost" onClick={() => setShowPasswordForm(false)}>
                   Cancel
                 </Button>
                 <Button>Update Password</Button>
@@ -308,8 +222,7 @@ export function UserProfilePage(): React.ReactNode {
             </div>
           ) : (
             <p className="text-sm text-slate-500">
-              Last changed 30 days ago. It&apos;s recommended to change your
-              password periodically.
+              Last changed 30 days ago. It's recommended to change your password periodically.
             </p>
           )}
         </SettingsCard>
@@ -321,37 +234,22 @@ export function UserProfilePage(): React.ReactNode {
           icon={Bell}
         >
           <SettingsGroup title="Channels">
-            <SettingsRow
-              label="Email Notifications"
-              description="Receive updates via email"
-            >
+            <SettingsRow label="Email Notifications" description="Receive updates via email">
               <Toggle
                 checked={profile.notifications.email}
-                onChange={(v) => {
-                  updateNotification("email", v);
-                }}
+                onChange={(v) => updateNotification("email", v)}
               />
             </SettingsRow>
-            <SettingsRow
-              label="Push Notifications"
-              description="Browser and desktop notifications"
-            >
+            <SettingsRow label="Push Notifications" description="Browser and desktop notifications">
               <Toggle
                 checked={profile.notifications.push}
-                onChange={(v) => {
-                  updateNotification("push", v);
-                }}
+                onChange={(v) => updateNotification("push", v)}
               />
             </SettingsRow>
-            <SettingsRow
-              label="SMS Notifications"
-              description="Text message alerts"
-            >
+            <SettingsRow label="SMS Notifications" description="Text message alerts">
               <Toggle
                 checked={profile.notifications.sms}
-                onChange={(v) => {
-                  updateNotification("sms", v);
-                }}
+                onChange={(v) => updateNotification("sms", v)}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -359,48 +257,28 @@ export function UserProfilePage(): React.ReactNode {
           <div className="my-6 border-t border-slate-100" />
 
           <SettingsGroup title="Alert Types">
-            <SettingsRow
-              label="Invoice Reminders"
-              description="Due date and overdue alerts"
-            >
+            <SettingsRow label="Invoice Reminders" description="Due date and overdue alerts">
               <Toggle
                 checked={profile.notifications.invoiceReminders}
-                onChange={(v) => {
-                  updateNotification("invoiceReminders", v);
-                }}
+                onChange={(v) => updateNotification("invoiceReminders", v)}
               />
             </SettingsRow>
-            <SettingsRow
-              label="Payment Alerts"
-              description="Incoming and outgoing payments"
-            >
+            <SettingsRow label="Payment Alerts" description="Incoming and outgoing payments">
               <Toggle
                 checked={profile.notifications.paymentAlerts}
-                onChange={(v) => {
-                  updateNotification("paymentAlerts", v);
-                }}
+                onChange={(v) => updateNotification("paymentAlerts", v)}
               />
             </SettingsRow>
-            <SettingsRow
-              label="Low Stock Alerts"
-              description="When items fall below reorder level"
-            >
+            <SettingsRow label="Low Stock Alerts" description="When items fall below reorder level">
               <Toggle
                 checked={profile.notifications.lowStockAlerts}
-                onChange={(v) => {
-                  updateNotification("lowStockAlerts", v);
-                }}
+                onChange={(v) => updateNotification("lowStockAlerts", v)}
               />
             </SettingsRow>
-            <SettingsRow
-              label="Weekly Reports"
-              description="Summary reports every week"
-            >
+            <SettingsRow label="Weekly Reports" description="Summary reports every week">
               <Toggle
                 checked={profile.notifications.weeklyReports}
-                onChange={(v) => {
-                  updateNotification("weeklyReports", v);
-                }}
+                onChange={(v) => updateNotification("weeklyReports", v)}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -411,9 +289,7 @@ export function UserProfilePage(): React.ReactNode {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-slate-500">Role</p>
-              <p className="font-medium text-slate-900">
-                {roleLabels[profile.role] || profile.role}
-              </p>
+              <p className="font-medium text-slate-900">{roleLabels[profile.role]}</p>
             </div>
             <div>
               <p className="text-slate-500">Account Created</p>

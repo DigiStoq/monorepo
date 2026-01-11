@@ -71,10 +71,6 @@ export interface ToastProviderProps {
 // CONTEXT
 // ============================================================================
 
-// ============================================================================
-// CONTEXT
-// ============================================================================
-
 interface ToastContextValue {
   toasts: Toast[];
   toast: (options: Omit<Toast, "id">) => string;
@@ -88,7 +84,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-export function useToast(): ToastContextValue {
+export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");
@@ -100,10 +96,7 @@ export function useToast(): ToastContextValue {
 // STYLES & ICONS
 // ============================================================================
 
-const typeStyles: Record<
-  ToastType,
-  { bg: string; icon: LucideIcon; iconColor: string }
-> = {
+const typeStyles: Record<ToastType, { bg: string; icon: LucideIcon; iconColor: string }> = {
   success: {
     bg: "bg-success-light border-success/30",
     icon: CheckCircle2,
@@ -165,21 +158,9 @@ const toastVariants = {
 // TOAST ITEM COMPONENT
 // ============================================================================
 
-const ToastItem = forwardRef<
-  HTMLDivElement,
-  ToastProps & { position: ToastPosition }
->(
+const ToastItem = forwardRef<HTMLDivElement, ToastProps & { position: ToastPosition }>(
   (
-    {
-      type,
-      title,
-      description,
-      duration = 5000,
-      action,
-      onDismiss,
-      onClose,
-      position,
-    },
+    { type, title, description, duration = 5000, action, onDismiss, onClose, position },
     ref
   ) => {
     const { bg, icon: Icon, iconColor } = typeStyles[type];
@@ -191,14 +172,12 @@ const ToastItem = forwardRef<
           onClose();
           onDismiss?.();
         }, duration);
-        return () => {
-          clearTimeout(timer);
-        };
+        return () => clearTimeout(timer);
       }
       return undefined;
     }, [duration, onClose, onDismiss]);
 
-    const handleClose = (): void => {
+    const handleClose = () => {
       onClose();
       onDismiss?.();
     };
@@ -271,7 +250,7 @@ function ToastContainer({
   toasts: Toast[];
   position: ToastPosition;
   onClose: (id: string) => void;
-}): JSX.Element | null {
+}) {
   if (typeof window === "undefined") return null;
 
   return createPortal(
@@ -288,9 +267,7 @@ function ToastContainer({
               key={toast.id}
               {...toast}
               position={position}
-              onClose={() => {
-                onClose(toast.id);
-              }}
+              onClose={() => onClose(toast.id)}
             />
           ))}
         </AnimatePresence>
@@ -311,7 +288,7 @@ export function ToastProvider({
   position = "top-right",
   defaultDuration = 5000,
   maxToasts = 5,
-}: ToastProviderProps): JSX.Element {
+}: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismiss = useCallback((id: string) => {
@@ -383,16 +360,7 @@ export function ToastProvider({
 
   return (
     <ToastContext.Provider
-      value={{
-        toasts,
-        toast,
-        success,
-        error,
-        warning,
-        info,
-        dismiss,
-        dismissAll,
-      }}
+      value={{ toasts, toast, success, error, warning, info, dismiss, dismissAll }}
     >
       {children}
       <ToastContainer toasts={toasts} position={position} onClose={dismiss} />

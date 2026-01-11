@@ -1,69 +1,78 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { Card, CardBody, CardHeader } from "@/components/ui";
-import {
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle, Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange } from "../types";
-import { useCashFlowReport } from "@/hooks/useReports";
-import { useCurrency } from "@/hooks/useCurrency";
+import type { DateRange, CashFlowReport as CashFlowReportType } from "../types";
+
+// ============================================================================
+// MOCK DATA
+// ============================================================================
+
+const mockCashFlow: CashFlowReportType = {
+  period: {
+    from: "2024-01-01",
+    to: "2024-01-31",
+  },
+  openingBalance: 25000,
+  inflows: {
+    salesReceipts: 185000,
+    otherReceipts: 5500,
+    total: 190500,
+  },
+  outflows: {
+    purchasePayments: 125000,
+    expenses: 28500,
+    otherPayments: 8000,
+    total: 161500,
+  },
+  netCashFlow: 29000,
+  closingBalance: 54000,
+};
+
+const mockMonthlyFlow = [
+  { month: "Aug", inflow: 165000, outflow: 142000 },
+  { month: "Sep", inflow: 175000, outflow: 155000 },
+  { month: "Oct", inflow: 182000, outflow: 158000 },
+  { month: "Nov", inflow: 195000, outflow: 168000 },
+  { month: "Dec", inflow: 210000, outflow: 175000 },
+  { month: "Jan", inflow: 190500, outflow: 161500 },
+];
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export function CashFlowReportPage(): React.ReactNode {
+export function CashFlowReportPage() {
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString()
-      .slice(0, 10),
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   });
 
-  // Fetch data from PowerSync
-  const { report, isLoading } = useCashFlowReport(dateRange);
+  const data = mockCashFlow;
 
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
-  // Loading state
-  if (isLoading || !report) {
-    return (
-      <ReportLayout
-        title="Cash Flow Statement"
-        subtitle="Summary of cash inflows and outflows"
-        backPath="/reports"
-        filters={
-          <div className="flex items-center gap-4">
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-          </div>
-        }
-      >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-500">Loading report data...</div>
-        </div>
-      </ReportLayout>
+  // Calculate max for chart scaling
+  const maxFlow = useMemo(() => {
+    return Math.max(
+      ...mockMonthlyFlow.map((m) => Math.max(m.inflow, m.outflow))
     );
-  }
-
-  const data = report;
+  }, []);
 
   return (
     <ReportLayout
       title="Cash Flow Statement"
       subtitle="Summary of cash inflows and outflows"
       backPath="/reports"
-      onExport={() => {
-        /* TODO: Implement export */
-      }}
-      onPrint={() => {
-        window.print();
-      }}
+      onExport={() => console.log("Export cash flow")}
+      onPrint={() => window.print()}
       filters={
         <div className="flex items-center gap-4">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -81,9 +90,7 @@ export function CashFlowReportPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Opening Balance</p>
-                  <p className="text-xl font-bold text-slate-900">
-                    {formatCurrency(data.openingBalance)}
-                  </p>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(data.openingBalance)}</p>
                 </div>
               </div>
             </CardBody>
@@ -96,9 +103,7 @@ export function CashFlowReportPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-green-600">Cash Inflows</p>
-                  <p className="text-xl font-bold text-success">
-                    {formatCurrency(data.inflows.total)}
-                  </p>
+                  <p className="text-xl font-bold text-success">{formatCurrency(data.inflows.total)}</p>
                 </div>
               </div>
             </CardBody>
@@ -111,9 +116,7 @@ export function CashFlowReportPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-red-600">Cash Outflows</p>
-                  <p className="text-xl font-bold text-error">
-                    {formatCurrency(data.outflows.total)}
-                  </p>
+                  <p className="text-xl font-bold text-error">{formatCurrency(data.outflows.total)}</p>
                 </div>
               </div>
             </CardBody>
@@ -126,9 +129,7 @@ export function CashFlowReportPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-teal-600">Closing Balance</p>
-                  <p className="text-xl font-bold text-teal-700">
-                    {formatCurrency(data.closingBalance)}
-                  </p>
+                  <p className="text-xl font-bold text-teal-700">{formatCurrency(data.closingBalance)}</p>
                 </div>
               </div>
             </CardBody>
@@ -149,23 +150,15 @@ export function CashFlowReportPage(): React.ReactNode {
               <div className="divide-y divide-slate-100">
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Sales Receipts</span>
-                  <span className="font-medium text-success">
-                    {formatCurrency(data.inflows.salesReceipts)}
-                  </span>
+                  <span className="font-medium text-success">{formatCurrency(data.inflows.salesReceipts)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Other Receipts</span>
-                  <span className="font-medium text-success">
-                    {formatCurrency(data.inflows.otherReceipts)}
-                  </span>
+                  <span className="font-medium text-success">{formatCurrency(data.inflows.otherReceipts)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-green-50">
-                  <span className="font-medium text-slate-900">
-                    Total Inflows
-                  </span>
-                  <span className="font-bold text-success">
-                    {formatCurrency(data.inflows.total)}
-                  </span>
+                  <span className="font-medium text-slate-900">Total Inflows</span>
+                  <span className="font-bold text-success">{formatCurrency(data.inflows.total)}</span>
                 </div>
               </div>
             </CardBody>
@@ -183,29 +176,19 @@ export function CashFlowReportPage(): React.ReactNode {
               <div className="divide-y divide-slate-100">
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Purchase Payments</span>
-                  <span className="font-medium text-error">
-                    {formatCurrency(data.outflows.purchasePayments)}
-                  </span>
+                  <span className="font-medium text-error">{formatCurrency(data.outflows.purchasePayments)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Expenses</span>
-                  <span className="font-medium text-error">
-                    {formatCurrency(data.outflows.expenses)}
-                  </span>
+                  <span className="font-medium text-error">{formatCurrency(data.outflows.expenses)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Other Payments</span>
-                  <span className="font-medium text-error">
-                    {formatCurrency(data.outflows.otherPayments)}
-                  </span>
+                  <span className="font-medium text-error">{formatCurrency(data.outflows.otherPayments)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-red-50">
-                  <span className="font-medium text-slate-900">
-                    Total Outflows
-                  </span>
-                  <span className="font-bold text-error">
-                    {formatCurrency(data.outflows.total)}
-                  </span>
+                  <span className="font-medium text-slate-900">Total Outflows</span>
+                  <span className="font-bold text-error">{formatCurrency(data.outflows.total)}</span>
                 </div>
               </div>
             </CardBody>
@@ -213,13 +196,9 @@ export function CashFlowReportPage(): React.ReactNode {
         </div>
 
         {/* Net Cash Flow */}
-        <Card
-          className={cn(
-            data.netCashFlow >= 0
-              ? "bg-green-50 border-green-200"
-              : "bg-red-50 border-red-200"
-          )}
-        >
+        <Card className={cn(
+          data.netCashFlow >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+        )}>
           <CardBody>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -229,37 +208,82 @@ export function CashFlowReportPage(): React.ReactNode {
                   <TrendingDown className="h-8 w-8 text-error" />
                 )}
                 <div>
-                  <p
-                    className={cn(
-                      "text-sm",
-                      data.netCashFlow >= 0 ? "text-green-600" : "text-red-600"
-                    )}
-                  >
+                  <p className={cn(
+                    "text-sm",
+                    data.netCashFlow >= 0 ? "text-green-600" : "text-red-600"
+                  )}>
                     Net Cash Flow
                   </p>
-                  <p
-                    className={cn(
-                      "text-3xl font-bold",
-                      data.netCashFlow >= 0 ? "text-success" : "text-error"
-                    )}
-                  >
-                    {data.netCashFlow >= 0 ? "+" : ""}
-                    {formatCurrency(data.netCashFlow)}
+                  <p className={cn(
+                    "text-3xl font-bold",
+                    data.netCashFlow >= 0 ? "text-success" : "text-error"
+                  )}>
+                    {data.netCashFlow >= 0 ? "+" : ""}{formatCurrency(data.netCashFlow)}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-500">Change from opening</p>
-                <p
-                  className={cn(
-                    "text-lg font-medium",
-                    data.netCashFlow >= 0 ? "text-success" : "text-error"
-                  )}
-                >
+                <p className={cn(
+                  "text-lg font-medium",
+                  data.netCashFlow >= 0 ? "text-success" : "text-error"
+                )}>
                   {data.openingBalance > 0
                     ? `${data.netCashFlow >= 0 ? "+" : ""}${((data.netCashFlow / data.openingBalance) * 100).toFixed(1)}%`
                     : "N/A"}
                 </p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Monthly Trend */}
+        <Card>
+          <CardHeader>
+            <h3 className="font-medium text-slate-900">Monthly Cash Flow Trend</h3>
+          </CardHeader>
+          <CardBody>
+            <div className="flex items-end justify-between gap-4 h-56">
+              {mockMonthlyFlow.map((month, index) => {
+                const inflowHeight = (month.inflow / maxFlow) * 100;
+                const outflowHeight = (month.outflow / maxFlow) * 100;
+                const netFlow = month.inflow - month.outflow;
+
+                return (
+                  <div key={index} className="flex-1 flex flex-col items-center">
+                    <div className="w-full flex flex-col items-center justify-end h-48">
+                      <span className={cn(
+                        "text-xs font-medium mb-1",
+                        netFlow >= 0 ? "text-success" : "text-error"
+                      )}>
+                        {netFlow >= 0 ? "+" : ""}{formatCurrency(netFlow)}
+                      </span>
+                      <div className="w-full flex gap-1 items-end justify-center">
+                        <div
+                          className="w-5 bg-gradient-to-t from-green-500 to-green-400 rounded-t"
+                          style={{ height: `${inflowHeight}%` }}
+                          title={`Inflow: ${formatCurrency(month.inflow)}`}
+                        />
+                        <div
+                          className="w-5 bg-gradient-to-t from-red-500 to-red-400 rounded-t"
+                          style={{ height: `${outflowHeight}%` }}
+                          title={`Outflow: ${formatCurrency(month.outflow)}`}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-500 mt-2">{month.month}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded" />
+                <span className="text-sm text-slate-600">Inflows</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded" />
+                <span className="text-sm text-slate-600">Outflows</span>
               </div>
             </div>
           </CardBody>

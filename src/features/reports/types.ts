@@ -224,39 +224,3 @@ export interface TaxSummary {
   };
   netTaxLiability: number;
 }
-
-// ============================================================================
-// CASH MOVEMENT REPORT TYPES
-// ============================================================================
-
-export type PaymentMode = "cash" | "bank" | "card" | "ach" | "cheque" | "other";
-
-export interface PaymentModeMovement {
-  mode: PaymentMode;
-  label: string;
-  moneyIn: number;
-  moneyOut: number;
-  net: number;
-  transactionCount: number;
-}
-
-export interface CashMovementTransaction {
-  id: string;
-  date: string;
-  type: "payment_in" | "payment_out" | "expense";
-  referenceNumber: string;
-  partyName?: string;
-  description: string;
-  paymentMode: PaymentMode;
-  moneyIn: number;
-  moneyOut: number;
-}
-
-export interface CashMovementReport {
-  period: DateRange;
-  byMode: PaymentModeMovement[];
-  totalMoneyIn: number;
-  totalMoneyOut: number;
-  netMovement: number;
-  transactions: CashMovementTransaction[];
-}

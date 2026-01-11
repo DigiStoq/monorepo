@@ -1,139 +1,31 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout";
-import { Button, ConfirmDeleteDialog } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { CustomerList, CustomerDetail, CustomerFormModal } from "./components";
-import {
-  useCustomers,
-  useCustomerMutations,
-  useCustomerTransactions,
-} from "@/hooks/useCustomers";
-import type {
-  Customer,
-  CustomerFormData,
-  CustomerFilters,
-  CustomerType,
-} from "./types";
-import { SearchInput, Select, type SelectOption } from "@/components/ui";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
+import { useCustomers, useCustomerMutations } from "@/hooks/useCustomers";
+import type { Customer, CustomerTransaction, CustomerFormData } from "./types";
 
-export function CustomersPage(): React.ReactNode {
-  const navigate = useNavigate();
-
+export function CustomersPage() {
   // Data from PowerSync
   const { customers, isLoading, error } = useCustomers();
-  const { createCustomer, updateCustomer, deleteCustomer } =
-    useCustomerMutations();
+  const { createCustomer, updateCustomer, deleteCustomer } = useCustomerMutations();
 
   // State
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
-    null
-  );
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Filter State
-  const [filters, setFilters] = useState<CustomerFilters>({
-    search: "",
-    type: "all",
-    balanceType: "all",
-    sortBy: "name",
-    sortOrder: "asc",
-  });
-
-  const typeOptions: SelectOption[] = [
-    { value: "all", label: "All Customers" },
-    { value: "customer", label: "Customers" },
-    { value: "supplier", label: "Suppliers" },
-    { value: "both", label: "Both" },
-  ];
-
-  const balanceOptions: SelectOption[] = [
-    { value: "all", label: "All Balances" },
-    { value: "receivable", label: "To Receive" },
-    { value: "payable", label: "To Pay" },
-  ];
-
-  // Filter Logic
-  const filteredCustomers = useMemo(() => {
-    return customers
-      .filter((customer) => {
-        // Search filter
-        if (filters.search) {
-          const searchLower = filters.search.toLowerCase();
-          const matchesName = customer.name.toLowerCase().includes(searchLower);
-          const matchesPhone = customer.phone?.includes(filters.search);
-          const matchesEmail = customer.email
-            ?.toLowerCase()
-            .includes(searchLower);
-          if (!matchesName && !matchesPhone && !matchesEmail) return false;
-        }
-
-        // Type filter
-        if (filters.type !== "all" && customer.type !== filters.type) {
-          return false;
-        }
-
-        // Balance filter
-        if (
-          filters.balanceType === "receivable" &&
-          customer.currentBalance <= 0
-        ) {
-          return false;
-        }
-        if (filters.balanceType === "payable" && customer.currentBalance >= 0) {
-          return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        let comparison = 0;
-
-        switch (filters.sortBy) {
-          case "name":
-            comparison = a.name.localeCompare(b.name);
-            break;
-          case "balance":
-            comparison =
-              Math.abs(b.currentBalance) - Math.abs(a.currentBalance);
-            break;
-          case "recent":
-            comparison =
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-            break;
-        }
-
-        return filters.sortOrder === "desc" ? -comparison : comparison;
-      });
-  }, [customers, filters]);
-
-  // Totals Calculation
-  const totals = useMemo(() => {
-    if (!filteredCustomers.length) return { receivable: 0, payable: 0 };
-
-    return filteredCustomers.reduce(
-      (acc, customer) => {
-        if (customer.currentBalance > 0) {
-          acc.receivable += customer.currentBalance;
-        } else {
-          acc.payable += Math.abs(customer.currentBalance);
-        }
-        return acc;
-      },
-      { receivable: 0, payable: 0 }
-    );
-  }, [filteredCustomers]);
-
-  const { formatCurrency } = useCurrency();
 
   // Update selected customer when data changes
   const currentSelectedCustomer = useMemo(() => {
@@ -141,31 +33,34 @@ export function CustomersPage(): React.ReactNode {
     return customers.find((c) => c.id === selectedCustomer.id) ?? null;
   }, [customers, selectedCustomer]);
 
-  // Fetch transactions for selected customer from PowerSync
-  const { transactions: selectedCustomerTransactions } =
-    useCustomerTransactions(currentSelectedCustomer?.id ?? null);
+  // TODO: Fetch transactions for selected customer from PowerSync
+  // For now, return empty array until transactions hook is connected
+  const selectedCustomerTransactions: CustomerTransaction[] = useMemo(() => {
+    // This will be replaced with a useCustomerTransactions hook
+    return [];
+  }, [currentSelectedCustomer]);
 
   // Handlers
-  const handleAddCustomer = (): void => {
+  const handleAddCustomer = () => {
     setEditingCustomer(null);
     setIsFormModalOpen(true);
   };
 
-  const handleEditCustomer = (): void => {
+  const handleEditCustomer = () => {
     if (currentSelectedCustomer) {
       setEditingCustomer(currentSelectedCustomer);
       setIsFormModalOpen(true);
     }
   };
 
-  const handleDeleteCustomer = (): void => {
+  const handleDeleteCustomer = () => {
     if (currentSelectedCustomer) {
       setCustomerToDelete(currentSelectedCustomer);
       setIsDeleteModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = async (): Promise<void> => {
+  const handleConfirmDelete = async () => {
     if (customerToDelete) {
       setIsSubmitting(true);
       try {
@@ -181,7 +76,7 @@ export function CustomersPage(): React.ReactNode {
     }
   };
 
-  const handleFormSubmit = async (data: CustomerFormData): Promise<void> => {
+  const handleFormSubmit = async (data: CustomerFormData) => {
     setIsSubmitting(true);
     try {
       if (editingCustomer) {
@@ -198,13 +93,9 @@ export function CustomersPage(): React.ReactNode {
     }
   };
 
-  const handleAddTransaction = (type: "payment-in" | "payment-out"): void => {
-    // Navigate to payment forms
-    if (type === "payment-in") {
-      void navigate({ to: "/sale/payment-in" });
-    } else {
-      void navigate({ to: "/purchase/payment-out" });
-    }
+  const handleAddTransaction = (type: "payment-in" | "payment-out") => {
+    // TODO: Open transaction modal - will navigate to payment forms
+    console.log("Add transaction:", type, "for customer:", currentSelectedCustomer?.id);
   };
 
   if (error) {
@@ -225,110 +116,26 @@ export function CustomersPage(): React.ReactNode {
         title="Customers"
         description="Manage your customers and suppliers"
         actions={
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleAddCustomer}
-          >
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddCustomer}>
             Add Customer
           </Button>
         }
       />
 
-      {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
-          {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-            <SearchInput
-              placeholder="Search customers..."
-              value={filters.search}
-              onChange={(e) => {
-                setFilters((f) => ({ ...f, search: e.target.value }));
-              }}
-              className="w-full sm:w-72"
-            />
-
-            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-              <Select
-                options={typeOptions}
-                value={filters.type}
-                onChange={(value) => {
-                  setFilters((f) => ({
-                    ...f,
-                    type: value as CustomerType | "all",
-                  }));
-                }}
-                size="md"
-                className="min-w-[140px]"
-              />
-
-              <Select
-                options={balanceOptions}
-                value={filters.balanceType}
-                onChange={(value) => {
-                  setFilters((f) => ({
-                    ...f,
-                    balanceType: value as "all" | "receivable" | "payable",
-                  }));
-                }}
-                size="md"
-                className="min-w-[140px]"
-              />
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
-                <ArrowDownLeft className="h-4 w-4 text-success" />
-              </div>
-              <div>
-                <p className="text-xs text-success-dark font-medium uppercase tracking-wider">
-                  To Receive
-                </p>
-                <p className="text-lg font-bold text-success leading-none">
-                  {formatCurrency(totals.receivable)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 px-4 py-2 bg-error-light rounded-lg border border-error/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
-                <ArrowUpRight className="h-4 w-4 text-error" />
-              </div>
-              <div>
-                <p className="text-xs text-error-dark font-medium uppercase tracking-wider">
-                  To Pay
-                </p>
-                <p className="text-lg font-bold text-error leading-none">
-                  {formatCurrency(totals.payable)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Content - Master-Detail Layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         {/* Customer List (Master) */}
-        <div className="w-full max-w-[400px] shrink-0 overflow-hidden flex flex-col">
+        <div className="w-[400px] shrink-0 overflow-auto">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <Spinner size="lg" />
             </div>
           ) : (
             <CustomerList
-              customers={filteredCustomers}
+              customers={customers}
               onCustomerClick={setSelectedCustomer}
               onAddCustomer={handleAddCustomer}
-              className="h-full overflow-auto pr-1"
-              hasActiveFilters={
-                !!filters.search ||
-                filters.type !== "all" ||
-                filters.balanceType !== "all"
-              }
+              className="h-full"
             />
           )}
         </div>
@@ -353,49 +160,45 @@ export function CustomersPage(): React.ReactNode {
           setIsFormModalOpen(false);
           setEditingCustomer(null);
         }}
-        onSubmit={(data) => {
-          void handleFormSubmit(data);
-        }}
+        onSubmit={handleFormSubmit}
         isLoading={isSubmitting}
       />
 
       {/* Delete Confirmation Modal */}
-      <ConfirmDeleteDialog
+      <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setCustomerToDelete(null);
         }}
-        onConfirm={() => {
-          void handleConfirmDelete();
-        }}
-        title="Delete Customer"
-        itemName={customerToDelete?.name ?? ""}
-        itemType={
-          customerToDelete?.type === "supplier"
-            ? "Supplier"
-            : customerToDelete?.type === "both"
-              ? "Customer/Supplier"
-              : "Customer"
-        }
-        warningMessage={
-          (customerToDelete?.currentBalance ?? 0) !== 0
-            ? `This customer has a balance of ${(customerToDelete?.currentBalance ?? 0) > 0 ? "+" : ""}$${Math.abs(customerToDelete?.currentBalance ?? 0).toFixed(2)}. Deleting will remove all their transaction history.`
-            : "This will permanently delete this customer and all their transaction history."
-        }
-        linkedItems={
-          selectedCustomerTransactions.length > 0
-            ? [
-                {
-                  type: "Transaction",
-                  count: selectedCustomerTransactions.length,
-                  description: "Will be deleted",
-                },
-              ]
-            : []
-        }
-        isLoading={isSubmitting}
-      />
+        size="sm"
+      >
+        <ModalContent>
+          <ModalHeader title="Delete Customer" />
+          <ModalBody>
+            <p className="text-slate-600">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-slate-900">{customerToDelete?.name}</span>?
+              This action cannot be undone.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setCustomerToDelete(null);
+              }}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleConfirmDelete} isLoading={isSubmitting}>
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

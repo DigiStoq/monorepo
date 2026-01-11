@@ -2,7 +2,7 @@
 // PURCHASE INVOICE TYPES
 // ============================================================================
 
-export type PurchaseInvoiceStatus = "draft" | "ordered" | "received" | "paid" | "returned";
+export type PurchaseInvoiceStatus = "draft" | "received" | "paid" | "partial" | "overdue" | "cancelled";
 
 export interface PurchaseInvoice {
   id: string;
@@ -59,12 +59,12 @@ export interface PurchaseInvoiceItemFormData {
 export interface PurchaseFilters {
   search: string;
   status: PurchaseInvoiceStatus | "all";
-  customerId: string;
+  customerId: string | "all";
   dateRange: {
     from: string | null;
     to: string | null;
   };
-  sortBy: "date" | "number" | "amount" | "supplier";
+  sortBy: "date" | "number" | "amount" | "party";
   sortOrder: "asc" | "desc";
 }
 
@@ -122,13 +122,11 @@ export interface Expense {
   category: ExpenseCategory;
   customerId?: string;
   customerName?: string;
-  paidToName?: string;
-  paidToDetails?: string;
   date: string;
   amount: number;
   paymentMode: PaymentOutMode;
   referenceNumber?: string;
-  description?: string;
+  description: string;
   notes?: string;
   attachmentUrl?: string;
   createdAt: string;
@@ -138,12 +136,10 @@ export interface Expense {
 export interface ExpenseFormData {
   category: ExpenseCategory;
   customerId?: string | undefined;
-  paidToName?: string | undefined;
-  paidToDetails?: string | undefined;
   date: string;
   amount: number;
   paymentMode: PaymentOutMode;
   referenceNumber?: string | undefined;
-  description?: string | undefined;
+  description: string;
   notes?: string | undefined;
 }

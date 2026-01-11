@@ -10,21 +10,10 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import {
-  Plus,
-  Trash2,
-  Calendar,
-  Building2,
-  FileText,
-  Hash,
-} from "lucide-react";
-import type {
-  PurchaseInvoiceFormData,
-  PurchaseInvoiceItemFormData,
-} from "../types";
+import { Plus, Trash2, Calendar, Building2, FileText, Hash } from "lucide-react";
+import type { PurchaseInvoiceFormData, PurchaseInvoiceItemFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
-import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
@@ -49,7 +38,6 @@ interface LineItem {
   unitPrice: number;
   discountPercent: number;
   taxPercent: number;
-  batchNumber: string;
   amount: number;
 }
 
@@ -65,38 +53,34 @@ export function PurchaseInvoiceForm({
   onSubmit,
   onCancel,
   className,
-}: PurchaseInvoiceFormProps): React.ReactNode {
+}: PurchaseInvoiceFormProps) {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(
-    initialData?.customerId ?? ""
-  );
-  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(
-    initialData?.supplierInvoiceNumber ?? ""
-  );
-  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
+  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
+  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(initialData?.supplierInvoiceNumber ?? "");
+  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate !== undefined ? initialData.dueDate : "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
-  const [discountPercent, setDiscountPercent] = useState(
-    initialData?.discountPercent ?? 0
-  );
+  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-  // Customer options (suppliers) - hook already filters by type
+  // Customer options (suppliers only)
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a supplier..." },
-      ...customers.map((c) => ({ value: c.id, label: c.name })),
+      ...customers
+        .filter((c) => c.type === "supplier" || c.type === "both")
+        .map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
-  // Item options - hook already filters by isActive
+  // Item options
   const itemOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select an item..." },
-      ...items.map((i) => ({
+      ...items.filter((i) => i.isActive).map((i) => ({
         value: i.id,
         label: `${i.name} - $${i.purchasePrice.toFixed(2)}`,
       })),
@@ -104,7 +88,7 @@ export function PurchaseInvoiceForm({
   }, [items]);
 
   // Add line item
-  const handleAddItem = (): void => {
+  const handleAddItem = () => {
     const newItem: LineItem = {
       id: `line-${Date.now()}`,
       itemId: "",
@@ -114,18 +98,13 @@ export function PurchaseInvoiceForm({
       unitPrice: 0,
       discountPercent: 0,
       taxPercent: 0,
-      batchNumber: "",
       amount: 0,
     };
     setLineItems([...lineItems, newItem]);
   };
 
   // Update line item
-  const handleUpdateLineItem = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ): void => {
+  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
     setLineItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -140,7 +119,6 @@ export function PurchaseInvoiceForm({
             updated.unit = selectedItem.unit;
             updated.unitPrice = selectedItem.purchasePrice; // Use purchase price
             updated.taxPercent = selectedItem.taxRate ?? 0;
-            updated.batchNumber = selectedItem.batchNumber ?? "";
           }
         }
 
@@ -157,7 +135,7 @@ export function PurchaseInvoiceForm({
   };
 
   // Remove line item
-  const handleRemoveLineItem = (id: string): void => {
+  const handleRemoveLineItem = (id: string) => {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -168,13 +146,10 @@ export function PurchaseInvoiceForm({
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
-      return (
-        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
-      );
+      return sum + item.quantity * item.unitPrice * (item.discountPercent / 100);
     }, 0);
 
-    const invoiceDiscount =
-      (subtotal - itemDiscounts) * (discountPercent / 100);
+    const invoiceDiscount = (subtotal - itemDiscounts) * (discountPercent / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
@@ -190,10 +165,15 @@ export function PurchaseInvoiceForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const { formatCurrency } = useCurrency();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Handle submit
-  const handleSubmit = (): void => {
+  const handleSubmit = () => {
     if (!customerId || lineItems.length === 0) return;
 
     const formData: PurchaseInvoiceFormData = {
@@ -201,15 +181,13 @@ export function PurchaseInvoiceForm({
       supplierInvoiceNumber: supplierInvoiceNumber || undefined,
       date,
       dueDate: dueDate || undefined,
-      items: lineItems.map(
-        (item): PurchaseInvoiceItemFormData => ({
-          itemId: item.itemId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discountPercent: item.discountPercent || undefined,
-          taxPercent: item.taxPercent || undefined,
-        })
-      ),
+      items: lineItems.map((item): PurchaseInvoiceItemFormData => ({
+        itemId: item.itemId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discountPercent: item.discountPercent || undefined,
+        taxPercent: item.taxPercent || undefined,
+      })),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
     };
@@ -224,9 +202,7 @@ export function PurchaseInvoiceForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            New Purchase Invoice
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">New Purchase Invoice</h1>
           <p className="text-slate-500">Record a purchase from your supplier</p>
         </div>
         <div className="flex gap-2">
@@ -271,9 +247,7 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="text"
                     value={supplierInvoiceNumber}
-                    onChange={(e) => {
-                      setSupplierInvoiceNumber(e.target.value);
-                    }}
+                    onChange={(e) => setSupplierInvoiceNumber(e.target.value)}
                     placeholder="Supplier's invoice number"
                   />
                 </div>
@@ -288,9 +262,7 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="date"
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
 
@@ -302,22 +274,16 @@ export function PurchaseInvoiceForm({
                   <Input
                     type="date"
                     value={dueDate}
-                    onChange={(e) => {
-                      setDueDate(e.target.value);
-                    }}
+                    onChange={(e) => setDueDate(e.target.value)}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">
-                    {selectedCustomer.name}
-                  </p>
+                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">
-                      {selectedCustomer.phone}
-                    </p>
+                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
                   )}
                 </div>
               )}
@@ -328,7 +294,6 @@ export function PurchaseInvoiceForm({
           <Card>
             <CardHeader
               title="Items"
-              className="pb-4"
               action={
                 <Button
                   variant="outline"
@@ -360,22 +325,22 @@ export function PurchaseInvoiceForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
                           Price
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
                           Amount
                         </th>
                         <th className="w-12"></th>
@@ -388,9 +353,9 @@ export function PurchaseInvoiceForm({
                             <Select
                               options={itemOptions}
                               value={item.itemId}
-                              onChange={(value) => {
-                                handleUpdateLineItem(item.id, "itemId", value);
-                              }}
+                              onChange={(value) =>
+                                handleUpdateLineItem(item.id, "itemId", value)
+                              }
                               size="sm"
                             />
                           </td>
@@ -399,13 +364,13 @@ export function PurchaseInvoiceForm({
                               type="number"
                               min="1"
                               value={item.quantity}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "quantity",
                                   parseInt(e.target.value) || 1
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -416,13 +381,13 @@ export function PurchaseInvoiceForm({
                               min="0"
                               step="0.01"
                               value={item.unitPrice}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "unitPrice",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -433,13 +398,13 @@ export function PurchaseInvoiceForm({
                               min="0"
                               max="100"
                               value={item.discountPercent}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "discountPercent",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -450,13 +415,13 @@ export function PurchaseInvoiceForm({
                               min="0"
                               max="100"
                               value={item.taxPercent}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 handleUpdateLineItem(
                                   item.id,
                                   "taxPercent",
                                   parseFloat(e.target.value) || 0
-                                );
-                              }}
+                                )
+                              }
                               size="sm"
                               className="text-right"
                             />
@@ -468,9 +433,7 @@ export function PurchaseInvoiceForm({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                handleRemoveLineItem(item.id);
-                              }}
+                              onClick={() => handleRemoveLineItem(item.id)}
                             >
                               <Trash2 className="h-4 w-4 text-error" />
                             </Button>
@@ -492,9 +455,7 @@ export function PurchaseInvoiceForm({
                 placeholder="Add any notes about this purchase..."
                 rows={3}
                 value={notes}
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                }}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </CardBody>
           </Card>
@@ -507,9 +468,7 @@ export function PurchaseInvoiceForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="font-medium">
-                  {formatCurrency(totals.subtotal)}
-                </span>
+                <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -519,9 +478,7 @@ export function PurchaseInvoiceForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => {
-                    setDiscountPercent(parseFloat(e.target.value) || 0);
-                  }}
+                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
                   size="sm"
                   className="w-16 text-right"
                 />
@@ -533,16 +490,12 @@ export function PurchaseInvoiceForm({
 
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tax</span>
-                <span className="font-medium">
-                  {formatCurrency(totals.taxAmount)}
-                </span>
+                <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
               </div>
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">
-                    Total
-                  </span>
+                  <span className="text-lg font-semibold text-slate-900">Total</span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatCurrency(totals.total)}
                   </span>

@@ -1,10 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type {
-  PurchaseInvoice,
-  PurchaseInvoiceItem,
-} from "@/features/purchases/types";
+import type { PurchaseInvoice, PurchaseInvoiceItem } from "@/features/purchases/types";
 
 // Database row types (snake_case columns from SQLite)
 interface PurchaseInvoiceRow {
@@ -42,50 +39,41 @@ interface PurchaseInvoiceItemRow {
 }
 
 function mapRowToPurchaseInvoice(row: PurchaseInvoiceRow): PurchaseInvoice {
-  const invoice: PurchaseInvoice = {
+  return {
     id: row.id,
     invoiceNumber: row.invoice_number,
-    customerId: row.customer_id,
-    customerName: row.customer_name,
+    supplierInvoiceNumber: row.supplier_invoice_number ?? undefined,
+    supplierId: row.customer_id,
+    supplierName: row.customer_name,
     date: row.date,
     dueDate: row.due_date,
-    status: row.status as PurchaseInvoice["status"],
-    items: [], // Will be populated by usePurchaseInvoiceById
+    status: row.status,
     subtotal: row.subtotal,
     taxAmount: row.tax_amount,
     discountAmount: row.discount_amount,
     total: row.total,
     amountPaid: row.amount_paid,
     amountDue: row.amount_due,
+    notes: row.notes ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-
-  if (row.supplier_invoice_number)
-    invoice.supplierInvoiceNumber = row.supplier_invoice_number;
-  if (row.notes) invoice.notes = row.notes;
-
-  return invoice;
 }
 
-function mapRowToPurchaseInvoiceItem(
-  row: PurchaseInvoiceItemRow
-): PurchaseInvoiceItem {
-  const item: PurchaseInvoiceItem = {
+function mapRowToPurchaseInvoiceItem(row: PurchaseInvoiceItemRow): PurchaseInvoiceItem {
+  return {
     id: row.id,
-    itemId: row.item_id ?? "",
+    invoiceId: row.invoice_id,
+    itemId: row.item_id ?? undefined,
     itemName: row.item_name,
+    description: row.description ?? undefined,
     quantity: row.quantity,
-    unit: row.unit ?? "pcs",
+    unit: row.unit ?? undefined,
     unitPrice: row.unit_price,
+    discountPercent: row.discount_percent,
+    taxPercent: row.tax_percent,
     amount: row.amount,
   };
-
-  if (row.description) item.description = row.description;
-  if (row.discount_percent) item.discountPercent = row.discount_percent;
-  if (row.tax_percent) item.taxPercent = row.tax_percent;
-
-  return item;
 }
 
 export function usePurchaseInvoices(filters?: {
@@ -94,31 +82,12 @@ export function usePurchaseInvoices(filters?: {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-}): {
-  invoices: PurchaseInvoice[];
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const params = useMemo(() => {
-    const statusFilter = filters?.status ?? null;
-    const supplierFilter = filters?.supplierId ?? null;
-    const dateFromFilter = filters?.dateFrom ?? null;
-    const dateToFilter = filters?.dateTo ?? null;
-    const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [
-      statusFilter,
-      supplierFilter,
-      dateFromFilter,
-      dateToFilter,
-      searchFilter,
-    ];
-  }, [
-    filters?.status,
-    filters?.supplierId,
-    filters?.dateFrom,
-    filters?.dateTo,
-    filters?.search,
-  ]);
+}): { invoices: PurchaseInvoice[]; isLoading: boolean; error: Error | undefined } {
+  const statusFilter = filters?.status ?? null;
+  const supplierFilter = filters?.supplierId ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
+  const searchFilter = filters?.search ? `%${filters.search}%` : null;
 
   const { data, isLoading, error } = useQuery<PurchaseInvoiceRow>(
     `SELECT * FROM purchase_invoices
@@ -128,10 +97,10 @@ export function usePurchaseInvoices(filters?: {
      AND ($4 IS NULL OR date <= $4)
      AND ($5 IS NULL OR invoice_number LIKE $5 OR customer_name LIKE $5)
      ORDER BY date DESC, created_at DESC`,
-    params
+    [statusFilter, supplierFilter, dateFromFilter, dateToFilter, searchFilter]
   );
 
-  const invoices = useMemo(() => data.map(mapRowToPurchaseInvoice), [data]);
+  const invoices = data.map(mapRowToPurchaseInvoice);
 
   return { invoices, isLoading, error };
 }
@@ -141,25 +110,21 @@ export function usePurchaseInvoiceById(id: string | null): {
   items: PurchaseInvoiceItem[];
   isLoading: boolean;
 } {
-  const { data: invoiceData, isLoading: invoiceLoading } =
-    useQuery<PurchaseInvoiceRow>(
-      id
-        ? `SELECT * FROM purchase_invoices WHERE id = ?`
-        : `SELECT * FROM purchase_invoices WHERE 1 = 0`,
-      id ? [id] : []
-    );
+  const { data: invoiceData, isLoading: invoiceLoading } = useQuery<PurchaseInvoiceRow>(
+    id
+      ? `SELECT * FROM purchase_invoices WHERE id = ?`
+      : `SELECT * FROM purchase_invoices WHERE 1 = 0`,
+    id ? [id] : []
+  );
 
-  const { data: itemsData, isLoading: itemsLoading } =
-    useQuery<PurchaseInvoiceItemRow>(
-      id
-        ? `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`
-        : `SELECT * FROM purchase_invoice_items WHERE 1 = 0`,
-      id ? [id] : []
-    );
+  const { data: itemsData, isLoading: itemsLoading } = useQuery<PurchaseInvoiceItemRow>(
+    id
+      ? `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`
+      : `SELECT * FROM purchase_invoice_items WHERE 1 = 0`,
+    id ? [id] : []
+  );
 
-  const invoice = invoiceData[0]
-    ? mapRowToPurchaseInvoice(invoiceData[0])
-    : null;
+  const invoice = invoiceData[0] ? mapRowToPurchaseInvoice(invoiceData[0]) : null;
   const items = itemsData.map(mapRowToPurchaseInvoiceItem);
 
   return {
@@ -254,11 +219,11 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
           [
             itemId,
             id,
-            item.itemId,
+            item.itemId ?? null,
             item.itemName,
             item.description ?? null,
             item.quantity,
-            item.unit,
+            item.unit ?? null,
             item.unitPrice,
             item.discountPercent ?? 0,
             item.taxPercent ?? 0,
@@ -289,10 +254,11 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
   const updateInvoiceStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(
-        `UPDATE purchase_invoices SET status = ?, updated_at = ? WHERE id = ?`,
-        [status, now, id]
-      );
+      await db.execute(`UPDATE purchase_invoices SET status = ?, updated_at = ? WHERE id = ?`, [
+        status,
+        now,
+        id,
+      ]);
     },
     [db]
   );
@@ -304,7 +270,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         `UPDATE purchase_invoices
          SET amount_paid = amount_paid + ?,
              amount_due = amount_due - ?,
-             status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE status END,
+             status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE 'partial' END,
              updated_at = ?
          WHERE id = ?`,
         [amount, amount, amount, now, id]
@@ -315,72 +281,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
 
   const deleteInvoice = useCallback(
     async (id: string): Promise<void> => {
-      const now = new Date().toISOString();
-
-      // Get invoice details to reverse balance
-      const invoiceResult = await db.execute(
-        `SELECT customer_id, total FROM purchase_invoices WHERE id = ?`,
-        [id]
-      );
-      const invoice = invoiceResult.rows?._array[0] as
-        | { customer_id: string; total: number }
-        | undefined;
-
-      // Get items to reverse stock
-      const itemsResult = await db.execute(
-        `SELECT item_id, quantity FROM purchase_invoice_items WHERE invoice_id = ?`,
-        [id]
-      );
-      const items = (itemsResult.rows?._array ?? []) as {
-        item_id: string;
-        quantity: number;
-      }[];
-
-      // Get linked payments to delete and reverse
-      const paymentsResult = await db.execute(
-        `SELECT id, amount FROM payment_outs WHERE invoice_id = ?`,
-        [id]
-      );
-      const payments = (paymentsResult.rows?._array ?? []) as {
-        id: string;
-        amount: number;
-      }[];
-
-      // Reverse supplier balance for each payment (payments increased balance, so decrease it back)
-      for (const payment of payments) {
-        if (invoice) {
-          await db.execute(
-            `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
-            [payment.amount, now, invoice.customer_id]
-          );
-        }
-      }
-
-      // Delete linked payments
-      await db.execute(`DELETE FROM payment_outs WHERE invoice_id = ?`, [id]);
-
-      // Reverse stock for each item (decrease - we're undoing the purchase)
-      for (const item of items) {
-        if (item.item_id) {
-          await db.execute(
-            `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
-            [item.quantity, now, item.item_id]
-          );
-        }
-      }
-
-      // Reverse supplier balance (increase - we're undoing the payable)
-      if (invoice) {
-        await db.execute(
-          `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
-          [invoice.total, now, invoice.customer_id]
-        );
-      }
-
-      await db.execute(
-        `DELETE FROM purchase_invoice_items WHERE invoice_id = ?`,
-        [id]
-      );
+      await db.execute(`DELETE FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
       await db.execute(`DELETE FROM purchase_invoices WHERE id = ?`, [id]);
     },
     [db]
@@ -397,61 +298,33 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
 interface PurchaseInvoiceStats {
   totalPurchases: number;
   totalPayable: number;
-  returnedCount: number;
+  overdueCount: number;
   thisMonthPurchases: number;
 }
 
 export function usePurchaseInvoiceStats(): PurchaseInvoiceStats {
   const { data: totalPurchases } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices WHERE status != 'returned'`
+    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices WHERE status != 'cancelled'`
   );
 
   const { data: totalPayable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM purchase_invoices WHERE status IN ('draft', 'ordered', 'received') AND amount_due > 0`
+    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM purchase_invoices WHERE status IN ('received', 'partial', 'overdue')`
   );
 
-  const { data: returnedCount } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM purchase_invoices WHERE status = 'returned'`
+  const { data: overdueCount } = useQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM purchase_invoices WHERE status = 'overdue'`
   );
 
   const { data: thisMonthPurchases } = useQuery<{ sum: number }>(
     `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices
-     WHERE status != 'returned'
+     WHERE status != 'cancelled'
      AND date >= date('now', 'start of month')`
   );
 
   return {
     totalPurchases: totalPurchases[0]?.sum ?? 0,
     totalPayable: totalPayable[0]?.sum ?? 0,
-    returnedCount: returnedCount[0]?.count ?? 0,
+    overdueCount: overdueCount[0]?.count ?? 0,
     thisMonthPurchases: thisMonthPurchases[0]?.sum ?? 0,
-  };
-}
-
-export interface PurchaseInvoiceLinkedItems {
-  itemsCount: number;
-  paymentsCount: number;
-}
-
-export function usePurchaseInvoiceLinkedItems(
-  invoiceId: string | null
-): PurchaseInvoiceLinkedItems {
-  const { data: itemsCount } = useQuery<{ count: number }>(
-    invoiceId
-      ? `SELECT COUNT(*) as count FROM purchase_invoice_items WHERE invoice_id = ?`
-      : `SELECT 0 as count`,
-    invoiceId ? [invoiceId] : []
-  );
-
-  const { data: paymentsCount } = useQuery<{ count: number }>(
-    invoiceId
-      ? `SELECT COUNT(*) as count FROM payment_outs WHERE invoice_id = ?`
-      : `SELECT 0 as count`,
-    invoiceId ? [invoiceId] : []
-  );
-
-  return {
-    itemsCount: itemsCount[0]?.count ?? 0,
-    paymentsCount: paymentsCount[0]?.count ?? 0,
   };
 }

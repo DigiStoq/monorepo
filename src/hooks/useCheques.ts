@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Cheque, ChequeType, ChequeStatus } from "@/features/cash-bank/types";
 
@@ -51,45 +51,24 @@ export function useCheques(filters?: {
   dateFrom?: string;
   dateTo?: string;
 }): { cheques: Cheque[]; isLoading: boolean; error: Error | undefined } {
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
+  const typeFilter = filters?.type ?? null;
+  const statusFilter = filters?.status ?? null;
+  const customerFilter = filters?.customerId ?? null;
+  const dateFromFilter = filters?.dateFrom ?? null;
+  const dateToFilter = filters?.dateTo ?? null;
 
-    if (filters?.type) {
-      conditions.push("type = ?");
-      params.push(filters.type);
-    }
+  const { data, isLoading, error } = useQuery<ChequeRow>(
+    `SELECT * FROM cheques
+     WHERE ($1 IS NULL OR type = $1)
+     AND ($2 IS NULL OR status = $2)
+     AND ($3 IS NULL OR customer_id = $3)
+     AND ($4 IS NULL OR due_date >= $4)
+     AND ($5 IS NULL OR due_date <= $5)
+     ORDER BY due_date ASC`,
+    [typeFilter, statusFilter, customerFilter, dateFromFilter, dateToFilter]
+  );
 
-    if (filters?.status) {
-      conditions.push("status = ?");
-      params.push(filters.status);
-    }
-
-    if (filters?.customerId) {
-      conditions.push("customer_id = ?");
-      params.push(filters.customerId);
-    }
-
-    if (filters?.dateFrom) {
-      conditions.push("due_date >= ?");
-      params.push(filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      conditions.push("due_date <= ?");
-      params.push(filters.dateTo);
-    }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM cheques ${whereClause} ORDER BY due_date ASC`,
-      params,
-    };
-  }, [filters?.type, filters?.status, filters?.customerId, filters?.dateFrom, filters?.dateTo]);
-
-  const { data, isLoading, error } = useQuery<ChequeRow>(query, params);
-
-  const cheques = useMemo(() => data.map(mapRowToCheque), [data]);
+  const cheques = data.map(mapRowToCheque);
 
   return { cheques, isLoading, error };
 }

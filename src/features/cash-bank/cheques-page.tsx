@@ -1,12 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-} from "@/components/ui";
+import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { ChequeList, ChequeDetail, ChequeForm } from "./components";
@@ -14,12 +8,11 @@ import { useCheques, useChequeMutations } from "@/hooks/useCheques";
 import { useCustomers } from "@/hooks/useCustomers";
 import type { Cheque, ChequeFormData } from "./types";
 
-export function ChequesPage(): React.ReactNode {
+export function ChequesPage() {
   // Data from PowerSync
   const { cheques, isLoading, error } = useCheques();
   const { customers } = useCustomers();
-  const { createCheque, updateChequeStatus, deleteCheque } =
-    useChequeMutations();
+  const { createCheque, updateChequeStatus, deleteCheque } = useChequeMutations();
 
   // State
   const [selectedCheque, setSelectedCheque] = useState<Cheque | null>(null);
@@ -32,23 +25,23 @@ export function ChequesPage(): React.ReactNode {
   }, [cheques, selectedCheque]);
 
   // Handlers
-  const handleChequeClick = (cheque: Cheque): void => {
+  const handleChequeClick = (cheque: Cheque) => {
     setSelectedCheque(cheque);
   };
 
-  const handleCloseDetail = (): void => {
+  const handleCloseDetail = () => {
     setSelectedCheque(null);
   };
 
-  const handleCreateCheque = (): void => {
+  const handleCreateCheque = () => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = (): void => {
+  const handleCloseForm = () => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitCheque = async (data: ChequeFormData): Promise<void> => {
+  const handleSubmitCheque = async (data: ChequeFormData) => {
     try {
       // Find customer name from ID
       const customer = customers.find((c) => c.id === data.customerId);
@@ -56,7 +49,7 @@ export function ChequesPage(): React.ReactNode {
         chequeNumber: data.chequeNumber,
         type: data.type,
         customerId: data.customerId,
-        customerName: customer?.name ?? "",
+        customerName: customer?.name || "",
         bankName: data.bankName,
         date: data.date,
         dueDate: data.dueDate,
@@ -70,7 +63,7 @@ export function ChequesPage(): React.ReactNode {
     }
   };
 
-  const handleDeleteCheque = async (): Promise<void> => {
+  const handleDeleteCheque = async () => {
     if (currentSelectedCheque) {
       try {
         await deleteCheque(currentSelectedCheque.id);
@@ -81,7 +74,7 @@ export function ChequesPage(): React.ReactNode {
     }
   };
 
-  const handleMarkCleared = async (): Promise<void> => {
+  const handleMarkCleared = async () => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cleared");
@@ -91,7 +84,7 @@ export function ChequesPage(): React.ReactNode {
     }
   };
 
-  const handleMarkBounced = async (): Promise<void> => {
+  const handleMarkBounced = async () => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "bounced");
@@ -101,7 +94,7 @@ export function ChequesPage(): React.ReactNode {
     }
   };
 
-  const handleCancelCheque = async (): Promise<void> => {
+  const handleCancelCheque = async () => {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cancelled");
@@ -128,10 +121,7 @@ export function ChequesPage(): React.ReactNode {
         title="Cheques"
         description="Manage received and issued cheques"
         actions={
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleCreateCheque}
-          >
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateCheque}>
             Add Cheque
           </Button>
         }
@@ -145,7 +135,10 @@ export function ChequesPage(): React.ReactNode {
               <Spinner size="lg" />
             </div>
           ) : (
-            <ChequeList cheques={cheques} onChequeClick={handleChequeClick} />
+            <ChequeList
+              cheques={cheques}
+              onChequeClick={handleChequeClick}
+            />
           )}
         </div>
 
@@ -155,21 +148,11 @@ export function ChequesPage(): React.ReactNode {
             <ChequeDetail
               cheque={currentSelectedCheque}
               onClose={handleCloseDetail}
-              onEdit={() => {
-                setIsFormOpen(true);
-              }}
-              onDelete={() => {
-                void handleDeleteCheque();
-              }}
-              onMarkCleared={() => {
-                void handleMarkCleared();
-              }}
-              onMarkBounced={() => {
-                void handleMarkBounced();
-              }}
-              onCancel={() => {
-                void handleCancelCheque();
-              }}
+              onEdit={() => setIsFormOpen(true)}
+              onDelete={handleDeleteCheque}
+              onMarkCleared={handleMarkCleared}
+              onMarkBounced={handleMarkBounced}
+              onCancel={handleCancelCheque}
             />
           </div>
         )}
@@ -178,13 +161,13 @@ export function ChequesPage(): React.ReactNode {
       {/* Cheque Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>Add Cheque</ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>
+            Add Cheque
+          </ModalHeader>
           <ModalBody>
             <ChequeForm
               customers={customers}
-              onSubmit={(data) => {
-                void handleSubmitCheque(data);
-              }}
+              onSubmit={handleSubmitCheque}
               onCancel={handleCloseForm}
             />
           </ModalBody>

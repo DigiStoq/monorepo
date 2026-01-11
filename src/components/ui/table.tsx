@@ -8,13 +8,7 @@ import {
   type TdHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/cn";
-import {
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
-  Check,
-  Minus,
-} from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Check, Minus } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -43,10 +37,7 @@ export interface Column<T> {
   hideOnMobile?: boolean;
 }
 
-export interface TableProps<T> extends Omit<
-  HTMLAttributes<HTMLTableElement>,
-  "children"
-> {
+export interface TableProps<T> extends Omit<HTMLAttributes<HTMLTableElement>, "children"> {
   /** Table columns configuration */
   columns: Column<T>[];
   /** Table data */
@@ -89,8 +80,8 @@ export interface TableProps<T> extends Omit<
   onSortChange?: (key: string, direction: SortDirection) => void;
 }
 
-export type TableHeaderProps = HTMLAttributes<HTMLTableSectionElement>;
-export type TableBodyProps = HTMLAttributes<HTMLTableSectionElement>;
+export interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {}
+export interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {}
 export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   selected?: boolean;
   clickable?: boolean;
@@ -100,7 +91,7 @@ export interface TableHeadProps extends ThHTMLAttributes<HTMLTableCellElement> {
   sortDirection?: SortDirection;
   onSort?: () => void;
 }
-export type TableCellProps = TdHTMLAttributes<HTMLTableCellElement>;
+export interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {}
 
 // ============================================================================
 // STYLES
@@ -116,21 +107,16 @@ const alignStyles = {
 // TABLE PRIMITIVES
 // ============================================================================
 
-export const TableHeader = forwardRef<
-  HTMLTableSectionElement,
-  TableHeaderProps
->(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("bg-slate-50", className)} {...props} />
-));
+export const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>(
+  ({ className, ...props }, ref) => (
+    <thead ref={ref} className={cn("bg-slate-50", className)} {...props} />
+  )
+);
 TableHeader.displayName = "TableHeader";
 
 export const TableBody = forwardRef<HTMLTableSectionElement, TableBodyProps>(
   ({ className, ...props }, ref) => (
-    <tbody
-      ref={ref}
-      className={cn("divide-y divide-slate-100", className)}
-      {...props}
-    />
+    <tbody ref={ref} className={cn("divide-y divide-slate-100", className)} {...props} />
   )
 );
 TableBody.displayName = "TableBody";
@@ -204,12 +190,7 @@ interface CheckboxProps {
   disabled?: boolean;
 }
 
-function Checkbox({
-  checked,
-  indeterminate,
-  onChange,
-  disabled,
-}: CheckboxProps): JSX.Element {
+function Checkbox({ checked, indeterminate, onChange, disabled }: CheckboxProps) {
   return (
     <button
       type="button"
@@ -240,13 +221,7 @@ function Checkbox({
 // LOADING SKELETON
 // ============================================================================
 
-function LoadingSkeleton({
-  columns,
-  rows = 5,
-}: {
-  columns: number;
-  rows?: number;
-}): JSX.Element {
+function LoadingSkeleton({ columns, rows = 5 }: { columns: number; rows?: number }) {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
@@ -266,17 +241,11 @@ function LoadingSkeleton({
 // EMPTY STATE
 // ============================================================================
 
-function EmptyState({
-  colSpan,
-  content,
-}: {
-  colSpan: number;
-  content?: ReactNode;
-}): React.ReactNode {
+function EmptyState({ colSpan, content }: { colSpan: number; content?: ReactNode }) {
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-12 text-center">
-        {content ?? (
+        {content || (
           <div className="text-slate-500">
             <p className="text-sm">No data available</p>
           </div>
@@ -313,20 +282,19 @@ export function Table<T>({
   onSortChange,
   className,
   ...props
-}: TableProps<T>): React.ReactNode {
+}: TableProps<T>): JSX.Element {
   // Internal sort state (for uncontrolled mode)
-  const [internalSortKey, setInternalSortKey] = useState<string | undefined>(
-    defaultSortKey
+  const [internalSortKey, setInternalSortKey] = useState<string | undefined>(defaultSortKey);
+  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>(
+    defaultSortKey ? defaultSortDirection : null
   );
-  const [internalSortDirection, setInternalSortDirection] =
-    useState<SortDirection>(defaultSortKey ? defaultSortDirection : null);
 
   // Use controlled or internal state
   const sortKey = controlledSortKey ?? internalSortKey;
   const sortDirection = controlledSortDirection ?? internalSortDirection;
 
   // Sort handler
-  const handleSort = (key: string): void => {
+  const handleSort = (key: string) => {
     let newDirection: SortDirection;
 
     if (sortKey === key) {
@@ -357,10 +325,9 @@ export function Table<T>({
     const column = columns.find((col) => col.key === sortKey);
     if (!column?.accessor) return data;
 
-    const accessor = column.accessor;
     return [...data].sort((a, b) => {
-      const aVal = accessor(a);
-      const bVal = accessor(b);
+      const aVal = column.accessor!(a);
+      const bVal = column.accessor!(b);
 
       if (aVal === null || aVal === undefined) return 1;
       if (bVal === null || bVal === undefined) return -1;
@@ -379,14 +346,11 @@ export function Table<T>({
   }, [data, sortKey, sortDirection, columns]);
 
   // Selection handlers
-  const allKeys = useMemo(
-    () => new Set(data.map((row, i) => getRowKey(row, i))),
-    [data, getRowKey]
-  );
+  const allKeys = useMemo(() => new Set(data.map((row, i) => getRowKey(row, i))), [data, getRowKey]);
   const isAllSelected = selectedKeys.size === allKeys.size && allKeys.size > 0;
   const isSomeSelected = selectedKeys.size > 0 && !isAllSelected;
 
-  const handleSelectAll = (): void => {
+  const handleSelectAll = () => {
     if (isAllSelected) {
       onSelectionChange?.(new Set());
     } else {
@@ -394,7 +358,7 @@ export function Table<T>({
     }
   };
 
-  const handleSelectRow = (key: string | number): void => {
+  const handleSelectRow = (key: string | number) => {
     if (singleSelect) {
       onSelectionChange?.(new Set([key]));
     } else {
@@ -442,11 +406,9 @@ export function Table<T>({
                 key={column.key}
                 sortable={column.sortable ?? false}
                 sortDirection={sortKey === column.key ? sortDirection : null}
-                onSort={() => {
-                  if (column.sortable) handleSort(column.key);
-                }}
+                onSort={() => column.sortable && handleSort(column.key)}
                 className={cn(
-                  alignStyles[column.align ?? "left"],
+                  alignStyles[column.align || "left"],
                   column.hideOnMobile && "hidden md:table-cell",
                   column.sticky === "left" && "sticky left-0 bg-slate-50 z-10",
                   column.sticky === "right" && "sticky right-0 bg-slate-50 z-10"
@@ -485,9 +447,7 @@ export function Table<T>({
                     <TableCell className="w-12">
                       <Checkbox
                         checked={isSelected}
-                        onChange={() => {
-                          handleSelectRow(rowKey);
-                        }}
+                        onChange={() => handleSelectRow(rowKey)}
                       />
                     </TableCell>
                   )}
@@ -497,13 +457,11 @@ export function Table<T>({
                     <TableCell
                       key={column.key}
                       className={cn(
-                        alignStyles[column.align ?? "left"],
+                        alignStyles[column.align || "left"],
                         compact ? "py-2" : "py-3",
                         column.hideOnMobile && "hidden md:table-cell",
-                        column.sticky === "left" &&
-                          "sticky left-0 bg-white z-10",
-                        column.sticky === "right" &&
-                          "sticky right-0 bg-white z-10",
+                        column.sticky === "left" && "sticky left-0 bg-white z-10",
+                        column.sticky === "right" && "sticky right-0 bg-white z-10",
                         isSelected && column.sticky && "bg-primary-50"
                       )}
                       style={{ width: column.width }}
@@ -511,8 +469,8 @@ export function Table<T>({
                       {column.cell
                         ? column.cell(row, index)
                         : column.accessor
-                          ? String(column.accessor(row) ?? "")
-                          : null}
+                        ? String(column.accessor(row) ?? "")
+                        : null}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -562,7 +520,7 @@ export function TablePagination({
   const canGoNext = page < totalPages;
 
   // Calculate visible page numbers
-  const getVisiblePages = (): (number | "ellipsis")[] => {
+  const getVisiblePages = () => {
     const pages: (number | "ellipsis")[] = [];
     const maxVisible = 5;
 
@@ -625,9 +583,7 @@ export function TablePagination({
             <span className="text-sm text-slate-600">Rows:</span>
             <select
               value={pageSize}
-              onChange={(e) => {
-                onPageSizeChange(Number(e.target.value));
-              }}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
               className={cn(
                 "h-8 px-2 text-sm border border-slate-200 rounded-md",
                 "focus:outline-none focus:ring-2 focus:ring-primary-500/30"
@@ -646,9 +602,7 @@ export function TablePagination({
         <button
           type="button"
           disabled={!canGoPrev}
-          onClick={() => {
-            onPageChange(page - 1);
-          }}
+          onClick={() => onPageChange(page - 1)}
           className={cn(
             "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
             canGoPrev
@@ -670,9 +624,7 @@ export function TablePagination({
               <button
                 key={p}
                 type="button"
-                onClick={() => {
-                  onPageChange(p);
-                }}
+                onClick={() => onPageChange(p)}
                 className={cn(
                   "min-w-[32px] h-8 px-2 text-sm font-medium rounded-md transition-colors",
                   p === page
@@ -690,9 +642,7 @@ export function TablePagination({
         <button
           type="button"
           disabled={!canGoNext}
-          onClick={() => {
-            onPageChange(page + 1);
-          }}
+          onClick={() => onPageChange(page + 1)}
           className={cn(
             "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
             canGoNext

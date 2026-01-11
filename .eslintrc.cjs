@@ -13,7 +13,7 @@ module.exports = {
     "plugin:react-hooks/recommended",
     "prettier",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs", "*.config.js", "*.config.ts", "src-tauri"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "*.config.js", "*.config.ts"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
