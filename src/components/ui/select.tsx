@@ -182,8 +182,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
@@ -296,7 +296,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-sm font-medium text-text-secondary mb-1.5"
           >
             {label}
           </label>
@@ -322,17 +322,17 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           onKeyDown={handleKeyDown}
           className={cn(
             "relative flex items-center justify-between gap-2 w-full",
-            "bg-white border rounded-[10px]",
+            "bg-card border rounded-[10px]",
             "transition-all duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
             styles.trigger,
             hasError
               ? "border-error focus-visible:ring-error/30"
-              : "border-slate-200 hover:border-slate-300 focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
-            disabled && "opacity-50 cursor-not-allowed bg-slate-50",
+              : "border-border-primary hover:border-border-secondary focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
+            disabled && "opacity-50 cursor-not-allowed bg-subtle",
             isOpen &&
-              !hasError &&
-              "border-primary-500 ring-2 ring-primary-500/30"
+            !hasError &&
+            "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -340,7 +340,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <span
             className={cn(
               "truncate text-left flex-1",
-              selectedOption ? "text-slate-900" : "text-slate-400"
+              selectedOption ? "text-text-primary" : "text-text-muted"
             )}
           >
             {selectedOption ? (
@@ -358,16 +358,16 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               <button
                 type="button"
                 onClick={handleClear}
-                className="p-0.5 hover:bg-slate-100 rounded transition-colors"
+                className="p-0.5 hover:bg-subtle rounded transition-colors"
                 aria-label="Clear selection"
               >
-                <X className={cn(styles.icon, "text-slate-400")} />
+                <X className={cn(styles.icon, "text-text-muted")} />
               </button>
             )}
             <ChevronDown
               className={cn(
                 styles.icon,
-                "text-slate-400 transition-transform duration-200",
+                "text-text-muted transition-transform duration-200",
                 isOpen && "rotate-180"
               )}
             />
@@ -393,15 +393,15 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                   }}
                   className={cn(
                     "z-popover",
-                    "bg-white rounded-lg shadow-elevated border border-slate-200",
+                    "bg-card rounded-lg shadow-elevated border border-border-primary",
                     "overflow-hidden"
                   )}
                 >
                   {/* Search Input */}
                   {searchable && (
-                    <div className="p-2 border-b border-slate-100">
+                    <div className="p-2 border-b border-border-primary">
                       <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
                         <input
                           ref={searchInputRef}
                           type="text"
@@ -413,7 +413,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                           placeholder={searchPlaceholder}
                           className={cn(
                             "w-full pl-8 pr-3 py-1.5 text-sm",
-                            "bg-slate-50 border border-slate-200 rounded-md",
+                            "bg-subtle border border-border-primary rounded-md text-text-primary",
                             "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                           )}
                         />
@@ -428,7 +428,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     role="listbox"
                   >
                     {filteredOptions.length === 0 ? (
-                      <div className="px-3 py-6 text-center text-sm text-slate-500">
+                      <div className="px-3 py-6 text-center text-sm text-text-tertiary">
                         No options found
                       </div>
                     ) : (
@@ -452,7 +452,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                               : "cursor-pointer",
                             highlightedIndex === index && "bg-primary-50",
                             option.value === value &&
-                              "text-primary-600 font-medium"
+                            "text-primary-600 font-medium"
                           )}
                           role="option"
                           aria-selected={option.value === value}
@@ -484,7 +484,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <p
             className={cn(
               "mt-1.5 text-xs",
-              hasError ? "text-error" : "text-slate-500"
+              hasError ? "text-error" : "text-text-tertiary"
             )}
           >
             {error ?? helperText}
@@ -554,8 +554,8 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
@@ -617,11 +617,11 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-sm font-medium text-text-secondary mb-1.5"
           >
             {label}
             {maxSelections && (
-              <span className="text-slate-400 font-normal ml-1">
+              <span className="text-text-muted font-normal ml-1">
                 ({value.length}/{maxSelections})
               </span>
             )}
@@ -650,17 +650,17 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
           }}
           className={cn(
             "relative flex items-center justify-between gap-2 w-full min-h-[40px]",
-            "bg-white border rounded-[10px]",
+            "bg-card border rounded-[10px]",
             "transition-all duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
             "px-3 py-1.5",
             hasError
               ? "border-error focus-visible:ring-error/30"
-              : "border-slate-200 hover:border-slate-300 focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
-            disabled && "opacity-50 cursor-not-allowed bg-slate-50",
+              : "border-border-primary hover:border-border-secondary focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
+            disabled && "opacity-50 cursor-not-allowed bg-subtle",
             isOpen &&
-              !hasError &&
-              "border-primary-500 ring-2 ring-primary-500/30"
+            !hasError &&
+            "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -689,14 +689,14 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                 </span>
               ))
             ) : (
-              <span className="text-slate-400 text-sm">{placeholder}</span>
+              <span className="text-text-muted text-sm">{placeholder}</span>
             )}
           </div>
 
           <ChevronDown
             className={cn(
               styles.icon,
-              "text-slate-400 transition-transform duration-200 shrink-0",
+              "text-text-muted transition-transform duration-200 shrink-0",
               isOpen && "rotate-180"
             )}
           />
@@ -721,15 +721,15 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   }}
                   className={cn(
                     "z-popover",
-                    "bg-white rounded-lg shadow-elevated border border-slate-200",
+                    "bg-card rounded-lg shadow-elevated border border-border-primary",
                     "overflow-hidden"
                   )}
                 >
                   {/* Search Input */}
                   {searchable && (
-                    <div className="p-2 border-b border-slate-100">
+                    <div className="p-2 border-b border-border-primary">
                       <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
                         <input
                           ref={searchInputRef}
                           type="text"
@@ -740,7 +740,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                           placeholder={searchPlaceholder}
                           className={cn(
                             "w-full pl-8 pr-3 py-1.5 text-sm",
-                            "bg-slate-50 border border-slate-200 rounded-md",
+                            "bg-subtle border border-border-primary rounded-md text-text-primary",
                             "focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                           )}
                         />
@@ -751,7 +751,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   {/* Options List */}
                   <div className="max-h-60 overflow-y-auto py-1" role="listbox">
                     {filteredOptions.length === 0 ? (
-                      <div className="px-3 py-6 text-center text-sm text-slate-500">
+                      <div className="px-3 py-6 text-center text-sm text-text-tertiary">
                         No options found
                       </div>
                     ) : (
@@ -795,7 +795,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                                 "transition-colors duration-100",
                                 isSelected
                                   ? "bg-primary-600 border-primary-600"
-                                  : "border-slate-300"
+                                  : "border-border-secondary"
                               )}
                             >
                               {isSelected && (
@@ -818,7 +818,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
           <p
             className={cn(
               "mt-1.5 text-xs",
-              hasError ? "text-error" : "text-slate-500"
+              hasError ? "text-error" : "text-text-tertiary"
             )}
           >
             {error ?? helperText}

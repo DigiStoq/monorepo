@@ -50,7 +50,7 @@ const paymentModeConfig: Record<
   cheque: {
     label: "Cheque",
     icon: FileText,
-    color: "text-slate-600 bg-slate-100",
+    color: "text-text-secondary bg-muted",
   },
   other: { label: "Other", icon: Wallet, color: "text-gray-600 bg-gray-100" },
 };
@@ -82,7 +82,7 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full p-4 bg-white rounded-lg border border-slate-200",
+        "w-full p-4 bg-card rounded-lg border border-border-primary",
         "hover:border-primary-300 hover:shadow-soft",
         "transition-all duration-200 text-left",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
@@ -102,7 +102,7 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
         {/* Payment Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-slate-900">
+            <h3 className="font-semibold text-text-heading">
               {payment.receiptNumber}
             </h3>
             <Badge variant="success" size="sm">
@@ -110,12 +110,12 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
             </Badge>
           </div>
 
-          <div className="flex items-center gap-1 text-sm text-slate-600 mb-1">
+          <div className="flex items-center gap-1 text-sm text-text-secondary mb-1">
             <User className="h-3.5 w-3.5" />
             <span className="truncate">{payment.customerName}</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-text-tertiary">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {formatDate(payment.date)}
@@ -193,7 +193,7 @@ export function PaymentInList({
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2 px-1">
+          <p className="text-sm text-text-tertiary mb-2 px-1">
             {displayPayments.length}{" "}
             {displayPayments.length === 1 ? "payment" : "payments"}
           </p>

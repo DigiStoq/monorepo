@@ -93,7 +93,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Total Purchases</p>
-                  <p className="text-lg sm:text-xl font-bold text-slate-900">
+                  <p className="text-lg sm:text-xl font-bold text-text-heading">
                     {formatCurrency(data.totalPurchases)}
                   </p>
                 </div>
@@ -108,7 +108,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Avg Order Value</p>
-                  <p className="text-lg sm:text-xl font-bold text-slate-900">
+                  <p className="text-lg sm:text-xl font-bold text-text-heading">
                     {formatCurrency(data.averageOrderValue)}
                   </p>
                 </div>
@@ -150,7 +150,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
         {/* Monthly Trend */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">
+            <h3 className="font-medium text-text-heading">
               Monthly Purchase Trend
             </h3>
           </CardHeader>
@@ -189,7 +189,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-slate-400" />
-                <h3 className="font-medium text-slate-900">Top Suppliers</h3>
+                <h3 className="font-medium text-text-heading">Top Suppliers</h3>
               </div>
             </CardHeader>
             <CardBody className="p-0">
@@ -203,11 +203,11 @@ export function PurchaseSummaryReport(): React.ReactNode {
                       <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-medium">
                         {index + 1}
                       </span>
-                      <span className="text-slate-900">
+                      <span className="text-text-heading">
                         {supplier.supplierName}
                       </span>
                     </div>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {formatCurrency(supplier.amount)}
                     </span>
                   </div>
@@ -221,7 +221,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-slate-400" />
-                <h3 className="font-medium text-slate-900">
+                <h3 className="font-medium text-text-heading">
                   Top Purchased Items
                 </h3>
               </div>
@@ -238,13 +238,13 @@ export function PurchaseSummaryReport(): React.ReactNode {
                         {index + 1}
                       </span>
                       <div>
-                        <span className="text-slate-900">{item.itemName}</span>
+                        <span className="text-text-heading">{item.itemName}</span>
                         <span className="text-xs text-slate-500 ml-2">
                           ({item.quantity} units)
                         </span>
                       </div>
                     </div>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {formatCurrency(item.amount)}
                     </span>
                   </div>

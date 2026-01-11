@@ -1,21 +1,24 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Plus, HandCoins, ArrowRight } from "lucide-react-native";
 import { LoanRecord } from "../lib/powersync";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomHeader } from "../components/CustomHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function LoansScreen() {
     const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'given' | 'taken'>('all');
     const insets = useSafeAreaInsets();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     // Loans Query
-    const query = filterType === 'all' 
+    const query = filterType === 'all'
         ? `SELECT * FROM loans ORDER BY start_date DESC, created_at DESC`
         : `SELECT * FROM loans WHERE type = '${filterType}' ORDER BY start_date DESC, created_at DESC`;
 
@@ -27,7 +30,7 @@ export function LoansScreen() {
     }, []);
 
     const getStatusColor = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'closed': return colors.success;
             case 'defaulted': return colors.danger;
             default: return colors.info; // blue (active)
@@ -37,14 +40,14 @@ export function LoansScreen() {
     return (
         <View style={styles.container}>
             <CustomHeader />
-            
+
             <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>
                     {['all', 'given', 'taken'].map((type) => (
-                        <TouchableOpacity 
-                            key={type} 
+                        <TouchableOpacity
+                            key={type}
                             style={[
-                                styles.filterPill, 
+                                styles.filterPill,
                                 filterType === type && styles.filterPillActive
                             ]}
                             onPress={() => setFilterType(type as any)}
@@ -65,17 +68,17 @@ export function LoansScreen() {
                 data={loans || []}
                 keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
                 }
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.card}
                         onPress={() => navigation.navigate("LoanForm" as any, { id: item.id })}
                         activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
-                            <View style={[styles.iconBox, { backgroundColor: item.type === 'given' ? colors.successMuted : colors.dangerMuted }]}>
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'given' ? colors.success + '20' : colors.danger + '20' }]}>
                                 <HandCoins color={item.type === 'given' ? colors.success : colors.danger} size={20} />
                             </View>
                             <View style={styles.headerInfo}>
@@ -88,24 +91,24 @@ export function LoansScreen() {
                                 </Text>
                             </View>
                         </View>
-                        
+
                         <View style={styles.detailsRow}>
-                             <View>
+                            <View>
                                 <Text style={styles.label}>Principal</Text>
                                 <Text style={styles.value}>${(item.principal_amount || 0).toFixed(2)}</Text>
-                             </View>
-                             <View style={{ alignItems: 'flex-end' }}>
+                            </View>
+                            <View style={{ alignItems: 'flex-end' }}>
                                 <Text style={styles.label}>Outstanding</Text>
                                 <Text style={[styles.value, { color: (item.outstanding_amount || 0) > 0 ? colors.warning : colors.success }]}>
                                     ${(item.outstanding_amount || 0).toFixed(2)}
                                 </Text>
-                             </View>
+                            </View>
                         </View>
 
                         <View style={styles.progressContainer}>
-                             <Text style={styles.progressText}>
+                            <Text style={styles.progressText}>
                                 {item.interest_rate}% Interest • {item.paid_emis || 0}/{item.total_emis || 0} EMIs Paid
-                             </Text>
+                            </Text>
                         </View>
                     </TouchableOpacity>
                 )}
@@ -115,23 +118,23 @@ export function LoansScreen() {
                     </View>
                 }
             />
-            
-           {/* FAB */}
-           <TouchableOpacity
-             style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
-             onPress={() => (navigation as any).navigate("LoanForm")}
-           >
-             <Text style={styles.fabText}>+ Add</Text>
-           </TouchableOpacity>
+
+            {/* FAB */}
+            <TouchableOpacity
+                style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
+                onPress={() => (navigation as any).navigate("LoanForm")}
+            >
+                <Text style={styles.fabText}>+ Add</Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    subHeader: { 
+    subHeader: {
         paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.md, 
+        paddingVertical: spacing.md,
     },
     filterContainer: { flexDirection: 'row', gap: spacing.sm, flex: 1 },
     filterPill: {
@@ -140,9 +143,9 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.full,
         backgroundColor: colors.surfaceHover,
     },
-    filterPillActive: { backgroundColor: colors.accent },
+    filterPillActive: { backgroundColor: colors.primary },
     filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
-    filterTextActive: { color: colors.textOnAccent },
+    filterTextActive: { color: "#ffffff" },
     listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
     card: {
         backgroundColor: colors.surface,
@@ -160,12 +163,12 @@ const styles = StyleSheet.create({
     detailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md, paddingHorizontal: 4 },
     label: { fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 2 },
     value: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
-    progressContainer: { 
-        backgroundColor: colors.background, 
-        padding: spacing.sm, 
-        borderRadius: borderRadius.md, 
-        alignItems: 'center', 
-        borderWidth: 1, 
+    progressContainer: {
+        backgroundColor: colors.background,
+        padding: spacing.sm,
+        borderRadius: borderRadius.md,
+        alignItems: 'center',
+        borderWidth: 1,
         borderColor: colors.border
     },
     progressText: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: fontWeight.medium },
@@ -174,7 +177,7 @@ const styles = StyleSheet.create({
     fab: {
         position: 'absolute',
         right: spacing.xl,
-        backgroundColor: colors.accent,
+        backgroundColor: colors.primary,
         paddingHorizontal: spacing.xl,
         paddingVertical: spacing.md,
         borderRadius: borderRadius.full,
@@ -183,6 +186,6 @@ const styles = StyleSheet.create({
     fabText: {
         fontSize: fontSize.md,
         fontWeight: fontWeight.semibold,
-        color: colors.textOnAccent,
+        color: "#ffffff",
     },
 });

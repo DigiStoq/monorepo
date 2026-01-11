@@ -637,7 +637,7 @@ export function SaleInvoicesPage(): React.ReactNode {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-2">Failed to load invoices</p>
-          <p className="text-slate-500 text-sm">{error.message}</p>
+          <p className="text-text-tertiary text-sm">{error.message}</p>
         </div>
       </div>
     );
@@ -681,8 +681,8 @@ export function SaleInvoicesPage(): React.ReactNode {
       discountPercent:
         currentSelectedInvoice.subtotal > 0
           ? (currentSelectedInvoice.discountAmount /
-              currentSelectedInvoice.subtotal) *
-            100
+            currentSelectedInvoice.subtotal) *
+          100
           : 0,
       notes: currentSelectedInvoice.notes,
       terms: currentSelectedInvoice.terms,
@@ -726,7 +726,7 @@ export function SaleInvoicesPage(): React.ReactNode {
       />
 
       {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border-primary px-6 py-4">
         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
@@ -756,23 +756,23 @@ export function SaleInvoicesPage(): React.ReactNode {
           </div>
 
           {/* Quick Stats */}
-          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
-                <DollarSign className="h-4 w-4 text-slate-500" />
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-border-primary">
+            <div className="flex items-center gap-3 px-4 py-2 bg-subtle rounded-lg border border-border-primary whitespace-nowrap">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
+                <DollarSign className="h-4 w-4 text-text-tertiary" />
               </div>
               <div>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                <p className="text-xs text-text-tertiary font-medium uppercase tracking-wider">
                   Total Revenue
                 </p>
-                <p className="text-lg font-bold text-slate-900 leading-none">
+                <p className="text-lg font-bold text-text-primary leading-none">
                   {formatCurrency(totals.total)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <CheckCircle className="h-4 w-4 text-success" />
               </div>
               <div>
@@ -786,7 +786,7 @@ export function SaleInvoicesPage(): React.ReactNode {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-warning-light rounded-lg border border-warning/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <Clock className="h-4 w-4 text-warning" />
               </div>
               <div>
@@ -803,7 +803,7 @@ export function SaleInvoicesPage(): React.ReactNode {
       </div>
 
       {/* Content - Master-Detail Layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex gap-4 p-4 overflow-hidden bg-app">
         {/* Invoice List (Master) */}
         <div className="w-full max-w-[420px] shrink-0 overflow-hidden flex flex-col">
           {invoicesLoading ? (
@@ -892,18 +892,18 @@ export function SaleInvoicesPage(): React.ReactNode {
           <ModalHeader title="Record Payment" />
           <ModalBody>
             <div className="space-y-4">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Invoice</p>
-                <p className="font-semibold text-slate-900">
+              <div className="p-3 bg-subtle rounded-lg">
+                <p className="text-sm text-text-tertiary">Invoice</p>
+                <p className="font-semibold text-text-primary">
                   {currentSelectedInvoice?.invoiceNumber}
                 </p>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-text-secondary mt-1">
                   Amount Due: ${currentSelectedInvoice?.amountDue.toFixed(2)}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-text-secondary mb-1">
                   Payment Amount
                 </label>
                 <Input
@@ -921,7 +921,7 @@ export function SaleInvoicesPage(): React.ReactNode {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-text-secondary mb-1">
                   Payment Mode
                 </label>
                 <Select
@@ -962,9 +962,9 @@ export function SaleInvoicesPage(): React.ReactNode {
                       />
                     </div>
                   ) : (
-                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                    <div className="space-y-3 p-3 bg-subtle rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-text-secondary">
                           Add Bank Account
                         </span>
                         <button
@@ -972,13 +972,13 @@ export function SaleInvoicesPage(): React.ReactNode {
                           onClick={() => {
                             setIsAddingBankAccount(false);
                           }}
-                          className="text-xs text-slate-500 hover:text-slate-700"
+                          className="text-xs text-text-tertiary hover:text-text-secondary"
                         >
                           Cancel
                         </button>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
                           Account Name
                         </label>
                         <Input
@@ -992,7 +992,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
                           Bank Name
                         </label>
                         <Input
@@ -1006,7 +1006,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
                           Account Number
                         </label>
                         <Input
@@ -1041,7 +1041,7 @@ export function SaleInvoicesPage(): React.ReactNode {
               {paymentMode === "cheque" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">
                       Cheque Number
                     </label>
                     <Input
@@ -1054,7 +1054,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">
                       Bank Name
                     </label>
                     <Input
@@ -1067,7 +1067,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">
                       Cheque Date (Due Date)
                     </label>
                     <Input
@@ -1148,11 +1148,11 @@ export function SaleInvoicesPage(): React.ReactNode {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-text-secondary mb-1">
                   Reason for Return <span className="text-error">*</span>
                 </label>
                 <textarea
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-border-secondary rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-card text-text-primary"
                   rows={3}
                   value={returnReason}
                   onChange={(e) => {
@@ -1160,29 +1160,29 @@ export function SaleInvoicesPage(): React.ReactNode {
                   }}
                   placeholder="Enter the reason for returning this invoice (e.g., goods damaged, customer requested cancellation, wrong items shipped...)"
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-text-tertiary mt-1">
                   This reason will be recorded in the invoice history.
                 </p>
               </div>
 
               {/* Add to Stock Option */}
-              <label className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+              <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer hover:bg-muted transition-colors">
                 <input
                   type="checkbox"
                   checked={addToStock}
                   onChange={(e) => {
                     setAddToStock(e.target.checked);
                   }}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  className="mt-0.5 h-4 w-4 rounded border-border-secondary text-primary-600 focus:ring-primary-500"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-slate-600" />
-                    <span className="text-sm font-medium text-slate-700">
+                    <Package className="h-4 w-4 text-text-secondary" />
+                    <span className="text-sm font-medium text-text-secondary">
                       Add items back to stock
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-text-tertiary mt-1">
                     Returned items will be added back to inventory (
                     {currentSelectedInvoice?.items.length ?? 0} items)
                   </p>

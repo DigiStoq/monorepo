@@ -148,7 +148,7 @@ export function LowStockReport(): React.ReactNode {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Stock Value at Risk</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xl font-bold text-text-heading">
                 {formatCurrency(stats.totalValue)}
               </p>
             </CardBody>
@@ -158,13 +158,13 @@ export function LowStockReport(): React.ReactNode {
         {/* Low Stock Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Low Stock Items</h3>
+            <h3 className="font-medium text-text-heading">Low Stock Items</h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Item
                     </th>
@@ -214,11 +214,11 @@ export function LowStockReport(): React.ReactNode {
                         <tr
                           key={item.itemId}
                           className={cn(
-                            "hover:bg-slate-50",
+                            "hover:bg-muted/50",
                             item.stockQuantity === 0 && "bg-red-50/50"
                           )}
                         >
-                          <td className="px-4 py-3 font-medium text-slate-900">
+                          <td className="px-4 py-3 font-medium text-text-heading">
                             {item.itemName}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
@@ -241,7 +241,7 @@ export function LowStockReport(): React.ReactNode {
                           <td className="px-4 py-3 text-right text-slate-600">
                             {formatCurrency(item.purchasePrice)}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-900">
+                          <td className="px-4 py-3 text-right text-text-heading">
                             {formatCurrency(reorderCost)}
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -256,11 +256,11 @@ export function LowStockReport(): React.ReactNode {
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td colSpan={7} className="px-4 py-3 text-slate-900">
+                    <tr className="bg-muted/50 font-medium">
+                      <td colSpan={7} className="px-4 py-3 text-text-heading">
                         Total Reorder Cost
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {formatCurrency(
                           filteredData.reduce((sum, item) => {
                             const shortage =

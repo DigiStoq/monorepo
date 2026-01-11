@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ export function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { colors } = useTheme();
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -44,19 +46,26 @@ export function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>DigiStoq</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>DigiStoq</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {isSignUp ? "Create your account" : "Sign in to continue"}
         </Text>
 
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.backgroundCard,
+                color: colors.text,
+                borderColor: colors.border,
+              },
+            ]}
             placeholder="Email"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textMuted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -64,16 +73,27 @@ export function LoginScreen() {
           />
 
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.backgroundCard,
+                color: colors.text,
+                borderColor: colors.border,
+              },
+            ]}
             placeholder="Password"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textMuted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              loading && styles.buttonDisabled,
+              { backgroundColor: colors.secondary }
+            ]}
             onPress={handleSubmit}
             disabled={loading}
           >
@@ -92,7 +112,7 @@ export function LoginScreen() {
               setIsSignUp(!isSignUp);
             }}
           >
-            <Text style={styles.switchText}>
+            <Text style={[styles.switchText, { color: colors.secondary }]}>
               {isSignUp
                 ? "Already have an account? Sign In"
                 : "Don't have an account? Sign Up"}
@@ -107,7 +127,6 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
   },
   content: {
     flex: 1,
@@ -117,13 +136,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: "bold",
-    color: "#0f172a",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#94a3b8",
     textAlign: "center",
     marginBottom: 40,
   },
@@ -131,16 +148,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   input: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: "#0f172a",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
   },
   button: {
-    backgroundColor: "#6366f1",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -159,7 +172,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   switchText: {
-    color: "#6366f1",
     fontSize: 14,
   },
 });

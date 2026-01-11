@@ -92,7 +92,7 @@ export function StockMovementReport(): React.ReactNode {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Opening Stock</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xl font-bold text-text-heading">
                 {totals.opening.toLocaleString()}
               </p>
             </CardBody>
@@ -144,7 +144,7 @@ export function StockMovementReport(): React.ReactNode {
         {/* Movement Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">
+            <h3 className="font-medium text-text-heading">
               Stock Movement Details
             </h3>
           </CardHeader>
@@ -152,7 +152,7 @@ export function StockMovementReport(): React.ReactNode {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Item
                     </th>
@@ -194,11 +194,11 @@ export function StockMovementReport(): React.ReactNode {
                           : 0;
 
                       return (
-                        <tr key={item.itemId} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-900">
+                        <tr key={item.itemId} className="hover:bg-muted/50">
+                          <td className="px-4 py-3 font-medium text-text-heading">
                             {item.itemName}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-900">
+                          <td className="px-4 py-3 text-right text-text-heading">
                             {item.openingStock}
                           </td>
                           <td className="px-4 py-3 text-right text-success">
@@ -239,9 +239,9 @@ export function StockMovementReport(): React.ReactNode {
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                    <tr className="bg-muted/50 font-medium">
+                      <td className="px-4 py-3 text-text-heading">Total</td>
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {totals.opening}
                       </td>
                       <td className="px-4 py-3 text-right text-success">

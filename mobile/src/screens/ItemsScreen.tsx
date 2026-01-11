@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@powersync/react-native";
 import { Search, ChevronRight, AlertCircle, Box, Package } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Item {
   id: string;
@@ -26,7 +27,7 @@ interface Item {
   is_active: number;
 }
 
-function ItemCard({ item }: { item: Item }) {
+function ItemCard({ item, styles, colors }: { item: Item, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
   const isLowStock = item.stock_quantity <= (item.low_stock_alert || 0) && item.type !== 'service';
 
@@ -65,6 +66,8 @@ export function ItemsScreen() {
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: items, isLoading } = useQuery<Item>(
     `SELECT * FROM items 
@@ -98,7 +101,7 @@ export function ItemsScreen() {
 
       <FlatList
         data={items}
-        renderItem={({ item }) => <ItemCard item={item} />}
+        renderItem={({ item }) => <ItemCard item={item} styles={styles} colors={colors} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -106,8 +109,8 @@ export function ItemsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -138,7 +141,7 @@ export function ItemsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -226,7 +229,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   addBtn: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.full,
@@ -235,12 +238,12 @@ const styles = StyleSheet.create({
   addBtnText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textOnAccent,
+    color: "#ffffff",
   },
   fab: {
     position: 'absolute',
     right: spacing.xl,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.full,
@@ -249,6 +252,6 @@ const styles = StyleSheet.create({
   fabText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textOnAccent,
+    color: "#ffffff",
   },
 });

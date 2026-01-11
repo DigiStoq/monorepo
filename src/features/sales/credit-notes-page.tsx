@@ -209,7 +209,7 @@ export function CreditNotesPage(): React.ReactNode {
       />
 
       {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border-primary px-6 py-4">
         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
@@ -240,8 +240,8 @@ export function CreditNotesPage(): React.ReactNode {
 
           {/* Quick Stats */}
           <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-2 bg-subtle rounded-lg border border-border-primary whitespace-nowrap">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <FileText className="h-4 w-4 text-slate-500" />
               </div>
               <div>
@@ -255,7 +255,7 @@ export function CreditNotesPage(): React.ReactNode {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <RotateCcw className="h-4 w-4 text-blue-600" />
               </div>
               <div>
@@ -269,7 +269,7 @@ export function CreditNotesPage(): React.ReactNode {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-warning-light rounded-lg border border-warning/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <Percent className="h-4 w-4 text-warning" />
               </div>
               <div>
@@ -285,7 +285,7 @@ export function CreditNotesPage(): React.ReactNode {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden bg-slate-50">
+      <div className="flex-1 flex overflow-hidden bg-app">
         {/* Credit Note List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -308,7 +308,7 @@ export function CreditNotesPage(): React.ReactNode {
               </div>
 
               {/* Detail View */}
-              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-slate-200 shadow-sm">
+              <div className="flex-1 overflow-hidden bg-card rounded-lg border border-border-primary shadow-sm">
                 {currentSelectedCreditNote ? (
                   <div className="h-full overflow-y-auto">
                     <CreditNoteDetail

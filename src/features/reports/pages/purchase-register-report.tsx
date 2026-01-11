@@ -150,7 +150,7 @@ export function PurchaseRegisterReport(): React.ReactNode {
             <CardBody className="py-3">
               <p className="text-xs text-slate-500 mb-1">Total Purchases</p>
               <p
-                className="text-lg sm:text-xl font-bold text-slate-900"
+                className="text-lg sm:text-xl font-bold text-text-heading"
                 title={formatCurrency(totals.total)}
               >
                 {formatCurrency(totals.total)}
@@ -182,7 +182,7 @@ export function PurchaseRegisterReport(): React.ReactNode {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500 mb-1">Invoices</p>
-              <p className="text-lg sm:text-xl font-bold text-slate-900">
+              <p className="text-lg sm:text-xl font-bold text-text-heading">
                 {filteredData.length}
               </p>
             </CardBody>
@@ -195,7 +195,7 @@ export function PurchaseRegisterReport(): React.ReactNode {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Invoice
                     </th>
@@ -243,8 +243,8 @@ export function PurchaseRegisterReport(): React.ReactNode {
                         variant: "warning" as const,
                       };
                       return (
-                        <tr key={entry.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-900">
+                        <tr key={entry.id} className="hover:bg-muted/50">
+                          <td className="px-4 py-3 font-medium text-text-heading">
                             {entry.invoiceNumber}
                           </td>
                           <td className="px-4 py-3">
@@ -253,19 +253,19 @@ export function PurchaseRegisterReport(): React.ReactNode {
                               {formatDate(entry.date)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-slate-900">
+                          <td className="px-4 py-3 text-text-heading">
                             {entry.customerName}
                           </td>
                           <td className="px-4 py-3 text-right text-slate-600">
                             {entry.itemCount}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-900">
+                          <td className="px-4 py-3 text-right text-text-heading">
                             {formatCurrency(entry.subtotal)}
                           </td>
                           <td className="px-4 py-3 text-right text-slate-600">
                             {formatCurrency(entry.tax)}
                           </td>
-                          <td className="px-4 py-3 text-right font-medium text-slate-900">
+                          <td className="px-4 py-3 text-right font-medium text-text-heading">
                             {formatCurrency(entry.total)}
                           </td>
                           <td className="px-4 py-3 text-right text-success">
@@ -286,17 +286,17 @@ export function PurchaseRegisterReport(): React.ReactNode {
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td colSpan={4} className="px-4 py-3 text-slate-900">
+                    <tr className="bg-muted/50 font-medium">
+                      <td colSpan={4} className="px-4 py-3 text-text-heading">
                         Total
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {formatCurrency(totals.subtotal)}
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         {formatCurrency(totals.tax)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {formatCurrency(totals.total)}
                       </td>
                       <td className="px-4 py-3 text-right text-success">

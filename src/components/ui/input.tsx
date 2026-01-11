@@ -46,7 +46,7 @@ export interface InputProps extends Omit<
 const wrapperStyles = "relative flex flex-col gap-1.5";
 
 const labelStyles = [
-  "text-sm font-medium text-slate-700",
+  "text-sm font-medium text-text-secondary",
   "cursor-pointer",
 ].join(" ");
 
@@ -54,13 +54,13 @@ const inputWrapperStyles = "relative flex items-center";
 
 const baseInputStyles = [
   "w-full",
-  "bg-white",
-  "border border-slate-300",
+  "bg-card",
+  "border border-border-secondary",
   "rounded-[10px]",
-  "text-slate-900 placeholder:text-slate-400",
+  "text-text-primary placeholder:text-text-muted",
   "transition-all duration-200",
   "focus:outline-none focus:ring-2 focus:ring-offset-0",
-  "disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed",
+  "disabled:bg-subtle disabled:text-text-tertiary disabled:cursor-not-allowed",
 ].join(" ");
 
 const sizeStyles: Record<InputSize, string> = {
@@ -71,8 +71,8 @@ const sizeStyles: Record<InputSize, string> = {
 
 const stateStyles: Record<InputState, string> = {
   default: [
-    "border-slate-300",
-    "hover:border-slate-400",
+    "border-border-secondary",
+    "hover:border-border-primary",
     "focus:border-primary-500 focus:ring-primary-500/20",
   ].join(" "),
   error: [
@@ -87,13 +87,13 @@ const stateStyles: Record<InputState, string> = {
   ].join(" "),
 };
 
-const iconStyles = "absolute text-slate-400 pointer-events-none";
+const iconStyles = "absolute text-text-muted pointer-events-none";
 const leftIconStyles = "left-3";
 const rightIconStyles = "right-3";
 
 const helperTextStyles = "text-xs";
 const errorTextStyles = "text-error";
-const defaultHelperStyles = "text-slate-500";
+const defaultHelperStyles = "text-text-tertiary";
 
 // ============================================================================
 // COMPONENT

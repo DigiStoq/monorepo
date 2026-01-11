@@ -265,7 +265,7 @@ export function ItemsPage(): React.ReactNode {
       />
 
       {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border-primary px-6 py-4">
         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">

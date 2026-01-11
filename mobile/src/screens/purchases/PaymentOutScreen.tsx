@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { ArrowUpRight } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface PaymentOut {
   id: string;
@@ -23,7 +24,7 @@ interface PaymentOut {
   reference_number: string;
 }
 
-function PaymentOutCard({ payment }: { payment: PaymentOut }) {
+function PaymentOutCard({ payment, styles, colors }: { payment: PaymentOut, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -72,6 +73,8 @@ export function PaymentOutScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: payments, isLoading } = useQuery<PaymentOut>(
     `SELECT * FROM payment_outs 
@@ -108,14 +111,14 @@ export function PaymentOutScreen() {
       <FlatList
         data={payments || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PaymentOutCard payment={item} />}
+        renderItem={({ item }) => <PaymentOutCard payment={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -136,7 +139,7 @@ export function PaymentOutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
@@ -158,13 +161,13 @@ const styles = StyleSheet.create({
   addButton: {
     width: 48,
     height: 48,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
   },
   addButtonText: {
-    color: colors.textOnAccent,
+    color: "#ffffff",
     fontSize: 24,
     fontWeight: fontWeight.semibold,
   },
@@ -188,7 +191,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.dangerMuted,
+    backgroundColor: colors.danger + '20', // transparent danger
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.border,
   },
   mode: {
     fontSize: fontSize.xs,

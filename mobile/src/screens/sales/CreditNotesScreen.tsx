@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { wp, hp } from "../../lib/responsive";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../lib/theme";
 
 interface CreditNote {
   id: string;
@@ -21,7 +23,7 @@ interface CreditNote {
   reason: string;
 }
 
-function CreditNoteCard({ note }: { note: CreditNote }) {
+function CreditNoteCard({ note, styles, colors }: { note: CreditNote, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -65,6 +67,8 @@ export function CreditNotesScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: notes, isLoading } = useQuery<CreditNote>(
     `SELECT * FROM credit_notes 
@@ -86,7 +90,7 @@ export function CreditNotesScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search credit notes..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
@@ -101,13 +105,13 @@ export function CreditNotesScreen() {
       <FlatList
         data={notes || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <CreditNoteCard note={item} />}
+        renderItem={({ item }) => <CreditNoteCard note={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
@@ -124,8 +128,8 @@ export function CreditNotesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     padding: wp(4),
@@ -134,18 +138,18 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 44,
-    color: "#0f172a",
+    color: colors.text,
   },
   addButton: {
     width: 44,
     height: 44,
-    backgroundColor: "#6366f1",
+    backgroundColor: colors.primary,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -153,12 +157,12 @@ const styles = StyleSheet.create({
   addButtonText: { color: "#ffffff", fontSize: 24, fontWeight: "600" },
   list: { padding: wp(4), paddingTop: 0, paddingBottom: hp(10) },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#f1f5f9",
+    borderColor: colors.border,
   },
   cardHeader: {
     flexDirection: "row",
@@ -170,29 +174,29 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#0f172a",
+    color: colors.text,
     marginBottom: 2,
   },
-  date: { fontSize: 13, color: "#64748b" },
-  amount: { fontSize: 16, fontWeight: "700", color: "#ef4444" },
+  date: { fontSize: 13, color: colors.textSecondary },
+  amount: { fontSize: 16, fontWeight: "700", color: colors.danger },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "#f8fafc",
+    borderTopColor: colors.borderLight,
     paddingTop: 8,
     marginTop: 4,
   },
-  reason: { fontSize: 13, color: "#64748b" },
-  ref: { fontSize: 12, color: "#94a3b8" },
+  reason: { fontSize: 13, color: colors.textSecondary },
+  ref: { fontSize: 12, color: colors.textMuted },
   empty: { alignItems: "center", justifyContent: "center", marginTop: hp(10) },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#0f172a",
+    color: colors.text,
     marginBottom: 8,
   },
-  emptySubtext: { fontSize: 14, color: "#64748b" },
+  emptySubtext: { fontSize: 14, color: colors.textSecondary },
 });

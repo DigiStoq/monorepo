@@ -110,7 +110,7 @@ export function SalesSummaryReport(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Sales</p>
-                <p className="text-xl sm:text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-text-heading">
                   {formatCurrency(data.totalSales)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -129,7 +129,7 @@ export function SalesSummaryReport(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Invoices</p>
-                <p className="text-xl sm:text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-text-heading">
                   {data.totalInvoices}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -218,10 +218,10 @@ export function SalesSummaryReport(): React.ReactNode {
               {data.topCustomers.slice(0, 5).map((customer, index) => (
                 <div key={customer.customerId} className="px-4 py-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-900 truncate">
+                    <span className="text-sm font-medium text-text-heading truncate">
                       {index + 1}. {customer.customerName}
                     </span>
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-text-heading">
                       {formatCurrency(customer.amount)}
                     </span>
                   </div>
@@ -248,7 +248,7 @@ export function SalesSummaryReport(): React.ReactNode {
         />
         <CardBody className="p-0">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-muted/50 border-b border-slate-200">
               <tr>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
                   #
@@ -269,17 +269,17 @@ export function SalesSummaryReport(): React.ReactNode {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.topItems.map((item, index) => (
-                <tr key={item.itemId} className="hover:bg-slate-50">
+                <tr key={item.itemId} className="hover:bg-muted/50">
                   <td className="px-4 py-3 text-sm text-slate-500">
                     {index + 1}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                  <td className="px-4 py-3 text-sm font-medium text-text-heading">
                     {item.itemName}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right">
+                  <td className="px-4 py-3 text-sm text-text-heading text-right">
                     {item.quantity}
                   </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">
+                  <td className="px-4 py-3 text-sm font-semibold text-text-heading text-right">
                     {formatCurrency(item.amount)}
                   </td>
                   <td className="px-4 py-3">

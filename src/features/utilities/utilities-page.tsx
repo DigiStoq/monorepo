@@ -91,7 +91,7 @@ export function UtilitiesPage(): React.ReactNode {
       title: "Import Data",
       description: "Import customers, items, or invoices from CSV/Excel files",
       icon: <Upload className="h-6 w-6" />,
-      color: "bg-blue-500",
+      color: "bg-blue-500/100",
       action: () => {
         setIsImportOpen(true);
       },
@@ -101,7 +101,7 @@ export function UtilitiesPage(): React.ReactNode {
       title: "Export Data",
       description: "Export your data to CSV, Excel, or PDF formats",
       icon: <Download className="h-6 w-6" />,
-      color: "bg-green-500",
+      color: "bg-green-500/100",
       action: () => {
         setIsExportOpen(true);
       },
@@ -196,7 +196,7 @@ export function UtilitiesPage(): React.ReactNode {
       <div className="p-6 space-y-8">
         {/* Main Utilities Grid */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <h2 className="text-lg font-semibold text-text-heading mb-4">
             Data Management
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -215,7 +215,7 @@ export function UtilitiesPage(): React.ReactNode {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900">
+                        <h3 className="font-semibold text-text-heading">
                           {utility.title}
                         </h3>
                         <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -233,7 +233,7 @@ export function UtilitiesPage(): React.ReactNode {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <h2 className="text-lg font-semibold text-text-heading mb-4">
             Quick Actions
           </h2>
           <Card>
@@ -257,13 +257,13 @@ export function UtilitiesPage(): React.ReactNode {
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-blue-500/10 border-blue-200">
             <CardBody className="flex items-start gap-4 p-5">
-              <div className="p-3 bg-blue-500 rounded-xl text-white">
+              <div className="p-3 bg-blue-500/100 rounded-xl text-white">
                 <Database className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">
+                <h3 className="font-semibold text-text-heading">
                   Data Import Tips
                 </h3>
                 <ul className="text-sm text-slate-600 mt-2 space-y-1 list-disc list-inside">
@@ -276,13 +276,13 @@ export function UtilitiesPage(): React.ReactNode {
             </CardBody>
           </Card>
 
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-green-500/10 border-green-200">
             <CardBody className="flex items-start gap-4 p-5">
-              <div className="p-3 bg-green-500 rounded-xl text-white">
+              <div className="p-3 bg-green-500/100 rounded-xl text-white">
                 <Shield className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Data Safety</h3>
+                <h3 className="font-semibold text-text-heading">Data Safety</h3>
                 <ul className="text-sm text-slate-600 mt-2 space-y-1 list-disc list-inside">
                   <li>All data is encrypted in transit and at rest</li>
                   <li>Backups are stored securely</li>

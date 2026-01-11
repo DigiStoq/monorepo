@@ -287,9 +287,9 @@ export function BulkUpdateModal({
                 <div
                   key={item.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 cursor-pointer",
+                    "flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer",
                     selectedIds.has(item.id) &&
-                      "bg-primary-50 border-primary-100"
+                    "bg-primary/10 border-primary-100"
                   )}
                   onClick={() => {
                     toggleSelection(item.id);
@@ -307,13 +307,13 @@ export function BulkUpdateModal({
                     }}
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-slate-900">{item.name}</p>
+                    <p className="font-medium text-text-heading">{item.name}</p>
                     <p className="text-xs text-slate-500">
                       SKU: {item.sku || "-"} • Stock: {item.stockQuantity}
                     </p>
                   </div>
                   <div className="text-right text-sm">
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-text-heading">
                       ${item.salePrice}
                     </p>
                   </div>
@@ -347,13 +347,13 @@ export function BulkUpdateModal({
       {/* STEP 2: CONFIGURE */}
       {step === "configure" && (
         <div className="py-4 space-y-6">
-          <Card className="bg-primary-50 border-primary">
+          <Card className="bg-primary/10 border-primary">
             <CardBody className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Layers className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-text-heading">
                   {selectedIds.size} items selected
                 </p>
                 <p
@@ -383,7 +383,7 @@ export function BulkUpdateModal({
                   className={cn(
                     "p-3 rounded-xl border-2 text-left transition-all",
                     updateType === opt.value
-                      ? "border-primary bg-primary-50"
+                      ? "border-primary bg-primary/10"
                       : "border-slate-200 hover:border-slate-300"
                   )}
                 >
@@ -398,7 +398,7 @@ export function BulkUpdateModal({
                     >
                       {opt.icon}
                     </div>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {opt.label}
                     </span>
                   </div>
@@ -566,7 +566,7 @@ export function BulkUpdateModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Update Successful!
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
@@ -580,7 +580,7 @@ export function BulkUpdateModal({
                 <AlertTriangle className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Update Failed
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">

@@ -283,10 +283,10 @@ export function ReportsHubPage(): React.ReactNode {
                     <CategoryIcon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
+                    <h2 className="text-lg font-semibold text-text-heading">
                       {category.title}
                     </h2>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-text-tertiary">
                       {category.description}
                     </p>
                   </div>
@@ -307,12 +307,12 @@ export function ReportsHubPage(): React.ReactNode {
                               >
                                 <ReportIcon className="h-4 w-4" />
                               </div>
-                              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+                              <ArrowRight className="h-4 w-4 text-text-muted group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
                             </div>
-                            <h3 className="font-medium text-slate-900 mb-1">
+                            <h3 className="font-medium text-text-heading mb-1">
                               {report.title}
                             </h3>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-text-tertiary">
                               {report.description}
                             </p>
                           </CardBody>
@@ -329,8 +329,8 @@ export function ReportsHubPage(): React.ReactNode {
         {/* Empty State */}
         {filteredCategories.length === 0 && (
           <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-slate-900 mb-1">
+            <FileText className="h-12 w-12 text-text-muted mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-text-heading mb-1">
               No reports found
             </h3>
             <p className="text-slate-500">Try adjusting your search term</p>

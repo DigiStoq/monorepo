@@ -41,10 +41,10 @@ const variantIcons: Record<EmptyStateVariant, LucideIcon> = {
 };
 
 const variantColors: Record<EmptyStateVariant, string> = {
-  default: "text-slate-300",
-  search: "text-slate-300",
+  default: "text-text-muted",
+  search: "text-text-muted",
   error: "text-error/50",
-  empty: "text-slate-300",
+  empty: "text-text-muted",
 };
 
 // ============================================================================
@@ -89,7 +89,7 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
 
         <h3
           className={cn(
-            "font-semibold text-slate-900 font-display",
+            "font-semibold text-text-heading font-display",
             compact ? "text-base" : "text-lg"
           )}
         >
@@ -99,7 +99,7 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
         {description && (
           <p
             className={cn(
-              "mt-1 text-slate-500 max-w-sm",
+              "mt-1 text-text-tertiary max-w-sm",
               compact ? "text-sm" : "text-sm"
             )}
           >

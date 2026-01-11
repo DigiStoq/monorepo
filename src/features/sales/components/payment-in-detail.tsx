@@ -95,7 +95,7 @@ export function PaymentInDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-text-heading">
             {payment.receiptNumber}
           </h2>
           <p className="text-sm text-slate-500">Payment Receipt</p>
@@ -143,7 +143,7 @@ export function PaymentInDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {payment.customerName}
                 </p>
               </div>
@@ -155,7 +155,7 @@ export function PaymentInDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {formatDate(payment.date)}
                 </p>
               </div>
@@ -172,7 +172,7 @@ export function PaymentInDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Payment Mode</p>
-                <p className="font-medium text-slate-900">{mode.label}</p>
+                <p className="font-medium text-text-heading">{mode.label}</p>
               </div>
             </div>
 
@@ -183,7 +183,7 @@ export function PaymentInDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Reference Number</p>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-text-heading">
                     {payment.referenceNumber}
                   </p>
                 </div>

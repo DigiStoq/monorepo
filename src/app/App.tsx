@@ -8,6 +8,7 @@ import { initializePowerSync, disconnectPowerSync } from "@/lib/powersync";
 import { useAuthStore } from "@/stores";
 import { router } from "@/routes";
 import { Spinner } from "@/components/common";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 
 // ============================================================================
 // TYPES
@@ -278,7 +279,9 @@ export function App(): React.ReactNode {
   // Ready - render app with router
   return (
     <PowerSyncContext.Provider value={db}>
-      <RouterProvider router={router} />
+      <ThemeProvider>
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </PowerSyncContext.Provider>
   );
 }

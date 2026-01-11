@@ -67,12 +67,15 @@ function AppContent(): JSX.Element | null {
 }
 
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ThemeProvider, useTheme } from "./src/contexts/ThemeContext";
 
 export default function App(): JSX.Element {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <AppWrapper />
+        <ThemeProvider>
+          <AppWrapper />
+        </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
@@ -80,12 +83,17 @@ export default function App(): JSX.Element {
 
 function AppWrapper() {
   const insets = useSafeAreaInsets();
-  
+  const { colors, isDark } = useTheme();
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
-      <View style={{ height: insets.top, backgroundColor: "#ffffff" }} />
-      <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+    <View style={{ flex: 1, backgroundColor: colors.backgroundLight }}>
+      <StatusBar
+        style={isDark ? "light" : "dark"}
+        backgroundColor={colors.backgroundLight}
+        translucent={false}
+      />
+      <View style={{ height: insets.top, backgroundColor: colors.backgroundLight }} />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <AppContent />
       </View>
     </View>

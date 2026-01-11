@@ -197,7 +197,7 @@ export function Modal({
             <motion.div
               className={cn(
                 "relative w-full",
-                "bg-white rounded-xl shadow-elevated",
+                "bg-card rounded-xl shadow-elevated",
                 "flex flex-col max-h-[calc(100vh-2rem)]",
                 sizeStyles[size],
                 className
@@ -260,7 +260,7 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
         ref={ref}
         className={cn(
           "flex items-start justify-between gap-4 px-6 pt-6 pb-4",
-          "border-b border-slate-100",
+          "border-b border-border-primary",
           className
         )}
         {...props}
@@ -269,13 +269,13 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
           {title && (
             <h2
               id="modal-title"
-              className="text-lg font-semibold text-slate-900 font-display"
+              className="text-lg font-semibold text-text-primary font-display"
             >
               {title}
             </h2>
           )}
           {description && (
-            <p id="modal-description" className="mt-1 text-sm text-slate-500">
+            <p id="modal-description" className="mt-1 text-sm text-text-tertiary">
               {description}
             </p>
           )}
@@ -336,7 +336,7 @@ export const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
         ref={ref}
         className={cn(
           "flex items-center gap-3 px-6 py-4",
-          "border-t border-slate-100 bg-slate-50/50",
+          "border-t border-border-primary bg-subtle",
           footerAlignStyles[align],
           className
         )}
@@ -425,7 +425,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-slate-600">{message}</p>
+      <p className="text-text-secondary">{message}</p>
     </Modal>
   );
 }

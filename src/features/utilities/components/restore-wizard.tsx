@@ -165,7 +165,7 @@ export function RestoreWizard({
                 "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
                 idx < currentIndex && "bg-success text-white",
                 idx === currentIndex && "bg-primary text-white",
-                idx > currentIndex && "bg-slate-200 text-slate-500"
+                idx > currentIndex && "bg-muted text-slate-500"
               )}
             >
               {idx < currentIndex ? (
@@ -178,7 +178,7 @@ export function RestoreWizard({
               <div
                 className={cn(
                   "w-12 h-0.5 mx-1",
-                  idx < currentIndex ? "bg-success" : "bg-slate-200"
+                  idx < currentIndex ? "bg-success" : "bg-muted"
                 )}
               />
             )}
@@ -195,7 +195,7 @@ export function RestoreWizard({
           <div className="space-y-6">
             <div className="text-center">
               <RefreshCw className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Restore Data
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -212,12 +212,12 @@ export function RestoreWizard({
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "local"
-                    ? "border-primary bg-primary-50"
+                    ? "border-primary bg-primary/10"
                     : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <HardDrive className="h-10 w-10 mx-auto mb-3 text-slate-600" />
-                <p className="font-semibold text-slate-900">Local File</p>
+                <p className="font-semibold text-text-heading">Local File</p>
                 <p className="text-xs text-slate-500 mt-1">
                   Upload a backup file from your device
                 </p>
@@ -231,12 +231,12 @@ export function RestoreWizard({
                 className={cn(
                   "p-6 rounded-xl border-2 text-center transition-all",
                   source === "cloud"
-                    ? "border-primary bg-primary-50"
+                    ? "border-primary bg-primary/10"
                     : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <Cloud className="h-10 w-10 mx-auto mb-3 text-slate-600" />
-                <p className="font-semibold text-slate-900">Cloud Storage</p>
+                <p className="font-semibold text-text-heading">Cloud Storage</p>
                 <p className="text-xs text-slate-500 mt-1">
                   Restore from a cloud backup
                 </p>
@@ -254,7 +254,7 @@ export function RestoreWizard({
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 {source === "local"
                   ? "Upload Backup File"
                   : "Select Cloud Backup"}
@@ -278,7 +278,7 @@ export function RestoreWizard({
                 {uploadedFile ? (
                   <div className="space-y-2">
                     <FileArchive className="h-12 w-12 mx-auto text-success" />
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-text-heading">
                       {uploadedFile.name}
                     </p>
                     <p className="text-sm text-slate-500">
@@ -330,14 +330,14 @@ export function RestoreWizard({
                       className={cn(
                         "w-full p-4 rounded-lg border-2 text-left transition-all",
                         selectedBackup?.id === backup.id
-                          ? "border-primary bg-primary-50"
+                          ? "border-primary bg-primary/10"
                           : "border-slate-200 hover:border-slate-300"
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <FileArchive className="h-8 w-8 text-slate-400" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 truncate">
+                          <p className="font-medium text-text-heading truncate">
                             {backup.filename}
                           </p>
                           <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
@@ -360,7 +360,7 @@ export function RestoreWizard({
                     </button>
                   ))
                 ) : (
-                  <Card className="bg-slate-50">
+                  <Card className="bg-muted/50">
                     <CardBody className="text-center py-8">
                       <Cloud className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                       <p className="text-sm text-slate-500">
@@ -379,7 +379,7 @@ export function RestoreWizard({
           <div className="space-y-6">
             <div className="text-center">
               <AlertTriangle className="h-16 w-16 mx-auto text-warning mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Confirm Restore
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -391,13 +391,13 @@ export function RestoreWizard({
               <CardBody className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Source</span>
-                  <span className="font-medium text-slate-900 capitalize">
+                  <span className="font-medium text-text-heading capitalize">
                     {source}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">File</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {source === "local"
                       ? uploadedFile?.name
                       : selectedBackup?.filename}
@@ -405,7 +405,7 @@ export function RestoreWizard({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Size</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {formatFileSize(
                       source === "local"
                         ? (uploadedFile?.size ?? 0)
@@ -431,7 +431,7 @@ export function RestoreWizard({
               </CardBody>
             </Card>
 
-            <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+            <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
               <input
                 type="checkbox"
                 checked={overwriteExisting}
@@ -462,7 +462,7 @@ export function RestoreWizard({
               <>
                 <CheckCircle2 className="h-20 w-20 mx-auto text-success" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">
+                  <h3 className="text-xl font-semibold text-text-heading">
                     Restore Complete!
                   </h3>
                   <p className="text-slate-500 mt-1">
@@ -474,7 +474,7 @@ export function RestoreWizard({
                   <CardBody className="flex items-center justify-center gap-4">
                     <Database className="h-8 w-8 text-primary" />
                     <div className="text-left">
-                      <p className="text-2xl font-bold text-slate-900">
+                      <p className="text-2xl font-bold text-text-heading">
                         {result.recordsRestored.toLocaleString()}
                       </p>
                       <p className="text-xs text-slate-500">Records Restored</p>
@@ -486,7 +486,7 @@ export function RestoreWizard({
               <>
                 <AlertTriangle className="h-20 w-20 mx-auto text-error" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">
+                  <h3 className="text-xl font-semibold text-text-heading">
                     Restore Failed
                   </h3>
                   <p className="text-slate-500 mt-1">

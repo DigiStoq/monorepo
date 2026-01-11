@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from "lucide-react-native";
 import { usePurchasesBySupplierReport, DateRange } from "../../hooks/useReports";
 import { CustomHeader } from "../../components/CustomHeader";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function PurchasesBySupplierScreen() {
     const navigation = useNavigation();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     // Default to current month
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -34,16 +37,16 @@ export function PurchasesBySupplierScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader />
-            
+            <CustomHeader title="Purchase By Supplier" />
+
             <View style={styles.content}>
                 <View style={styles.dateDisplay}>
-                    <Calendar color={colors.textMuted} size={16} style={{marginRight: 6}} />
+                    <Calendar color={colors.textMuted} size={16} style={{ marginRight: 6 }} />
                     <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
                 </View>
 
                 {isLoading ? (
-                     <Text style={styles.loadingText}>Loading...</Text>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 ) : (
                     <FlatList
                         data={data}
@@ -58,7 +61,7 @@ export function PurchasesBySupplierScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     content: { flex: 1 },
     dateDisplay: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: spacing.md, backgroundColor: colors.surfaceHover },

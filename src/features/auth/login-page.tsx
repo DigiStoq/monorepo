@@ -86,7 +86,7 @@ export function LoginPage(): ReactNode {
             void handleGoogleSignIn();
           }}
           isLoading={isLoading}
-          className="bg-white text-slate-700 border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2"
+          className="bg-card text-text-secondary border-border-secondary hover:bg-subtle flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -111,10 +111,10 @@ export function LoginPage(): ReactNode {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200" />
+            <span className="w-full border-t border-border-primary" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-slate-500">
+            <span className="bg-card px-2 text-text-tertiary">
               Or continue with
             </span>
           </div>
@@ -128,7 +128,7 @@ export function LoginPage(): ReactNode {
           onChange={(e) => {
             setEmail(e.target.value);
           }}
-          leftIcon={<Mail size={18} className="text-slate-400" />}
+          leftIcon={<Mail size={18} className="text-text-muted" />}
           autoComplete="email"
           disabled={isLoading}
         />
@@ -164,7 +164,7 @@ export function LoginPage(): ReactNode {
         </Button>
 
         {/* Signup Link */}
-        <p className="text-center text-sm text-slate-600">
+        <p className="text-center text-sm text-text-secondary">
           Don&apos;t have an account?{" "}
           <Link
             to="/signup"

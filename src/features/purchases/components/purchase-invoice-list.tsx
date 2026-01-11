@@ -82,7 +82,7 @@ function InvoiceCard({ invoice, onClick }: InvoiceCardProps): React.ReactNode {
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full p-4 bg-white rounded-lg border border-slate-200",
+        "w-full p-4 bg-card rounded-lg border border-border-primary",
         "hover:border-primary-300 hover:shadow-soft",
         "transition-all duration-200 text-left",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
@@ -92,7 +92,7 @@ function InvoiceCard({ invoice, onClick }: InvoiceCardProps): React.ReactNode {
         {/* Invoice Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-slate-900">
+            <h3 className="font-semibold text-text-heading">
               {invoice.invoiceNumber}
             </h3>
             <Badge variant={status.variant} size="sm">

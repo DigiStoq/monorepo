@@ -25,7 +25,8 @@ import {
 import { Plus, Trash2, Save, X } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface CustomerData {
   id: string;
@@ -51,6 +52,8 @@ interface LineItem {
 
 export function CreditNoteFormScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -402,7 +405,7 @@ export function CreditNoteFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",

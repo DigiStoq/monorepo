@@ -41,15 +41,15 @@ export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
 // STYLES
 // ============================================================================
 
-const baseStyles = ["bg-white", "rounded-lg"].join(" ");
+const baseStyles = ["bg-card", "rounded-lg"].join(" ");
 
 const variantStyles: Record<CardVariant, string> = {
-  default: "border border-slate-200 shadow-soft",
-  outlined: "border-2 border-slate-200",
-  elevated: "border border-slate-100 shadow-card",
+  default: "border border-border-primary shadow-soft",
+  outlined: "border-2 border-border-primary",
+  elevated: "border border-border-primary shadow-card",
   gradient: [
-    "border border-slate-100",
-    "bg-gradient-to-br from-white via-slate-50/50 to-primary-50/30",
+    "border border-border-primary",
+    "bg-gradient-to-br from-card via-subtle to-primary-50/30",
     "shadow-soft",
   ].join(" "),
 };
@@ -121,12 +121,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
         {title || subtitle ? (
           <div className="flex-1 min-w-0">
             {title && (
-              <h3 className="text-lg font-semibold text-slate-900 font-display truncate">
+              <h3 className="text-lg font-semibold text-text-heading font-display truncate">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="mt-1 text-sm text-slate-500 truncate">{subtitle}</p>
+              <p className="mt-1 text-sm text-text-tertiary truncate">{subtitle}</p>
             )}
           </div>
         ) : (

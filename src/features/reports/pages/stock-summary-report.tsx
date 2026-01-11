@@ -161,7 +161,7 @@ export function StockSummaryReport(): React.ReactNode {
           <CardBody className="p-4 text-center">
             <Boxes className="h-6 w-6 text-primary-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Items</p>
-            <p className="text-xl sm:text-2xl font-bold text-slate-900">
+            <p className="text-xl sm:text-2xl font-bold text-text-heading">
               {totals.totalItems}
             </p>
           </CardBody>
@@ -171,7 +171,7 @@ export function StockSummaryReport(): React.ReactNode {
           <CardBody className="p-4 text-center">
             <Package className="h-6 w-6 text-blue-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Quantity</p>
-            <p className="text-xl sm:text-2xl font-bold text-slate-900">
+            <p className="text-xl sm:text-2xl font-bold text-text-heading">
               {totals.totalQuantity.toLocaleString()}
             </p>
           </CardBody>
@@ -209,7 +209,7 @@ export function StockSummaryReport(): React.ReactNode {
             <p
               className={cn(
                 "text-xl sm:text-2xl font-bold",
-                totals.lowStockCount > 0 ? "text-warning" : "text-slate-900"
+                totals.lowStockCount > 0 ? "text-warning" : "text-text-heading"
               )}
             >
               {totals.lowStockCount}
@@ -222,7 +222,7 @@ export function StockSummaryReport(): React.ReactNode {
       <Card>
         <CardBody className="p-0">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-muted/50 border-b border-slate-200">
               <tr>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
                   Item
@@ -255,12 +255,12 @@ export function StockSummaryReport(): React.ReactNode {
                 <tr
                   key={item.itemId}
                   className={cn(
-                    "hover:bg-slate-50",
+                    "hover:bg-muted/50",
                     item.isLowStock && "bg-warning-light"
                   )}
                 >
                   <td className="px-4 py-3">
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {item.itemName}
                     </span>
                   </td>
@@ -278,7 +278,7 @@ export function StockSummaryReport(): React.ReactNode {
                     <span
                       className={cn(
                         "font-medium",
-                        item.isLowStock ? "text-warning" : "text-slate-900"
+                        item.isLowStock ? "text-warning" : "text-text-heading"
                       )}
                     >
                       {item.stockQuantity} {item.unit}
@@ -292,7 +292,7 @@ export function StockSummaryReport(): React.ReactNode {
                   <td className="px-4 py-3 text-right text-sm text-slate-600">
                     {formatCurrency(item.purchasePrice)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-900">
+                  <td className="px-4 py-3 text-right text-sm text-text-heading">
                     {formatCurrency(item.salePrice)}
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-green-600">
@@ -317,11 +317,11 @@ export function StockSummaryReport(): React.ReactNode {
               <tr>
                 <td
                   colSpan={3}
-                  className="px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="px-4 py-3 text-sm font-semibold text-text-heading"
                 >
                   Total ({filteredItems.length} items)
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-slate-900">
+                <td className="px-4 py-3 text-right font-bold text-text-heading">
                   {totals.totalQuantity.toLocaleString()}
                 </td>
                 <td colSpan={2}></td>

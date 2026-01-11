@@ -341,7 +341,7 @@ export function ImportWizard({
                 "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
                 idx < currentIndex && "bg-success text-white",
                 idx === currentIndex && "bg-primary text-white",
-                idx > currentIndex && "bg-slate-200 text-slate-500"
+                idx > currentIndex && "bg-muted text-slate-500"
               )}
             >
               {idx < currentIndex ? (
@@ -354,7 +354,7 @@ export function ImportWizard({
               <div
                 className={cn(
                   "w-12 h-0.5 mx-1",
-                  idx < currentIndex ? "bg-success" : "bg-slate-200"
+                  idx < currentIndex ? "bg-success" : "bg-muted"
                 )}
               />
             )}
@@ -371,7 +371,7 @@ export function ImportWizard({
           <div className="space-y-6">
             <div className="text-center">
               <FileSpreadsheet className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Import Data
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -392,7 +392,7 @@ export function ImportWizard({
               />
             </div>
 
-            <Card className="bg-slate-50 border-dashed">
+            <Card className="bg-muted/50 border-dashed">
               <CardBody className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-700">
@@ -420,7 +420,7 @@ export function ImportWizard({
           <div className="space-y-6">
             <div className="text-center">
               <Upload className="h-16 w-16 mx-auto text-primary mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Upload File
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -439,7 +439,7 @@ export function ImportWizard({
               {file ? (
                 <div className="space-y-2">
                   <CheckCircle2 className="h-12 w-12 mx-auto text-success" />
-                  <p className="font-medium text-slate-900">{file.name}</p>
+                  <p className="font-medium text-text-heading">{file.name}</p>
                   <p className="text-sm text-slate-500">
                     {(file.size / 1024).toFixed(1)} KB • {fileData.length} rows
                     detected
@@ -505,7 +505,7 @@ export function ImportWizard({
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Map Fields
               </h3>
               <p className="text-sm text-slate-500">
@@ -527,7 +527,7 @@ export function ImportWizard({
                 return (
                   <div
                     key={col}
-                    className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg"
+                    className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
                   >
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-700">
@@ -566,7 +566,7 @@ export function ImportWizard({
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-text-heading">
                 Preview Import
               </h3>
               <p className="text-sm text-slate-500">
@@ -579,7 +579,7 @@ export function ImportWizard({
                 <div className="grid grid-cols-3 gap-4">
                   <Card>
                     <CardBody className="text-center py-4">
-                      <p className="text-2xl font-bold text-slate-900">
+                      <p className="text-2xl font-bold text-text-heading">
                         {preview.totalRows}
                       </p>
                       <p className="text-xs text-slate-500">Total Rows</p>
@@ -629,12 +629,12 @@ export function ImportWizard({
                 )}
 
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
+                  <div className="bg-muted/50 px-4 py-2 text-xs font-medium text-slate-500">
                     Preview (first 5 rows)
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-slate-50 border-b">
+                      <thead className="bg-muted/50 border-b">
                         <tr>
                           {mappings
                             .filter((m) => m.targetField)
@@ -690,7 +690,7 @@ export function ImportWizard({
               <>
                 <CheckCircle2 className="h-20 w-20 mx-auto text-success" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">
+                  <h3 className="text-xl font-semibold text-text-heading">
                     Import Complete!
                   </h3>
                   <p className="text-slate-500 mt-1">
@@ -728,7 +728,7 @@ export function ImportWizard({
               <>
                 <XCircle className="h-20 w-20 mx-auto text-error" />
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">
+                  <h3 className="text-xl font-semibold text-text-heading">
                     Import Failed
                   </h3>
                   <p className="text-slate-500 mt-1">

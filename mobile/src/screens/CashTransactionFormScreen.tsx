@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  Alert, 
-  KeyboardAvoidingView, 
-  Platform,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator
+import React, { useState, useEffect, useMemo } from "react";
+import {
+    View,
+    StyleSheet,
+    ScrollView,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Text,
+    TouchableOpacity,
+    ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { usePowerSync } from "@powersync/react-native";
 import { generateUUID } from "../lib/utils";
 import { X, Save, Trash2 } from "lucide-react-native";
-import { 
-    Button, 
+import {
+    Button,
     Input,
     Card,
     CardHeader,
     CardBody
 } from "../components/ui";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { wp, hp } from "../lib/responsive";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function CashTransactionFormScreen() {
     const navigation = useNavigation();
@@ -31,8 +32,10 @@ export function CashTransactionFormScreen() {
     const params = route.params as { id?: string } | undefined;
     const id = params?.id;
     const isEditing = !!id;
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
-    const [type, setType] = useState<'in'|'out'>('out'); 
+    const [type, setType] = useState<'in' | 'out'>('out');
     const [amount, setAmount] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState("");
@@ -71,7 +74,7 @@ export function CashTransactionFormScreen() {
             setLoading(true);
             const amt = parseFloat(amount);
             const now = new Date().toISOString();
-            
+
             if (isEditing) {
                 await db.execute(
                     `UPDATE cash_transactions SET
@@ -99,10 +102,12 @@ export function CashTransactionFormScreen() {
     async function handleDelete() {
         Alert.alert("Delete", "Are you sure?", [
             { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: async () => {
-                await db.execute("DELETE FROM cash_transactions WHERE id = ?", [id]);
-                navigation.goBack();
-            }}
+            {
+                text: "Delete", style: "destructive", onPress: async () => {
+                    await db.execute("DELETE FROM cash_transactions WHERE id = ?", [id]);
+                    navigation.goBack();
+                }
+            }
         ]);
     }
 
@@ -122,13 +127,13 @@ export function CashTransactionFormScreen() {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.switchContainer}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'in' && styles.switchActiveIn]}
                         onPress={() => setType('in')}
                     >
                         <Text style={[styles.switchText, type === 'in' && styles.switchTextActive]}>Cash In (+)</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'out' && styles.switchActiveOut]}
                         onPress={() => setType('out')}
                     >
@@ -139,7 +144,7 @@ export function CashTransactionFormScreen() {
                 <Card>
                     <CardHeader title="Details" />
                     <CardBody>
-                        <Input 
+                        <Input
                             label="Amount"
                             value={amount}
                             onChangeText={setAmount}
@@ -148,19 +153,19 @@ export function CashTransactionFormScreen() {
                             style={styles.inputBig}
                             autoFocus={!isEditing}
                         />
-                        <Input 
+                        <Input
                             label="Date"
                             value={date}
                             onChangeText={setDate}
                             placeholder="YYYY-MM-DD"
                         />
-                         <Input 
+                        <Input
                             label="Description"
                             value={description}
                             onChangeText={setDescription}
                             placeholder="e.g. Sales, Office Supplies"
                         />
-                         <Input 
+                        <Input
                             label="Category (Optional)"
                             value={category}
                             onChangeText={setCategory}
@@ -170,21 +175,21 @@ export function CashTransactionFormScreen() {
                 </Card>
 
                 {isEditing && (
-                     <Button
+                    <Button
                         variant="outline"
                         style={{ marginTop: 24, borderColor: colors.danger }}
                         onPress={handleDelete}
                         leftIcon={<Trash2 size={18} color={colors.danger} />}
-                     >
+                    >
                         <Text style={{ color: colors.danger }}>Delete Transaction</Text>
-                     </Button>
+                    </Button>
                 )}
             </ScrollView>
         </KeyboardAvoidingView>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: "row",
@@ -206,5 +211,5 @@ const styles = StyleSheet.create({
     switchActiveOut: { backgroundColor: colors.danger },
     switchText: { fontWeight: fontWeight.medium, color: colors.textSecondary },
     switchTextActive: { color: "#fff", fontWeight: fontWeight.bold },
-    inputBig: { fontSize: 24, fontWeight: "bold", textAlign: "center" },
+    inputBig: { fontSize: 24, fontWeight: "bold", textAlign: "center", color: colors.text },
 });

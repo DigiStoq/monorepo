@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useCompanySettings } from "./useSettings";
+import { useUserPreferences } from "./useUserPreferences";
 
 export interface CurrencyOption {
   code: string;
@@ -50,16 +51,36 @@ export function useCurrency(): {
 
   const currencyCode = settings?.currency ?? "USD";
   const locale = settings?.locale ?? "en-US";
+  
+  const { preferences } = useUserPreferences();
 
   const formatCurrency = useCallback(
     (value: number) => {
       try {
-        return new Intl.NumberFormat(locale, {
+        const decimals = preferences?.numberFormat?.decimalPlaces ?? 2;
+        const decimalSeparator = preferences?.numberFormat?.decimalSeparator ?? ".";
+        const thousandsSeparator = preferences?.numberFormat?.thousandsSeparator ?? ",";
+
+        const formatter = new Intl.NumberFormat(locale, {
           style: "currency",
           currency: currencyCode,
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(value);
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
+
+        // If no custom separators are set (or defaults), just use standard formatter
+        // Actually, we should always respect the robust preferences if we want consistency
+        // But 'preferences' might be loading. 
+        // We can use formatToParts for precise control.
+
+        const parts = formatter.formatToParts(value);
+        
+        return parts.map(part => {
+          if (part.type === "decimal") return decimalSeparator;
+          if (part.type === "group") return thousandsSeparator;
+          return part.value;
+        }).join("");
+
       } catch (error) {
         // Fallback for invalid currency codes
         console.warn(`Invalid currency code: ${currencyCode}`, error);
@@ -69,7 +90,7 @@ export function useCurrency(): {
         }).format(value);
       }
     },
-    [currencyCode, locale]
+    [currencyCode, locale, preferences]
   );
 
   return {

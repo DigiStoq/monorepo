@@ -1,6 +1,7 @@
 import type React from "react";
 import type { ViewStyle, StyleProp } from "react-native";
 import { View, Text, StyleSheet } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface CardProps {
   children: React.ReactNode;
@@ -8,7 +9,21 @@ interface CardProps {
 }
 
 export function Card({ children, style }: CardProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border
+        },
+        style
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 interface CardHeaderProps {
@@ -19,9 +34,16 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ title, action, style }: CardHeaderProps) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.header, style]}>
-      {title && <Text style={styles.title}>{title}</Text>}
+    <View
+      style={[
+        styles.header,
+        { borderBottomColor: colors.borderLight },
+        style
+      ]}
+    >
+      {title && <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>}
       {action && <View>{action}</View>}
     </View>
   );
@@ -39,11 +61,8 @@ export function CardBody({ children, style }: CardBodyProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -54,7 +73,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -62,7 +80,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#334155",
   },
   body: {
     padding: 16,

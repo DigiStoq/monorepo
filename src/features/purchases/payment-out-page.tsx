@@ -236,7 +236,7 @@ export function PaymentOutPage(): React.ReactNode {
       />
 
       {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border-primary px-6 py-4">
         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
@@ -312,7 +312,7 @@ export function PaymentOutPage(): React.ReactNode {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden bg-slate-50">
+      <div className="flex-1 flex overflow-hidden bg-app">
         {/* Payment List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -402,12 +402,12 @@ export function PaymentOutPage(): React.ReactNode {
         linkedItems={
           paymentToDelete?.invoiceId
             ? [
-                {
-                  type: "Invoice Link",
-                  count: 1,
-                  description: "Balance will be reversed",
-                },
-              ]
+              {
+                type: "Invoice Link",
+                count: 1,
+                description: "Balance will be reversed",
+              },
+            ]
             : undefined
         }
         isLoading={isSubmitting}

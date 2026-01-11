@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,10 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Search, ChevronRight, Wallet } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomHeader } from "../components/CustomHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../contexts/ThemeContext";
 
 // Define local interface for CashRecord
 interface CashRecord {
@@ -23,7 +24,7 @@ interface CashRecord {
   description: string;
 }
 
-function CashAccountCard({ account }: { account: CashRecord }) {
+function CashAccountCard({ account, styles, colors }: { account: CashRecord, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   return (
@@ -36,7 +37,7 @@ function CashAccountCard({ account }: { account: CashRecord }) {
     >
       <View style={styles.cardHeader}>
         <View style={styles.avatar}>
-          <Wallet size={24} color={colors.textOnAccent} />
+          <Wallet size={24} color={"#ffffff"} />
         </View>
         <View style={styles.cardInfo}>
           <Text style={styles.cardTitle}>{account.name}</Text>
@@ -64,6 +65,8 @@ export function CashInHandScreen() {
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // This is a placeholder as the exact schema for cash_accounts isn't visible
   // Assuming a similar structure or a single record for main cash
@@ -84,7 +87,7 @@ export function CashInHandScreen() {
   return (
     <View style={styles.container}>
       <CustomHeader />
-      
+
       <View style={styles.searchBar}>
         <View style={styles.searchInput}>
           <Search size={18} color={colors.textMuted} />
@@ -101,15 +104,15 @@ export function CashInHandScreen() {
       <FlatList
         data={accounts || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <CashAccountCard account={item} />}
+        renderItem={({ item }) => <CashAccountCard account={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -128,7 +131,7 @@ export function CashInHandScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },

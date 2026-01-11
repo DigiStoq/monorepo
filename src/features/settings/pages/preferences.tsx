@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
 import {
   Settings,
@@ -19,9 +19,10 @@ import {
 } from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { AppPreferences, DateFormat, DashboardWidget } from "../types";
+import { useUserPreferences, useUserPreferencesMutations } from "@/hooks/useUserPreferences";
 
-// Mock data
-const mockPreferences: AppPreferences = {
+// Default empty state to prevent null access before load
+const defaultPreferences: AppPreferences = {
   theme: "system",
   dateFormat: "DD/MM/YYYY",
   numberFormat: {
@@ -31,13 +32,7 @@ const mockPreferences: AppPreferences = {
   },
   defaultInvoiceTerms: 30,
   defaultPaymentTerms: "Net 30",
-  showDashboardWidgets: [
-    "sales-chart",
-    "receivables",
-    "payables",
-    "recent-transactions",
-    "quick-actions",
-  ],
+  showDashboardWidgets: [],
   compactMode: false,
   autoSave: true,
   printSettings: {
@@ -64,14 +59,12 @@ function Toggle({
       onClick={() => {
         onChange(!checked);
       }}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? "bg-teal-600" : "bg-slate-200"
-      }`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-teal-600" : "bg-muted"
+        }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"
+          }`}
       />
     </button>
   );
@@ -82,21 +75,21 @@ const themeOptions: {
   label: string;
   icon: typeof Sun;
 }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
-];
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "System", icon: Monitor },
+  ];
 
 const dateFormatOptions: {
   value: DateFormat;
   label: string;
   example: string;
 }[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
-  { value: "DD-MMM-YYYY", label: "DD-MMM-YYYY", example: "25-Dec-2024" },
-];
+    { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
+    { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
+    { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
+    { value: "DD-MMM-YYYY", label: "DD-MMM-YYYY", example: "25-Dec-2024" },
+  ];
 
 const widgetOptions: { id: DashboardWidget; label: string }[] = [
   { id: "sales-chart", label: "Sales Chart" },
@@ -110,14 +103,30 @@ const widgetOptions: { id: DashboardWidget; label: string }[] = [
 ];
 
 export function PreferencesPage(): React.ReactNode {
+  const { preferences: storedPreferences, isLoading } = useUserPreferences();
+  const { updateUserPreferences } = useUserPreferencesMutations();
+
   const [preferences, setPreferences] =
-    useState<AppPreferences>(mockPreferences);
+    useState<AppPreferences>(defaultPreferences);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && storedPreferences) {
+      setPreferences(storedPreferences);
+    }
+  }, [storedPreferences, isLoading]);
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      await updateUserPreferences(preferences);
+      setHasChanges(false);
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateField = <K extends keyof AppPreferences>(
@@ -125,16 +134,31 @@ export function PreferencesPage(): React.ReactNode {
     value: AppPreferences[K]
   ): void => {
     setPreferences((prev) => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
   const toggleWidget = (widgetId: DashboardWidget): void => {
-    setPreferences((prev) => ({
-      ...prev,
-      showDashboardWidgets: prev.showDashboardWidgets.includes(widgetId)
-        ? prev.showDashboardWidgets.filter((w) => w !== widgetId)
-        : [...prev.showDashboardWidgets, widgetId],
-    }));
+    setPreferences((prev) => {
+      const currentWidgets = prev.showDashboardWidgets || [];
+      const newWidgets = currentWidgets.includes(widgetId)
+        ? currentWidgets.filter((w) => w !== widgetId)
+        : [...currentWidgets, widgetId];
+
+      return {
+        ...prev,
+        showDashboardWidgets: newWidgets,
+      };
+    });
+    setHasChanges(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-slate-500">Loading preferences...</p>
+      </div>
+    );
+  }
 
   return (
     <SettingsLayout
@@ -238,6 +262,7 @@ export function PreferencesPage(): React.ReactNode {
                       decimalSeparator: e.target.value as "." | ",",
                     },
                   }));
+                  setHasChanges(true);
                 }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -256,6 +281,7 @@ export function PreferencesPage(): React.ReactNode {
                       thousandsSeparator: e.target.value as "," | "." | " ",
                     },
                   }));
+                  setHasChanges(true);
                 }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
@@ -275,6 +301,7 @@ export function PreferencesPage(): React.ReactNode {
                       decimalPlaces: parseInt(e.target.value),
                     },
                   }));
+                  setHasChanges(true);
                 }}
                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >

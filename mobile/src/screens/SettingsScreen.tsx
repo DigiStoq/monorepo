@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useQuery } from "@powersync/react-native";
 import { useCompanySettings } from "../hooks/useSettings";
 import { useNavigation } from "@react-navigation/native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { CustomHeader } from "../components/CustomHeader";
 import { ChevronRight } from "lucide-react-native";
 
@@ -20,14 +22,26 @@ function SettingsItem({
   title,
   subtitle,
   onPress,
+  rightElement,
+  styles,
+  colors,
 }: {
   icon: string;
   title: string;
   subtitle?: string;
   onPress?: () => void;
+  rightElement?: React.ReactNode;
+  styles: any;
+  colors: any;
 }) {
+  const Container = onPress ? TouchableOpacity : View;
+
   return (
-    <TouchableOpacity style={styles.settingsItem} onPress={onPress} activeOpacity={0.7}>
+    <Container
+      style={styles.settingsItem}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.settingsIcon}>
         <Text style={styles.settingsIconText}>{icon}</Text>
       </View>
@@ -35,8 +49,9 @@ function SettingsItem({
         <Text style={styles.settingsTitle}>{title}</Text>
         {subtitle && <Text style={styles.settingsSubtitle}>{subtitle}</Text>}
       </View>
-      {onPress && <ChevronRight size={20} color={colors.textMuted} />}
-    </TouchableOpacity>
+      {rightElement}
+      {onPress && !rightElement && <ChevronRight size={20} color={colors.textMuted} />}
+    </Container>
   );
 }
 
@@ -44,12 +59,18 @@ export function SettingsScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation();
   const { settings: company } = useCompanySettings();
+  const { colors, isDark, setMode } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       { text: "Sign Out", style: "destructive", onPress: signOut },
     ]);
+  };
+
+  const toggleTheme = (value: boolean) => {
+    setMode(value ? "dark" : "light");
   };
 
   return (
@@ -60,7 +81,7 @@ export function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Company</Text>
           <View style={styles.card}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.companyHeader}
               onPress={() => navigation.navigate("CompanySettings" as any)}
               activeOpacity={0.7}
@@ -92,24 +113,32 @@ export function SettingsScreen() {
               title="Company Profile"
               subtitle="Name, logo, address"
               onPress={() => navigation.navigate("CompanySettings" as any)}
+              styles={styles}
+              colors={colors}
             />
             <SettingsItem
               icon="📄"
               title="Invoice Settings"
               subtitle="Templates, numbering"
               onPress={() => navigation.navigate("InvoiceSettings" as any)}
+              styles={styles}
+              colors={colors}
             />
             <SettingsItem
               icon="💰"
               title="Tax Configuration"
               subtitle="Manage tax rates"
               onPress={() => navigation.navigate("TaxSettings" as any)}
+              styles={styles}
+              colors={colors}
             />
             <SettingsItem
               icon="🏦"
               title="Bank Accounts"
               subtitle="Payment details"
               onPress={() => navigation.navigate("BankAccounts" as any)}
+              styles={styles}
+              colors={colors}
             />
           </View>
         </View>
@@ -118,18 +147,36 @@ export function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.card}>
-            <SettingsItem icon="🎨" title="Appearance" subtitle="Theme, colors" onPress={() => {}} />
+            <SettingsItem
+              icon="🎨"
+              title="Dark Mode"
+              subtitle={isDark ? "On" : "Off"}
+              styles={styles}
+              colors={colors}
+              rightElement={
+                <Switch
+                  value={isDark}
+                  onValueChange={toggleTheme}
+                  trackColor={{ false: colors.border, true: colors.success }}
+                  thumbColor={"#fff"}
+                />
+              }
+            />
             <SettingsItem
               icon="🔔"
               title="Notifications"
               subtitle="Push, email alerts"
-              onPress={() => {}}
+              onPress={() => { }}
+              styles={styles}
+              colors={colors}
             />
             <SettingsItem
               icon="🌍"
               title="Regional"
               subtitle={company?.currency || "USD"}
               onPress={() => navigation.navigate("CompanySettings" as any)}
+              styles={styles}
+              colors={colors}
             />
           </View>
         </View>
@@ -138,13 +185,29 @@ export function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.card}>
-            <SettingsItem icon="👤" title="Profile" subtitle={user?.email} onPress={() => {}} />
-            <SettingsItem icon="🔐" title="Security" subtitle="Password, 2FA" onPress={() => {}} />
+            <SettingsItem
+              icon="👤"
+              title="Profile"
+              subtitle={user?.email}
+              onPress={() => { }}
+              styles={styles}
+              colors={colors}
+            />
+            <SettingsItem
+              icon="🔐"
+              title="Security"
+              subtitle="Password, 2FA"
+              onPress={() => { }}
+              styles={styles}
+              colors={colors}
+            />
             <SettingsItem
               icon="💾"
               title="Backup & Sync"
               subtitle="Data management"
-              onPress={() => {}}
+              onPress={() => { }}
+              styles={styles}
+              colors={colors}
             />
           </View>
         </View>
@@ -160,7 +223,7 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

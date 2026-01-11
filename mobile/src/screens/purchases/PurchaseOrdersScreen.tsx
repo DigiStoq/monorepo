@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   FlatList,
@@ -10,8 +10,9 @@ import {
 } from "react-native";
 import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, ClipboardList, ChevronRight } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
+import { Plus, Search, ClipboardList } from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface PurchaseOrder {
   id: string;
@@ -27,6 +28,8 @@ export function PurchaseOrdersScreen() {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: purchaseOrders, isLoading } = useQuery<PurchaseOrder>(`
         SELECT * FROM purchase_orders 
@@ -49,9 +52,9 @@ export function PurchaseOrdersScreen() {
   const getStatusColor = (status: string = 'draft') => {
     switch (status.toLowerCase()) {
       case "sent":
-        return { bg: colors.infoMuted, text: colors.info };
+        return { bg: colors.info + '20', text: colors.info };
       case "received":
-        return { bg: colors.successMuted, text: colors.success };
+        return { bg: colors.success + '20', text: colors.success };
       case "cancelled":
         return { bg: colors.surfaceHover, text: colors.textSecondary };
       case "draft":
@@ -72,7 +75,7 @@ export function PurchaseOrdersScreen() {
       >
         <View style={styles.cardHeader}>
           <View style={styles.iconBox}>
-             <ClipboardList size={22} color={colors.accent} />
+            <ClipboardList size={22} color={colors.primary} />
           </View>
           <View style={styles.info}>
             <Text style={styles.poNumber}>{item.po_number || "Draft PO"}</Text>
@@ -87,8 +90,8 @@ export function PurchaseOrdersScreen() {
 
         <View style={styles.cardFooter}>
           <View style={styles.dateInfo}>
-              <Text style={styles.dateLabel}>Date</Text>
-              <Text style={styles.dateValue}>{item.date}</Text>
+            <Text style={styles.dateLabel}>Date</Text>
+            <Text style={styles.dateValue}>{item.date}</Text>
           </View>
           <View style={styles.amountInfo}>
             <Text style={styles.totalLabel}>Total</Text>
@@ -123,8 +126,8 @@ export function PurchaseOrdersScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -139,19 +142,19 @@ export function PurchaseOrdersScreen() {
           ) : null
         }
       />
-      
-       {/* FAB */}
-       <TouchableOpacity
-         style={styles.fab}
-         onPress={() => (navigation as any).navigate("PurchaseOrderForm")}
-       >
-         <Plus size={24} color={colors.textOnAccent} />
-       </TouchableOpacity>
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => (navigation as any).navigate("PurchaseOrderForm")}
+      >
+        <Plus size={24} color={"#ffffff"} />
+      </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   searchBar: {
     paddingHorizontal: spacing.xl,
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.borderLight, // Using borderLight from theme if available or border
   },
   dateInfo: {},
   dateLabel: { fontSize: fontSize.xs, color: colors.textMuted },
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
     ...shadows.md,

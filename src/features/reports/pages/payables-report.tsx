@@ -101,7 +101,7 @@ export function PayablesReport(): React.ReactNode {
               <p className="text-xs text-slate-500 mb-1">
                 Suppliers with Balance
               </p>
-              <p className="text-lg sm:text-xl font-bold text-slate-900">
+              <p className="text-lg sm:text-xl font-bold text-text-heading">
                 {filteredData.length}
               </p>
             </CardBody>
@@ -136,13 +136,13 @@ export function PayablesReport(): React.ReactNode {
         {/* Payables Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Supplier Payables</h3>
+            <h3 className="font-medium text-text-heading">Supplier Payables</h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Supplier
                     </th>
@@ -170,8 +170,8 @@ export function PayablesReport(): React.ReactNode {
                     </tr>
                   ) : (
                     filteredData.map((entry) => (
-                      <tr key={entry.supplierId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">
+                      <tr key={entry.supplierId} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium text-text-heading">
                           {entry.supplierName}
                         </td>
                         <td className="px-4 py-3 text-right text-slate-600">
@@ -198,8 +198,8 @@ export function PayablesReport(): React.ReactNode {
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-4 py-3 text-slate-900">Total</td>
+                    <tr className="bg-muted/50 font-medium">
+                      <td className="px-4 py-3 text-text-heading">Total</td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         {filteredData.reduce(
                           (sum, e) => sum + e.invoiceCount,

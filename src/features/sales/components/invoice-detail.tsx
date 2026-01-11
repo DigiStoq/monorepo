@@ -158,7 +158,7 @@ export function InvoiceDetail({
       header: "Item",
       cell: (row) => (
         <div>
-          <p className="font-medium text-slate-900">{row.itemName}</p>
+          <p className="font-medium text-text-heading">{row.itemName}</p>
           {row.description && (
             <p className="text-xs text-slate-500">{row.description}</p>
           )}
@@ -248,7 +248,7 @@ export function InvoiceDetail({
                 <FileText className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-lg font-semibold text-text-heading">
                   {invoice.invoiceNumber}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
@@ -316,7 +316,7 @@ export function InvoiceDetail({
               <p className="text-xs text-slate-500 uppercase mb-1">Customer</p>
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-400" />
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-text-heading">
                   {invoice.customerName}
                 </span>
               </div>
@@ -328,7 +328,7 @@ export function InvoiceDetail({
               </p>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-400" />
-                <span className="text-slate-900">
+                <span className="text-text-heading">
                   {formatDate(invoice.date)}
                 </span>
               </div>
@@ -342,7 +342,7 @@ export function InvoiceDetail({
                   className={cn(
                     invoice.status === "returned"
                       ? "text-error font-medium"
-                      : "text-slate-900"
+                      : "text-text-heading"
                   )}
                 >
                   {formatDate(invoice.dueDate)}
@@ -355,7 +355,7 @@ export function InvoiceDetail({
           <div className="grid grid-cols-3 gap-4">
             <div className="p-4 bg-slate-50 rounded-xl">
               <p className="text-xs text-slate-500 mb-1">Total Amount</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xl font-bold text-text-heading">
                 {formatCurrency(invoice.total)}
               </p>
             </div>
@@ -396,7 +396,7 @@ export function InvoiceDetail({
                     ? invoice.status === "returned"
                       ? "text-error"
                       : "text-warning-dark"
-                    : "text-slate-900"
+                    : "text-text-heading"
                 )}
               >
                 {formatCurrency(invoice.amountDue)}
@@ -450,7 +450,7 @@ export function InvoiceDetail({
 
               <div className="pt-2 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">
+                  <span className="text-lg font-semibold text-text-heading">
                     Total
                   </span>
                   <span className="text-lg font-bold text-primary-600">
@@ -619,7 +619,7 @@ function HistorySection({
                         entry.action === "updated" && "bg-primary-100",
                         entry.action === "status_changed" && "bg-warning-light",
                         entry.action === "payment_recorded" &&
-                          "bg-success-light",
+                        "bg-success-light",
                         entry.action === "deleted" && "bg-error-light"
                       )}
                     >
@@ -628,7 +628,7 @@ function HistorySection({
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-text-heading">
                         {entry.description}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -684,7 +684,7 @@ function HistorySection({
                                               {formatted.map((item, idx) => (
                                                 <li
                                                   key={idx}
-                                                  className="text-slate-900"
+                                                  className="text-text-heading"
                                                 >
                                                   • {item}
                                                 </li>
@@ -698,7 +698,7 @@ function HistorySection({
                                                 .replace(/([A-Z])/g, " $1")
                                                 .trim()}
                                             </span>
-                                            <span className="text-slate-900 font-medium">
+                                            <span className="text-text-heading font-medium">
                                               {formatted}
                                             </span>
                                           </div>
@@ -734,7 +734,7 @@ function HistorySection({
                                               {formatted.map((item, idx) => (
                                                 <li
                                                   key={idx}
-                                                  className="text-slate-900"
+                                                  className="text-text-heading"
                                                 >
                                                   • {item}
                                                 </li>
@@ -748,7 +748,7 @@ function HistorySection({
                                                 .replace(/([A-Z])/g, " $1")
                                                 .trim()}
                                             </span>
-                                            <span className="text-slate-900 font-medium">
+                                            <span className="text-text-heading font-medium">
                                               {formatted}
                                             </span>
                                           </div>

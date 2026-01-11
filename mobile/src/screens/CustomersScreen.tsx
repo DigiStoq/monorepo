@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,16 +12,17 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@powersync/react-native";
 import { Search, Users, ChevronRight } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomerRecord } from "../lib/powersync";
 import { CustomHeader } from "../components/CustomHeader";
+import { useTheme } from "../contexts/ThemeContext";
 
-function CustomerCard({ customer }: { customer: CustomerRecord }) {
+function CustomerCard({ customer, styles, colors }: { customer: CustomerRecord, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
   const typeColors: Record<string, { bg: string; text: string }> = {
-    customer: { bg: colors.successMuted, text: colors.success },
-    supplier: { bg: colors.warningMuted, text: colors.warning },
-    both: { bg: colors.infoMuted, text: colors.info },
+    customer: { bg: colors.success + '20', text: colors.success }, // using opacity for bg
+    supplier: { bg: colors.warning + '20', text: colors.warning },
+    both: { bg: colors.info + '20', text: colors.info },
   };
 
   const typeStyle = typeColors[customer.type] || typeColors.customer;
@@ -68,6 +69,8 @@ export function CustomersScreen() {
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: customers, isLoading } = useQuery<CustomerRecord>(
     `SELECT * FROM customers 
@@ -86,7 +89,7 @@ export function CustomersScreen() {
   return (
     <View style={styles.container}>
       <CustomHeader />
-      
+
       {/* Search Bar */}
       <View style={styles.searchBar}>
         <View style={styles.searchInput}>
@@ -103,7 +106,7 @@ export function CustomersScreen() {
 
       <FlatList
         data={customers}
-        renderItem={({ item }) => <CustomerCard customer={item} />}
+        renderItem={({ item }) => <CustomerCard customer={item} styles={styles} colors={colors} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -111,8 +114,8 @@ export function CustomersScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -143,7 +146,7 @@ export function CustomersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -186,14 +189,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.textOnAccent,
+    color: "#ffffff",
   },
   customerInfo: {
     flex: 1,
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   addBtn: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.full,
@@ -264,12 +267,12 @@ const styles = StyleSheet.create({
   addBtnText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textOnAccent,
+    color: "#ffffff",
   },
   fab: {
     position: 'absolute',
     right: spacing.xl,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.full,
@@ -278,6 +281,6 @@ const styles = StyleSheet.create({
   fabText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textOnAccent,
+    color: "#ffffff",
   },
 });

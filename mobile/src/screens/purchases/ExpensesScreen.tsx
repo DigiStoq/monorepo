@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Receipt } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface Expense {
   id: string;
@@ -23,7 +24,7 @@ interface Expense {
   notes: string;
 }
 
-function ExpenseCard({ expense }: { expense: Expense }) {
+function ExpenseCard({ expense, styles, colors }: { expense: Expense, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -46,7 +47,7 @@ function ExpenseCard({ expense }: { expense: Expense }) {
     >
       <View style={styles.cardHeader}>
         <View style={styles.iconBox}>
-           <Receipt size={20} color={colors.textSecondary} />
+          <Receipt size={20} color={colors.textSecondary} />
         </View>
         <View style={styles.info}>
           <Text style={styles.category}>
@@ -71,6 +72,8 @@ export function ExpensesScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Simple search filter
   const { data: expenses, isLoading } = useQuery<Expense>(
@@ -108,20 +111,20 @@ export function ExpensesScreen() {
       <FlatList
         data={expenses || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ExpenseCard expense={item} />}
+        renderItem={({ item }) => <ExpenseCard expense={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIconContainer}>
-               <Receipt size={48} color={colors.textMuted} />
+              <Receipt size={48} color={colors.textMuted} />
             </View>
             <Text style={styles.emptyText}>No expenses yet</Text>
             <Text style={styles.emptySubtext}>
@@ -134,7 +137,7 @@ export function ExpensesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
@@ -156,13 +159,13 @@ const styles = StyleSheet.create({
   addButton: {
     width: 48,
     height: 48,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     justifyContent: "center",
     alignItems: "center",
   },
   addButtonText: {
-    color: colors.textOnAccent,
+    color: "#ffffff",
     fontSize: 24,
     fontWeight: fontWeight.semibold,
   },
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.border,
   },
   paidTo: {
     fontSize: fontSize.sm,

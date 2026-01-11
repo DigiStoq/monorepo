@@ -101,7 +101,7 @@ export function PurchaseInvoiceDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-text-heading">
             {invoice.invoiceNumber}
           </h2>
           <p className="text-sm text-slate-500">Purchase Invoice</p>
@@ -142,7 +142,7 @@ export function PurchaseInvoiceDetail({
                 size="sm"
               />
             </div>
-            <p className="text-3xl font-bold text-slate-900">
+            <p className="text-3xl font-bold text-text-heading">
               {formatCurrency(invoice.total)}
             </p>
             {invoice.amountDue > 0 && invoice.amountDue !== invoice.total && (
@@ -174,7 +174,7 @@ export function PurchaseInvoiceDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Supplier</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {invoice.customerName}
                 </p>
               </div>
@@ -187,7 +187,7 @@ export function PurchaseInvoiceDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Supplier Invoice #</p>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-text-heading">
                     {invoice.supplierInvoiceNumber}
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export function PurchaseInvoiceDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Invoice Date</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {formatDate(invoice.date)}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function PurchaseInvoiceDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Due Date</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {formatDate(invoice.dueDate)}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export function PurchaseInvoiceDetail({
               {invoice.items.map((item) => (
                 <div key={item.id} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-text-heading">
                       {item.itemName}
                     </p>
                     <p className="text-sm text-slate-500">
@@ -236,7 +236,7 @@ export function PurchaseInvoiceDetail({
                       {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-text-heading">
                     {formatCurrency(item.amount)}
                   </p>
                 </div>
@@ -269,7 +269,7 @@ export function PurchaseInvoiceDetail({
               </span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
-              <span className="font-semibold text-slate-900">Total</span>
+              <span className="font-semibold text-text-heading">Total</span>
               <span className="font-bold text-primary-600">
                 {formatCurrency(invoice.total)}
               </span>

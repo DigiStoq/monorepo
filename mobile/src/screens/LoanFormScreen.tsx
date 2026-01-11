@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { 
-    View, 
-    StyleSheet, 
-    TextInput, 
-    TouchableOpacity, 
-    ScrollView, 
-    Alert, 
-    KeyboardAvoidingView, 
-    Platform, 
+import React, { useState, useEffect, useMemo } from "react";
+import {
+    View,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
     Modal,
     Text,
     ActivityIndicator
@@ -17,16 +17,17 @@ import { usePowerSync, useQuery } from "@powersync/react-native";
 import { generateUUID } from "../lib/utils";
 import { X, Save, CheckSquare, Trash2 } from "lucide-react-native";
 import { CustomerRecord } from "../lib/powersync";
-import { 
-    Button, 
+import {
+    Button,
     Input,
     Card,
     CardHeader,
     CardBody,
     Select
 } from "../components/ui";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { wp, hp } from "../lib/responsive";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function LoanFormScreen() {
     const navigation = useNavigation();
@@ -35,28 +36,30 @@ export function LoanFormScreen() {
     const params = route.params as { id?: string } | undefined;
     const id = params?.id;
     const isEditing = !!id;
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     // Fetch customers
     const { data: customers } = useQuery<CustomerRecord>("SELECT id, name FROM customers ORDER BY name ASC");
-    
+
     // Fetch bank accounts
-    const { data: bankAccounts } = useQuery<{id: string, name: string}>("SELECT id, name FROM bank_accounts ORDER BY name ASC");
+    const { data: bankAccounts } = useQuery<{ id: string, name: string }>("SELECT id, name FROM bank_accounts ORDER BY name ASC");
 
     const [type, setType] = useState<'given' | 'taken'>('given');
-    const [name, setName] = useState(""); 
+    const [name, setName] = useState("");
     const [customerId, setCustomerId] = useState("");
-    const [partyName, setPartyName] = useState(""); 
+    const [partyName, setPartyName] = useState("");
     const [principal, setPrincipal] = useState("");
     const [interestRate, setInterestRate] = useState("");
     const [interestType, setInterestType] = useState<'simple' | 'compound'>('simple');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [totalEmis, setTotalEmis] = useState("");
-    const [emiAmount, setEmiAmount] = useState(""); 
+    const [emiAmount, setEmiAmount] = useState("");
     const [linkedAccountId, setLinkedAccountId] = useState("");
     const [status, setStatus] = useState("active");
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
-    
+
     // UI Helpers
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [showBankModal, setShowBankModal] = useState(false);
@@ -74,10 +77,10 @@ export function LoanFormScreen() {
             setType(data.type);
             setName(data.name || "");
             setCustomerId(data.customer_id || "");
-            
+
             if (data.type === 'taken') setPartyName(data.lender_name || "");
             else setPartyName(data.customer_name || "");
-            
+
             setPrincipal(String(data.principal_amount || ""));
             setInterestRate(String(data.interest_rate || ""));
             setInterestType(data.interest_type || "simple");
@@ -123,7 +126,7 @@ export function LoanFormScreen() {
             };
 
             if (!isEditing) {
-                dbFields.outstanding_amount = pAmount; 
+                dbFields.outstanding_amount = pAmount;
                 dbFields.paid_emis = 0;
                 dbFields.id = generateUUID();
                 dbFields.user_id = 'user';
@@ -164,16 +167,16 @@ export function LoanFormScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                
+
                 {/* Type Switcher */}
                 <View style={styles.switchContainer}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'given' && styles.switchActiveGiven]}
                         onPress={() => setType('given')}
                     >
                         <Text style={[styles.switchText, type === 'given' && styles.switchTextActive]}>Money Given (Asset)</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'taken' && styles.switchActiveTaken]}
                         onPress={() => setType('taken')}
                     >
@@ -193,7 +196,7 @@ export function LoanFormScreen() {
                             </TouchableOpacity>
                         </View>
 
-                         <Input 
+                        <Input
                             label="Principal Loan Amount"
                             value={principal}
                             onChangeText={setPrincipal}
@@ -202,8 +205,8 @@ export function LoanFormScreen() {
                             style={styles.inputBig}
                         />
 
-                         <View style={styles.row}>
-                             <Input 
+                        <View style={styles.row}>
+                            <Input
                                 label="Interest Rate (%)"
                                 value={interestRate}
                                 onChangeText={setInterestRate}
@@ -211,27 +214,27 @@ export function LoanFormScreen() {
                                 placeholder="0"
                                 containerStyle={{ flex: 1, marginRight: 8 }}
                             />
-                             <View style={[styles.formGroup, { flex: 1 }]}>
+                            <View style={[styles.formGroup, { flex: 1 }]}>
                                 <Text style={styles.label}>Type</Text>
                                 <View style={styles.radioRow}>
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         style={[styles.radio, interestType === 'simple' && styles.radioActive]}
                                         onPress={() => setInterestType('simple')}
                                     >
-                                        <Text style={[styles.radioText, interestType === 'simple' && {color: 'white'}]}>Simple</Text>
+                                        <Text style={[styles.radioText, interestType === 'simple' && { color: 'white' }]}>Simple</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         style={[styles.radio, interestType === 'compound' && styles.radioActive]}
                                         onPress={() => setInterestType('compound')}
                                     >
-                                        <Text style={[styles.radioText, interestType === 'compound' && {color: 'white'}]}>Compound</Text>
+                                        <Text style={[styles.radioText, interestType === 'compound' && { color: 'white' }]}>Compound</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
 
-                         <View style={styles.row}>
-                            <Input 
+                        <View style={styles.row}>
+                            <Input
                                 label="# of EMIs"
                                 value={totalEmis}
                                 onChangeText={setTotalEmis}
@@ -239,7 +242,7 @@ export function LoanFormScreen() {
                                 placeholder="12"
                                 containerStyle={{ flex: 1, marginRight: 8 }}
                             />
-                            <Input 
+                            <Input
                                 label="EMI Amount"
                                 value={emiAmount}
                                 onChangeText={setEmiAmount}
@@ -249,14 +252,14 @@ export function LoanFormScreen() {
                             />
                         </View>
 
-                        <Input 
+                        <Input
                             label="Start Date"
                             value={startDate}
                             onChangeText={setStartDate}
                             placeholder="YYYY-MM-DD"
                         />
 
-                         <View style={styles.formGroup}>
+                        <View style={styles.formGroup}>
                             <Text style={styles.label}>Linked Bank Account</Text>
                             <TouchableOpacity style={styles.selectBtn} onPress={() => setShowBankModal(true)}>
                                 <Text style={{ color: linkedAccountId ? colors.text : colors.textSecondary }}>
@@ -264,8 +267,8 @@ export function LoanFormScreen() {
                                 </Text>
                             </TouchableOpacity>
                         </View>
-                        
-                         <Input 
+
+                        <Input
                             label="Notes"
                             value={notes}
                             onChangeText={setNotes}
@@ -277,7 +280,7 @@ export function LoanFormScreen() {
             </ScrollView>
 
             {/* Customer/Party Modal */}
-            <Modal visible={showCustomerModal} animationType="slide" presentationStyle="pageSheet">
+            <Modal visible={showCustomerModal} animationType="slide" presentationStyle="pageSheet" transparent={false}>
                 <View style={styles.modalContainer}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Select Party</Text>
@@ -286,17 +289,17 @@ export function LoanFormScreen() {
                         </TouchableOpacity>
                     </View>
                     <View style={{ padding: 16, borderBottomWidth: 1, borderColor: colors.border }}>
-                         <Input 
-                            value={partyName} 
+                        <Input
+                            value={partyName}
                             onChangeText={(t) => { setPartyName(t); setCustomerId(""); }}
                             placeholder="Type Name manually..."
-                         />
+                        />
                     </View>
                     <ScrollView contentContainerStyle={{ padding: 16 }}>
                         <Text style={styles.sectionHeader}>Existing Customers</Text>
                         {customers?.map(c => (
-                            <TouchableOpacity 
-                                key={c.id} 
+                            <TouchableOpacity
+                                key={c.id}
                                 style={styles.listItem}
                                 onPress={() => {
                                     setCustomerId(c.id);
@@ -313,16 +316,16 @@ export function LoanFormScreen() {
             </Modal>
 
             {/* Bank Modal */}
-            <Modal visible={showBankModal} animationType="slide" presentationStyle="pageSheet">
+            <Modal visible={showBankModal} animationType="slide" presentationStyle="pageSheet" transparent={false}>
                 <View style={styles.modalContainer}>
-                     <View style={styles.modalHeader}>
+                    <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Select Bank Account</Text>
                         <TouchableOpacity onPress={() => setShowBankModal(false)}>
                             <X size={24} color={colors.text} />
                         </TouchableOpacity>
                     </View>
-                     <ScrollView contentContainerStyle={{ padding: 16 }}>
-                        <TouchableOpacity 
+                    <ScrollView contentContainerStyle={{ padding: 16 }}>
+                        <TouchableOpacity
                             style={styles.listItem}
                             onPress={() => {
                                 setLinkedAccountId("");
@@ -332,8 +335,8 @@ export function LoanFormScreen() {
                             <Text style={[styles.listItemText, { color: colors.textSecondary, fontStyle: 'italic' }]}>None</Text>
                         </TouchableOpacity>
                         {bankAccounts?.map(b => (
-                            <TouchableOpacity 
-                                key={b.id} 
+                            <TouchableOpacity
+                                key={b.id}
                                 style={styles.listItem}
                                 onPress={() => {
                                     setLinkedAccountId(b.id);
@@ -351,7 +354,7 @@ export function LoanFormScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: "row",
@@ -375,7 +378,7 @@ const styles = StyleSheet.create({
     switchTextActive: { color: "white" },
     formGroup: { marginBottom: 16 },
     label: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary, marginBottom: 8 },
-    inputBig: { fontSize: 24, fontWeight: "bold" },
+    inputBig: { fontSize: 24, fontWeight: "bold", color: colors.text },
     row: { flexDirection: 'row' },
     selectBtn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.md, padding: 12 },
     radioRow: { flexDirection: 'row', gap: 8 },

@@ -179,7 +179,7 @@ export function AgingReport(): React.ReactNode {
           <Card className="bg-slate-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-slate-600">Total</p>
-              <p className="text-lg font-bold text-slate-900">
+              <p className="text-lg font-bold text-text-heading">
                 {formatCurrency(totals.total)}
               </p>
             </CardBody>
@@ -189,7 +189,7 @@ export function AgingReport(): React.ReactNode {
         {/* Aging Chart */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Aging Distribution</h3>
+            <h3 className="font-medium text-text-heading">Aging Distribution</h3>
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
@@ -229,7 +229,7 @@ export function AgingReport(): React.ReactNode {
         {/* Detail Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">
+            <h3 className="font-medium text-text-heading">
               {reportType === "receivable" ? "Customer" : "Supplier"} Aging
               Details
             </h3>
@@ -238,7 +238,7 @@ export function AgingReport(): React.ReactNode {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       {reportType === "receivable" ? "Customer" : "Supplier"}
                     </th>
@@ -272,8 +272,8 @@ export function AgingReport(): React.ReactNode {
                     </tr>
                   ) : (
                     filteredData.map((entry) => (
-                      <tr key={entry.customerId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">
+                      <tr key={entry.customerId} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium text-text-heading">
                           {entry.customerName}
                         </td>
                         <td className="px-4 py-3 text-right text-success">
@@ -301,7 +301,7 @@ export function AgingReport(): React.ReactNode {
                             ? formatCurrency(entry.over90)
                             : "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-900">
+                        <td className="px-4 py-3 text-right font-medium text-text-heading">
                           {formatCurrency(entry.total)}
                         </td>
                       </tr>
@@ -310,8 +310,8 @@ export function AgingReport(): React.ReactNode {
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-4 py-3 text-slate-900">Total</td>
+                    <tr className="bg-muted/50 font-medium">
+                      <td className="px-4 py-3 text-text-heading">Total</td>
                       <td className="px-4 py-3 text-right text-success">
                         {formatCurrency(totals.current)}
                       </td>
@@ -327,7 +327,7 @@ export function AgingReport(): React.ReactNode {
                       <td className="px-4 py-3 text-right text-error">
                         {formatCurrency(totals.over90)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {formatCurrency(totals.total)}
                       </td>
                     </tr>

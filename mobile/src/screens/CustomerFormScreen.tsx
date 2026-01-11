@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -20,13 +20,16 @@ import {
 } from "../components/ui";
 import { Save, X } from "lucide-react-native";
 import { wp, hp } from "../lib/responsive";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function CustomerFormScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -319,7 +322,7 @@ export function CustomerFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

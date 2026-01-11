@@ -11,8 +11,9 @@ import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import { useAuth } from "../contexts/AuthContext";
-import { 
-  Package, 
+import { useTheme } from "../contexts/ThemeContext";
+import {
+  Package,
   ShoppingCart,
   BarChart3,
   Users,
@@ -21,11 +22,13 @@ import {
   TrendingUp,
   DollarSign,
 } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const [refreshing, setRefreshing] = React.useState(false);
 
   // Fetch stats
@@ -38,7 +41,7 @@ export function DashboardScreen() {
     setRefreshing(true);
     try {
       const db = getPowerSyncDatabase();
-      await db.execute("SELECT 1"); 
+      await db.execute("SELECT 1");
     } catch (e) {
       console.error(e);
     }
@@ -71,11 +74,12 @@ export function DashboardScreen() {
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
-        <RefreshControl 
-          refreshing={refreshing} 
-          onRefresh={onRefresh} 
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           tintColor={colors.accent}
           colors={[colors.accent]}
+          progressBackgroundColor={colors.surface}
         />
       }
       showsVerticalScrollIndicator={false}
@@ -117,29 +121,29 @@ export function DashboardScreen() {
 
       {/* Quick Actions Section */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
-      
+
       <View style={styles.menuSection}>
-        <MenuCard 
-          icon={Package} 
-          title="Inventory" 
+        <MenuCard
+          icon={Package}
+          title="Inventory"
           subtitle="Manage your products"
           onPress={() => navigation.navigate("ItemsTab")}
         />
-        <MenuCard 
-          icon={ShoppingCart} 
-          title="Sales" 
+        <MenuCard
+          icon={ShoppingCart}
+          title="Sales"
           subtitle="View orders & invoices"
           onPress={() => navigation.navigate("SalesTab")}
         />
-        <MenuCard 
-          icon={BarChart3} 
-          title="Reports" 
+        <MenuCard
+          icon={BarChart3}
+          title="Reports"
           subtitle="Analytics & insights"
           onPress={() => navigation.navigate("ReportsTab")}
         />
-        <MenuCard 
-          icon={Users} 
-          title="Customers" 
+        <MenuCard
+          icon={Users}
+          title="Customers"
           subtitle="Manage contacts"
           onPress={() => navigation.navigate("Customers")}
         />
@@ -148,7 +152,7 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -174,7 +174,7 @@ export function TaxSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Avg Tax Rate</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-xl font-bold text-text-heading">
                     {salesTaxRate.toFixed(1)}%
                   </p>
                 </div>
@@ -190,7 +190,7 @@ export function TaxSummaryReport(): React.ReactNode {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-success" />
-                <h3 className="font-medium text-slate-900">
+                <h3 className="font-medium text-text-heading">
                   Sales Tax (Output Tax)
                 </h3>
               </div>
@@ -199,18 +199,18 @@ export function TaxSummaryReport(): React.ReactNode {
               <div className="divide-y divide-slate-100">
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Taxable Sales Amount</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {formatCurrency(data.salesTax.taxableAmount)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Tax Rate</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {salesTaxRate.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-green-50">
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     Tax Collected
                   </span>
                   <span className="font-bold text-success">
@@ -226,7 +226,7 @@ export function TaxSummaryReport(): React.ReactNode {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-orange-600" />
-                <h3 className="font-medium text-slate-900">
+                <h3 className="font-medium text-text-heading">
                   Purchase Tax (Input Tax)
                 </h3>
               </div>
@@ -237,18 +237,18 @@ export function TaxSummaryReport(): React.ReactNode {
                   <span className="text-slate-600">
                     Taxable Purchase Amount
                   </span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {formatCurrency(data.purchaseTax.taxableAmount)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-slate-600">Tax Rate</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     {purchaseTaxRate.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-orange-50">
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     Tax Paid (Credit)
                   </span>
                   <span className="font-bold text-orange-700">

@@ -210,7 +210,7 @@ export function RootLayout(): React.ReactNode {
             onToggleCollapse={toggleSidebar}
             header={
               <SidebarLogo
-                logo={<span className="text-white font-bold text-lg">D</span>}
+                logo={<span className="text-primary-600 font-black text-xl">D</span>}
                 name="DigiStoq"
                 tagline="Inventory Management"
                 isCollapsed={sidebarCollapsed}
@@ -220,10 +220,10 @@ export function RootLayout(): React.ReactNode {
               />
             }
             footer={
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {/* Bottom Navigation Items */}
                 {!sidebarCollapsed && (
-                  <div className="space-y-1 mb-3">
+                  <div className="space-y-1 mb-4">
                     {bottomItems.map((item) => {
                       const Icon = item.icon;
                       return (
@@ -233,9 +233,9 @@ export function RootLayout(): React.ReactNode {
                           onClick={() => {
                             handleNavigate(item);
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-sidebar-hover hover:text-white transition-colors"
+                          className="w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-[0.875rem] font-semibold text-slate-500 hover:bg-white/5 hover:text-white transition-all duration-200"
                         >
-                          {Icon && <Icon className="h-4 w-4" />}
+                          {Icon && <Icon className="h-4.5 w-4.5" />}
                           <span>{item.label}</span>
                         </button>
                       );
@@ -246,9 +246,9 @@ export function RootLayout(): React.ReactNode {
                       onClick={() => {
                         void handleLogout();
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
+                      className="w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-[0.875rem] font-semibold text-slate-500 hover:bg-error/10 hover:text-error transition-all duration-200"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4.5 w-4.5" />
                       <span>Sign out</span>
                     </button>
                   </div>

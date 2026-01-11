@@ -25,7 +25,8 @@ import {
 import { Plus, Trash2, Save, X, Send } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Inline Types
 interface CustomerData {
@@ -59,6 +60,8 @@ export function PurchaseOrderFormScreen() {
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -98,40 +101,40 @@ export function PurchaseOrderFormScreen() {
   // Load Data if Editing
   useEffect(() => {
     async function loadData() {
-        if (!id) return;
-        
-        try {
-            const res = await db.execute("SELECT * FROM purchase_orders WHERE id = ?", [id]);
-            if (res.rows?.length > 0) {
-                const data = res.rows.item(0);
-                setSupplierId(data.supplier_id);
-                setPoNumber(data.po_number || "");
-                setDate(data.date);
-                setExpectedDate(data.expected_date || "");
-                setNotes(data.notes || "");
-                setStatus(data.status || "draft");
-            }
-            
-            const itemsRes = await db.execute("SELECT * FROM purchase_order_items WHERE po_id = ?", [id]);
-            const loadedItems: LineItem[] = [];
-            for (let i = 0; i < itemsRes.rows.length; i++) {
-                const row = itemsRes.rows.item(i);
-                loadedItems.push({
-                    id: row.id,
-                    itemId: row.item_id,
-                    itemName: row.item_name,
-                    quantity: row.quantity,
-                    unit: row.unit,
-                    unitPrice: row.unit_price,
-                    taxPercent: row.tax_percent,
-                    amount: row.amount
-                });
-            }
-            setLineItems(loadedItems);
-        } catch (e) {
-            console.error(e);
-            Alert.alert("Error", "Failed to load Purchase Order");
+      if (!id) return;
+
+      try {
+        const res = await db.execute("SELECT * FROM purchase_orders WHERE id = ?", [id]);
+        if (res.rows?.length > 0) {
+          const data = res.rows.item(0);
+          setSupplierId(data.supplier_id);
+          setPoNumber(data.po_number || "");
+          setDate(data.date);
+          setExpectedDate(data.expected_date || "");
+          setNotes(data.notes || "");
+          setStatus(data.status || "draft");
         }
+
+        const itemsRes = await db.execute("SELECT * FROM purchase_order_items WHERE po_id = ?", [id]);
+        const loadedItems: LineItem[] = [];
+        for (let i = 0; i < itemsRes.rows.length; i++) {
+          const row = itemsRes.rows.item(i);
+          loadedItems.push({
+            id: row.id,
+            itemId: row.item_id,
+            itemName: row.item_name,
+            quantity: row.quantity,
+            unit: row.unit,
+            unitPrice: row.unit_price,
+            taxPercent: row.tax_percent,
+            amount: row.amount
+          });
+        }
+        setLineItems(loadedItems);
+      } catch (e) {
+        console.error(e);
+        Alert.alert("Error", "Failed to load Purchase Order");
+      }
     }
     loadData();
   }, [id]);
@@ -140,12 +143,12 @@ export function PurchaseOrderFormScreen() {
     () => suppliers.map((s) => ({ label: s.name, value: s.id })),
     [suppliers]
   );
-  
+
   const statusOptions = [
-      { label: "Draft", value: "draft" },
-      { label: "Sent", value: "sent" },
-      { label: "Received", value: "received" },
-      { label: "Cancelled", value: "cancelled" },
+    { label: "Draft", value: "draft" },
+    { label: "Sent", value: "sent" },
+    { label: "Received", value: "received" },
+    { label: "Cancelled", value: "cancelled" },
   ];
 
   const itemOptions = useMemo(
@@ -160,8 +163,8 @@ export function PurchaseOrderFormScreen() {
   const totals = useMemo(() => {
     const subtotal = lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const tax = lineItems.reduce((sum, item) => {
-        const base = item.quantity * item.unitPrice;
-        return sum + (base * (item.taxPercent / 100));
+      const base = item.quantity * item.unitPrice;
+      return sum + (base * (item.taxPercent / 100));
     }, 0);
     return {
       subtotal,
@@ -301,17 +304,17 @@ export function PurchaseOrderFormScreen() {
         <Card>
           <CardHeader title="Order Details" />
           <CardBody>
-             <View style={styles.row}>
-                <View style={{flex: 1, marginRight: 8}}>
-                    <Select label="Supplier" options={supplierOptions} value={supplierId} onChange={setSupplierId} placeholder="Select Supplier" />
-                </View>
-                 <View style={{width: 120}}>
-                    <Select label="Status" options={statusOptions} value={status} onChange={setStatus} />
-                 </View>
-             </View>
-             
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Select label="Supplier" options={supplierOptions} value={supplierId} onChange={setSupplierId} placeholder="Select Supplier" />
+              </View>
+              <View style={{ width: 120 }}>
+                <Select label="Status" options={statusOptions} value={status} onChange={setStatus} />
+              </View>
+            </View>
+
             <Input label="PO Number" value={poNumber} onChangeText={setPoNumber} placeholder="Auto-generated if empty" />
-            
+
             <View style={styles.row}>
               <Input label="Order Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" containerStyle={{ flex: 1, marginRight: 8 }} />
               <Input label="Expected Date" value={expectedDate} onChangeText={setExpectedDate} placeholder="YYYY-MM-DD" containerStyle={{ flex: 1 }} />
@@ -360,12 +363,12 @@ export function PurchaseOrderFormScreen() {
             </View>
           </CardBody>
         </Card>
-        
+
         {/* Helper Actions */}
         {isEditing && status === 'draft' && (
-             <Button fullWidth style={{marginTop: 16}} onPress={() => handleSubmit('sent')} leftIcon={<Send size={18} color="white"/>}>
-                 Save & Mark Sent
-             </Button>
+          <Button fullWidth style={{ marginTop: 16 }} onPress={() => handleSubmit('sent')} leftIcon={<Send size={18} color="white" />}>
+            Save & Mark Sent
+          </Button>
         )}
       </ScrollView>
 
@@ -398,7 +401,7 @@ export function PurchaseOrderFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: wp(4), paddingVertical: hp(1.5), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, marginTop: Platform.OS === "android" ? 24 : 0 },
   title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },

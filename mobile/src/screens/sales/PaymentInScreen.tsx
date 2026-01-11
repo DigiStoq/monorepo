@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { wp, hp } from "../../lib/responsive";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../lib/theme";
 
 interface PaymentIn {
   id: string;
@@ -22,7 +24,7 @@ interface PaymentIn {
   reference_number: string;
 }
 
-function PaymentCard({ payment }: { payment: PaymentIn }) {
+function PaymentCard({ payment, styles, colors }: { payment: PaymentIn, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -66,6 +68,8 @@ export function PaymentInScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: payments, isLoading } = useQuery<PaymentIn>(
     `SELECT * FROM payment_ins 
@@ -87,7 +91,7 @@ export function PaymentInScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search payments..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
@@ -102,13 +106,13 @@ export function PaymentInScreen() {
       <FlatList
         data={payments || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PaymentCard payment={item} />}
+        renderItem={({ item }) => <PaymentCard payment={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
@@ -125,10 +129,10 @@ export function PaymentInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -138,18 +142,18 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 44,
-    color: "#0f172a",
+    color: colors.text,
   },
   addButton: {
     width: 44,
     height: 44,
-    backgroundColor: "#6366f1",
+    backgroundColor: colors.primary,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -165,13 +169,13 @@ const styles = StyleSheet.create({
     paddingBottom: hp(10),
   },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#64748b",
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -189,39 +193,39 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#0f172a",
+    color: colors.text,
     marginBottom: 2,
   },
   date: {
     fontSize: 13,
-    color: "#64748b",
+    color: colors.textSecondary,
   },
   amount: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#22c55e",
+    color: colors.success,
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "#f8fafc",
+    borderTopColor: colors.borderLight,
     paddingTop: 8,
     marginTop: 4,
   },
   mode: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#64748b",
+    color: colors.textSecondary,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    backgroundColor: "#f1f5f9",
+    backgroundColor: colors.surfaceHover,
     borderRadius: 4,
   },
   ref: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: colors.textMuted,
   },
   empty: {
     alignItems: "center",
@@ -235,11 +239,11 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#0f172a",
+    color: colors.text,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#64748b",
+    color: colors.textSecondary,
   },
 });

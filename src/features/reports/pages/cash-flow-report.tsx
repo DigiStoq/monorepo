@@ -81,7 +81,7 @@ export function CashFlowReportPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Opening Balance</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-xl font-bold text-text-heading">
                     {formatCurrency(data.openingBalance)}
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export function CashFlowReportPage(): React.ReactNode {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ArrowUpCircle className="h-4 w-4 text-success" />
-                <h3 className="font-medium text-slate-900">Cash Inflows</h3>
+                <h3 className="font-medium text-text-heading">Cash Inflows</h3>
               </div>
             </CardHeader>
             <CardBody className="p-0">
@@ -160,7 +160,7 @@ export function CashFlowReportPage(): React.ReactNode {
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-green-50">
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     Total Inflows
                   </span>
                   <span className="font-bold text-success">
@@ -176,7 +176,7 @@ export function CashFlowReportPage(): React.ReactNode {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ArrowDownCircle className="h-4 w-4 text-error" />
-                <h3 className="font-medium text-slate-900">Cash Outflows</h3>
+                <h3 className="font-medium text-text-heading">Cash Outflows</h3>
               </div>
             </CardHeader>
             <CardBody className="p-0">
@@ -200,7 +200,7 @@ export function CashFlowReportPage(): React.ReactNode {
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 bg-red-50">
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-text-heading">
                     Total Outflows
                   </span>
                   <span className="font-bold text-error">

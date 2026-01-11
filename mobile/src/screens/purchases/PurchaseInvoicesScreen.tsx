@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   FlatList,
@@ -10,8 +10,9 @@ import {
 } from "react-native";
 import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, Filter, ChevronRight, CreditCard } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
+import { Plus, Search, Filter, CreditCard } from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Types
 interface PurchaseInvoice {
@@ -24,15 +25,15 @@ interface PurchaseInvoice {
   amount_due: number;
 }
 
-function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
+function PurchaseInvoiceCard({ item, styles, colors }: { item: PurchaseInvoice, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
-  
+
   const statusColors: Record<string, { bg: string; text: string }> = {
     draft: { bg: colors.surfaceHover, text: colors.textSecondary },
-    unpaid: { bg: colors.dangerMuted, text: colors.danger },
-    paid: { bg: colors.successMuted, text: colors.success },
-    partial: { bg: colors.warningMuted, text: colors.warning },
-    overdue: { bg: colors.dangerMuted, text: colors.danger },
+    unpaid: { bg: colors.danger + '20', text: colors.danger },
+    paid: { bg: colors.success + '20', text: colors.success },
+    partial: { bg: colors.warning + '20', text: colors.warning },
+    overdue: { bg: colors.danger + '20', text: colors.danger },
   };
 
   const statusStyle = statusColors[item.status?.toLowerCase()] || statusColors.draft;
@@ -57,7 +58,7 @@ function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
     >
       <View style={styles.cardHeader}>
         <View style={styles.iconBox}>
-          <CreditCard size={22} color={colors.accent} />
+          <CreditCard size={22} color={colors.primary} />
         </View>
         <View style={styles.info}>
           <View style={styles.billHeaderRow}>
@@ -70,7 +71,7 @@ function PurchaseInvoiceCard({ item }: { item: PurchaseInvoice }) {
           <View style={styles.billFooterRow}>
             <Text style={styles.dateValue}>{formatDate(item.date)}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-               <Text style={[styles.statusText, { color: statusStyle.text }]}>
+              <Text style={[styles.statusText, { color: statusStyle.text }]}>
                 {item.status}
               </Text>
             </View>
@@ -85,6 +86,8 @@ export function PurchaseInvoicesScreen() {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: invoices, isLoading } = useQuery<PurchaseInvoice>(`
         SELECT * FROM purchase_invoices 
@@ -124,7 +127,7 @@ export function PurchaseInvoicesScreen() {
 
       <FlatList
         data={filteredInvoices}
-        renderItem={({ item }) => <PurchaseInvoiceCard item={item} />}
+        renderItem={({ item }) => <PurchaseInvoiceCard item={item} styles={styles} colors={colors} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -132,8 +135,8 @@ export function PurchaseInvoicesScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
@@ -146,7 +149,7 @@ export function PurchaseInvoicesScreen() {
               <Text style={styles.emptySubtext}>
                 Record your purchases and keep track of your expenses.
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.emptyAddButton}
                 onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
               >
@@ -161,13 +164,13 @@ export function PurchaseInvoicesScreen() {
         style={styles.fab}
         onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
       >
-        <Plus size={24} color={colors.textOnAccent} />
+        <Plus size={24} color={"#ffffff"} />
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   searchBar: {
     flexDirection: "row",
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
     ...shadows.md,
@@ -311,13 +314,13 @@ const styles = StyleSheet.create({
   emptyAddButton: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.primary,
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
   },
   emptyAddButtonText: {
-    color: colors.accent,
+    color: colors.primary,
     fontWeight: fontWeight.bold,
     fontSize: fontSize.md,
   }

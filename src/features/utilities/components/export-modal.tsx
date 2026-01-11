@@ -55,25 +55,25 @@ const formatOptions: {
   icon: React.ReactNode;
   description: string;
 }[] = [
-  {
-    value: "csv",
-    label: "CSV",
-    icon: <FileSpreadsheet className="h-6 w-6" />,
-    description: "Comma-separated values, compatible with Excel",
-  },
-  {
-    value: "xlsx",
-    label: "Excel",
-    icon: <FileSpreadsheet className="h-6 w-6 text-green-600" />,
-    description: "Microsoft Excel format with formatting",
-  },
-  {
-    value: "pdf",
-    label: "PDF",
-    icon: <FileText className="h-6 w-6 text-red-500" />,
-    description: "Portable document format for printing",
-  },
-];
+    {
+      value: "csv",
+      label: "CSV",
+      icon: <FileSpreadsheet className="h-6 w-6" />,
+      description: "Comma-separated values, compatible with Excel",
+    },
+    {
+      value: "xlsx",
+      label: "Excel",
+      icon: <FileSpreadsheet className="h-6 w-6 text-green-600" />,
+      description: "Microsoft Excel format with formatting",
+    },
+    {
+      value: "pdf",
+      label: "PDF",
+      icon: <FileText className="h-6 w-6 text-red-500" />,
+      description: "Portable document format for printing",
+    },
+  ];
 
 // ============================================================================
 // COMPONENT
@@ -111,8 +111,8 @@ export function ExportModal({
         ...(needsDateRange &&
           dateFrom &&
           dateTo && {
-            dateRange: { from: dateFrom, to: dateTo },
-          }),
+          dateRange: { from: dateFrom, to: dateTo },
+        }),
       };
 
       const exportResult = await onExport(options);
@@ -155,7 +155,7 @@ export function ExportModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Export Successful!
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
@@ -168,19 +168,19 @@ export function ExportModal({
                 <CardBody className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Filename</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {result.filename}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Records</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {result.recordCount}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">File Size</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {formatFileSize(result.fileSize)}
                     </span>
                   </div>
@@ -207,7 +207,7 @@ export function ExportModal({
                 <FileDown className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Export Failed
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
@@ -287,12 +287,12 @@ export function ExportModal({
                 className={cn(
                   "p-4 rounded-xl border-2 text-center transition-all",
                   format === opt.value
-                    ? "border-primary bg-primary-50"
+                    ? "border-primary bg-primary/10"
                     : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <div className="flex justify-center mb-2">{opt.icon}</div>
-                <p className="font-medium text-slate-900">{opt.label}</p>
+                <p className="font-medium text-text-heading">{opt.label}</p>
                 <p className="text-xs text-slate-500 mt-1">{opt.description}</p>
               </button>
             ))}
@@ -300,7 +300,7 @@ export function ExportModal({
         </div>
 
         {/* Info */}
-        <Card className="bg-slate-50">
+        <Card className="bg-muted/50">
           <CardBody className="flex items-start gap-3">
             <FileSpreadsheet className="h-5 w-5 text-primary shrink-0" />
             <div className="text-sm">

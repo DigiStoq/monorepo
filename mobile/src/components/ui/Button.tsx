@@ -8,6 +8,7 @@ import {
   View,
   TextStyle,
 } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export type ButtonVariant =
   | "default"
@@ -35,8 +36,8 @@ interface ButtonProps {
 }
 
 export function Button({
-  variant,
-  size,
+  variant = "default",
+  size = "default",
   children,
   onClick,
   onPress,
@@ -47,54 +48,55 @@ export function Button({
   fullWidth,
   style,
 }: ButtonProps) {
+  const { colors } = useTheme();
   const handlePress = onPress || onClick;
 
   // Variant Styles
   const getBackgroundColor = () => {
-    if (disabled) return "#e2e8f0";
+    if (disabled) return colors.surfaceHover;
     switch (variant) {
       case "default":
-        return "#6366f1"; // Primary
+        return colors.primary;
       case "destructive":
-        return "#ef4444";
+        return colors.danger;
       case "outline":
         return "transparent";
       case "secondary":
-        return "#f1f5f9";
+        return colors.surfaceHover;
       case "ghost":
         return "transparent";
       case "link":
         return "transparent";
       default:
-        return "#6366f1";
+        return colors.primary;
     }
   };
 
   const getBorderColor = () => {
-    if (disabled) return "#e2e8f0";
+    if (disabled) return colors.border;
     switch (variant) {
       case "outline":
-        return "#e2e8f0";
+        return colors.border;
       default:
         return "transparent";
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return "#94a3b8";
+    if (disabled) return colors.textMuted;
     switch (variant) {
       case "default":
         return "#ffffff";
       case "destructive":
         return "#ffffff";
       case "outline":
-        return "#0f172a";
+        return colors.text;
       case "secondary":
-        return "#0f172a";
+        return colors.text;
       case "ghost":
-        return "#0f172a";
+        return colors.text;
       case "link":
-        return "#6366f1";
+        return colors.primary;
       default:
         return "#ffffff";
     }
@@ -125,17 +127,24 @@ export function Button({
     }
   };
 
+  const isDisabled = disabled || isLoading;
+  const bgColor = getBackgroundColor();
+
+  // Opacity for disabled state if not handled by color
+  const opacity = isDisabled && variant !== "outline" && variant !== "ghost" ? 0.7 : 1;
+
   return (
     <TouchableOpacity
       onPress={handlePress}
-      disabled={disabled || isLoading}
+      disabled={isDisabled}
       activeOpacity={0.7}
       style={[
         styles.base,
         {
-          backgroundColor: getBackgroundColor(),
+          backgroundColor: bgColor,
           borderColor: getBorderColor(),
           borderWidth: variant === "outline" ? 1 : 0,
+          opacity: opacity,
           ...(getPadding() as ViewStyle),
         },
         fullWidth && styles.fullWidth,

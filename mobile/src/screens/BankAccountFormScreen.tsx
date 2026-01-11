@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -23,7 +23,8 @@ import {
 } from "../components/ui";
 import { Save, X, Trash2 } from "lucide-react-native";
 import { wp, hp } from "../lib/responsive";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function BankAccountFormScreen() {
   const navigation = useNavigation();
@@ -31,6 +32,8 @@ export function BankAccountFormScreen() {
   const db = usePowerSync();
   const params = route.params as { id?: string } | undefined;
   const id = params?.id;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,7 +42,7 @@ export function BankAccountFormScreen() {
     account_number: "",
     account_type: "savings", // default
     opening_balance: "",
-    current_balance: "", 
+    current_balance: "",
     notes: "",
   });
 
@@ -101,7 +104,7 @@ export function BankAccountFormScreen() {
             formData.account_number,
             formData.account_type,
             balance,
-            balance, 
+            balance,
             formData.notes,
             now,
             id,
@@ -191,69 +194,69 @@ export function BankAccountFormScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Card>
-            <CardHeader title="Account Details" />
-            <CardBody>
-                <Input
-                    label="Account Name"
-                    value={formData.name}
-                    onChangeText={(t) => setFormData({ ...formData, name: t })}
-                    placeholder="e.g. Main Business Account"
-                />
-                <Input
-                    label="Bank Name"
-                    value={formData.bank_name}
-                    onChangeText={(t) => setFormData({ ...formData, bank_name: t })}
-                    placeholder="e.g. Chase, Wells Fargo"
-                />
-                <Input
-                    label="Account Number"
-                    value={formData.account_number}
-                    onChangeText={(t) => setFormData({ ...formData, account_number: t })}
-                    placeholder="Account Number"
-                    keyboardType="numeric"
-                />
-                 <Input
-                    label="Opening Balance"
-                    value={formData.opening_balance}
-                    onChangeText={(t) => setFormData({ ...formData, opening_balance: t })}
-                    placeholder="0.00"
-                    keyboardType="numeric"
-                />
-                <Select
-                    label="Account Type"
-                    options={accountTypeOptions}
-                    value={formData.account_type}
-                    onChange={(val) => setFormData({...formData, account_type: val})}
-                />
-                 <Input
-                    label="Notes"
-                    value={formData.notes}
-                    onChangeText={(t) => setFormData({ ...formData, notes: t })}
-                    placeholder="Additional notes..."
-                    multiline
-                    numberOfLines={4}
-                />
-            </CardBody>
+          <CardHeader title="Account Details" />
+          <CardBody>
+            <Input
+              label="Account Name"
+              value={formData.name}
+              onChangeText={(t) => setFormData({ ...formData, name: t })}
+              placeholder="e.g. Main Business Account"
+            />
+            <Input
+              label="Bank Name"
+              value={formData.bank_name}
+              onChangeText={(t) => setFormData({ ...formData, bank_name: t })}
+              placeholder="e.g. Chase, Wells Fargo"
+            />
+            <Input
+              label="Account Number"
+              value={formData.account_number}
+              onChangeText={(t) => setFormData({ ...formData, account_number: t })}
+              placeholder="Account Number"
+              keyboardType="numeric"
+            />
+            <Input
+              label="Opening Balance"
+              value={formData.opening_balance}
+              onChangeText={(t) => setFormData({ ...formData, opening_balance: t })}
+              placeholder="0.00"
+              keyboardType="numeric"
+            />
+            <Select
+              label="Account Type"
+              options={accountTypeOptions}
+              value={formData.account_type}
+              onChange={(val) => setFormData({ ...formData, account_type: val })}
+            />
+            <Input
+              label="Notes"
+              value={formData.notes}
+              onChangeText={(t) => setFormData({ ...formData, notes: t })}
+              placeholder="Additional notes..."
+              multiline
+              numberOfLines={4}
+            />
+          </CardBody>
         </Card>
 
         {isEditing && (
-             <Button
-                variant="outline"
-                style={{ marginTop: 24, borderColor: colors.danger }}
-                onPress={handleDelete}
-                leftIcon={<Trash2 size={18} color={colors.danger} />}
-             >
-                <Text style={{ color: colors.danger }}>Delete Bank Account</Text>
-             </Button>
+          <Button
+            variant="outline"
+            style={{ marginTop: 24, borderColor: colors.danger }}
+            onPress={handleDelete}
+            leftIcon={<Trash2 size={18} color={colors.danger} />}
+          >
+            <Text style={{ color: colors.danger }}>Delete Bank Account</Text>
+          </Button>
         )}
-        
-        <View style={{ height: 40 }} /> 
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

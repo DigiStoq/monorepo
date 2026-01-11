@@ -96,7 +96,7 @@ export function ProfitLossReportPage(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
-                <p className="text-xl sm:text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-text-heading">
                   {formatCurrency(data.revenue.total)}
                 </p>
               </div>
@@ -112,7 +112,7 @@ export function ProfitLossReportPage(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Expenses</p>
-                <p className="text-xl sm:text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-text-heading">
                   {formatCurrency(data.expenses.total)}
                 </p>
               </div>
@@ -298,7 +298,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                     (
                     {formatCurrency(
                       data.expenses.operatingExpenses +
-                        data.expenses.otherExpenses
+                      data.expenses.otherExpenses
                     )}
                     )
                   </td>
@@ -345,7 +345,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                       {expense.category}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">
+                      <span className="text-sm font-medium text-text-heading">
                         {formatCurrency(expense.amount)}
                       </span>
                       <span className="text-xs text-slate-500 w-12 text-right">

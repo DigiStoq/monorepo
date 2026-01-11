@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ArrowLeft, Calendar } from "lucide-react-native";
 import { useDayBookReport } from "../../hooks/useReports";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function DayBookScreen() {
     const navigation = useNavigation();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     // Default to today
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -16,10 +20,21 @@ export function DayBookScreen() {
         return "$" + (amount || 0).toFixed(2);
     };
 
+    const getTypeStyleKey = (type: string) => {
+        switch (type) {
+            case 'Sale': return 'sale';
+            case 'Purchase': return 'purchase';
+            case 'Payment In': return 'payIn';
+            case 'Payment Out': return 'payOut';
+            case 'Expense': return 'expense';
+            default: return 'other';
+        }
+    };
+
     const renderItem = ({ item }: { item: any }) => (
         <View style={styles.card}>
             <View style={styles.leftCol}>
-                <View style={[styles.badge, styles[getTypeStyle(item.type)]]}>
+                <View style={[styles.badge, styles[getTypeStyleKey(item.type)]]}>
                     <Text style={styles.badgeText}>{item.type}</Text>
                 </View>
                 <Text style={styles.desc}>{item.description || 'No Description'}</Text>
@@ -31,34 +46,23 @@ export function DayBookScreen() {
         </View>
     );
 
-    const getTypeStyle = (type: string) => {
-        switch(type) {
-            case 'Sale': return 'sale';
-            case 'Purchase': return 'purchase';
-            case 'Payment In': return 'payIn';
-            case 'Payment Out': return 'payOut';
-            case 'Expense': return 'expense';
-            default: return 'other';
-        }
-    };
-
     const totalIn = data ? data.reduce((sum, item) => sum + item.amount_in, 0) : 0;
     const totalOut = data ? data.reduce((sum, item) => sum + item.amount_out, 0) : 0;
 
     return (
         <View style={styles.container}>
-             <View style={styles.header}>
+            <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color="#0f172a" size={24} />
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Day Book</Text>
-                 <TouchableOpacity style={styles.iconBtn}>
-                    <Calendar color="#64748b" size={24} />
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Calendar color={colors.textSecondary} size={24} />
                 </TouchableOpacity>
             </View>
 
             <View style={styles.content}>
-                 <View style={styles.dateDisplay}>
+                <View style={styles.dateDisplay}>
                     <Text style={styles.dateText}>Date: {date}</Text>
                 </View>
 
@@ -79,7 +83,7 @@ export function DayBookScreen() {
                 </View>
 
                 {isLoading ? (
-                     <Text style={styles.loadingText}>Loading...</Text>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 ) : (
                     <FlatList
                         data={data}
@@ -94,33 +98,33 @@ export function DayBookScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
     iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
     content: { flex: 1 },
-    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: '#f1f5f9' },
-    dateText: { fontSize: 14, color: '#64748b', fontWeight: '500' },
-    summaryBar: { flexDirection: 'row', backgroundColor: 'white', padding: 16, borderBottomWidth: 1, borderColor: '#e2e8f0' },
+    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: colors.surfaceHover },
+    dateText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+    summaryBar: { flexDirection: 'row', backgroundColor: colors.surface, padding: 16, borderBottomWidth: 1, borderColor: colors.border },
     sumItem: { flex: 1, alignItems: 'center' },
-    sumLabel: { fontSize: 12, color: '#64748b' },
-    sumValue: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
+    sumLabel: { fontSize: 12, color: colors.textSecondary },
+    sumValue: { fontSize: 16, fontWeight: '700', color: colors.text },
     list: { padding: 16, gap: 12 },
-    loadingText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    emptyText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    card: { backgroundColor: 'white', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    loadingText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    emptyText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    card: { backgroundColor: colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     leftCol: { gap: 4 },
     rightCol: { alignItems: 'flex-end' },
-    desc: { fontSize: 14, color: '#334155' },
-    in: { color: '#16a34a', fontWeight: '600' },
-    out: { color: '#dc2626', fontWeight: '600' },
+    desc: { fontSize: 14, color: colors.textSecondary },
+    in: { color: colors.success, fontWeight: '600' },
+    out: { color: colors.danger, fontWeight: '600' },
     badge: { alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
     badgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
-    sale: { backgroundColor: '#3b82f6' },
-    purchase: { backgroundColor: '#f97316' },
-    payIn: { backgroundColor: '#22c55e' },
-    payOut: { backgroundColor: '#ef4444' },
-    expense: { backgroundColor: '#a855f7' },
-    other: { backgroundColor: '#94a3b8' },
+    sale: { backgroundColor: colors.primary },
+    purchase: { backgroundColor: colors.warning },
+    payIn: { backgroundColor: colors.success },
+    payOut: { backgroundColor: colors.danger },
+    expense: { backgroundColor: colors.info },
+    other: { backgroundColor: colors.textMuted },
 });

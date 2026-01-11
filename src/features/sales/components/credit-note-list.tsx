@@ -75,7 +75,7 @@ function CreditNoteCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full p-4 bg-white rounded-lg border border-slate-200",
+        "w-full p-4 bg-card rounded-lg border border-border-primary",
         "hover:border-primary-300 hover:shadow-soft",
         "transition-all duration-200 text-left",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
@@ -85,7 +85,7 @@ function CreditNoteCard({
         {/* Credit Note Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-slate-900">
+            <h3 className="font-semibold text-text-heading">
               {creditNote.creditNoteNumber}
             </h3>
             <Badge variant={reason.variant} size="sm">
@@ -94,12 +94,12 @@ function CreditNoteCard({
             </Badge>
           </div>
 
-          <div className="flex items-center gap-1 text-sm text-slate-600 mb-1">
+          <div className="flex items-center gap-1 text-sm text-text-secondary mb-1">
             <User className="h-3.5 w-3.5" />
             <span className="truncate">{creditNote.customerName}</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-text-tertiary">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {formatDate(creditNote.date)}
@@ -118,7 +118,7 @@ function CreditNoteCard({
           <p className="font-semibold text-error text-lg">
             -{formatCurrency(creditNote.total)}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-tertiary">
             {creditNote.items.length}{" "}
             {creditNote.items.length === 1 ? "item" : "items"}
           </p>
@@ -180,7 +180,7 @@ export function CreditNoteList({
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2 px-1">
+          <p className="text-sm text-text-tertiary mb-2 px-1">
             {displayCreditNotes.length}{" "}
             {displayCreditNotes.length === 1 ? "credit note" : "credit notes"}
           </p>

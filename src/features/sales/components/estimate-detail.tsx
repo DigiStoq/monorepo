@@ -113,7 +113,7 @@ export function EstimateDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-text-heading">
             {estimate.estimateNumber}
           </h2>
           <p className="text-sm text-slate-500">Estimate/Quotation</p>
@@ -150,7 +150,7 @@ export function EstimateDetail({
               <StatusIcon className="h-4 w-4 mr-1" />
               {status.label}
             </Badge>
-            <p className="text-3xl font-bold text-slate-900">
+            <p className="text-3xl font-bold text-text-heading">
               {formatCurrency(estimate.total)}
             </p>
             <p className="text-sm text-slate-500 mt-1">
@@ -218,7 +218,7 @@ export function EstimateDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {estimate.customerName}
                 </p>
               </div>
@@ -230,7 +230,7 @@ export function EstimateDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date Created</p>
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-text-heading">
                   {formatDate(estimate.date)}
                 </p>
               </div>
@@ -255,7 +255,7 @@ export function EstimateDetail({
                 <p
                   className={cn(
                     "font-medium",
-                    isExpired() ? "text-error" : "text-slate-900"
+                    isExpired() ? "text-error" : "text-text-heading"
                   )}
                 >
                   {formatDate(estimate.validUntil)}
@@ -286,7 +286,7 @@ export function EstimateDetail({
               {estimate.items.map((item) => (
                 <div key={item.id} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-text-heading">
                       {item.itemName}
                     </p>
                     <p className="text-sm text-slate-500">
@@ -294,7 +294,7 @@ export function EstimateDetail({
                       {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-text-heading">
                     {formatCurrency(item.amount)}
                   </p>
                 </div>
@@ -327,7 +327,7 @@ export function EstimateDetail({
               </span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
-              <span className="font-semibold text-slate-900">Total</span>
+              <span className="font-semibold text-text-heading">Total</span>
               <span className="font-bold text-primary-600">
                 {formatCurrency(estimate.total)}
               </span>

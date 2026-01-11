@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { ChevronDown, X, Check } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export interface SelectOption {
   value: string;
@@ -35,6 +36,8 @@ export function Select({
   containerStyle,
 }: SelectProps) {
   const [modalVisible, setModalVisible] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -112,7 +115,7 @@ export function Select({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },

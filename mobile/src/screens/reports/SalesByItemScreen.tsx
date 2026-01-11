@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ArrowLeft, Calendar } from "lucide-react-native";
 import { useSalesByItemReport, DateRange } from "../../hooks/useReports";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function SalesByItemScreen() {
     const navigation = useNavigation();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     // Default to current month
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -34,11 +38,11 @@ export function SalesByItemScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color="#0f172a" size={24} />
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Sales By Item</Text>
-                 <TouchableOpacity style={styles.iconBtn}>
-                    <Calendar color="#64748b" size={24} />
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Calendar color={colors.textSecondary} size={24} />
                 </TouchableOpacity>
             </View>
 
@@ -48,7 +52,7 @@ export function SalesByItemScreen() {
                 </View>
 
                 {isLoading ? (
-                     <Text style={styles.loadingText}>Loading...</Text>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 ) : (
                     <FlatList
                         data={data}
@@ -63,20 +67,20 @@ export function SalesByItemScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
     iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
     content: { flex: 1 },
-    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: '#f1f5f9' },
-    dateText: { fontSize: 14, color: '#64748b', fontWeight: '500' },
+    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: colors.surfaceHover },
+    dateText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
     list: { padding: 16, gap: 12 },
-    loadingText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    emptyText: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
-    card: { backgroundColor: 'white', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+    loadingText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    emptyText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    card: { backgroundColor: colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
     cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-    itemName: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-    amount: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-    qty: { fontSize: 12, color: '#64748b' },
+    itemName: { fontSize: 16, fontWeight: '600', color: colors.text },
+    amount: { fontSize: 16, fontWeight: '600', color: colors.text },
+    qty: { fontSize: 12, color: colors.textMuted },
 });

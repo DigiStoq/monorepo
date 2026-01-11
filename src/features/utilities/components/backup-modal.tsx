@@ -122,7 +122,7 @@ export function BackupModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Backup Successful!
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
@@ -133,25 +133,25 @@ export function BackupModal({
                 <CardBody className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Filename</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {result.filename}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Size</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {formatFileSize(result.size)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Destination</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {result.destination}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Created</span>
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-text-heading">
                       {formatDate(result.timestamp)}
                     </span>
                   </div>
@@ -172,7 +172,7 @@ export function BackupModal({
                 <AlertTriangle className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-text-heading">
                   Backup Failed
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
@@ -199,9 +199,9 @@ export function BackupModal({
       <div className="space-y-6 py-4">
         {/* Last Backup Info */}
         {lastBackup && (
-          <Card className="bg-slate-50">
+          <Card className="bg-muted/50">
             <CardBody className="flex items-center gap-4">
-              <div className="p-3 bg-slate-200 rounded-xl">
+              <div className="p-3 bg-muted rounded-xl">
                 <Clock className="h-5 w-5 text-slate-600" />
               </div>
               <div className="flex-1">
@@ -236,12 +236,12 @@ export function BackupModal({
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "local"
-                  ? "border-primary bg-primary-50"
+                  ? "border-primary bg-primary/10"
                   : "border-slate-200 hover:border-slate-300"
               )}
             >
               <HardDrive className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-              <p className="font-medium text-slate-900">Local Storage</p>
+              <p className="font-medium text-text-heading">Local Storage</p>
               <p className="text-xs text-slate-500 mt-1">
                 Download to your device
               </p>
@@ -254,12 +254,12 @@ export function BackupModal({
               className={cn(
                 "p-4 rounded-xl border-2 text-center transition-all",
                 destination === "cloud"
-                  ? "border-primary bg-primary-50"
+                  ? "border-primary bg-primary/10"
                   : "border-slate-200 hover:border-slate-300"
               )}
             >
               <Cloud className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-              <p className="font-medium text-slate-900">Cloud Storage</p>
+              <p className="font-medium text-text-heading">Cloud Storage</p>
               <p className="text-xs text-slate-500 mt-1">
                 Save to cloud provider
               </p>
@@ -287,7 +287,7 @@ export function BackupModal({
             Backup Options
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
             <input
               type="checkbox"
               checked={includeAttachments}
@@ -306,7 +306,7 @@ export function BackupModal({
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
             <input
               type="checkbox"
               checked={compress}
@@ -327,7 +327,7 @@ export function BackupModal({
         </div>
 
         {/* What's Included */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-500/10 border-blue-200">
           <CardBody className="flex items-start gap-3">
             <Database className="h-5 w-5 text-blue-600 shrink-0" />
             <div>

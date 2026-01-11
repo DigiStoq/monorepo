@@ -114,30 +114,30 @@ const sizeStyles: Record<TabsSize, { trigger: string; icon: string }> = {
 
 const variantStyles = {
   default: {
-    list: "bg-slate-100 p-1 rounded-lg",
+    list: "bg-muted p-1 rounded-lg",
     trigger: "rounded-md",
-    active: "bg-white shadow-sm text-slate-900",
-    inactive: "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+    active: "bg-card shadow-sm text-text-primary",
+    inactive: "text-text-secondary hover:text-text-primary hover:bg-muted/80",
   },
   pills: {
     list: "gap-2",
     trigger: "rounded-full",
     active: "bg-primary-600 text-white shadow-sm",
-    inactive: "text-slate-600 hover:bg-slate-100",
+    inactive: "text-text-secondary hover:bg-muted",
   },
   underline: {
-    list: "border-b border-slate-200 gap-0",
+    list: "border-b border-border-primary gap-0",
     trigger: "rounded-none border-b-2 -mb-px",
     active: "border-primary-600 text-primary-600",
     inactive:
-      "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300",
+      "border-transparent text-text-secondary hover:text-text-primary hover:border-border-secondary",
   },
   enclosed: {
-    list: "border-b border-slate-200",
+    list: "border-b border-border-primary",
     trigger: "rounded-t-lg border border-b-0 -mb-px",
-    active: "bg-white border-slate-200 text-slate-900",
+    active: "bg-card border-border-primary text-text-primary",
     inactive:
-      "bg-slate-50 border-transparent text-slate-600 hover:text-slate-900",
+      "bg-muted/50 border-transparent text-text-secondary hover:text-text-primary",
   },
 };
 

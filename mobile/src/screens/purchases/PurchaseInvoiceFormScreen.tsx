@@ -25,7 +25,8 @@ import {
 import { Plus, Trash2, Save, X } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -63,6 +64,8 @@ export function PurchaseInvoiceFormScreen() {
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -114,7 +117,7 @@ export function PurchaseInvoiceFormScreen() {
             setDueDate(data.due_date || "");
             setDiscountPercent(
               data.discount_amount ? String(data.discount_amount) : ""
-            ); 
+            );
             setNotes(data.notes || "");
           }
         }
@@ -329,7 +332,7 @@ export function PurchaseInvoiceFormScreen() {
           onPress={handleSubmit}
           disabled={isLoading}
         >
-            {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
+          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
         </Button>
       </View>
 
@@ -597,7 +600,7 @@ export function PurchaseInvoiceFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

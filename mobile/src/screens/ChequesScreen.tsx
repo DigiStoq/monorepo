@@ -1,21 +1,24 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Plus, ArrowUpRight, ArrowDownLeft, Trash2 } from "lucide-react-native";
 import { ChequeRecord } from "../lib/powersync";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomHeader } from "../components/CustomHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function ChequesScreen() {
     const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'received' | 'issued'>('all');
     const insets = useSafeAreaInsets();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     // Cheques Query
-    const query = filterType === 'all' 
+    const query = filterType === 'all'
         ? `SELECT * FROM cheques ORDER BY date DESC, created_at DESC`
         : `SELECT * FROM cheques WHERE type = '${filterType}' ORDER BY date DESC, created_at DESC`;
 
@@ -28,25 +31,25 @@ export function ChequesScreen() {
 
     // Helper to get status color
     const getStatusColor = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'cleared': return colors.success;
             case 'bounced': return colors.danger;
             case 'cancelled': return colors.textMuted;
-            default: return colors.warning;
+            default: return colors.warning; // or warning color if available, else standard text
         }
     };
 
     return (
         <View style={styles.container}>
             <CustomHeader />
-            
+
             <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>
                     {['all', 'received', 'issued'].map((type) => (
-                        <TouchableOpacity 
-                            key={type} 
+                        <TouchableOpacity
+                            key={type}
                             style={[
-                                styles.filterPill, 
+                                styles.filterPill,
                                 filterType === type && styles.filterPillActive
                             ]}
                             onPress={() => setFilterType(type as any)}
@@ -67,18 +70,18 @@ export function ChequesScreen() {
                 data={cheques || []}
                 keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
                 }
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.card}
                         onPress={() => navigation.navigate("ChequeForm" as any, { id: item.id })}
                         activeOpacity={0.7}
                     >
                         <View style={styles.cardHeader}>
-                            <View style={[styles.iconBox, { backgroundColor: item.type === 'received' ? colors.successMuted : colors.dangerMuted }]}>
-                                {item.type === 'received' 
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'received' ? colors.success + '20' : colors.danger + '20' }]}>
+                                {item.type === 'received'
                                     ? <ArrowDownLeft color={colors.success} size={20} />
                                     : <ArrowUpRight color={colors.danger} size={20} />
                                 }
@@ -105,21 +108,21 @@ export function ChequesScreen() {
                     </View>
                 }
             />
-            
-           {/* FAB */}
-           <TouchableOpacity
-             style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
-             onPress={() => (navigation as any).navigate("ChequeForm")}
-           >
-             <Text style={styles.fabText}>+ Add</Text>
-           </TouchableOpacity>
+
+            {/* FAB */}
+            <TouchableOpacity
+                style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
+                onPress={() => (navigation as any).navigate("ChequeForm")}
+            >
+                <Text style={styles.fabText}>+ Add</Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    subHeader: { 
+    subHeader: {
         paddingHorizontal: spacing.xl,
         paddingVertical: spacing.md,
     },
@@ -130,9 +133,9 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.full,
         backgroundColor: colors.surfaceHover,
     },
-    filterPillActive: { backgroundColor: colors.accent },
+    filterPillActive: { backgroundColor: colors.primary },
     filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
-    filterTextActive: { color: colors.textOnAccent },
+    filterTextActive: { color: "#ffffff" },
     listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
     card: {
         backgroundColor: colors.surface,
@@ -155,7 +158,7 @@ const styles = StyleSheet.create({
     fab: {
         position: 'absolute',
         right: spacing.xl,
-        backgroundColor: colors.accent,
+        backgroundColor: colors.primary,
         paddingHorizontal: spacing.xl,
         paddingVertical: spacing.md,
         borderRadius: borderRadius.full,
@@ -164,6 +167,6 @@ const styles = StyleSheet.create({
     fabText: {
         fontSize: fontSize.md,
         fontWeight: fontWeight.semibold,
-        color: colors.textOnAccent,
+        color: "#ffffff",
     },
 });

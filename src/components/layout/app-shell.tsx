@@ -41,7 +41,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
     return (
       <div
         ref={ref}
-        className={cn("flex h-screen bg-slate-50 overflow-hidden", className)}
+        className={cn("flex h-screen bg-app overflow-hidden", className)}
         {...props}
       >
         {/* Sidebar */}
@@ -55,7 +55,8 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
           {header && (
             <header
               className={cn(
-                "shrink-0 bg-white border-b border-slate-200 z-sticky",
+                "shrink-0 bg-card border-b border-border-primary z-sticky",
+                "shadow-sm shadow-slate-200/50 dark:shadow-none",
                 fixedHeader && "sticky top-0"
               )}
             >

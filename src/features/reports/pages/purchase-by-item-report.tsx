@@ -131,7 +131,7 @@ export function PurchaseByItemReport(): React.ReactNode {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Unique Items</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xl font-bold text-text-heading">
                 {processedData.length}
               </p>
             </CardBody>
@@ -139,7 +139,7 @@ export function PurchaseByItemReport(): React.ReactNode {
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Quantity</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xl font-bold text-text-heading">
                 {totals.quantity.toLocaleString()}
               </p>
             </CardBody>
@@ -157,7 +157,7 @@ export function PurchaseByItemReport(): React.ReactNode {
         {/* Items Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">
+            <h3 className="font-medium text-text-heading">
               Item Purchase Details
             </h3>
           </CardHeader>
@@ -165,7 +165,7 @@ export function PurchaseByItemReport(): React.ReactNode {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       Item
                     </th>
@@ -200,11 +200,11 @@ export function PurchaseByItemReport(): React.ReactNode {
                     </tr>
                   ) : (
                     processedData.map((item) => (
-                      <tr key={item.itemId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">
+                      <tr key={item.itemId} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium text-text-heading">
                           {item.itemName}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-900">
+                        <td className="px-4 py-3 text-right text-text-heading">
                           {item.quantityPurchased}
                         </td>
                         <td className="px-4 py-3 text-right text-slate-600">
@@ -219,9 +219,9 @@ export function PurchaseByItemReport(): React.ReactNode {
                 </tbody>
                 {processedData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-slate-900">
+                    <tr className="bg-muted/50 font-medium">
+                      <td className="px-4 py-3 text-text-heading">Total</td>
+                      <td className="px-4 py-3 text-right text-text-heading">
                         {totals.quantity}
                       </td>
                       <td className="px-4 py-3"></td>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react"; 
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -23,7 +23,8 @@ import {
 import { Save, X } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface CustomerData {
   id: string;
@@ -32,6 +33,8 @@ interface CustomerData {
 
 export function PaymentInFormScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -244,7 +247,7 @@ export function PaymentInFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@powersync/react-native";
 import { Search, FileText, ChevronRight } from "lucide-react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Invoice {
   id: string;
@@ -25,9 +26,9 @@ interface Invoice {
   amount_due: number;
 }
 
-function InvoiceCard({ invoice }: { invoice: Invoice }) {
+function InvoiceCard({ invoice, styles, colors }: { invoice: Invoice; styles: any; colors: ThemeColors }) {
   const navigation = useNavigation();
-  
+
   const statusColors: Record<string, { bg: string; text: string }> = {
     draft: { bg: colors.surfaceHover, text: colors.textMuted },
     sent: { bg: colors.infoMuted, text: colors.info },
@@ -86,6 +87,9 @@ export function SalesScreen() {
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const { data: invoices, isLoading } = useQuery<Invoice>(
     `SELECT si.*, c.name as customer_name 
      FROM sale_invoices si 
@@ -118,7 +122,7 @@ export function SalesScreen() {
 
       <FlatList
         data={invoices}
-        renderItem={({ item }) => <InvoiceCard invoice={item} />}
+        renderItem={({ item }) => <InvoiceCard invoice={item} styles={styles} colors={colors} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -128,6 +132,7 @@ export function SalesScreen() {
             onRefresh={onRefresh}
             tintColor={colors.accent}
             colors={[colors.accent]}
+            progressBackgroundColor={colors.surface}
           />
         }
         ListEmptyComponent={
@@ -158,7 +163,7 @@ export function SalesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

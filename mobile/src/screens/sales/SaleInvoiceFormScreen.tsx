@@ -25,7 +25,8 @@ import {
 import { Plus, Trash2, Save, X, Truck, Calendar } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Types
 interface CustomerData {
@@ -62,6 +63,8 @@ interface LineItem {
 
 export function SaleInvoiceFormScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -687,7 +690,7 @@ export function SaleInvoiceFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

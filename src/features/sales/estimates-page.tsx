@@ -336,7 +336,7 @@ export function EstimatesPage(): React.ReactNode {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-2">Failed to load estimates</p>
-          <p className="text-slate-500 text-sm">{error.message}</p>
+          <p className="text-text-tertiary text-sm">{error.message}</p>
         </div>
       </div>
     );
@@ -358,7 +358,7 @@ export function EstimatesPage(): React.ReactNode {
       />
 
       {/* Filters Header - Full Width */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border-primary px-6 py-4">
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
@@ -388,23 +388,23 @@ export function EstimatesPage(): React.ReactNode {
           </div>
 
           {/* Quick Stats */}
-          <div className="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
-                <DollarSign className="h-4 w-4 text-slate-500" />
+          <div className="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-border-primary">
+            <div className="flex items-center gap-3 px-4 py-2 bg-subtle rounded-lg border border-border-primary whitespace-nowrap">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
+                <DollarSign className="h-4 w-4 text-text-tertiary" />
               </div>
               <div>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                <p className="text-xs text-text-tertiary font-medium uppercase tracking-wider">
                   Total Value
                 </p>
-                <p className="text-lg font-bold text-slate-900 leading-none">
+                <p className="text-lg font-bold text-text-primary leading-none">
                   {formatCurrency(totals.total)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <Clock className="h-4 w-4 text-blue-600" />
               </div>
               <div>
@@ -418,7 +418,7 @@ export function EstimatesPage(): React.ReactNode {
             </div>
 
             <div className="flex items-center gap-3 px-4 py-2 bg-success-light rounded-lg border border-success/20 whitespace-nowrap">
-              <div className="p-1.5 bg-white rounded-md shadow-sm">
+              <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <CheckCircle className="h-4 w-4 text-success" />
               </div>
               <div>
@@ -434,7 +434,7 @@ export function EstimatesPage(): React.ReactNode {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden bg-slate-50">
+      <div className="flex-1 flex overflow-hidden bg-app">
         {/* Estimate List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -457,7 +457,7 @@ export function EstimatesPage(): React.ReactNode {
               </div>
 
               {/* Detail - Showing Placeholder or Selected */}
-              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-slate-200 shadow-sm">
+              <div className="flex-1 overflow-hidden bg-card rounded-lg border border-border-primary shadow-sm">
                 {currentSelectedEstimate ? (
                   <div className="h-full overflow-y-auto">
                     <EstimateDetail
@@ -486,7 +486,7 @@ export function EstimatesPage(): React.ReactNode {
                     />
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <div className="h-full flex flex-col items-center justify-center text-text-muted">
                     <FileText className="h-16 w-16 mb-4 opacity-20" />
                     <p className="text-lg font-medium">
                       Select an estimate to view details

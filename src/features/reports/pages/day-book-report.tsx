@@ -252,7 +252,7 @@ export function DayBookReport(): React.ReactNode {
           {filteredEntries.length === 0 ? (
             <div className="py-12 text-center">
               <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-slate-900 mb-1">
+              <h3 className="text-lg font-medium text-text-heading mb-1">
                 No transactions found
               </h3>
               <p className="text-slate-500">
@@ -261,7 +261,7 @@ export function DayBookReport(): React.ReactNode {
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-muted/50 border-b border-slate-200">
                 <tr>
                   <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
                     Type
@@ -288,7 +288,7 @@ export function DayBookReport(): React.ReactNode {
                   const config = typeConfig[entry.type];
 
                   return (
-                    <tr key={entry.id} className="hover:bg-slate-50">
+                    <tr key={entry.id} className="hover:bg-muted/50">
                       <td className="px-4 py-2">
                         <Badge
                           className={cn(
@@ -304,7 +304,7 @@ export function DayBookReport(): React.ReactNode {
                       <td className="px-4 py-2 text-sm font-mono text-slate-600">
                         {entry.referenceNumber}
                       </td>
-                      <td className="px-4 py-2 text-sm text-slate-900">
+                      <td className="px-4 py-2 text-sm text-text-heading">
                         {entry.customerName ?? "-"}
                       </td>
                       <td className="px-4 py-2 text-sm text-slate-600">
@@ -329,8 +329,8 @@ export function DayBookReport(): React.ReactNode {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-slate-50 font-medium">
-                  <td colSpan={4} className="px-4 py-3 text-slate-900">
+                <tr className="bg-muted/50 font-medium">
+                  <td colSpan={4} className="px-4 py-3 text-text-heading">
                     Total
                   </td>
                   <td className="px-4 py-3 text-right text-blue-600">

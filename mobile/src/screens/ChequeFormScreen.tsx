@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { 
-    View, 
-    StyleSheet, 
-    TextInput, 
-    TouchableOpacity, 
-    ScrollView, 
-    Alert, 
-    KeyboardAvoidingView, 
-    Platform, 
+import React, { useState, useEffect, useMemo } from "react";
+import {
+    View,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
     Modal,
     Text,
     ActivityIndicator
@@ -17,16 +17,17 @@ import { usePowerSync, useQuery } from "@powersync/react-native";
 import { generateUUID } from "../lib/utils";
 import { X, Save, CheckSquare, Trash2 } from "lucide-react-native";
 import { CustomerRecord } from "../lib/powersync";
-import { 
-    Button, 
+import {
+    Button,
     Input,
     Card,
     CardHeader,
     CardBody,
     Select
 } from "../components/ui";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { wp, hp } from "../lib/responsive";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function ChequeFormScreen() {
     const navigation = useNavigation();
@@ -35,6 +36,8 @@ export function ChequeFormScreen() {
     const params = route.params as { id?: string } | undefined;
     const id = params?.id;
     const isEditing = !!id;
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     // Fetch customers for selection
     const { data: customers } = useQuery<CustomerRecord>("SELECT id, name FROM customers ORDER BY name ASC");
@@ -50,7 +53,7 @@ export function ChequeFormScreen() {
     const [status, setStatus] = useState("pending");
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
-    
+
     // Customer Selection Modal
     const [showCustomerModal, setShowCustomerModal] = useState(false);
 
@@ -87,7 +90,7 @@ export function ChequeFormScreen() {
             setLoading(true);
             const amt = parseFloat(amount);
             const now = new Date().toISOString();
-            
+
             // Resolve Name if selected from DB
             let finalName = customerName;
             if (customerId) {
@@ -101,16 +104,16 @@ export function ChequeFormScreen() {
                      type=?, customer_id=?, customer_name=?, bank_name=?, cheque_number=?, 
                      amount=?, date=?, due_date=?, status=?, notes=?, updated_at=?
                      WHERE id=?`,
-                    [type, customerId || null, finalName, bankName, chequeNumber, 
-                     amt, date, dueDate || null, status, notes, now, id]
+                    [type, customerId || null, finalName, bankName, chequeNumber,
+                        amt, date, dueDate || null, status, notes, now, id]
                 );
             } else {
                 await db.execute(
                     `INSERT INTO cheques 
                     (id, user_id, type, customer_id, customer_name, bank_name, cheque_number, amount, date, due_date, status, notes, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [generateUUID(), 'user', type, customerId || null, finalName, bankName, chequeNumber, 
-                     amt, date, dueDate || null, status, notes, now, now]
+                    [generateUUID(), 'user', type, customerId || null, finalName, bankName, chequeNumber,
+                        amt, date, dueDate || null, status, notes, now, now]
                 );
             }
             navigation.goBack();
@@ -125,10 +128,12 @@ export function ChequeFormScreen() {
     async function handleDelete() {
         Alert.alert("Delete", "Are you sure?", [
             { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: async () => {
-                await db.execute("DELETE FROM cheques WHERE id = ?", [id]);
-                navigation.goBack();
-            }}
+            {
+                text: "Delete", style: "destructive", onPress: async () => {
+                    await db.execute("DELETE FROM cheques WHERE id = ?", [id]);
+                    navigation.goBack();
+                }
+            }
         ]);
     }
 
@@ -147,16 +152,16 @@ export function ChequeFormScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                
+
                 {/* Type Switcher */}
                 <View style={[styles.switchContainer, { borderColor: type === 'received' ? colors.success : colors.danger }]}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'received' && { backgroundColor: colors.success }]}
                         onPress={() => setType('received')}
                     >
                         <Text style={[styles.switchText, type === 'received' && { color: 'white' }]}>Received</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.switchOption, type === 'issued' && { backgroundColor: colors.danger }]}
                         onPress={() => setType('issued')}
                     >
@@ -167,7 +172,7 @@ export function ChequeFormScreen() {
                 <Card>
                     <CardHeader title="Details" />
                     <CardBody>
-                         <View style={styles.formGroup}>
+                        <View style={styles.formGroup}>
                             <Text style={styles.label}>{type === 'received' ? 'From Customer' : 'To Party'}</Text>
                             <TouchableOpacity style={styles.selectBtn} onPress={() => setShowCustomerModal(true)}>
                                 <Text style={{ color: customerId || customerName ? colors.text : colors.textSecondary }}>
@@ -175,7 +180,7 @@ export function ChequeFormScreen() {
                                 </Text>
                             </TouchableOpacity>
                             {!customerId && (
-                                <Input 
+                                <Input
                                     value={customerName}
                                     onChangeText={setCustomerName}
                                     placeholder="Or enter name manually"
@@ -184,7 +189,7 @@ export function ChequeFormScreen() {
                             )}
                         </View>
 
-                        <Input 
+                        <Input
                             label="Amount"
                             value={amount}
                             onChangeText={setAmount}
@@ -193,15 +198,15 @@ export function ChequeFormScreen() {
                             style={styles.inputBig}
                         />
 
-                         <View style={styles.row}>
-                            <Input 
+                        <View style={styles.row}>
+                            <Input
                                 label="Bank Name"
                                 value={bankName}
                                 onChangeText={setBankName}
                                 placeholder="e.g. HDFC"
                                 containerStyle={{ flex: 1, marginRight: 8 }}
                             />
-                            <Input 
+                            <Input
                                 label="Cheque No."
                                 value={chequeNumber}
                                 onChangeText={setChequeNumber}
@@ -211,15 +216,15 @@ export function ChequeFormScreen() {
                             />
                         </View>
 
-                         <View style={styles.row}>
-                             <Input 
+                        <View style={styles.row}>
+                            <Input
                                 label="Issue Date"
                                 value={date}
                                 onChangeText={setDate}
                                 placeholder="YYYY-MM-DD"
                                 containerStyle={{ flex: 1, marginRight: 8 }}
                             />
-                            <Input 
+                            <Input
                                 label="Due Date"
                                 value={dueDate}
                                 onChangeText={setDueDate}
@@ -228,12 +233,12 @@ export function ChequeFormScreen() {
                             />
                         </View>
 
-                         <View style={styles.formGroup}>
+                        <View style={styles.formGroup}>
                             <Text style={styles.label}>Status</Text>
                             <View style={styles.statusRow}>
                                 {['pending', 'cleared', 'bounced', 'cancelled'].map(s => (
-                                    <TouchableOpacity 
-                                        key={s} 
+                                    <TouchableOpacity
+                                        key={s}
                                         style={[styles.statusChip, status === s && styles.statusChipActive]}
                                         onPress={() => setStatus(s)}
                                     >
@@ -245,7 +250,7 @@ export function ChequeFormScreen() {
                             </View>
                         </View>
 
-                         <Input 
+                        <Input
                             label="Notes"
                             value={notes}
                             onChangeText={setNotes}
@@ -257,19 +262,19 @@ export function ChequeFormScreen() {
                 </Card>
 
                 {isEditing && (
-                     <Button
+                    <Button
                         variant="outline"
                         style={{ marginTop: 24, borderColor: colors.danger }}
                         onPress={handleDelete}
                         leftIcon={<Trash2 size={18} color={colors.danger} />}
-                     >
+                    >
                         <Text style={{ color: colors.danger }}>Delete Cheque Entry</Text>
-                     </Button>
+                    </Button>
                 )}
             </ScrollView>
 
             {/* Customer Selection Modal */}
-            <Modal visible={showCustomerModal} animationType="slide" presentationStyle="pageSheet">
+            <Modal visible={showCustomerModal} animationType="slide" presentationStyle="pageSheet" transparent={false}>
                 <View style={styles.modalContainer}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Select Party</Text>
@@ -278,7 +283,7 @@ export function ChequeFormScreen() {
                         </TouchableOpacity>
                     </View>
                     <ScrollView contentContainerStyle={{ padding: 16 }}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.customerItem}
                             onPress={() => {
                                 setCustomerId("");
@@ -291,8 +296,8 @@ export function ChequeFormScreen() {
                             </Text>
                         </TouchableOpacity>
                         {customers?.map(c => (
-                            <TouchableOpacity 
-                                key={c.id} 
+                            <TouchableOpacity
+                                key={c.id}
                                 style={styles.customerItem}
                                 onPress={() => {
                                     setCustomerId(c.id);
@@ -311,7 +316,7 @@ export function ChequeFormScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: "row",
@@ -332,7 +337,7 @@ const styles = StyleSheet.create({
     switchText: { fontWeight: fontWeight.semibold, color: colors.textSecondary },
     formGroup: { marginBottom: 16 },
     label: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textSecondary, marginBottom: 6 },
-    inputBig: { fontSize: 24, fontWeight: "bold" },
+    inputBig: { fontSize: 24, fontWeight: "bold", color: colors.text },
     row: { flexDirection: 'row' },
     selectBtn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.md, padding: 12 },
     statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

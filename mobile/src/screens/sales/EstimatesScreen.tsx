@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
 import { Search, Plus, Filter, FileText, ChevronRight, Calculator } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../lib/theme";
 
 interface Estimate {
   id: string;
@@ -22,7 +24,7 @@ interface Estimate {
   status: string; // 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted'
 }
 
-function EstimateCard({ estimate }: { estimate: Estimate }) {
+function EstimateCard({ estimate, styles, colors }: { estimate: Estimate, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -36,12 +38,12 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
   };
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
-    draft: { bg: "#f1f5f9", text: "#64748b", border: "#e2e8f0" },
-    sent: { bg: "#eff6ff", text: "#3b82f6", border: "#dbeafe" },
-    accepted: { bg: "#f0fdf4", text: "#22c55e", border: "#dcfce7" },
-    rejected: { bg: "#fef2f2", text: "#ef4444", border: "#fee2e2" },
-    converted: { bg: "#f5f3ff", text: "#8b5cf6", border: "#ede9fe" },
-    expired: { bg: "#fff7ed", text: "#ea580c", border: "#ffedd5" },
+    draft: { bg: colors.surfaceHover, text: colors.textMuted, border: colors.border },
+    sent: { bg: colors.infoMuted, text: colors.info, border: colors.info + "20" },
+    accepted: { bg: colors.successMuted, text: colors.success, border: colors.success + "20" },
+    rejected: { bg: colors.dangerMuted, text: colors.danger, border: colors.danger + "20" },
+    converted: { bg: colors.primaryMuted, text: colors.primary, border: colors.primary + "20" },
+    expired: { bg: colors.warningMuted, text: colors.warning, border: colors.warning + "20" },
   };
 
   const statusStyle = statusColors[estimate.status] || statusColors.draft;
@@ -54,9 +56,9 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
         (navigation as any).navigate("EstimateForm", { id: estimate.id })
       }
     >
-       <View style={styles.cardMain}>
+      <View style={styles.cardMain}>
         <View style={styles.estimateIconBox}>
-          <Calculator size={20} color="#8b5cf6" />
+          <Calculator size={20} color={colors.primary} />
         </View>
         <View style={styles.estimateMainInfo}>
           <View style={styles.estimateHeaderRow}>
@@ -69,13 +71,13 @@ function EstimateCard({ estimate }: { estimate: Estimate }) {
           <View style={styles.estimateFooterRow}>
             <Text style={styles.dateValue}>{formatDate(estimate.date)}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
-               <Text style={[styles.statusText, { color: statusStyle.text }]}>
+              <Text style={[styles.statusText, { color: statusStyle.text }]}>
                 {estimate.status}
               </Text>
             </View>
           </View>
         </View>
-        <ChevronRight size={18} color="#cbd5e1" style={{ marginLeft: 8 }} />
+        <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 8 }} />
       </View>
     </TouchableOpacity>
   );
@@ -85,6 +87,8 @@ export function EstimatesScreen() {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: estimates, isLoading } = useQuery<Estimate>(
     `SELECT * FROM estimates 
@@ -104,43 +108,43 @@ export function EstimatesScreen() {
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
-          <Search size={18} color="#94a3b8" style={styles.searchIcon} />
+          <Search size={18} color={colors.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search estimates..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
           />
         </View>
         <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#64748b" />
+          <Filter size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <FlatList
         data={estimates || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EstimateCard estimate={item} />}
+        renderItem={({ item }) => <EstimateCard estimate={item} styles={styles} colors={colors} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366f1"
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIconContainer}>
-               <Calculator size={48} color="#cbd5e1" />
+              <Calculator size={48} color={colors.textMuted} />
             </View>
             <Text style={styles.emptyText}>No estimates yet</Text>
             <Text style={styles.emptySubtext}>
               Send professional quotes to your clients and win more business.
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.emptyAddButton}
               onPress={() => (navigation as any).navigate("EstimateForm")}
             >
@@ -160,10 +164,10 @@ export function EstimatesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: colors.background,
   },
   searchContainer: {
     flexDirection: "row",
@@ -176,11 +180,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     height: 48,
   },
   searchIcon: {
@@ -189,17 +193,17 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: "#0f172a",
+    color: colors.text,
   },
   filterButton: {
     width: 48,
     height: 48,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   list: {
     paddingHorizontal: 20,
@@ -207,12 +211,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#f1f5f9",
-    shadowColor: "#0f172a",
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#f5f3ff',
+    backgroundColor: colors.primary + "10",
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -243,16 +247,16 @@ const styles = StyleSheet.create({
   estimateNumber: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#0f172a",
+    color: colors.text,
   },
   totalValue: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#8b5cf6",
+    color: colors.primary,
   },
   customerName: {
     fontSize: 14,
-    color: "#64748b",
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   estimateFooterRow: {
@@ -262,7 +266,7 @@ const styles = StyleSheet.create({
   },
   dateValue: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: colors.textMuted,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -283,24 +287,24 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#6366f1",
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6366f1",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
   empty: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 80,
   },
   emptyIconContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.surfaceHover,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -308,26 +312,26 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#0f172a",
+    color: colors.text,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#64748b",
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 40,
     marginBottom: 24,
   },
   emptyAddButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#6366f1',
+    borderColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
   },
   emptyAddButtonText: {
-    color: '#6366f1',
+    color: colors.primary,
     fontWeight: '700',
     fontSize: 15,
   }

@@ -3,10 +3,14 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Platform
 import { useNavigation } from "@react-navigation/native";
 import { ArrowLeft, Calendar, Search, Filter } from "lucide-react-native";
 import { useSalesRegisterReport, DateRange } from "../../hooks/useReports";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function SalesRegisterScreen() {
     const navigation = useNavigation();
-    
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const today = now.toISOString().split('T')[0];
@@ -40,13 +44,13 @@ export function SalesRegisterScreen() {
     }, [filteredData]);
 
     const formatCurrency = (amount: number) => "$" + (amount || 0).toFixed(2);
-    
+
     const getStatusColor = (status: string) => {
-        switch(status) {
-            case 'paid': return '#16a34a';
-            case 'partial': return '#ea580c';
-            case 'unpaid': return '#dc2626';
-            default: return '#64748b';
+        switch (status) {
+            case 'paid': return colors.success;
+            case 'partial': return colors.warning;
+            case 'unpaid': return colors.danger;
+            default: return colors.textMuted;
         }
     };
 
@@ -54,32 +58,33 @@ export function SalesRegisterScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color="#0f172a" size={24} />
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Sales Register</Text>
-                <View style={{ width: 40 }} />
+                <View style={{ width: 46 }} />
             </View>
 
             {/* Filters */}
             <View style={styles.filterSection}>
                 <View style={styles.searchBox}>
-                    <Search size={18} color="#94a3b8" />
-                    <TextInput 
-                        style={styles.searchInput} 
-                        placeholder="Search invoice or customer..." 
+                    <Search size={18} color={colors.textMuted} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search invoice or customer..."
+                        placeholderTextColor={colors.textMuted}
                         value={search}
                         onChangeText={setSearch}
                     />
                 </View>
-                
+
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll}>
                     {['all', 'paid', 'partial', 'unpaid'].map(s => (
-                        <TouchableOpacity 
-                            key={s} 
+                        <TouchableOpacity
+                            key={s}
                             style={[
-                                styles.pill, 
+                                styles.pill,
                                 statusFilter === s && styles.pillActive,
-                                statusFilter === s && { backgroundColor: getStatusColor(s) === '#64748b' ? '#0f172a' : getStatusColor(s) }
+                                statusFilter === s && { backgroundColor: getStatusColor(s) === colors.textMuted ? colors.text : getStatusColor(s) }
                             ]}
                             onPress={() => setStatusFilter(s as any)}
                         >
@@ -105,17 +110,17 @@ export function SalesRegisterScreen() {
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
                     <Text style={styles.summaryLabel}>Received</Text>
-                    <Text style={[styles.summaryValue, { color: '#16a34a' }]}>{formatCurrency(totals.paid)}</Text>
+                    <Text style={[styles.summaryValue, { color: colors.success }]}>{formatCurrency(totals.paid)}</Text>
                 </View>
-                 <View style={styles.summaryDivider} />
+                <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
                     <Text style={styles.summaryLabel}>Due</Text>
-                    <Text style={[styles.summaryValue, { color: '#dc2626' }]}>{formatCurrency(totals.due)}</Text>
+                    <Text style={[styles.summaryValue, { color: colors.danger }]}>{formatCurrency(totals.due)}</Text>
                 </View>
             </View>
 
             {/* List */}
-             <FlatList
+            <FlatList
                 data={filteredData}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.list}
@@ -133,20 +138,20 @@ export function SalesRegisterScreen() {
                             <Text style={styles.customerName}>{item.customerName}</Text>
                             <Text style={styles.date}>{item.date}</Text>
                         </View>
-                        
+
                         <View style={styles.cardDivider} />
-                        
+
                         <View style={styles.cardRow}>
                             <Text style={styles.amountLabel}>Total</Text>
                             <Text style={styles.amountValue}>{formatCurrency(item.total)}</Text>
                         </View>
-                        
+
                         {(item.due > 0 || item.paid > 0) && (
                             <View style={[styles.cardRow, { marginTop: 4 }]}>
                                 <Text style={styles.dueLabel}>
                                     {item.paid > 0 ? `Paid: ${formatCurrency(item.paid)}` : ''}
                                 </Text>
-                                <Text style={[styles.dueValue, { color: item.due > 0 ? '#dc2626' : '#16a34a' }]}>
+                                <Text style={[styles.dueValue, { color: item.due > 0 ? colors.danger : colors.success }]}>
                                     Due: {formatCurrency(item.due)}
                                 </Text>
                             </View>
@@ -154,7 +159,7 @@ export function SalesRegisterScreen() {
                     </View>
                 )}
                 ListEmptyComponent={
-                     <View style={styles.emptyState}>
+                    <View style={styles.emptyState}>
                         <Text style={styles.emptyText}>{isLoading ? "Loading..." : "No invoices found"}</Text>
                     </View>
                 }
@@ -163,39 +168,39 @@ export function SalesRegisterScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f8fafc" },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "white", borderBottomWidth: 1, borderColor: "#e2e8f0", marginTop: Platform.OS === 'android' ? 24 : 0 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
     iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#0f172a" },
-    filterSection: { padding: 16, backgroundColor: 'white', borderBottomWidth: 1, borderColor: '#f1f5f9' },
-    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, height: 40, marginBottom: 12 },
-    searchInput: { flex: 1, marginLeft: 8, height: '100%', fontSize: 15 },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
+    filterSection: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border },
+    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: 8, paddingHorizontal: 10, height: 40, marginBottom: 12 },
+    searchInput: { flex: 1, marginLeft: 8, height: '100%', fontSize: 15, color: colors.text },
     pillsScroll: { flexDirection: 'row', marginBottom: 12 },
-    pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f1f5f9', marginRight: 8 },
-    pillActive: { backgroundColor: '#0f172a' },
-    pillText: { fontSize: 13, color: '#64748b', fontWeight: '500' },
-    pillTextActive: { color: 'white' },
+    pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: colors.surfaceHover, marginRight: 8 },
+    pillActive: { backgroundColor: colors.text },
+    pillText: { fontSize: 13, color: colors.textMuted, fontWeight: '500' },
+    pillTextActive: { color: colors.background }, // Inverted text color for active pill
     dateRow: { flexDirection: 'row', justifyContent: 'flex-end' },
-    dateText: { fontSize: 13, color: '#64748b' },
-    summaryStrip: { flexDirection: 'row', backgroundColor: 'white', padding: 12, marginBottom: 1, justifyContent: 'space-around', borderBottomWidth: 1, borderColor: '#e2e8f0' },
+    dateText: { fontSize: 13, color: colors.textMuted },
+    summaryStrip: { flexDirection: 'row', backgroundColor: colors.surface, padding: 12, marginBottom: 1, justifyContent: 'space-around', borderBottomWidth: 1, borderColor: colors.border },
     summaryItem: { alignItems: 'center' },
-    summaryLabel: { fontSize: 11, color: '#64748b', marginBottom: 2 },
-    summaryValue: { fontSize: 15, fontWeight: '700', color: '#0f172a' },
-    summaryDivider: { width: 1, backgroundColor: '#e2e8f0' },
+    summaryLabel: { fontSize: 11, color: colors.textMuted, marginBottom: 2 },
+    summaryValue: { fontSize: 15, fontWeight: '700', color: colors.text },
+    summaryDivider: { width: 1, backgroundColor: colors.border },
     list: { padding: 16, gap: 12, paddingBottom: 40 },
-    card: { backgroundColor: 'white', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e2e8f0' },
+    card: { backgroundColor: colors.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border },
     cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    invoiceNum: { fontSize: 15, fontWeight: '600', color: '#0f172a' },
+    invoiceNum: { fontSize: 15, fontWeight: '600', color: colors.text },
     statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
     statusText: { fontSize: 10, fontWeight: '700' },
-    customerName: { fontSize: 14, color: '#334155', marginTop: 4 },
-    date: { fontSize: 12, color: '#94a3b8', marginTop: 4 },
-    cardDivider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 12 },
-    amountLabel: { fontSize: 14, color: '#64748b' },
-    amountValue: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
-    dueLabel: { fontSize: 12, color: '#16a34a' },
+    customerName: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+    date: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
+    cardDivider: { height: 1, backgroundColor: colors.borderLight, marginVertical: 12 },
+    amountLabel: { fontSize: 14, color: colors.textSecondary },
+    amountValue: { fontSize: 16, fontWeight: '700', color: colors.text },
+    dueLabel: { fontSize: 12, color: colors.success },
     dueValue: { fontSize: 12, fontWeight: '600' },
     emptyState: { padding: 40, alignItems: 'center' },
-    emptyText: { color: '#94a3b8' }
+    emptyText: { color: colors.textMuted }
 });

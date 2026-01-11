@@ -266,7 +266,7 @@ export function CustomerStatementReport(): React.ReactNode {
                     <User className="h-5 w-5 text-primary-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-text-heading">
                       {statement.customerName}
                     </h3>
                     <span
@@ -292,7 +292,7 @@ export function CustomerStatementReport(): React.ReactNode {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500 mb-1">Total Debit</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-2xl font-bold text-text-heading">
                       {formatCurrency(statement.totalDebit)}
                     </p>
                   </div>
@@ -309,7 +309,7 @@ export function CustomerStatementReport(): React.ReactNode {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500 mb-1">Total Credit</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-2xl font-bold text-text-heading">
                       {formatCurrency(statement.totalCredit)}
                     </p>
                   </div>
@@ -325,7 +325,7 @@ export function CustomerStatementReport(): React.ReactNode {
           <Card>
             <CardBody className="p-0">
               <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted/50 border-b border-slate-200">
                   <tr>
                     <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
                       Date
@@ -352,7 +352,7 @@ export function CustomerStatementReport(): React.ReactNode {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {statement.entries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-slate-50">
+                    <tr key={entry.id} className="hover:bg-muted/50">
                       <td className="px-4 py-3 text-sm text-slate-600">
                         {formatDate(entry.date)}
                       </td>
@@ -369,7 +369,7 @@ export function CustomerStatementReport(): React.ReactNode {
                       <td className="px-4 py-3 text-sm font-mono text-slate-600">
                         {entry.referenceNumber}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-900">
+                      <td className="px-4 py-3 text-sm text-text-heading">
                         {entry.description}
                       </td>
                       <td className="px-4 py-3 text-sm text-right">
@@ -386,7 +386,7 @@ export function CustomerStatementReport(): React.ReactNode {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-semibold text-slate-900">
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-text-heading">
                         {formatCurrency(entry.balance)}
                       </td>
                     </tr>
@@ -396,7 +396,7 @@ export function CustomerStatementReport(): React.ReactNode {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-3 text-sm font-semibold text-slate-900"
+                      className="px-4 py-3 text-sm font-semibold text-text-heading"
                     >
                       Closing Balance
                     </td>
@@ -429,7 +429,7 @@ export function CustomerStatementReport(): React.ReactNode {
         <Card>
           <CardBody className="py-12 text-center">
             <User className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-slate-900 mb-1">
+            <h3 className="text-lg font-medium text-text-heading mb-1">
               Select a Customer
             </h3>
             <p className="text-slate-500">

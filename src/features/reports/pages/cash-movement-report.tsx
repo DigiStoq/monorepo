@@ -273,8 +273,8 @@ export function CashMovementReportPage(): React.ReactNode {
         {/* Payment Mode Breakdown */}
         <Card>
           <CardBody className="p-0">
-            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
-              <h3 className="font-medium text-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 bg-muted/50">
+              <h3 className="font-medium text-text-heading">
                 Movement by Payment Mode
               </h3>
             </div>
@@ -290,8 +290,8 @@ export function CashMovementReportPage(): React.ReactNode {
                     <div
                       key={mode.mode}
                       className={cn(
-                        "flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors",
-                        modeFilter === mode.mode && "bg-slate-50"
+                        "flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors",
+                        modeFilter === mode.mode && "bg-muted/50"
                       )}
                       onClick={() => {
                         setModeFilter(
@@ -310,7 +310,7 @@ export function CashMovementReportPage(): React.ReactNode {
                           {config.icon}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">
+                          <p className="font-medium text-text-heading">
                             {config.label}
                           </p>
                           <p className="text-sm text-slate-500">
@@ -358,8 +358,8 @@ export function CashMovementReportPage(): React.ReactNode {
         {/* Transactions Table */}
         <Card>
           <CardBody className="p-0">
-            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <h3 className="font-medium text-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 bg-muted/50 flex items-center justify-between">
+              <h3 className="font-medium text-text-heading">
                 Transactions
                 {modeFilter !== "all" && (
                   <span className="ml-2 text-sm font-normal text-slate-500">
@@ -376,7 +376,7 @@ export function CashMovementReportPage(): React.ReactNode {
             {filteredTransactions.length === 0 ? (
               <div className="py-12 text-center">
                 <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-slate-900 mb-1">
+                <h3 className="text-lg font-medium text-text-heading mb-1">
                   No transactions found
                 </h3>
                 <p className="text-slate-500">
@@ -385,7 +385,7 @@ export function CashMovementReportPage(): React.ReactNode {
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted/50 border-b border-slate-200">
                   <tr>
                     <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-2">
                       Date
@@ -416,7 +416,7 @@ export function CashMovementReportPage(): React.ReactNode {
                     const mConfig = modeConfig[tx.paymentMode];
 
                     return (
-                      <tr key={tx.id} className="hover:bg-slate-50">
+                      <tr key={tx.id} className="hover:bg-muted/50">
                         <td className="px-4 py-2 text-sm text-slate-600">
                           {formatDate(tx.date)}
                         </td>
@@ -435,7 +435,7 @@ export function CashMovementReportPage(): React.ReactNode {
                         <td className="px-4 py-2 text-sm font-mono text-slate-600">
                           {tx.referenceNumber}
                         </td>
-                        <td className="px-4 py-2 text-sm text-slate-900">
+                        <td className="px-4 py-2 text-sm text-text-heading">
                           {tx.partyName ?? "-"}
                         </td>
                         <td className="px-4 py-2">
@@ -469,8 +469,8 @@ export function CashMovementReportPage(): React.ReactNode {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-slate-50 font-medium">
-                    <td colSpan={5} className="px-4 py-3 text-slate-900">
+                  <tr className="bg-muted/50 font-medium">
+                    <td colSpan={5} className="px-4 py-3 text-text-heading">
                       Total
                     </td>
                     <td className="px-4 py-3 text-right text-success">

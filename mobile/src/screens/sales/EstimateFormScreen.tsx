@@ -25,7 +25,8 @@ import {
 import { Plus, Trash2, Save, X, FileCheck2 } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -57,6 +58,8 @@ interface LineItem {
 
 export function EstimateFormScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -108,9 +111,9 @@ export function EstimateFormScreen() {
     let tax = 0;
     let total = 0;
     lineItems.forEach(i => {
-        subtotal += i.quantity * i.unitPrice;
-        tax += i.quantity * i.unitPrice * (i.taxPercent / 100);
-        total += i.amount;
+      subtotal += i.quantity * i.unitPrice;
+      tax += i.quantity * i.unitPrice * (i.taxPercent / 100);
+      total += i.amount;
     });
     return { subtotal, tax, total };
   }, [lineItems]);
@@ -129,7 +132,7 @@ export function EstimateFormScreen() {
           setTerms(data.terms || "");
         }
       });
-      
+
       db.execute("SELECT * FROM estimate_items WHERE estimate_id = ?", [id]).then((res) => {
         const items: LineItem[] = [];
         for (let i = 0; i < res.rows.length; i++) {
@@ -153,21 +156,21 @@ export function EstimateFormScreen() {
 
   const openItemModal = (item?: LineItem) => {
     if (item) {
-        setEditingItemId(item.id);
-        setTempItem({...item});
+      setEditingItemId(item.id);
+      setTempItem({ ...item });
     } else {
-        setEditingItemId(null);
-        setTempItem({
-            id: generateUUID(),
-            itemId: "",
-            itemName: "",
-            quantity: 1,
-            unit: "pcs",
-            unitPrice: 0,
-            taxPercent: 0,
-            discountPercent: 0,
-            amount: 0,
-        });
+      setEditingItemId(null);
+      setTempItem({
+        id: generateUUID(),
+        itemId: "",
+        itemName: "",
+        quantity: 1,
+        unit: "pcs",
+        unitPrice: 0,
+        taxPercent: 0,
+        discountPercent: 0,
+        amount: 0,
+      });
     }
     setModalVisible(true);
   };
@@ -240,24 +243,24 @@ export function EstimateFormScreen() {
 
         // Insert new items
         for (const item of lineItems) {
-            await tx.execute(
-                `INSERT INTO estimate_items 
+          await tx.execute(
+            `INSERT INTO estimate_items 
                 (id, estimate_id, item_id, item_name, description, quantity, unit, unit_price, discount_percent, tax_percent, amount)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    generateUUID(),
-                    estimateId,
-                    item.itemId,
-                    item.itemName,
-                    "", // description not in LineItem interface yet, defaulting empty
-                    item.quantity,
-                    item.unit,
-                    item.unitPrice,
-                    item.discountPercent,
-                    item.taxPercent,
-                    item.amount
-                ]
-            );
+            [
+              generateUUID(),
+              estimateId,
+              item.itemId,
+              item.itemName,
+              "", // description not in LineItem interface yet, defaulting empty
+              item.quantity,
+              item.unit,
+              item.unitPrice,
+              item.discountPercent,
+              item.taxPercent,
+              item.amount
+            ]
+          );
         }
       });
       Alert.alert("Success", "Estimate saved");
@@ -274,67 +277,69 @@ export function EstimateFormScreen() {
     if (!id) return;
     setIsLoading(true);
     try {
-        const newInvoiceId = generateUUID();
-        const customer = customers.find(c => c.id === customerId);
-        
-        await db.writeTransaction(async tx => {
-            // 1. Invoice
-            await tx.execute(`
+      const newInvoiceId = generateUUID();
+      const customer = customers.find(c => c.id === customerId);
+
+      await db.writeTransaction(async tx => {
+        // 1. Invoice
+        await tx.execute(`
                 INSERT INTO sale_invoices 
                 (id, customer_id, customer_name, invoice_number, date, due_date, status, total, amount_due, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                newInvoiceId,
-                customerId,
-                customer?.name || '',
-                'INV-' + Math.floor(Math.random() * 100000), 
-                new Date().toISOString().split('T')[0], // Today
-                // Default due date = valid until or today + 7 days
-                validUntil || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-                'draft',
-                totals.total,
-                totals.total, // Amount due
-                new Date().toISOString(),
-                new Date().toISOString()
-            ]);
+          newInvoiceId,
+          customerId,
+          customer?.name || '',
+          'INV-' + Math.floor(Math.random() * 100000),
+          new Date().toISOString().split('T')[0], // Today
+          // Default due date = valid until or today + 7 days
+          validUntil || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          'draft',
+          totals.total,
+          totals.total, // Amount due
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]);
 
-            // 2. Items
-            for(const item of lineItems) {
-                await tx.execute(`
+        // 2. Items
+        for (const item of lineItems) {
+          await tx.execute(`
                     INSERT INTO sale_invoice_items
                     (id, invoice_id, item_id, item_name, quantity, unit, unit_price, discount_percent, tax_percent, amount)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
-                    generateUUID(),
-                    newInvoiceId,
-                    item.itemId,
-                    item.itemName,
-                    item.quantity,
-                    item.unit,
-                    item.unitPrice,
-                    item.discountPercent,
-                    item.taxPercent,
-                    item.amount
-                ]);
-            }
+            generateUUID(),
+            newInvoiceId,
+            item.itemId,
+            item.itemName,
+            item.quantity,
+            item.unit,
+            item.unitPrice,
+            item.discountPercent,
+            item.taxPercent,
+            item.amount
+          ]);
+        }
 
-            // 3. Update Estimate
-            await tx.execute(`UPDATE estimates SET status = 'converted', converted_to_invoice_id = ? WHERE id = ?`, [newInvoiceId, id]);
-        });
+        // 3. Update Estimate
+        await tx.execute(`UPDATE estimates SET status = 'converted', converted_to_invoice_id = ? WHERE id = ?`, [newInvoiceId, id]);
+      });
 
-        Alert.alert("Success", "Converted to Invoice", [
-            { text: "View Invoice", onPress: () => {
-                navigation.goBack(); // Close estimate
-                setTimeout(() => (navigation as any).navigate('SaleInvoiceForm', { id: newInvoiceId }), 100);
-            }},
-            { text: "OK", onPress: () => navigation.goBack() }
-        ]);
+      Alert.alert("Success", "Converted to Invoice", [
+        {
+          text: "View Invoice", onPress: () => {
+            navigation.goBack(); // Close estimate
+            setTimeout(() => (navigation as any).navigate('SaleInvoiceForm', { id: newInvoiceId }), 100);
+          }
+        },
+        { text: "OK", onPress: () => navigation.goBack() }
+      ]);
 
-    } catch(e) {
-        console.error(e);
-        Alert.alert("Error", "Conversion failed");
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Conversion failed");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -359,19 +364,19 @@ export function EstimateFormScreen() {
           </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-            {isEditing && status !== 'converted' && (
-                <Button variant="ghost" size="icon" onPress={handleConvertToInvoice} disabled={isLoading}>
-                     <FileCheck2 size={24} color={colors.success} />
-                </Button>
-            )}
-            <Button
+          {isEditing && status !== 'converted' && (
+            <Button variant="ghost" size="icon" onPress={handleConvertToInvoice} disabled={isLoading}>
+              <FileCheck2 size={24} color={colors.success} />
+            </Button>
+          )}
+          <Button
             variant="ghost"
             size="icon"
             onPress={handleSubmit}
             disabled={isLoading}
-            >
+          >
             {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
-            </Button>
+          </Button>
         </View>
       </View>
 
@@ -543,7 +548,7 @@ export function EstimateFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",

@@ -120,7 +120,7 @@ export const TableHeader = forwardRef<
   HTMLTableSectionElement,
   TableHeaderProps
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("bg-slate-50", className)} {...props} />
+  <thead ref={ref} className={cn("bg-subtle", className)} {...props} />
 ));
 TableHeader.displayName = "TableHeader";
 
@@ -128,7 +128,7 @@ export const TableBody = forwardRef<HTMLTableSectionElement, TableBodyProps>(
   ({ className, ...props }, ref) => (
     <tbody
       ref={ref}
-      className={cn("divide-y divide-slate-100", className)}
+      className={cn("divide-y divide-border-primary", className)}
       {...props}
     />
   )
@@ -142,7 +142,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
       className={cn(
         "transition-colors",
         selected && "bg-primary-50",
-        clickable && "cursor-pointer hover:bg-slate-50",
+        clickable && "cursor-pointer hover:bg-subtle",
         className
       )}
       {...props}
@@ -156,8 +156,8 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
     <th
       ref={ref}
       className={cn(
-        "px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider",
-        sortable && "cursor-pointer select-none hover:bg-slate-100",
+        "px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider",
+        sortable && "cursor-pointer select-none hover:bg-subtle",
         className
       )}
       onClick={sortable ? onSort : undefined}
@@ -172,7 +172,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
             ) : sortDirection === "desc" ? (
               <ChevronDown className="h-3.5 w-3.5 text-primary-600" />
             ) : (
-              <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
+              <ChevronsUpDown className="h-3.5 w-3.5 text-text-muted" />
             )}
           </span>
         )}
@@ -186,7 +186,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={cn("px-4 py-3 text-sm text-slate-700", className)}
+      className={cn("px-4 py-3 text-sm text-text-secondary", className)}
       {...props}
     />
   )
@@ -226,7 +226,7 @@ function Checkbox({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30",
         checked || indeterminate
           ? "bg-primary-600 border-primary-600"
-          : "border-slate-300 hover:border-slate-400",
+          : "border-border-secondary hover:border-border-primary",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
@@ -253,7 +253,7 @@ function LoadingSkeleton({
         <tr key={i} className="animate-pulse">
           {Array.from({ length: columns }).map((_, j) => (
             <td key={j} className="px-4 py-3">
-              <div className="h-4 bg-slate-200 rounded w-3/4" />
+              <div className="h-4 bg-muted rounded w-3/4" />
             </td>
           ))}
         </tr>
@@ -277,7 +277,7 @@ function EmptyState({
     <tr>
       <td colSpan={colSpan} className="px-4 py-12 text-center">
         {content ?? (
-          <div className="text-slate-500">
+          <div className="text-text-tertiary">
             <p className="text-sm">No data available</p>
           </div>
         )}
@@ -413,13 +413,13 @@ export function Table<T>({
   return (
     <div
       className={cn(
-        "overflow-auto rounded-lg border border-slate-200",
+        "overflow-auto rounded-lg border border-border-primary",
         maxHeight && "overflow-y-auto"
       )}
       style={{ maxHeight }}
     >
       <table
-        className={cn("min-w-full divide-y divide-slate-200", className)}
+        className={cn("min-w-full divide-y divide-border-primary", className)}
         {...props}
       >
         <TableHeader className={cn(stickyHeader && "sticky top-0 z-10")}>
@@ -448,8 +448,8 @@ export function Table<T>({
                 className={cn(
                   alignStyles[column.align ?? "left"],
                   column.hideOnMobile && "hidden md:table-cell",
-                  column.sticky === "left" && "sticky left-0 bg-slate-50 z-10",
-                  column.sticky === "right" && "sticky right-0 bg-slate-50 z-10"
+                  column.sticky === "left" && "sticky left-0 bg-subtle z-10",
+                  column.sticky === "right" && "sticky right-0 bg-subtle z-10"
                 )}
                 style={{ width: column.width }}
               >
@@ -476,8 +476,8 @@ export function Table<T>({
                   clickable={Boolean(onRowClick)}
                   onClick={() => onRowClick?.(row, index)}
                   className={cn(
-                    striped && index % 2 === 1 && "bg-slate-50/50",
-                    hoverable && "hover:bg-slate-50"
+                    striped && index % 2 === 1 && "bg-subtle",
+                    hoverable && "hover:bg-subtle"
                   )}
                 >
                   {/* Selection Cell */}
@@ -501,9 +501,9 @@ export function Table<T>({
                         compact ? "py-2" : "py-3",
                         column.hideOnMobile && "hidden md:table-cell",
                         column.sticky === "left" &&
-                          "sticky left-0 bg-white z-10",
+                        "sticky left-0 bg-card z-10",
                         column.sticky === "right" &&
-                          "sticky right-0 bg-white z-10",
+                        "sticky right-0 bg-card z-10",
                         isSelected && column.sticky && "bg-primary-50"
                       )}
                       style={{ width: column.width }}
@@ -603,12 +603,12 @@ export function TablePagination({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 px-4 py-3 bg-white border-t border-slate-200",
+        "flex items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border-primary",
         className
       )}
     >
       {/* Left side - showing info */}
-      <div className="text-sm text-slate-600">
+      <div className="text-sm text-text-secondary">
         {totalItems !== undefined && pageSize !== undefined && (
           <span>
             Showing {Math.min((page - 1) * pageSize + 1, totalItems)} -{" "}
@@ -622,14 +622,14 @@ export function TablePagination({
         {/* Page size selector */}
         {onPageSizeChange && pageSize && (
           <div className="flex items-center gap-2 mr-4">
-            <span className="text-sm text-slate-600">Rows:</span>
+            <span className="text-sm text-text-secondary">Rows:</span>
             <select
               value={pageSize}
               onChange={(e) => {
                 onPageSizeChange(Number(e.target.value));
               }}
               className={cn(
-                "h-8 px-2 text-sm border border-slate-200 rounded-md",
+                "h-8 px-2 text-sm border border-border-primary rounded-md bg-card text-text-primary",
                 "focus:outline-none focus:ring-2 focus:ring-primary-500/30"
               )}
             >

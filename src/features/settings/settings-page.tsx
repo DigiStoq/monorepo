@@ -65,12 +65,12 @@ const settingsSections = [
 
 export function SettingsPage(): React.ReactNode {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-app">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-          <p className="mt-1 text-slate-500">
+          <h1 className="text-2xl font-bold text-text-heading">Settings</h1>
+          <p className="mt-1 text-text-tertiary">
             Manage your account and application preferences
           </p>
         </div>
@@ -82,7 +82,7 @@ export function SettingsPage(): React.ReactNode {
 
             return (
               <Link key={section.id} to={section.path}>
-                <Card className="h-full hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group">
+                <Card className="h-full hover:shadow-md hover:border-border-secondary transition-all cursor-pointer group">
                   <CardBody className="p-5">
                     <div className="flex items-start gap-4">
                       <div
@@ -95,12 +95,12 @@ export function SettingsPage(): React.ReactNode {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-slate-900 group-hover:text-teal-600 transition-colors">
+                          <h3 className="font-semibold text-text-heading group-hover:text-teal-600 transition-colors">
                             {section.label}
                           </h3>
-                          <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
+                          <ChevronRight className="h-5 w-5 text-text-muted group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
                         </div>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <p className="text-sm text-text-tertiary mt-1">
                           {section.description}
                         </p>
                       </div>
@@ -113,7 +113,7 @@ export function SettingsPage(): React.ReactNode {
         </div>
 
         {/* App Info */}
-        <div className="mt-8 text-center text-sm text-slate-400">
+        <div className="mt-8 text-center text-sm text-text-muted">
           <p>DigiStoq v1.0.0</p>
           <p className="mt-1">
             <a href="#" className="hover:text-teal-600 transition-colors">
