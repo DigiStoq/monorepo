@@ -145,35 +145,44 @@ export function SalesRegisterReport(): React.ReactNode {
     >
       <div className="space-y-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card>
             <CardBody className="py-3">
-              <p className="text-xs text-slate-500">Total Sales</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xs text-slate-500 mb-1">Total Sales</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-slate-900"
+                title={formatCurrency(totals.total)}
+              >
                 {formatCurrency(totals.total)}
               </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-xs text-slate-500">Amount Received</p>
-              <p className="text-xl font-bold text-success">
+              <p className="text-xs text-slate-500 mb-1">Amount Received</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-success"
+                title={formatCurrency(totals.paid)}
+              >
                 {formatCurrency(totals.paid)}
               </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-xs text-slate-500">Amount Due</p>
-              <p className="text-xl font-bold text-error">
+              <p className="text-xs text-slate-500 mb-1">Amount Due</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-error"
+                title={formatCurrency(totals.due)}
+              >
                 {formatCurrency(totals.due)}
               </p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-xs text-slate-500">Invoices</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xs text-slate-500 mb-1">Invoices</p>
+              <p className="text-lg sm:text-xl font-bold text-slate-900">
                 {filteredData.length}
               </p>
             </CardBody>

@@ -82,7 +82,7 @@ export function TaxSummaryReport(): React.ReactNode {
     >
       <div className="space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">

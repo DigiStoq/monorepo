@@ -191,7 +191,7 @@ export function DayBookReport(): React.ReactNode {
       }
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardBody className="p-4">
             <div className="flex items-center justify-between">

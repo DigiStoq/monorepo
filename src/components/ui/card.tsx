@@ -234,7 +234,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative rounded-xl p-6",
+          "relative rounded-xl p-4 sm:p-6",
           "bg-gradient-to-br",
           metricColorStyles[color],
           "text-white shadow-lg",
@@ -251,7 +251,9 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-white/80">{title}</p>
-              <p className="mt-2 text-3xl font-bold font-display">{value}</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold font-display">
+                {value}
+              </p>
             </div>
             {icon && <div className="rounded-lg bg-white/20 p-2.5">{icon}</div>}
           </div>

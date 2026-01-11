@@ -257,7 +257,7 @@ export function CustomerStatementReport(): React.ReactNode {
       {selectedCustomerId ? (
         <>
           {/* Customer Info & Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Customer Details */}
             <Card>
               <CardBody className="p-4">

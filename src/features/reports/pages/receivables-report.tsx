@@ -95,30 +95,38 @@ export function ReceivablesReport(): React.ReactNode {
     >
       <div className="space-y-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardBody className="py-3">
-              <p className="text-xs text-slate-500">Customers with Balance</p>
-              <p className="text-xl font-bold text-slate-900">
+              <p className="text-xs text-slate-500 mb-1">
+                Customers with Balance
+              </p>
+              <p className="text-lg sm:text-xl font-bold text-slate-900">
                 {filteredData.length}
               </p>
             </CardBody>
           </Card>
           <Card className="bg-amber-50 border-amber-100">
             <CardBody className="py-3">
-              <p className="text-xs text-amber-600">Total Amount Due</p>
-              <p className="text-xl font-bold text-amber-700">
+              <p className="text-xs text-amber-600 mb-1">Total Amount Due</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-amber-700"
+                title={formatCurrency(totals.due)}
+              >
                 {formatCurrency(totals.due)}
               </p>
             </CardBody>
           </Card>
           <Card className="bg-red-50 border-red-100">
             <CardBody className="py-3">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 mb-1">
                 <AlertCircle className="h-3 w-3 text-error" />
                 <p className="text-xs text-red-600">Overdue Amount</p>
               </div>
-              <p className="text-xl font-bold text-error">
+              <p
+                className="text-lg sm:text-xl font-bold text-error"
+                title={formatCurrency(totals.overdue)}
+              >
                 {formatCurrency(totals.overdue)}
               </p>
             </CardBody>

@@ -188,7 +188,7 @@ export function CashMovementReportPage(): React.ReactNode {
     >
       <div className="space-y-6">
         {/* Overall Summary */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">

@@ -151,7 +151,7 @@ export function PurchaseBySupplierReport(): React.ReactNode {
     >
       <div className="space-y-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card>
             <CardBody className="py-3">
               <p className="text-xs text-slate-500">Total Suppliers</p>

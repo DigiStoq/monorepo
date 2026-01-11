@@ -104,13 +104,13 @@ export function SalesSummaryReport(): React.ReactNode {
       filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardBody className="p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Sales</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">
                   {formatCurrency(data.totalSales)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -129,7 +129,7 @@ export function SalesSummaryReport(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Invoices</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">
                   {data.totalInvoices}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -148,7 +148,7 @@ export function SalesSummaryReport(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Amount Received</p>
-                <p className="text-2xl font-bold text-success">
+                <p className="text-xl sm:text-2xl font-bold text-success">
                   {formatCurrency(data.totalPaid)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -167,7 +167,7 @@ export function SalesSummaryReport(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Amount Due</p>
-                <p className="text-2xl font-bold text-error">
+                <p className="text-xl sm:text-2xl font-bold text-error">
                   {formatCurrency(data.totalDue)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -183,9 +183,9 @@ export function SalesSummaryReport(): React.ReactNode {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Sales Trend */}
-        <Card className="col-span-2">
+        <Card className="col-span-1 lg:col-span-2">
           <CardHeader title="Sales Trend" />
           <CardBody>
             <div className="h-48 flex items-end gap-2">

@@ -90,13 +90,13 @@ export function ProfitLossReportPage(): React.ReactNode {
       filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardBody className="p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">
                   {formatCurrency(data.revenue.total)}
                 </p>
               </div>
@@ -112,7 +112,7 @@ export function ProfitLossReportPage(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Expenses</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">
                   {formatCurrency(data.expenses.total)}
                 </p>
               </div>
@@ -128,7 +128,7 @@ export function ProfitLossReportPage(): React.ReactNode {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Gross Profit</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">
                   {formatCurrency(data.grossProfit)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -151,7 +151,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                 <p className="text-sm text-slate-500 mb-1">Net Profit</p>
                 <p
                   className={cn(
-                    "text-2xl font-bold",
+                    "text-xl sm:text-2xl font-bold",
                     data.netProfit >= 0 ? "text-success" : "text-error"
                   )}
                 >
@@ -178,7 +178,7 @@ export function ProfitLossReportPage(): React.ReactNode {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* P&L Statement */}
         <Card>
           <CardHeader title="Profit & Loss Statement" />

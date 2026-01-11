@@ -118,7 +118,7 @@ export function LowStockReport(): React.ReactNode {
     >
       <div className="space-y-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="bg-red-50 border-red-100">
             <CardBody className="py-3">
               <div className="flex items-center gap-1">

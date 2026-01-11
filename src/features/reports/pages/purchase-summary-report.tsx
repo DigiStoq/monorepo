@@ -84,7 +84,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
     >
       <div className="space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Total Purchases</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">
                     {formatCurrency(data.totalPurchases)}
                   </p>
                 </div>
@@ -108,7 +108,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Avg Order Value</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">
                     {formatCurrency(data.averageOrderValue)}
                   </p>
                 </div>
@@ -123,7 +123,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Amount Paid</p>
-                  <p className="text-xl font-bold text-success">
+                  <p className="text-lg sm:text-xl font-bold text-success">
                     {formatCurrency(data.totalPaid)}
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Amount Due</p>
-                  <p className="text-xl font-bold text-error">
+                  <p className="text-lg sm:text-xl font-bold text-error">
                     {formatCurrency(data.totalDue)}
                   </p>
                 </div>
@@ -183,10 +183,10 @@ export function PurchaseSummaryReport(): React.ReactNode {
         </Card>
 
         {/* Top Suppliers and Items */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Top Suppliers */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-slate-400" />
                 <h3 className="font-medium text-slate-900">Top Suppliers</h3>
@@ -218,7 +218,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
 
           {/* Top Items */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-slate-400" />
                 <h3 className="font-medium text-slate-900">

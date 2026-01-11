@@ -38,12 +38,7 @@ export function MetricCards({
 
   if (isLoading || !metrics) {
     return (
-      <div
-        className={cn(
-          "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-          className
-        )}
-      >
+      <div className={cn("grid grid-cols-2 xl:grid-cols-4 gap-4", className)}>
         {Array.from({ length: 4 }).map((_, i) => (
           <MetricCardSkeleton key={i} />
         ))}
@@ -52,12 +47,7 @@ export function MetricCards({
   }
 
   return (
-    <div
-      className={cn(
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-        className
-      )}
-    >
+    <div className={cn("grid grid-cols-2 xl:grid-cols-4 gap-4", className)}>
       <MetricCard
         title="Total Receivable"
         value={formatCurrency(metrics.totalReceivable)}

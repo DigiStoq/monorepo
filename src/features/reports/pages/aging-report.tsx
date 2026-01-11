@@ -132,7 +132,7 @@ export function AgingReport(): React.ReactNode {
     >
       <div className="space-y-6">
         {/* Aging Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-green-600">Current</p>

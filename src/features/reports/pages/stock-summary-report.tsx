@@ -156,12 +156,12 @@ export function StockSummaryReport(): React.ReactNode {
       }
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardBody className="p-4 text-center">
             <Boxes className="h-6 w-6 text-primary-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Items</p>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900">
               {totals.totalItems}
             </p>
           </CardBody>
@@ -171,7 +171,7 @@ export function StockSummaryReport(): React.ReactNode {
           <CardBody className="p-4 text-center">
             <Package className="h-6 w-6 text-blue-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Total Quantity</p>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900">
               {totals.totalQuantity.toLocaleString()}
             </p>
           </CardBody>
@@ -181,7 +181,7 @@ export function StockSummaryReport(): React.ReactNode {
           <CardBody className="p-4 text-center">
             <DollarSign className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Stock Value</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-xl sm:text-2xl font-bold text-green-600">
               {formatCurrency(totals.totalValue)}
             </p>
           </CardBody>
@@ -191,7 +191,7 @@ export function StockSummaryReport(): React.ReactNode {
           <CardBody className="p-4 text-center">
             <TrendingUp className="h-6 w-6 text-teal-500 mx-auto mb-2" />
             <p className="text-sm text-slate-500 mb-1">Potential Revenue</p>
-            <p className="text-2xl font-bold text-teal-600">
+            <p className="text-xl sm:text-2xl font-bold text-teal-600">
               {formatCurrency(totals.potentialRevenue)}
             </p>
           </CardBody>
@@ -208,7 +208,7 @@ export function StockSummaryReport(): React.ReactNode {
             <p className="text-sm text-slate-500 mb-1">Low Stock</p>
             <p
               className={cn(
-                "text-2xl font-bold",
+                "text-xl sm:text-2xl font-bold",
                 totals.lowStockCount > 0 ? "text-warning" : "text-slate-900"
               )}
             >
