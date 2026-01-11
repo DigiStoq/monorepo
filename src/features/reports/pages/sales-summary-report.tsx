@@ -9,48 +9,15 @@ import {
   Users,
   Package,
 } from "lucide-react";
-import { cn } from "@/lib/cn";
-import type { DateRange, SalesSummary } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockSalesData: SalesSummary = {
-  totalSales: 125000,
-  totalInvoices: 156,
-  totalPaid: 98500,
-  totalDue: 26500,
-  averageOrderValue: 801.28,
-  topCustomers: [
-    { customerId: "1", customerName: "Acme Electronics", amount: 28500 },
-    { customerId: "2", customerName: "Global Traders Inc", amount: 22000 },
-    { customerId: "3", customerName: "Metro Supplies Co", amount: 18750 },
-    { customerId: "4", customerName: "City Hardware Ltd", amount: 15200 },
-    { customerId: "5", customerName: "Valley Distributors", amount: 12800 },
-  ],
-  topItems: [
-    { itemId: "1", itemName: "Laptop Pro 15", quantity: 45, amount: 54000 },
-    { itemId: "2", itemName: "Office Chair Deluxe", quantity: 120, amount: 42000 },
-    { itemId: "3", itemName: "Wireless Mouse", quantity: 350, amount: 8750 },
-    { itemId: "4", itemName: "Desk Lamp LED", quantity: 200, amount: 9000 },
-    { itemId: "5", itemName: "Tool Kit Professional", quantity: 60, amount: 10800 },
-  ],
-  salesByMonth: [
-    { month: "Jan", amount: 18500 },
-    { month: "Feb", amount: 22000 },
-    { month: "Mar", amount: 19800 },
-    { month: "Apr", amount: 25500 },
-    { month: "May", amount: 21200 },
-    { month: "Jun", amount: 18000 },
-  ],
-};
+import type { DateRange } from "../types";
+import { useSalesSummaryReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export function SalesSummaryReport() {
+export function SalesSummaryReport(): React.ReactNode {
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -59,35 +26,82 @@ export function SalesSummaryReport() {
     to: today.toISOString().slice(0, 10),
   });
 
-  const data = mockSalesData;
-
-  // Calculate growth (mock)
-  const growth = 12.5;
-  const isPositiveGrowth = growth >= 0;
+  const { summary: data, isLoading } = useSalesSummaryReport(dateRange);
 
   // Format currency
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  // Format currency
+  const { formatCurrency } = useCurrency();
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Sales Summary"
+        subtitle="Overview of sales performance"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
+
+  // Empty state
+  if (!data) {
+    return (
+      <ReportLayout
+        title="Sales Summary"
+        subtitle="Overview of sales performance"
+        filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">
+            No sales data found for the selected period.
+          </div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   // Max values for bar charts
-  const maxCustomerAmount = Math.max(...data.topCustomers.map((c) => c.amount));
-  const maxItemAmount = Math.max(...data.topItems.map((i) => i.amount));
-  const maxMonthAmount = Math.max(...data.salesByMonth.map((m) => m.amount));
+  const maxCustomerAmount =
+    data.topCustomers.length > 0
+      ? Math.max(...data.topCustomers.map((c) => c.amount))
+      : 1;
+  const maxItemAmount =
+    data.topItems.length > 0
+      ? Math.max(...data.topItems.map((i) => i.amount))
+      : 1;
+  const maxMonthAmount =
+    data.salesByMonth.length > 0
+      ? Math.max(...data.salesByMonth.map((m) => m.amount))
+      : 1;
+
+  // Calculate collection percentage
+  const collectionPercent =
+    data.totalSales > 0
+      ? ((data.totalPaid / data.totalSales) * 100).toFixed(1)
+      : "0";
+  const outstandingPercent =
+    data.totalSales > 0
+      ? ((data.totalDue / data.totalSales) * 100).toFixed(1)
+      : "0";
 
   return (
     <ReportLayout
       title="Sales Summary"
       subtitle="Overview of sales performance"
-      onRefresh={() => console.log("Refresh")}
-      onExport={() => console.log("Export")}
-      onPrint={() => window.print()}
-      filters={
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
-      }
+      onRefresh={() => {
+        /* TODO: Implement refresh */
+      }}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
+      filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
     >
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -96,14 +110,12 @@ export function SalesSummaryReport() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Sales</p>
-                <p className="text-2xl font-bold text-slate-900">{formatCurrency(data.totalSales)}</p>
-                <div className={cn(
-                  "flex items-center gap-1 text-sm mt-1",
-                  isPositiveGrowth ? "text-success" : "text-error"
-                )}>
-                  {isPositiveGrowth ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  <span>{Math.abs(growth)}% vs last period</span>
-                </div>
+                <p className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(data.totalSales)}
+                </p>
+                <p className="text-sm text-slate-500 mt-1">
+                  {data.totalInvoices} invoices
+                </p>
               </div>
               <div className="p-2 rounded-lg bg-green-100">
                 <DollarSign className="h-5 w-5 text-green-700" />
@@ -117,7 +129,9 @@ export function SalesSummaryReport() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Total Invoices</p>
-                <p className="text-2xl font-bold text-slate-900">{data.totalInvoices}</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {data.totalInvoices}
+                </p>
                 <p className="text-sm text-slate-500 mt-1">
                   Avg: {formatCurrency(data.averageOrderValue)}
                 </p>
@@ -134,9 +148,11 @@ export function SalesSummaryReport() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Amount Received</p>
-                <p className="text-2xl font-bold text-success">{formatCurrency(data.totalPaid)}</p>
+                <p className="text-2xl font-bold text-success">
+                  {formatCurrency(data.totalPaid)}
+                </p>
                 <p className="text-sm text-slate-500 mt-1">
-                  {((data.totalPaid / data.totalSales) * 100).toFixed(1)}% collected
+                  {collectionPercent}% collected
                 </p>
               </div>
               <div className="p-2 rounded-lg bg-teal-100">
@@ -151,9 +167,11 @@ export function SalesSummaryReport() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-slate-500 mb-1">Amount Due</p>
-                <p className="text-2xl font-bold text-error">{formatCurrency(data.totalDue)}</p>
+                <p className="text-2xl font-bold text-error">
+                  {formatCurrency(data.totalDue)}
+                </p>
                 <p className="text-sm text-slate-500 mt-1">
-                  {((data.totalDue / data.totalSales) * 100).toFixed(1)}% outstanding
+                  {outstandingPercent}% outstanding
                 </p>
               </div>
               <div className="p-2 rounded-lg bg-red-100">
@@ -172,10 +190,15 @@ export function SalesSummaryReport() {
           <CardBody>
             <div className="h-48 flex items-end gap-2">
               {data.salesByMonth.map((month) => (
-                <div key={month.month} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  key={month.month}
+                  className="flex-1 flex flex-col items-center gap-1"
+                >
                   <div
                     className="w-full bg-primary-500 rounded-t transition-all hover:bg-primary-600"
-                    style={{ height: `${(month.amount / maxMonthAmount) * 180}px` }}
+                    style={{
+                      height: `${(month.amount / maxMonthAmount) * 180}px`,
+                    }}
                   />
                   <span className="text-xs text-slate-500">{month.month}</span>
                 </div>
@@ -205,7 +228,9 @@ export function SalesSummaryReport() {
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary-500 rounded-full"
-                      style={{ width: `${(customer.amount / maxCustomerAmount) * 100}%` }}
+                      style={{
+                        width: `${(customer.amount / maxCustomerAmount) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -225,19 +250,35 @@ export function SalesSummaryReport() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">#</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Item</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Qty Sold</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">Revenue</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 w-48">Share</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  #
+                </th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Item
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Qty Sold
+                </th>
+                <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                  Revenue
+                </th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 w-48">
+                  Share
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.topItems.map((item, index) => (
                 <tr key={item.itemId} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-slate-500">{index + 1}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">{item.itemName}</td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right">{item.quantity}</td>
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {index + 1}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                    {item.itemName}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-900 text-right">
+                    {item.quantity}
+                  </td>
                   <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">
                     {formatCurrency(item.amount)}
                   </td>
@@ -246,7 +287,9 @@ export function SalesSummaryReport() {
                       <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-green-500 rounded-full"
-                          style={{ width: `${(item.amount / maxItemAmount) * 100}%` }}
+                          style={{
+                            width: `${(item.amount / maxItemAmount) * 100}%`,
+                          }}
                         />
                       </div>
                       <span className="text-xs text-slate-500 w-12 text-right">

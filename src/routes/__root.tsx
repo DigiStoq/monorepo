@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import {
   AppShell,
@@ -52,9 +52,17 @@ const navigationItems: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { id: "sale-invoices", label: "Sale Invoices", href: "/sale/invoices" },
-      { id: "sale-estimates", label: "Estimates/Quotations", href: "/sale/estimates" },
+      {
+        id: "sale-estimates",
+        label: "Estimates/Quotations",
+        href: "/sale/estimates",
+      },
       { id: "sale-payment-in", label: "Payment In", href: "/sale/payment-in" },
-      { id: "sale-credit-notes", label: "Credit Notes", href: "/sale/credit-notes" },
+      {
+        id: "sale-credit-notes",
+        label: "Credit Notes",
+        href: "/sale/credit-notes",
+      },
     ],
   },
   {
@@ -62,9 +70,21 @@ const navigationItems: NavItem[] = [
     label: "Purchase",
     icon: Receipt,
     children: [
-      { id: "purchase-invoices", label: "Purchase Invoices", href: "/purchase/invoices" },
-      { id: "purchase-payment-out", label: "Payment Out", href: "/purchase/payment-out" },
-      { id: "purchase-expenses", label: "Expenses", href: "/purchase/expenses" },
+      {
+        id: "purchase-invoices",
+        label: "Purchase Invoices",
+        href: "/purchase/invoices",
+      },
+      {
+        id: "purchase-payment-out",
+        label: "Payment Out",
+        href: "/purchase/payment-out",
+      },
+      {
+        id: "purchase-expenses",
+        label: "Expenses",
+        href: "/purchase/expenses",
+      },
     ],
   },
   {
@@ -72,7 +92,11 @@ const navigationItems: NavItem[] = [
     label: "Cash & Bank",
     icon: Wallet,
     children: [
-      { id: "bank-accounts", label: "Bank Accounts", href: "/cash-bank/accounts" },
+      {
+        id: "bank-accounts",
+        label: "Bank Accounts",
+        href: "/cash-bank/accounts",
+      },
       { id: "cash-in-hand", label: "Cash in Hand", href: "/cash-bank/cash" },
       { id: "cheques", label: "Cheques", href: "/cash-bank/cheques" },
       { id: "loans", label: "Loans", href: "/cash-bank/loans" },
@@ -111,7 +135,7 @@ const bottomItems: NavItem[] = [
 // ROOT LAYOUT
 // ============================================================================
 
-export function RootLayout() {
+export function RootLayout(): React.ReactNode {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -126,10 +150,21 @@ export function RootLayout() {
   // Auth Store
   const { user, signOut } = useAuthStore();
 
+  // User display name
+  const userDisplayName = useMemo((): string => {
+    if (user?.user_metadata.full_name) {
+      return user.user_metadata.full_name as string;
+    }
+    if (user?.email) {
+      return user.email.split("@")[0];
+    }
+    return "User";
+  }, [user]);
+
   // Handle logout
   const handleLogout = useCallback(async () => {
     await signOut();
-    navigate({ to: "/login" });
+    void navigate({ to: "/login" });
   }, [signOut, navigate]);
 
   // Determine active item from current path
@@ -154,7 +189,7 @@ export function RootLayout() {
   const handleNavigate = useCallback(
     (item: NavItem) => {
       if (item.href) {
-        navigate({ to: item.href });
+        void navigate({ to: item.href });
       }
     },
     [navigate]
@@ -175,13 +210,13 @@ export function RootLayout() {
             onToggleCollapse={toggleSidebar}
             header={
               <SidebarLogo
-                logo={
-                  <span className="text-white font-bold text-lg">D</span>
-                }
+                logo={<span className="text-white font-bold text-lg">D</span>}
                 name="DigiStoq"
                 tagline="Inventory Management"
                 isCollapsed={sidebarCollapsed}
-                onClick={() => navigate({ to: "/" })}
+                onClick={() => {
+                  void navigate({ to: "/" });
+                }}
               />
             }
             footer={
@@ -195,7 +230,9 @@ export function RootLayout() {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => handleNavigate(item)}
+                          onClick={() => {
+                            handleNavigate(item);
+                          }}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-sidebar-hover hover:text-white transition-colors"
                         >
                           {Icon && <Icon className="h-4 w-4" />}
@@ -206,7 +243,9 @@ export function RootLayout() {
                     {/* Logout Button */}
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={() => {
+                        void handleLogout();
+                      }}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
@@ -217,10 +256,12 @@ export function RootLayout() {
 
                 {/* User Profile */}
                 <SidebarUser
-                  name={user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
+                  name={userDisplayName}
                   email={user?.email ?? ""}
                   isCollapsed={sidebarCollapsed}
-                  onClick={() => navigate({ to: "/settings/profile" })}
+                  onClick={() => {
+                    void navigate({ to: "/settings/profile" });
+                  }}
                 />
               </div>
             }

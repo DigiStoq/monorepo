@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/layout";
 import { Card, CardBody, Button } from "@/components/ui";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Upload,
   Download,
@@ -14,8 +15,16 @@ import {
   Shield,
   HardDrive,
 } from "lucide-react";
-import { ImportWizard, ExportModal, BulkUpdateModal, BackupModal, RestoreWizard } from "./components";
-import type { ImportEntityType, ExportOptions, BulkUpdateType, ImportResult, ExportResult, BulkUpdateResult } from "./types";
+import { ImportWizard, ExportModal, BulkUpdateModal } from "./components";
+import type {
+  ImportEntityType,
+  ExportOptions,
+  BulkUpdateType,
+  ImportResult,
+  ExportResult,
+  BulkUpdateResult,
+} from "./types";
+import { useDataExport, useDataImport, useBulkActions } from "@/hooks";
 
 // ============================================================================
 // TYPES
@@ -34,19 +43,18 @@ interface UtilityCard {
 // COMPONENT
 // ============================================================================
 
-export function UtilitiesPage() {
+export function UtilitiesPage(): React.ReactNode {
+  const navigate = useNavigate();
+  const { exportData } = useDataExport();
+  const { importData } = useDataImport();
+  const { bulkUpdate } = useBulkActions();
+
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
-  const [isBackupOpen, setIsBackupOpen] = useState(false);
-  const [isRestoreOpen, setIsRestoreOpen] = useState(false);
 
-  // Mock data for bulk update
-  const mockSelectedItems = [
-    { id: "1", name: "Widget A", salePrice: 29.99, purchasePrice: 15.00 },
-    { id: "2", name: "Widget B", salePrice: 39.99, purchasePrice: 20.00 },
-    { id: "3", name: "Widget C", salePrice: 49.99, purchasePrice: 25.00 },
-  ];
+  // Mock data for bulk update items - in real app this would come from a selection context or picker
+  // For now we keep the mock expectation for the modal, but the ACTION is real
 
   const mockCategories = [
     { id: "cat-1", name: "Electronics" },
@@ -55,75 +63,26 @@ export function UtilitiesPage() {
     { id: "cat-4", name: "Software" },
   ];
 
-  // Mock handlers
-  const handleImport = async (_entityType: ImportEntityType, _data: Record<string, unknown>[]): Promise<ImportResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      success: true,
-      imported: _data.length,
-      skipped: 0,
-      errors: [],
-    };
+  const handleImport = async (
+    entityType: ImportEntityType,
+    data: Record<string, unknown>[]
+  ): Promise<ImportResult> => {
+    return importData(entityType, data);
   };
 
-  const handleExport = async (options: ExportOptions): Promise<ExportResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const filename = `${options.entityType}-export-${new Date().toISOString().slice(0, 10)}.${options.format}`;
-    return {
-      success: true,
-      filename,
-      recordCount: Math.floor(Math.random() * 500) + 50,
-      fileSize: Math.floor(Math.random() * 500000) + 10000,
-    };
+  const handleExport = async (
+    options: ExportOptions
+  ): Promise<ExportResult> => {
+    return exportData(options);
   };
 
-  const handleBulkUpdate = async (_type: BulkUpdateType, _config: unknown): Promise<BulkUpdateResult> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return {
-      success: true,
-      updated: mockSelectedItems.length,
-      failed: 0,
-      errors: [],
-    };
-  };
-
-  const handleBackup = async (_options: { destination: "local" | "cloud"; cloudProvider?: string | undefined; includeAttachments: boolean; compress: boolean }) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    return {
-      success: true,
-      filename: `digistoq-backup-${new Date().toISOString().slice(0, 10)}.zip`,
-      size: 15728640, // 15 MB
-      timestamp: new Date().toISOString(),
-      destination: _options.destination === "local" ? "Local Storage" : "Google Drive",
-    };
-  };
-
-  const handleRestore = async (_options: { source: "local" | "cloud"; backupId?: string | undefined; file?: File | undefined; overwriteExisting: boolean }) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    return {
-      success: true,
-      recordsRestored: 1247,
-      timestamp: new Date().toISOString(),
-    };
-  };
-
-  // Mock data for available cloud backups
-  const mockCloudBackups = [
-    { id: "bk-1", filename: "digistoq-backup-2024-01-15.zip", size: 12582912, createdAt: "2024-01-15T10:30:00Z", source: "cloud" as const, provider: "Google Drive" },
-    { id: "bk-2", filename: "digistoq-backup-2024-01-08.zip", size: 11534336, createdAt: "2024-01-08T14:15:00Z", source: "cloud" as const, provider: "Google Drive" },
-    { id: "bk-3", filename: "digistoq-backup-2024-01-01.zip", size: 10485760, createdAt: "2024-01-01T09:00:00Z", source: "cloud" as const, provider: "Google Drive" },
-  ];
-
-  const mockLastBackup = {
-    timestamp: "2024-01-15T10:30:00Z",
-    size: 12582912,
-    destination: "Google Drive",
-    status: "success" as const,
+  const handleBulkUpdate = async (
+    type: BulkUpdateType,
+    selectedIds: string[],
+    config: unknown
+  ): Promise<BulkUpdateResult> => {
+    // The modal now handles selection, so we pass selectedIds directly to the hook
+    return bulkUpdate(type, selectedIds, config);
   };
 
   const utilities: UtilityCard[] = [
@@ -133,7 +92,9 @@ export function UtilitiesPage() {
       description: "Import customers, items, or invoices from CSV/Excel files",
       icon: <Upload className="h-6 w-6" />,
       color: "bg-blue-500",
-      action: () => setIsImportOpen(true),
+      action: () => {
+        setIsImportOpen(true);
+      },
     },
     {
       id: "export",
@@ -141,15 +102,20 @@ export function UtilitiesPage() {
       description: "Export your data to CSV, Excel, or PDF formats",
       icon: <Download className="h-6 w-6" />,
       color: "bg-green-500",
-      action: () => setIsExportOpen(true),
+      action: () => {
+        setIsExportOpen(true);
+      },
     },
     {
       id: "bulk-update",
       title: "Bulk Updates",
-      description: "Update prices, categories, or stock for multiple items at once",
+      description:
+        "Update prices, categories, or stock for multiple items at once",
       icon: <Layers className="h-6 w-6" />,
       color: "bg-purple-500",
-      action: () => setIsBulkUpdateOpen(true),
+      action: () => {
+        setIsBulkUpdateOpen(true);
+      },
     },
     {
       id: "backup",
@@ -157,7 +123,9 @@ export function UtilitiesPage() {
       description: "Create a backup of all your business data",
       icon: <HardDrive className="h-6 w-6" />,
       color: "bg-teal-500",
-      action: () => setIsBackupOpen(true),
+      action: () => {
+        void navigate({ to: "/settings/backup" });
+      },
     },
     {
       id: "restore",
@@ -165,12 +133,15 @@ export function UtilitiesPage() {
       description: "Restore data from a previous backup",
       icon: <RefreshCw className="h-6 w-6" />,
       color: "bg-orange-500",
-      action: () => setIsRestoreOpen(true),
+      action: () => {
+        void navigate({ to: "/settings/backup" });
+      },
     },
     {
       id: "cleanup",
       title: "Data Cleanup",
-      description: "Remove inactive customers, zero-stock items, or old transactions",
+      description:
+        "Remove inactive customers, zero-stock items, or old transactions",
       icon: <Trash2 className="h-6 w-6" />,
       color: "bg-red-500",
       action: () => {
@@ -186,7 +157,8 @@ export function UtilitiesPage() {
       title: "Download Customer Template",
       icon: <FileSpreadsheet className="h-4 w-4" />,
       action: () => {
-        const template = "Name,Type,Phone,Email,Tax ID,Address,City,State,ZIP Code,Opening Balance,Credit Limit";
+        const template =
+          "Name,Type,Phone,Email,Tax ID,Address,City,State,ZIP Code,Opening Balance,Credit Limit";
         const blob = new Blob([template], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -201,7 +173,8 @@ export function UtilitiesPage() {
       title: "Download Items Template",
       icon: <FileSpreadsheet className="h-4 w-4" />,
       action: () => {
-        const template = "Name,SKU,Description,Category,Sale Price,Purchase Price,Unit,Opening Stock,Min Stock,Tax Rate";
+        const template =
+          "Name,SKU,Description,Category,Sale Price,Purchase Price,Unit,Opening Stock,Min Stock,Tax Rate";
         const blob = new Blob([template], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -223,7 +196,9 @@ export function UtilitiesPage() {
       <div className="p-6 space-y-8">
         {/* Main Utilities Grid */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Data Management</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            Data Management
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {utilities.map((utility) => (
               <Card
@@ -233,15 +208,21 @@ export function UtilitiesPage() {
               >
                 <CardBody className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={cn("p-3 rounded-xl text-white", utility.color)}>
+                    <div
+                      className={cn("p-3 rounded-xl text-white", utility.color)}
+                    >
                       {utility.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900">{utility.title}</h3>
+                        <h3 className="font-semibold text-slate-900">
+                          {utility.title}
+                        </h3>
                         <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </div>
-                      <p className="text-sm text-slate-500 mt-1">{utility.description}</p>
+                      <p className="text-sm text-slate-500 mt-1">
+                        {utility.description}
+                      </p>
                     </div>
                   </div>
                 </CardBody>
@@ -252,7 +233,9 @@ export function UtilitiesPage() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            Quick Actions
+          </h2>
           <Card>
             <CardBody className="p-4">
               <div className="flex flex-wrap gap-3">
@@ -280,7 +263,9 @@ export function UtilitiesPage() {
                 <Database className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Data Import Tips</h3>
+                <h3 className="font-semibold text-slate-900">
+                  Data Import Tips
+                </h3>
                 <ul className="text-sm text-slate-600 mt-2 space-y-1 list-disc list-inside">
                   <li>Use CSV or Excel format for best results</li>
                   <li>Ensure column headers match our template</li>
@@ -313,36 +298,27 @@ export function UtilitiesPage() {
       {/* Modals */}
       <ImportWizard
         isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
+        onClose={() => {
+          setIsImportOpen(false);
+        }}
         onImport={handleImport}
       />
 
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         onExport={handleExport}
       />
 
       <BulkUpdateModal
         isOpen={isBulkUpdateOpen}
-        onClose={() => setIsBulkUpdateOpen(false)}
-        selectedItems={mockSelectedItems}
+        onClose={() => {
+          setIsBulkUpdateOpen(false);
+        }}
         categories={mockCategories}
         onUpdate={handleBulkUpdate}
-      />
-
-      <BackupModal
-        isOpen={isBackupOpen}
-        onClose={() => setIsBackupOpen(false)}
-        onBackup={handleBackup}
-        lastBackup={mockLastBackup}
-      />
-
-      <RestoreWizard
-        isOpen={isRestoreOpen}
-        onClose={() => setIsRestoreOpen(false)}
-        onRestore={handleRestore}
-        availableBackups={mockCloudBackups}
       />
     </>
   );

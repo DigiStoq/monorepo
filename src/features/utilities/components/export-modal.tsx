@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { isTauri } from "@tauri-apps/api/core";
 import {
   Modal,
   Button,
@@ -17,7 +18,12 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import type { ExportEntityType, ExportFormat, ExportOptions, ExportResult } from "../types";
+import type {
+  ExportEntityType,
+  ExportFormat,
+  ExportOptions,
+  ExportResult,
+} from "../types";
 
 // ============================================================================
 // TYPES
@@ -43,7 +49,12 @@ const entityOptions: SelectOption[] = [
   { value: "expenses", label: "Expenses" },
 ];
 
-const formatOptions: Array<{ value: ExportFormat; label: string; icon: React.ReactNode; description: string }> = [
+const formatOptions: {
+  value: ExportFormat;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}[] = [
   {
     value: "csv",
     label: "CSV",
@@ -73,25 +84,35 @@ export function ExportModal({
   onClose,
   onExport,
   defaultEntityType = "customers",
-}: ExportModalProps) {
-  const [entityType, setEntityType] = useState<ExportEntityType>(defaultEntityType);
+}: ExportModalProps): React.ReactNode {
+  const [entityType, setEntityType] =
+    useState<ExportEntityType>(defaultEntityType);
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [result, setResult] = useState<ExportResult | null>(null);
 
-  const needsDateRange = ["sale-invoices", "purchase-invoices", "payments", "expenses"].includes(entityType);
+  const isDesktop = isTauri();
 
-  const handleExport = async () => {
+  const needsDateRange = [
+    "sale-invoices",
+    "purchase-invoices",
+    "payments",
+    "expenses",
+  ].includes(entityType);
+
+  const handleExport = async (): Promise<void> => {
     setIsExporting(true);
     try {
       const options: ExportOptions = {
         entityType,
         format,
-        ...(needsDateRange && dateFrom && dateTo && {
-          dateRange: { from: dateFrom, to: dateTo },
-        }),
+        ...(needsDateRange &&
+          dateFrom &&
+          dateTo && {
+            dateRange: { from: dateFrom, to: dateTo },
+          }),
       };
 
       const exportResult = await onExport(options);
@@ -108,12 +129,12 @@ export function ExportModal({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setResult(null);
     onClose();
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -121,7 +142,12 @@ export function ExportModal({
 
   if (result) {
     return (
-      <Modal isOpen={isOpen} onClose={handleClose} title="Export Complete" size="sm">
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Export Complete"
+        size="sm"
+      >
         <div className="py-8 text-center space-y-6">
           {result.success ? (
             <>
@@ -129,30 +155,51 @@ export function ExportModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Export Successful!</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Export Successful!
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Your file is ready for download
+                  {isDesktop
+                    ? "File saved successfully to your computer"
+                    : "Your file is ready for download"}
                 </p>
               </div>
               <Card className="text-left">
                 <CardBody className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Filename</span>
-                    <span className="font-medium text-slate-900">{result.filename}</span>
+                    <span className="font-medium text-slate-900">
+                      {result.filename}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Records</span>
-                    <span className="font-medium text-slate-900">{result.recordCount}</span>
+                    <span className="font-medium text-slate-900">
+                      {result.recordCount}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">File Size</span>
-                    <span className="font-medium text-slate-900">{formatFileSize(result.fileSize)}</span>
+                    <span className="font-medium text-slate-900">
+                      {formatFileSize(result.fileSize)}
+                    </span>
                   </div>
                 </CardBody>
               </Card>
-              <Button onClick={handleClose} leftIcon={<Download className="h-4 w-4" />}>
-                Download File
-              </Button>
+
+              {isDesktop ? (
+                <Button onClick={handleClose} className="w-full">
+                  Done
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleClose}
+                  leftIcon={<Download className="h-4 w-4" />}
+                  className="w-full"
+                >
+                  Download File
+                </Button>
+              )}
             </>
           ) : (
             <>
@@ -160,7 +207,9 @@ export function ExportModal({
                 <FileDown className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Export Failed</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Export Failed
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Something went wrong. Please try again.
                 </p>
@@ -186,7 +235,9 @@ export function ExportModal({
           <Select
             options={entityOptions}
             value={entityType}
-            onChange={(v) => setEntityType(v as ExportEntityType)}
+            onChange={(v) => {
+              setEntityType(v as ExportEntityType);
+            }}
           />
         </div>
 
@@ -200,13 +251,17 @@ export function ExportModal({
               <Input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                }}
                 placeholder="From"
               />
               <Input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                }}
                 placeholder="To"
               />
             </div>
@@ -226,7 +281,9 @@ export function ExportModal({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setFormat(opt.value)}
+                onClick={() => {
+                  setFormat(opt.value);
+                }}
                 className={cn(
                   "p-4 rounded-xl border-2 text-center transition-all",
                   format === opt.value
@@ -249,12 +306,18 @@ export function ExportModal({
             <div className="text-sm">
               <p className="font-medium text-slate-700">Export Information</p>
               <p className="text-slate-500 mt-1">
-                {entityType === "customers" && "Includes all customer details, contact info, and balance."}
-                {entityType === "items" && "Includes item details, pricing, stock levels, and categories."}
-                {entityType === "sale-invoices" && "Includes invoice details, line items, and payment status."}
-                {entityType === "purchase-invoices" && "Includes purchase details, supplier info, and amounts."}
-                {entityType === "payments" && "Includes all payment records with dates and references."}
-                {entityType === "expenses" && "Includes expense categories, amounts, and descriptions."}
+                {entityType === "customers" &&
+                  "Includes all customer details, contact info, and balance."}
+                {entityType === "items" &&
+                  "Includes item details, pricing, stock levels, and categories."}
+                {entityType === "sale-invoices" &&
+                  "Includes invoice details, line items, and payment status."}
+                {entityType === "purchase-invoices" &&
+                  "Includes purchase details, supplier info, and amounts."}
+                {entityType === "payments" &&
+                  "Includes all payment records with dates and references."}
+                {entityType === "expenses" &&
+                  "Includes expense categories, amounts, and descriptions."}
               </p>
             </div>
           </CardBody>
@@ -266,7 +329,9 @@ export function ExportModal({
           Cancel
         </Button>
         <Button
-          onClick={handleExport}
+          onClick={() => {
+            void handleExport();
+          }}
           disabled={isExporting}
           leftIcon={
             isExporting ? (

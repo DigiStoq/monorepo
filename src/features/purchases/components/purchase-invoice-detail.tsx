@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { Card, CardHeader, CardBody, Button, Badge } from "@/components/ui";
+import { Card, CardHeader, CardBody, Button, Select } from "@/components/ui";
 import {
   X,
   Printer,
@@ -9,11 +9,10 @@ import {
   Building2,
   FileText,
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   DollarSign,
+  Download,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { PurchaseInvoice, PurchaseInvoiceStatus } from "../types";
 
 // ============================================================================
@@ -26,7 +25,9 @@ export interface PurchaseInvoiceDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onPrint?: () => void;
+  onDownload?: () => void;
   onRecordPayment?: () => void;
+  onStatusChange?: (newStatus: PurchaseInvoiceStatus) => void;
   className?: string;
 }
 
@@ -34,14 +35,36 @@ export interface PurchaseInvoiceDetailProps {
 // STATUS CONFIG
 // ============================================================================
 
-const statusConfig: Record<PurchaseInvoiceStatus, { label: string; variant: "success" | "warning" | "error" | "info" | "secondary"; icon: typeof CheckCircle }> = {
-  draft: { label: "Draft", variant: "secondary", icon: FileText },
-  received: { label: "Received", variant: "info", icon: Clock },
-  paid: { label: "Paid", variant: "success", icon: CheckCircle },
-  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
-  overdue: { label: "Overdue", variant: "error", icon: AlertCircle },
-  cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
+const statusLabels: Record<string, string> = {
+  draft: "Draft",
+  ordered: "Ordered",
+  received: "Received",
+  paid: "Paid",
+  returned: "Returned",
 };
+
+// Status progression order (can only move forward)
+const statusOrder: string[] = [
+  "draft",
+  "ordered",
+  "received",
+  "paid",
+  "returned",
+];
+
+function getAvailableStatuses(
+  currentStatus: string
+): { value: string; label: string }[] {
+  const currentIndex = statusOrder.indexOf(currentStatus);
+  if (currentIndex === -1) {
+    // Unknown status - return all options
+    return statusOrder.map((s) => ({ value: s, label: statusLabels[s] ?? s }));
+  }
+  // Only allow current status and statuses after it
+  return statusOrder
+    .slice(currentIndex)
+    .map((s) => ({ value: s, label: statusLabels[s] ?? s }));
+}
 
 // ============================================================================
 // COMPONENT
@@ -53,20 +76,14 @@ export function PurchaseInvoiceDetail({
   onEdit,
   onDelete,
   onPrint,
+  onDownload,
   onRecordPayment,
+  onStatusChange,
   className,
-}: PurchaseInvoiceDetailProps) {
-  const status = statusConfig[invoice.status];
-  const StatusIcon = status.icon;
+}: PurchaseInvoiceDetailProps): React.ReactNode {
+  const { formatCurrency } = useCurrency();
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
-
-  const formatDate = (dateStr: string) =>
+  const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
@@ -74,7 +91,10 @@ export function PurchaseInvoiceDetail({
       year: "numeric",
     });
 
-  const canPay = invoice.status !== "paid" && invoice.status !== "cancelled" && invoice.amountDue > 0;
+  const canPay =
+    invoice.status !== "paid" &&
+    invoice.status !== "returned" &&
+    invoice.amountDue > 0;
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -87,6 +107,9 @@ export function PurchaseInvoiceDetail({
           <p className="text-sm text-slate-500">Purchase Invoice</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onDownload}>
+            <Download className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={onPrint}>
             <Printer className="h-4 w-4" />
           </Button>
@@ -99,17 +122,29 @@ export function PurchaseInvoiceDetail({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Status & Amount Card */}
-        <Card className={cn(
-          invoice.status === "paid" ? "bg-success-light border-success/20" :
-          invoice.status === "overdue" ? "bg-error-light border-error/20" :
-          "bg-slate-50"
-        )}>
+        <Card
+          className={cn(
+            invoice.status === "paid"
+              ? "bg-success-light border-success/20"
+              : invoice.status === "returned"
+                ? "bg-error-light border-error/20"
+                : "bg-slate-50"
+          )}
+        >
           <CardBody className="text-center py-6">
-            <Badge variant={status.variant} size="lg" className="mb-3">
-              <StatusIcon className="h-4 w-4 mr-1" />
-              {status.label}
-            </Badge>
-            <p className="text-3xl font-bold text-slate-900">{formatCurrency(invoice.total)}</p>
+            <div className="flex justify-center mb-3">
+              <Select
+                options={getAvailableStatuses(invoice.status)}
+                value={invoice.status}
+                onChange={(value) =>
+                  onStatusChange?.(value as PurchaseInvoiceStatus)
+                }
+                size="sm"
+              />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">
+              {formatCurrency(invoice.total)}
+            </p>
             {invoice.amountDue > 0 && invoice.amountDue !== invoice.total && (
               <p className="text-lg text-error mt-1">
                 Due: {formatCurrency(invoice.amountDue)}
@@ -120,7 +155,11 @@ export function PurchaseInvoiceDetail({
 
         {/* Quick Action */}
         {canPay && (
-          <Button fullWidth leftIcon={<DollarSign className="h-4 w-4" />} onClick={onRecordPayment}>
+          <Button
+            fullWidth
+            leftIcon={<DollarSign className="h-4 w-4" />}
+            onClick={onRecordPayment}
+          >
             Record Payment
           </Button>
         )}
@@ -135,7 +174,9 @@ export function PurchaseInvoiceDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Supplier</p>
-                <p className="font-medium text-slate-900">{invoice.customerName}</p>
+                <p className="font-medium text-slate-900">
+                  {invoice.customerName}
+                </p>
               </div>
             </div>
 
@@ -146,7 +187,9 @@ export function PurchaseInvoiceDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Supplier Invoice #</p>
-                  <p className="font-medium text-slate-900">{invoice.supplierInvoiceNumber}</p>
+                  <p className="font-medium text-slate-900">
+                    {invoice.supplierInvoiceNumber}
+                  </p>
                 </div>
               </div>
             )}
@@ -157,20 +200,19 @@ export function PurchaseInvoiceDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Invoice Date</p>
-                <p className="font-medium text-slate-900">{formatDate(invoice.date)}</p>
+                <p className="font-medium text-slate-900">
+                  {formatDate(invoice.date)}
+                </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <div className={cn(
-                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                invoice.status === "overdue" ? "bg-error-light" : "bg-slate-100"
-              )}>
-                <Clock className={cn("h-4 w-4", invoice.status === "overdue" ? "text-error" : "text-slate-500")} />
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <Clock className="h-4 w-4 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Due Date</p>
-                <p className={cn("font-medium", invoice.status === "overdue" ? "text-error" : "text-slate-900")}>
+                <p className="font-medium text-slate-900">
                   {formatDate(invoice.dueDate)}
                 </p>
               </div>
@@ -186,12 +228,17 @@ export function PurchaseInvoiceDetail({
               {invoice.items.map((item) => (
                 <div key={item.id} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium text-slate-900">{item.itemName}</p>
+                    <p className="font-medium text-slate-900">
+                      {item.itemName}
+                    </p>
                     <p className="text-sm text-slate-500">
-                      {item.quantity} {item.unit} × {formatCurrency(item.unitPrice)}
+                      {item.quantity} {item.unit} ×{" "}
+                      {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className="font-medium text-slate-900">{formatCurrency(item.amount)}</p>
+                  <p className="font-medium text-slate-900">
+                    {formatCurrency(item.amount)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -203,31 +250,43 @@ export function PurchaseInvoiceDetail({
           <CardBody className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+              <span className="font-medium">
+                {formatCurrency(invoice.subtotal)}
+              </span>
             </div>
             {invoice.discountAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Discount</span>
-                <span className="font-medium text-success">-{formatCurrency(invoice.discountAmount)}</span>
+                <span className="font-medium text-success">
+                  -{formatCurrency(invoice.discountAmount)}
+                </span>
               </div>
             )}
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Tax</span>
-              <span className="font-medium">{formatCurrency(invoice.taxAmount)}</span>
+              <span className="font-medium">
+                {formatCurrency(invoice.taxAmount)}
+              </span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
               <span className="font-semibold text-slate-900">Total</span>
-              <span className="font-bold text-primary-600">{formatCurrency(invoice.total)}</span>
+              <span className="font-bold text-primary-600">
+                {formatCurrency(invoice.total)}
+              </span>
             </div>
             {invoice.amountPaid > 0 && (
               <>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Paid</span>
-                  <span className="font-medium text-success">{formatCurrency(invoice.amountPaid)}</span>
+                  <span className="font-medium text-success">
+                    {formatCurrency(invoice.amountPaid)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Balance Due</span>
-                  <span className="font-medium text-error">{formatCurrency(invoice.amountDue)}</span>
+                  <span className="font-medium text-error">
+                    {formatCurrency(invoice.amountDue)}
+                  </span>
                 </div>
               </>
             )}
@@ -239,7 +298,9 @@ export function PurchaseInvoiceDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{invoice.notes}</p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                {invoice.notes}
+              </p>
             </CardBody>
           </Card>
         )}
@@ -255,7 +316,12 @@ export function PurchaseInvoiceDetail({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-slate-200 space-y-2">
-        <Button fullWidth variant="outline" leftIcon={<Edit className="h-4 w-4" />} onClick={onEdit}>
+        <Button
+          fullWidth
+          variant="outline"
+          leftIcon={<Edit className="h-4 w-4" />}
+          onClick={onEdit}
+        >
           Edit Purchase
         </Button>
         <Button

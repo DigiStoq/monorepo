@@ -38,6 +38,8 @@ export interface SidebarProps {
   expandedIds?: Set<string>;
   /** Toggle section expansion */
   onToggleExpand?: (id: string) => void;
+  /** Check if link is active */
+  isLinkActive?: (path: string) => boolean;
   /** Navigation callback */
   onNavigate?: (item: NavItem) => void;
   /** Collapsed state */
@@ -93,12 +95,12 @@ function SidebarItem({
   onToggle,
   onNavigate,
   activeId,
-}: SidebarItemProps) {
+}: SidebarItemProps): ReactNode {
   const hasChildren = item.children && item.children.length > 0;
   const Icon = item.icon;
   const isNested = depth > 0;
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (hasChildren) {
       onToggle?.();
     } else {
@@ -107,9 +109,12 @@ function SidebarItem({
   };
 
   // Check if any child is active
-  const hasActiveChild = hasChildren && item.children?.some(
-    (child) => child.id === activeId || child.children?.some((c) => c.id === activeId)
-  );
+  const hasActiveChild =
+    hasChildren &&
+    item.children?.some(
+      (child) =>
+        child.id === activeId || child.children?.some((c) => c.id === activeId)
+    );
 
   return (
     <div>
@@ -134,7 +139,9 @@ function SidebarItem({
           <Icon
             className={cn(
               "shrink-0 transition-colors",
-              isActive || hasActiveChild ? "text-primary-400" : "text-slate-400",
+              isActive || hasActiveChild
+                ? "text-primary-400"
+                : "text-slate-400",
               isCollapsed ? "h-5 w-5" : "h-4.5 w-4.5"
             )}
           />
@@ -174,7 +181,7 @@ function SidebarItem({
               className="overflow-hidden"
             >
               <div className="mt-1 space-y-1">
-                {item.children!.map((child) => (
+                {(item.children ?? []).map((child) => (
                   <SidebarItem
                     key={child.id}
                     item={child}
@@ -313,7 +320,7 @@ export function SidebarSection({
   children,
   isCollapsed,
   className,
-}: SidebarSectionProps) {
+}: SidebarSectionProps): React.ReactNode {
   return (
     <div className={cn("mb-4", className)}>
       {title && !isCollapsed && (
@@ -352,7 +359,7 @@ export function SidebarLogo({
   isCollapsed,
   onClick,
   className,
-}: SidebarLogoProps) {
+}: SidebarLogoProps): ReactNode {
   return (
     <button
       type="button"
@@ -416,8 +423,15 @@ export function SidebarUser({
   isCollapsed,
   onClick,
   className,
-}: SidebarUserProps) {
-  const initials = avatarFallback || name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}: SidebarUserProps): ReactNode {
+  const initials =
+    avatarFallback ??
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
 
   return (
     <button
@@ -455,9 +469,7 @@ export function SidebarUser({
       {!isCollapsed && (
         <div className="flex-1 min-w-0 text-left">
           <p className="text-sm font-medium text-white truncate">{name}</p>
-          {email && (
-            <p className="text-xs text-slate-400 truncate">{email}</p>
-          )}
+          {email && <p className="text-xs text-slate-400 truncate">{email}</p>}
         </div>
       )}
     </button>

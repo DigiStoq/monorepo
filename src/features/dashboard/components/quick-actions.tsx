@@ -45,8 +45,8 @@ const defaultActions: Omit<QuickAction, "onClick">[] = [
     color: "bg-info hover:bg-info-dark",
   },
   {
-    id: "add-party",
-    label: "Add Party",
+    id: "add-customer",
+    label: "Add Customer",
     icon: Users,
     color: "bg-success hover:bg-success-dark",
   },
@@ -74,12 +74,15 @@ const defaultActions: Omit<QuickAction, "onClick">[] = [
 // COMPONENT
 // ============================================================================
 
-export function QuickActions({ onAction, className }: QuickActionsProps) {
+export function QuickActions({
+  onAction,
+  className,
+}: QuickActionsProps): React.ReactNode {
   return (
     <Card className={className}>
       <CardHeader title="Quick Actions" subtitle="Common operations" />
       <CardBody className="pt-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-6 lg:grid-cols-2 xl:grid-cols-3 gap-3">
           {defaultActions.map((action) => {
             const Icon = action.icon;
             return (
@@ -88,15 +91,15 @@ export function QuickActions({ onAction, className }: QuickActionsProps) {
                 type="button"
                 onClick={() => onAction?.(action.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-2 p-4 rounded-xl",
-                  "text-white font-medium text-sm",
+                  "flex flex-col items-center justify-center gap-2 p-3 sm:p-4 rounded-xl",
+                  "text-white font-medium text-sm text-center leading-tight",
                   "transition-all duration-200",
                   "hover:shadow-md hover:-translate-y-0.5",
                   "active:scale-[0.98]",
                   action.color
                 )}
               >
-                <Icon className="h-6 w-6" />
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span>{action.label}</span>
               </button>
             );
@@ -116,7 +119,10 @@ export interface FloatingActionButtonProps {
   className?: string;
 }
 
-export function FloatingActionButton({ onClick, className }: FloatingActionButtonProps) {
+export function FloatingActionButton({
+  onClick,
+  className,
+}: FloatingActionButtonProps): React.ReactNode {
   return (
     <button
       type="button"

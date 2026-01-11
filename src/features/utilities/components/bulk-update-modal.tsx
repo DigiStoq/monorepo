@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
+import { useItems } from "@/hooks/useItems";
 import {
   Modal,
   Button,
@@ -8,7 +9,6 @@ import {
   type SelectOption,
   Card,
   CardBody,
-  Badge,
 } from "@/components/ui";
 import {
   Layers,
@@ -18,8 +18,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  Search,
+  ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
-import type { BulkUpdateType, BulkPriceUpdate, BulkUpdateResult } from "../types";
+import type {
+  BulkUpdateType,
+  BulkPriceUpdate,
+  BulkUpdateResult,
+} from "../types";
 
 // ============================================================================
 // TYPES
@@ -28,16 +35,21 @@ import type { BulkUpdateType, BulkPriceUpdate, BulkUpdateResult } from "../types
 interface BulkUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedItems: Array<{ id: string; name: string; salePrice?: number; purchasePrice?: number }>;
-  categories: Array<{ id: string; name: string }>;
-  onUpdate: (type: BulkUpdateType, config: unknown) => Promise<BulkUpdateResult>;
+  // selectedItems prop is removed/ignored in favor of internal selection
+  selectedItems?: unknown[];
+  categories: { id: string; name: string }[];
+  onUpdate: (
+    type: BulkUpdateType,
+    selectedIds: string[],
+    config: unknown
+  ) => Promise<BulkUpdateResult>;
 }
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const updateTypeOptions: Array<{ value: BulkUpdateType; label: string; icon: React.ReactNode; description: string }> = [
+const updateTypeOptions = [
   {
     value: "price",
     label: "Update Prices",
@@ -93,18 +105,30 @@ const statusOptions: SelectOption[] = [
 export function BulkUpdateModal({
   isOpen,
   onClose,
-  selectedItems,
   categories,
   onUpdate,
-}: BulkUpdateModalProps) {
+}: BulkUpdateModalProps): React.ReactNode {
+  // Step state
+  const [step, setStep] = useState<"select" | "configure" | "result">("select");
+
+  // Selection state
+  const { items, isLoading: isLoadingItems } = useItems();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Update Config State
   const [updateType, setUpdateType] = useState<BulkUpdateType>("price");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<BulkUpdateResult | null>(null);
 
   // Price update state
-  const [priceType, setPriceType] = useState<"percentage" | "fixed">("percentage");
+  const [priceType, setPriceType] = useState<"percentage" | "fixed">(
+    "percentage"
+  );
   const [priceValue, setPriceValue] = useState<number>(0);
-  const [priceApplyTo, setPriceApplyTo] = useState<"sale" | "purchase" | "both">("both");
+  const [priceApplyTo, setPriceApplyTo] = useState<
+    "sale" | "purchase" | "both"
+  >("both");
   const [roundTo, setRoundTo] = useState<number>(2);
 
   // Category update state
@@ -122,7 +146,34 @@ export function BulkUpdateModal({
     label: c.name,
   }));
 
-  const handleUpdate = async () => {
+  // Filter items
+  const filteredItems = useMemo(() => {
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [items, searchQuery]);
+
+  const handleSelectAll = (checked: boolean): void => {
+    if (checked) {
+      setSelectedIds(new Set(filteredItems.map((i) => i.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const toggleSelection = (id: string): void => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const handleUpdate = async (): Promise<void> => {
     setIsProcessing(true);
     try {
       let config: unknown;
@@ -139,7 +190,8 @@ export function BulkUpdateModal({
         case "category":
           config = {
             categoryId,
-            categoryName: categories.find((c) => c.id === categoryId)?.name || "",
+            categoryName:
+              categories.find((c) => c.id === categoryId)?.name ?? "",
           };
           break;
         case "status":
@@ -149,68 +201,364 @@ export function BulkUpdateModal({
           config = { type: stockType, value: stockValue };
           break;
       }
-
-      const updateResult = await onUpdate(updateType, config);
+      const ids = Array.from(selectedIds);
+      const updateResult = await onUpdate(updateType, ids, config);
       setResult(updateResult);
+      setStep("result");
     } catch {
       setResult({
         success: false,
         updated: 0,
-        failed: selectedItems.length,
+        failed: selectedIds.size,
         errors: [{ id: "", message: "Update failed" }],
       });
+      setStep("result");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
+    setStep("select");
+    setSelectedIds(new Set());
     setResult(null);
     onClose();
   };
 
-  const getPreviewText = () => {
-    switch (updateType) {
-      case "price":
-        if (priceValue === 0) return null;
-        const changeText = priceValue > 0 ? "increase" : "decrease";
-        const valueText = priceType === "percentage"
-          ? `${Math.abs(priceValue)}%`
-          : `$${Math.abs(priceValue).toFixed(2)}`;
-        const applyText = priceApplyTo === "both" ? "both prices" : `${priceApplyTo} price`;
-        return `Will ${changeText} ${applyText} by ${valueText}`;
-      case "category":
-        const cat = categories.find((c) => c.id === categoryId);
-        return cat ? `Will move items to "${cat.name}"` : null;
-      case "status":
-        return `Will ${isActive === "true" ? "activate" : "deactivate"} all selected items`;
-      case "stock":
-        if (stockValue === 0 && stockType !== "set") return null;
-        if (stockType === "set") return `Will set stock to ${stockValue}`;
-        return `Will ${stockType} ${stockValue} units ${stockType === "add" ? "to" : "from"} stock`;
-      default:
-        return null;
-    }
+  const canUpdate = (): boolean => {
+    if (updateType === "price") return priceValue !== 0;
+    if (updateType === "category") return !!categoryId;
+    if (updateType === "stock") return stockType === "set" || stockValue !== 0;
+    return true;
   };
 
-  const canUpdate = () => {
-    switch (updateType) {
-      case "price":
-        return priceValue !== 0;
-      case "category":
-        return !!categoryId;
-      case "status":
-        return true;
-      case "stock":
-        return stockType === "set" || stockValue !== 0;
-      default:
-        return false;
-    }
-  };
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={step === "select" ? "Select Items" : "Bulk Update"}
+      size={step === "select" ? "lg" : "md"}
+    >
+      {/* STEP 1: SELECT */}
+      {step === "select" && (
+        <div className="flex flex-col h-[500px]">
+          <div className="p-4 border-b space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search items by name or SKU..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={
+                    filteredItems.length > 0 &&
+                    selectedIds.size === filteredItems.length
+                  }
+                  onChange={(e) => {
+                    handleSelectAll(e.target.checked);
+                  }}
+                />
+                <span>Select All ({filteredItems.length})</span>
+              </div>
+              <span>{selectedIds.size} selected</span>
+            </div>
+          </div>
 
-  if (result) {
-    return (
-      <Modal isOpen={isOpen} onClose={handleClose} title="Update Complete" size="sm">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {isLoadingItems ? (
+              <div className="flex items-center justify-center h-full text-slate-400">
+                Loading items...
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-slate-400">
+                No items found
+              </div>
+            ) : (
+              filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 cursor-pointer",
+                    selectedIds.has(item.id) &&
+                      "bg-primary-50 border-primary-100"
+                  )}
+                  onClick={() => {
+                    toggleSelection(item.id);
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => {
+                      toggleSelection(item.id);
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-900">{item.name}</p>
+                    <p className="text-xs text-slate-500">
+                      SKU: {item.sku || "-"} • Stock: {item.stockQuantity}
+                    </p>
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="font-medium text-slate-900">
+                      ${item.salePrice}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="p-4 border-t flex justify-between items-center">
+            <span className="text-sm text-slate-500">
+              {selectedIds.size} items selected
+            </span>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                disabled={selectedIds.size === 0}
+                onClick={() => {
+                  setStep("configure");
+                }}
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 2: CONFIGURE */}
+      {step === "configure" && (
+        <div className="py-4 space-y-6">
+          <Card className="bg-primary-50 border-primary">
+            <CardBody className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Layers className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">
+                  {selectedIds.size} items selected
+                </p>
+                <p
+                  className="text-xs text-slate-500 cursor-pointer hover:underline"
+                  onClick={() => {
+                    setStep("select");
+                  }}
+                >
+                  Change selection
+                </p>
+              </div>
+            </CardBody>
+          </Card>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              What do you want to update?
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {updateTypeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setUpdateType(opt.value as BulkUpdateType);
+                  }}
+                  className={cn(
+                    "p-3 rounded-xl border-2 text-left transition-all",
+                    updateType === opt.value
+                      ? "border-primary bg-primary-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <div
+                      className={cn(
+                        "p-1.5 rounded-lg",
+                        updateType === opt.value
+                          ? "bg-primary text-white"
+                          : "bg-slate-100 text-slate-600"
+                      )}
+                    >
+                      {opt.icon}
+                    </div>
+                    <span className="font-medium text-slate-900">
+                      {opt.label}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dynamic Config Fields */}
+          <div className="space-y-4">
+            {updateType === "price" && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Change Type
+                    </label>
+                    <Select
+                      options={priceTypeOptions}
+                      value={priceType}
+                      onChange={(v) => {
+                        setPriceType(v as "percentage" | "fixed");
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Value
+                    </label>
+                    <Input
+                      type="number"
+                      value={priceValue}
+                      onChange={(e) => {
+                        setPriceValue(parseFloat(e.target.value) || 0);
+                      }}
+                      placeholder="e.g., 10 or -10"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Apply To
+                    </label>
+                    <Select
+                      options={priceApplyOptions}
+                      value={priceApplyTo}
+                      onChange={(v) => {
+                        setPriceApplyTo(v as "sale" | "purchase" | "both");
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Round to
+                    </label>
+                    <Input
+                      type="number"
+                      value={roundTo}
+                      onChange={(e) => {
+                        setRoundTo(parseInt(e.target.value) || 0);
+                      }}
+                      min={0}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {updateType === "category" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  New Category
+                </label>
+                <Select
+                  options={categoryOptions}
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  placeholder="Select a category"
+                />
+              </div>
+            )}
+
+            {updateType === "status" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Set Status
+                </label>
+                <Select
+                  options={statusOptions}
+                  value={isActive}
+                  onChange={setIsActive}
+                />
+              </div>
+            )}
+
+            {updateType === "stock" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Operation
+                  </label>
+                  <Select
+                    options={stockTypeOptions}
+                    value={stockType}
+                    onChange={(v) => {
+                      setStockType(v as "set" | "add" | "subtract");
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Value
+                  </label>
+                  <Input
+                    type="number"
+                    value={stockValue}
+                    onChange={(e) => {
+                      setStockValue(parseInt(e.target.value) || 0);
+                    }}
+                    min={0}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-between pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStep("select");
+              }}
+              leftIcon={<ArrowLeft className="h-4 w-4" />}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={() => {
+                void handleUpdate();
+              }}
+              disabled={!canUpdate() || isProcessing}
+              leftIcon={
+                isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Layers className="h-4 w-4" />
+                )
+              }
+            >
+              {isProcessing ? "Updating..." : "Update Items"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: RESULT */}
+      {step === "result" && result && (
         <div className="py-8 text-center space-y-6">
           {result.success ? (
             <>
@@ -218,14 +566,13 @@ export function BulkUpdateModal({
                 <CheckCircle2 className="h-10 w-10 text-success" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Update Successful!</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Update Successful!
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   {result.updated} items updated successfully
                 </p>
               </div>
-              {result.failed > 0 && (
-                <Badge variant="warning">{result.failed} items failed</Badge>
-              )}
             </>
           ) : (
             <>
@@ -233,211 +580,18 @@ export function BulkUpdateModal({
                 <AlertTriangle className="h-10 w-10 text-error" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Update Failed</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Update Failed
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Could not update the selected items
+                  {result.errors[0]?.message ?? "Could not update items"}
                 </p>
               </div>
             </>
           )}
           <Button onClick={handleClose}>Done</Button>
         </div>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Bulk Update" size="md">
-      <div className="space-y-6 py-4">
-        {/* Selected Items Count */}
-        <Card className="bg-primary-50 border-primary">
-          <CardBody className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Layers className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="font-semibold text-slate-900">{selectedItems.length} items selected</p>
-              <p className="text-xs text-slate-500">
-                {selectedItems.slice(0, 3).map((i) => i.name).join(", ")}
-                {selectedItems.length > 3 && ` and ${selectedItems.length - 3} more`}
-              </p>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Update Type Selection */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            What do you want to update?
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {updateTypeOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setUpdateType(opt.value)}
-                className={cn(
-                  "p-3 rounded-xl border-2 text-left transition-all",
-                  updateType === opt.value
-                    ? "border-primary bg-primary-50"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={cn(
-                    "p-1.5 rounded-lg",
-                    updateType === opt.value ? "bg-primary text-white" : "bg-slate-100 text-slate-600"
-                  )}>
-                    {opt.icon}
-                  </div>
-                  <span className="font-medium text-slate-900">{opt.label}</span>
-                </div>
-                <p className="text-xs text-slate-500">{opt.description}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Update Configuration */}
-        <div className="space-y-4">
-          {updateType === "price" && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Change Type
-                  </label>
-                  <Select
-                    options={priceTypeOptions}
-                    value={priceType}
-                    onChange={(v) => setPriceType(v as "percentage" | "fixed")}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Value (use negative to decrease)
-                  </label>
-                  <Input
-                    type="number"
-                    value={priceValue}
-                    onChange={(e) => setPriceValue(parseFloat(e.target.value) || 0)}
-                    placeholder={priceType === "percentage" ? "e.g., 10 or -10" : "e.g., 5.00 or -5.00"}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Apply To
-                  </label>
-                  <Select
-                    options={priceApplyOptions}
-                    value={priceApplyTo}
-                    onChange={(v) => setPriceApplyTo(v as "sale" | "purchase" | "both")}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Round to decimal places
-                  </label>
-                  <Input
-                    type="number"
-                    value={roundTo}
-                    onChange={(e) => setRoundTo(parseInt(e.target.value) || 0)}
-                    min={0}
-                    max={4}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {updateType === "category" && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                New Category
-              </label>
-              <Select
-                options={categoryOptions}
-                value={categoryId}
-                onChange={setCategoryId}
-                placeholder="Select a category"
-              />
-            </div>
-          )}
-
-          {updateType === "status" && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Set Status
-              </label>
-              <Select
-                options={statusOptions}
-                value={isActive}
-                onChange={setIsActive}
-              />
-            </div>
-          )}
-
-          {updateType === "stock" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Operation
-                </label>
-                <Select
-                  options={stockTypeOptions}
-                  value={stockType}
-                  onChange={(v) => setStockType(v as "set" | "add" | "subtract")}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {stockType === "set" ? "New Value" : "Quantity"}
-                </label>
-                <Input
-                  type="number"
-                  value={stockValue}
-                  onChange={(e) => setStockValue(parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Preview */}
-        {getPreviewText() && (
-          <Card className="bg-warning-light border-warning">
-            <CardBody className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
-              <div>
-                <p className="font-medium text-slate-900">Preview</p>
-                <p className="text-sm text-slate-600">{getPreviewText()}</p>
-              </div>
-            </CardBody>
-          </Card>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={handleClose}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleUpdate}
-          disabled={!canUpdate() || isProcessing}
-          leftIcon={
-            isProcessing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Layers className="h-4 w-4" />
-            )
-          }
-        >
-          {isProcessing ? "Updating..." : `Update ${selectedItems.length} Items`}
-        </Button>
-      </div>
+      )}
     </Modal>
   );
 }

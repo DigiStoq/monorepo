@@ -54,7 +54,7 @@ const settingsSections = [
   },
 ];
 
-export function SettingsNav() {
+export function SettingsNav(): React.ReactNode {
   const location = useLocation();
   const currentPath = location.pathname;
 

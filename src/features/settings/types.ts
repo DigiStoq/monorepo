@@ -2,7 +2,7 @@
 // Settings Types
 // ============================================================================
 
-// Company Settings
+// Company Settings (nested structure for UI)
 export interface CompanySettings {
   id: string;
   name: string;
@@ -31,6 +31,31 @@ export interface CompanySettings {
   currency: string;
   locale: string;
   timezone: string;
+}
+
+// Company Settings (flat structure for database operations)
+export interface FlatCompanySettings {
+  id: string;
+  name: string;
+  legalName?: string;
+  logoUrl?: string;
+  addressStreet?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressPostalCode?: string;
+  addressCountry?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactWebsite?: string;
+  taxId?: string;
+  ein?: string;
+  financialYearStartMonth: number;
+  financialYearStartDay: number;
+  currency: string;
+  locale: string;
+  timezone: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // User Profile
@@ -127,19 +152,37 @@ export interface TaxRate {
   isActive: boolean;
 }
 
+// PDF Template options
+export type PDFTemplateId = "classic" | "modern" | "minimal";
+
 // Invoice Settings
 export interface InvoiceSettings {
+  id?: string;
   prefix: string;
   nextNumber: number;
   padding: number; // e.g., 4 for INV-0001
-  termsAndConditions: string;
-  notes: string;
-  showPaymentQR: boolean;
+  termsAndConditions?: string;
+  notes?: string;
+  showPaymentQR?: boolean;
+  showPaymentQr?: boolean; // DB uses lowercase 'r'
   showBankDetails: boolean;
   bankDetails?: BankDetails;
+  // Flat bank fields from database
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  bankRoutingNumber?: string;
+  bankBranchName?: string;
+  bankSwiftCode?: string;
   dueDateDays: number;
   lateFeesEnabled: boolean;
   lateFeesPercentage?: number;
+  pdfTemplate: PDFTemplateId;
+  taxEnabled: boolean;
+  taxInclusive: boolean;
+  roundTax: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BankDetails {

@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { BankAccount, BankAccountType } from "@/features/cash-bank/types";
 
@@ -38,18 +38,30 @@ export function useBankAccounts(filters?: {
   isActive?: boolean;
   accountType?: string;
 }): { accounts: BankAccount[]; isLoading: boolean; error: Error | undefined } {
-  const activeFilter = filters?.isActive !== undefined ? (filters.isActive ? 1 : 0) : null;
-  const typeFilter = filters?.accountType ?? null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
 
-  const { data, isLoading, error } = useQuery<BankAccountRow>(
-    `SELECT * FROM bank_accounts
-     WHERE ($1 IS NULL OR is_active = $1)
-     AND ($2 IS NULL OR account_type = $2)
-     ORDER BY name`,
-    [activeFilter, typeFilter]
-  );
+    if (filters?.isActive !== undefined) {
+      conditions.push("is_active = ?");
+      params.push(filters.isActive ? 1 : 0);
+    }
 
-  const accounts = data.map(mapRowToAccount);
+    if (filters?.accountType) {
+      conditions.push("account_type = ?");
+      params.push(filters.accountType);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM bank_accounts ${whereClause} ORDER BY name`,
+      params,
+    };
+  }, [filters?.isActive, filters?.accountType]);
+
+  const { data, isLoading, error } = useQuery<BankAccountRow>(query, params);
+
+  const accounts = useMemo(() => data.map(mapRowToAccount), [data]);
 
   return { accounts, isLoading, error };
 }

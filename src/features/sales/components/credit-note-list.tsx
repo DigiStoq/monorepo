@@ -1,14 +1,5 @@
-import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import {
-  Card,
-  CardBody,
-  SearchInput,
-  Button,
-  Badge,
-  Select,
-  type SelectOption,
-} from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
 import {
   Plus,
@@ -20,6 +11,7 @@ import {
   AlertTriangle,
   MoreHorizontal,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { CreditNote, CreditNoteReason } from "../types";
 
 // ============================================================================
@@ -32,32 +24,21 @@ export interface CreditNoteListProps {
   onCreditNoteClick?: (creditNote: CreditNote) => void;
   onCreateCreditNote?: () => void;
   className?: string;
+  hasActiveFilters?: boolean;
 }
-
-interface CreditNoteFilters {
-  search: string;
-  reason: CreditNoteReason | "all";
-  sortBy: "date" | "amount" | "party";
-  sortOrder: "asc" | "desc";
-}
-
-// ============================================================================
-// FILTER OPTIONS
-// ============================================================================
-
-const reasonOptions: SelectOption[] = [
-  { value: "all", label: "All Reasons" },
-  { value: "return", label: "Return" },
-  { value: "discount", label: "Discount" },
-  { value: "error", label: "Error Correction" },
-  { value: "other", label: "Other" },
-];
 
 // ============================================================================
 // REASON CONFIG
 // ============================================================================
 
-const reasonConfig: Record<CreditNoteReason, { label: string; icon: typeof RotateCcw; variant: "info" | "warning" | "error" | "secondary" }> = {
+const reasonConfig: Record<
+  CreditNoteReason,
+  {
+    label: string;
+    icon: typeof RotateCcw;
+    variant: "info" | "warning" | "error" | "secondary";
+  }
+> = {
   return: { label: "Return", icon: RotateCcw, variant: "info" },
   discount: { label: "Discount", icon: Percent, variant: "warning" },
   error: { label: "Error", icon: AlertTriangle, variant: "error" },
@@ -73,18 +54,16 @@ interface CreditNoteCardProps {
   onClick?: () => void;
 }
 
-function CreditNoteCard({ creditNote, onClick }: CreditNoteCardProps) {
+function CreditNoteCard({
+  creditNote,
+  onClick,
+}: CreditNoteCardProps): React.ReactNode {
   const reason = reasonConfig[creditNote.reason];
   const ReasonIcon = reason.icon;
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
-  const formatDate = (dateStr: string) =>
+  const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "short",
@@ -140,7 +119,8 @@ function CreditNoteCard({ creditNote, onClick }: CreditNoteCardProps) {
             -{formatCurrency(creditNote.total)}
           </p>
           <p className="text-xs text-slate-500">
-            {creditNote.items.length} {creditNote.items.length === 1 ? "item" : "items"}
+            {creditNote.items.length}{" "}
+            {creditNote.items.length === 1 ? "item" : "items"}
           </p>
         </div>
       </div>
@@ -158,89 +138,11 @@ export function CreditNoteList({
   onCreditNoteClick,
   onCreateCreditNote,
   className,
-}: CreditNoteListProps) {
-  const [filters, setFilters] = useState<CreditNoteFilters>({
-    search: "",
-    reason: "all",
-    sortBy: "date",
-    sortOrder: "desc",
-  });
-
-  // Filter and sort credit notes
-  const filteredCreditNotes = useMemo(() => {
-    if (!creditNotes) return [];
-
-    return creditNotes
-      .filter((cn) => {
-        // Search filter
-        if (filters.search) {
-          const searchLower = filters.search.toLowerCase();
-          const matchesNumber = cn.creditNoteNumber.toLowerCase().includes(searchLower);
-          const matchesParty = cn.customerName.toLowerCase().includes(searchLower);
-          const matchesInvoice = cn.invoiceNumber?.toLowerCase().includes(searchLower);
-          if (!matchesNumber && !matchesParty && !matchesInvoice) return false;
-        }
-
-        // Reason filter
-        if (filters.reason !== "all" && cn.reason !== filters.reason) {
-          return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        let comparison = 0;
-
-        switch (filters.sortBy) {
-          case "date":
-            comparison = new Date(b.date).getTime() - new Date(a.date).getTime();
-            break;
-          case "amount":
-            comparison = b.total - a.total;
-            break;
-          case "party":
-            comparison = a.customerName.localeCompare(b.customerName);
-            break;
-        }
-
-        return filters.sortOrder === "desc" ? comparison : -comparison;
-      });
-  }, [creditNotes, filters]);
-
-  // Calculate totals
-  const totals = useMemo(() => {
-    if (!filteredCreditNotes.length) return { total: 0, returns: 0, discounts: 0, errors: 0 };
-
-    return filteredCreditNotes.reduce(
-      (acc, cn) => {
-        acc.total += cn.total;
-        if (cn.reason === "return") {
-          acc.returns += cn.total;
-        } else if (cn.reason === "discount") {
-          acc.discounts += cn.total;
-        } else if (cn.reason === "error") {
-          acc.errors += cn.total;
-        }
-        return acc;
-      },
-      { total: 0, returns: 0, discounts: 0, errors: 0 }
-    );
-  }, [filteredCreditNotes]);
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
-
+  hasActiveFilters = false,
+}: CreditNoteListProps): React.ReactNode {
   if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
-        <div className="flex gap-4">
-          <div className="flex-1 h-10 bg-slate-200 rounded-lg animate-pulse" />
-          <div className="w-32 h-10 bg-slate-200 rounded-lg animate-pulse" />
-        </div>
         {Array.from({ length: 5 }).map((_, i) => (
           <CardSkeleton key={i} hasHeader={false} bodyLines={2} />
         ))}
@@ -248,89 +150,29 @@ export function CreditNoteList({
     );
   }
 
+  // Items are already filtered by parent
+  const displayCreditNotes = creditNotes ?? [];
+
   return (
     <div className={className}>
-      {/* Header with Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <SearchInput
-          placeholder="Search credit notes..."
-          value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          className="flex-1"
-        />
-
-        <div className="flex gap-2">
-          <Select
-            options={reasonOptions}
-            value={filters.reason}
-            onChange={(value) =>
-              setFilters((f) => ({ ...f, reason: value as CreditNoteReason | "all" }))
-            }
-            size="md"
-          />
-
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateCreditNote}>
-            New Credit Note
-          </Button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        <Card className="bg-slate-50">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-slate-500" />
-              <p className="text-xs text-slate-500 font-medium">Total Credits</p>
-            </div>
-            <p className="text-lg font-bold text-error">{formatCurrency(totals.total)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-blue-50">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4 text-blue-600" />
-              <p className="text-xs text-blue-600 font-medium">Returns</p>
-            </div>
-            <p className="text-lg font-bold text-blue-700">{formatCurrency(totals.returns)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-warning-light">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <Percent className="h-4 w-4 text-warning" />
-              <p className="text-xs text-warning-dark font-medium">Discounts</p>
-            </div>
-            <p className="text-lg font-bold text-warning-dark">{formatCurrency(totals.discounts)}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-error-light">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-error" />
-              <p className="text-xs text-error-dark font-medium">Errors</p>
-            </div>
-            <p className="text-lg font-bold text-error">{formatCurrency(totals.errors)}</p>
-          </CardBody>
-        </Card>
-      </div>
-
       {/* Credit Note List */}
-      {filteredCreditNotes.length === 0 ? (
+      {displayCreditNotes.length === 0 ? (
         <EmptyState
-          variant={filters.search ? "search" : "empty"}
-          title={filters.search ? "No credit notes found" : "No credit notes yet"}
+          variant={hasActiveFilters ? "search" : "empty"}
+          title={
+            hasActiveFilters ? "No credit notes found" : "No credit notes yet"
+          }
           description={
-            filters.search
+            hasActiveFilters
               ? "Try adjusting your search or filters"
               : "Create a credit note for returns, discounts, or corrections"
           }
           action={
-            !filters.search && (
-              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={onCreateCreditNote}>
+            !hasActiveFilters && (
+              <Button
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={onCreateCreditNote}
+              >
                 Create Credit Note
               </Button>
             )
@@ -338,11 +180,12 @@ export function CreditNoteList({
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2">
-            {filteredCreditNotes.length} {filteredCreditNotes.length === 1 ? "credit note" : "credit notes"}
+          <p className="text-sm text-slate-500 mb-2 px-1">
+            {displayCreditNotes.length}{" "}
+            {displayCreditNotes.length === 1 ? "credit note" : "credit notes"}
           </p>
 
-          {filteredCreditNotes.map((creditNote) => (
+          {displayCreditNotes.map((creditNote) => (
             <CreditNoteCard
               key={creditNote.id}
               creditNote={creditNote}

@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Cheque, ChequeStatus } from "../types";
 
 // ============================================================================
@@ -36,11 +37,39 @@ export interface ChequeDetailProps {
 // HELPERS
 // ============================================================================
 
-const statusConfig: Record<ChequeStatus, { label: string; icon: React.ReactNode; variant: "success" | "warning" | "error" | "secondary"; color: string }> = {
-  pending: { label: "Pending", icon: <Clock className="h-4 w-4" />, variant: "warning", color: "bg-warning-light border-warning/20" },
-  cleared: { label: "Cleared", icon: <CheckCircle className="h-4 w-4" />, variant: "success", color: "bg-success-light border-success/20" },
-  bounced: { label: "Bounced", icon: <AlertTriangle className="h-4 w-4" />, variant: "error", color: "bg-error-light border-error/20" },
-  cancelled: { label: "Cancelled", icon: <XCircle className="h-4 w-4" />, variant: "secondary", color: "bg-slate-100 border-slate-200" },
+const statusConfig: Record<
+  ChequeStatus,
+  {
+    label: string;
+    icon: React.ReactNode;
+    variant: "success" | "warning" | "error" | "secondary";
+    color: string;
+  }
+> = {
+  pending: {
+    label: "Pending",
+    icon: <Clock className="h-4 w-4" />,
+    variant: "warning",
+    color: "bg-warning-light border-warning/20",
+  },
+  cleared: {
+    label: "Cleared",
+    icon: <CheckCircle className="h-4 w-4" />,
+    variant: "success",
+    color: "bg-success-light border-success/20",
+  },
+  bounced: {
+    label: "Bounced",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    variant: "error",
+    color: "bg-error-light border-error/20",
+  },
+  cancelled: {
+    label: "Cancelled",
+    icon: <XCircle className="h-4 w-4" />,
+    variant: "secondary",
+    color: "bg-slate-100 border-slate-200",
+  },
 };
 
 // ============================================================================
@@ -56,21 +85,16 @@ export function ChequeDetail({
   onMarkBounced,
   onCancel,
   className,
-}: ChequeDetailProps) {
+}: ChequeDetailProps): React.ReactNode {
   const status = statusConfig[cheque.status];
   const isReceived = cheque.type === "received";
   const isPending = cheque.status === "pending";
 
   // Format currency
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       weekday: "short",
@@ -85,7 +109,9 @@ export function ChequeDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Cheque Details</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Cheque Details
+          </h2>
           <p className="text-sm text-slate-500">#{cheque.chequeNumber}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -98,18 +124,26 @@ export function ChequeDetail({
         {/* Amount Card */}
         <Card className={cn("border", status.color)}>
           <CardBody className="text-center py-6">
-            <div className={cn(
-              "inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3",
-              isReceived ? "bg-success-light text-success" : "bg-error-light text-error"
-            )}>
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3",
+                isReceived
+                  ? "bg-success-light text-success"
+                  : "bg-error-light text-error"
+              )}
+            >
               {isReceived ? (
                 <ArrowDownLeft className="h-4 w-4" />
               ) : (
                 <ArrowUpRight className="h-4 w-4" />
               )}
-              <span className="text-sm font-medium">{isReceived ? "Cheque Received" : "Cheque Issued"}</span>
+              <span className="text-sm font-medium">
+                {isReceived ? "Cheque Received" : "Cheque Issued"}
+              </span>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{formatCurrency(cheque.amount)}</p>
+            <p className="text-3xl font-bold text-slate-900">
+              {formatCurrency(cheque.amount)}
+            </p>
             <div className="mt-3">
               <Badge variant={status.variant} size="lg">
                 {status.icon}
@@ -150,8 +184,12 @@ export function ChequeDetail({
             <div className="flex items-start gap-3">
               <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
-                <p className="text-sm text-slate-500">{isReceived ? "Received From" : "Issued To"}</p>
-                <p className="font-medium text-slate-900">{cheque.customerName}</p>
+                <p className="text-sm text-slate-500">
+                  {isReceived ? "Received From" : "Issued To"}
+                </p>
+                <p className="font-medium text-slate-900">
+                  {cheque.customerName}
+                </p>
               </div>
             </div>
 
@@ -159,7 +197,9 @@ export function ChequeDetail({
               <Hash className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Cheque Number</p>
-                <p className="font-medium text-slate-900 font-mono">{cheque.chequeNumber}</p>
+                <p className="font-medium text-slate-900 font-mono">
+                  {cheque.chequeNumber}
+                </p>
               </div>
             </div>
 
@@ -175,7 +215,9 @@ export function ChequeDetail({
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Cheque Date</p>
-                <p className="font-medium text-slate-900">{formatDate(cheque.date)}</p>
+                <p className="font-medium text-slate-900">
+                  {formatDate(cheque.date)}
+                </p>
               </div>
             </div>
 
@@ -183,7 +225,9 @@ export function ChequeDetail({
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Due Date</p>
-                <p className="font-medium text-slate-900">{formatDate(cheque.dueDate)}</p>
+                <p className="font-medium text-slate-900">
+                  {formatDate(cheque.dueDate)}
+                </p>
               </div>
             </div>
 
@@ -192,7 +236,9 @@ export function ChequeDetail({
                 <CheckCircle className="h-5 w-5 text-success mt-0.5" />
                 <div>
                   <p className="text-sm text-slate-500">Cleared Date</p>
-                  <p className="font-medium text-success">{formatDate(cheque.clearedDate)}</p>
+                  <p className="font-medium text-success">
+                    {formatDate(cheque.clearedDate)}
+                  </p>
                 </div>
               </div>
             )}
@@ -202,7 +248,9 @@ export function ChequeDetail({
                 <FileText className="h-5 w-5 text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-sm text-slate-500">Related Invoice</p>
-                  <p className="font-medium text-primary-600">{cheque.relatedInvoiceNumber}</p>
+                  <p className="font-medium text-primary-600">
+                    {cheque.relatedInvoiceNumber}
+                  </p>
                 </div>
               </div>
             )}
@@ -214,7 +262,9 @@ export function ChequeDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{cheque.notes}</p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                {cheque.notes}
+              </p>
             </CardBody>
           </Card>
         )}
