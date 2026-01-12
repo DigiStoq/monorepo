@@ -10,9 +10,9 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "DigiStoq",
         "width": 1024,
         "height": 768,
@@ -29,14 +29,13 @@
   },
   "plugins": {
     "shell": {
-      "open": ".*"
+      "open": true
     },
     "sql": {
       "preload": ["sqlite:digistoq.db"]
     }
   },
   "bundle": {
-    "active": true,
     "targets": "all",
     "windows": {
       "nsis": {

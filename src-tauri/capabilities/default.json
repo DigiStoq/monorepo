@@ -13,6 +13,7 @@
     "fs:allow-temp-write",
     "fs:allow-download-write",
     "store:default",
+    "sql:default",
     "dialog:default",
     "dialog:allow-save",
     "core:path:default",
