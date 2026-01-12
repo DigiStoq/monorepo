@@ -88,7 +88,7 @@ export function CustomersScreen() {
 
   return (
     <View style={styles.container}>
-      <CustomHeader />
+      <CustomHeader title="Customers" showBack />
 
       {/* Search Bar */}
       <View style={styles.searchBar}>

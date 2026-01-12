@@ -6,32 +6,43 @@ import { Menu, ArrowLeft } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
 
-export function CustomHeader() {
+interface CustomHeaderProps {
+  title?: string;
+  showBack?: boolean;
+}
+
+export function CustomHeader({ title, showBack }: CustomHeaderProps) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
   const initials = displayName.charAt(0).toUpperCase();
 
+  const canGoBack = showBack || navigation.canGoBack();
+
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.userSection}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
+      {!title && (
+        <View style={styles.userSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </View>
+          <Text style={styles.userName}>{displayName}</Text>
         </View>
-        <Text style={styles.userName}>{displayName}</Text>
-      </View>
-      <Text style={styles.appName}>DigiStoq</Text>
-      {navigation.canGoBack() ? (
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+      )}
+
+      <Text style={styles.appName}>{title || "DigiStoq"}</Text>
+
+      {canGoBack ? (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.menuBtn}
         >
           <ArrowLeft color={colors.text} size={24} strokeWidth={2} />
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity 
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} 
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuBtn}
         >
           <Menu color={colors.text} size={24} strokeWidth={2} />

@@ -39,7 +39,7 @@ export function LoansScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader />
+            <CustomHeader title="Loans" showBack />
 
             <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>

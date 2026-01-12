@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText, Truck } from "lucide-react";
+import { Plus, Trash2, Calendar, User, FileText, Truck, Percent, DollarSign } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useInvoiceSettings, useTaxRates } from "@/hooks/useSettings";
 import type { SaleInvoiceFormData } from "../types";
@@ -82,9 +82,15 @@ export function InvoiceForm({
   const [deliveryLocation, setDeliveryLocation] = useState(
     initialData?.deliveryLocation ?? ""
   );
-  const [discountPercent, setDiscountPercent] = useState(
-    initialData?.discountPercent ?? 0
+  const [discountType, setDiscountType] = useState<"percent" | "amount">(
+    initialData?.discountType ?? "percent"
   );
+  const [discountValue, setDiscountValue] = useState(
+    initialData?.discountType === "amount"
+      ? initialData?.discountAmount ?? 0
+      : initialData?.discountPercent ?? 0
+  );
+  const [showValidation, setShowValidation] = useState(false);
 
   // Initialize line items from initialData if editing
   const getInitialLineItems = (): LineItem[] => {
@@ -219,14 +225,12 @@ export function InvoiceForm({
       return (
         sum +
         (item.quantity || 0) *
-          (item.unitPrice || 0) *
-          ((item.discountPercent || 0) / 100)
+        (item.unitPrice || 0) *
+        ((item.discountPercent || 0) / 100)
       );
     }, 0);
 
-    const invoiceDiscount =
-      (subtotal - itemDiscounts) * ((discountPercent || 0) / 100);
-    const totalDiscount = itemDiscounts + invoiceDiscount;
+    const totalDiscount = itemDiscounts;
 
     const taxableAmount = subtotal - totalDiscount;
     const taxAmount = lineItems.reduce((sum, item) => {
@@ -240,15 +244,47 @@ export function InvoiceForm({
     const total = taxableAmount + taxAmount;
 
     return { subtotal, totalDiscount, taxAmount, total };
-  }, [lineItems, discountPercent]);
+    return { subtotal, totalDiscount, taxAmount, total };
+  }, [lineItems]);
 
-  // Format currency
+  // Sync global discountValue with calculated item totals
+  useEffect(() => {
+    if (discountType === "percent") {
+      const pct =
+        totals.subtotal > 0
+          ? (totals.totalDiscount / totals.subtotal) * 100
+          : 0;
+      // Avoid circular update/cursor jumping if value is effectively the same (tolerance 0.01)
+      if (Math.abs(pct - discountValue) > 0.01) {
+        setDiscountValue(parseFloat(pct.toFixed(2)));
+      }
+    } else {
+      if (Math.abs(totals.totalDiscount - discountValue) > 0.01) {
+        setDiscountValue(parseFloat(totals.totalDiscount.toFixed(2)));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totals, discountType]);
+
   // Format currency
   const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || lineItems.length === 0) return;
+    if (!customerId || lineItems.length === 0) {
+      setShowValidation(true);
+      return;
+    }
+
+    // Validate line items
+    const hasInvalidItems = lineItems.some(
+      (item) => !item.itemId || item.quantity <= 0 || item.unitPrice < 0
+    );
+
+    if (hasInvalidItems) {
+      setShowValidation(true);
+      return;
+    }
 
     const formData: SaleInvoiceFormData = {
       customerId,
@@ -263,7 +299,9 @@ export function InvoiceForm({
         discountPercent: item.discountPercent || undefined,
         taxPercent: item.taxPercent || undefined,
       })),
-      discountPercent: discountPercent || undefined,
+      discountType,
+      discountPercent: discountType === "percent" ? discountValue : undefined,
+      discountAmount: discountType === "amount" ? discountValue : undefined,
       notes: notes || undefined,
       terms: terms || undefined,
       transportName: transportName || undefined,
@@ -321,6 +359,9 @@ export function InvoiceForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select customer"
+                    className={cn(
+                      showValidation && !customerId && "border-red-500 ring-red-500"
+                    )}
                   />
                 </div>
 
@@ -475,7 +516,7 @@ export function InvoiceForm({
                           Rate
                         </th>
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
-                          Disc %
+                          {discountType === "percent" ? "Disc %" : "Disc $"}
                         </th>
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Tax %
@@ -497,6 +538,11 @@ export function InvoiceForm({
                                 handleUpdateLineItem(item.id, "itemId", value);
                               }}
                               size="sm"
+                              className={cn(
+                                showValidation &&
+                                !item.itemId &&
+                                "border-red-500 focus:ring-red-500"
+                              )}
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -549,13 +595,35 @@ export function InvoiceForm({
                           </td>
                           <td className="px-4 py-3">
                             <TableNumberInput
-                              value={item.discountPercent}
+                              value={
+                                discountType === "percent"
+                                  ? item.discountPercent
+                                  : (item.unitPrice *
+                                    item.quantity *
+                                    item.discountPercent) /
+                                  100
+                              }
                               onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "discountPercent",
-                                  val
-                                );
+                                if (discountType === "percent") {
+                                  handleUpdateLineItem(
+                                    item.id,
+                                    "discountPercent",
+                                    val
+                                  );
+                                } else {
+                                  // Convert amount to percent
+                                  const totalAmount =
+                                    item.unitPrice * item.quantity;
+                                  const pct =
+                                    totalAmount > 0
+                                      ? (val / totalAmount) * 100
+                                      : 0;
+                                  handleUpdateLineItem(
+                                    item.id,
+                                    "discountPercent",
+                                    pct
+                                  );
+                                }
                               }}
                               size="sm"
                               className="text-right min-w-[60px]"
@@ -641,18 +709,91 @@ export function InvoiceForm({
 
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-500">Discount</span>
+                <div className="flex items-center border border-slate-300 rounded-md overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("percent")}
+                    className={cn(
+                      "p-1.5 hover:bg-slate-100 transition-colors",
+                      discountType === "percent"
+                        ? "bg-primary-50 text-primary-600"
+                        : "text-slate-500"
+                    )}
+                  >
+                    <Percent className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="w-[1px] h-full bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("amount")}
+                    className={cn(
+                      "p-1.5 hover:bg-slate-100 transition-colors",
+                      discountType === "amount"
+                        ? "bg-primary-50 text-primary-600"
+                        : "text-slate-500"
+                    )}
+                  >
+                    <DollarSign className="h-3.5 w-3.5" />
+                  </button>
+                </div>
                 <Input
                   type="number"
                   min="0"
-                  max="100"
-                  value={discountPercent}
+                  value={discountValue}
                   onChange={(e) => {
-                    setDiscountPercent(parseFloat(e.target.value) || 0);
+                    const val = parseFloat(e.target.value) || 0;
+                    setDiscountValue(val);
+
+                    // Apply to all items
+                    if (discountType === "percent") {
+                      setLineItems((prev) =>
+                        prev.map((item) => {
+                          const subtotal = item.quantity * item.unitPrice;
+                          const discountAmount = subtotal * (val / 100);
+                          const taxableAmount = subtotal - discountAmount;
+                          const taxAmount = taxableAmount * (item.taxPercent / 100);
+                          return {
+                            ...item,
+                            discountPercent: val,
+                            amount: taxableAmount + taxAmount,
+                          };
+                        })
+                      );
+                    } else {
+                      // Amount
+                      // Calculate effective % based on current subtotal?
+                      // We need the *current* subtotal of items before discount for this to be accurate,
+                      // but lineItems state has the items.
+                      // Let's calculate total item value (gross).
+                      const totalGross = lineItems.reduce(
+                        (sum, i) => sum + i.quantity * i.unitPrice,
+                        0
+                      );
+
+                      const pct = totalGross > 0 ? (val / totalGross) * 100 : 0;
+
+                      setLineItems((prev) =>
+                        prev.map((item) => {
+                          const subtotal = item.quantity * item.unitPrice;
+                          const discountAmount = subtotal * (pct / 100);
+                          const taxableAmount = subtotal - discountAmount;
+                          const taxAmount = taxableAmount * (item.taxPercent / 100);
+                          return {
+                            ...item,
+                            discountPercent: pct,
+                            amount: taxableAmount + taxAmount,
+                          };
+                        })
+                      );
+                    }
                   }}
                   size="sm"
-                  className="w-16 text-right"
+                  className="w-20 text-right"
+                  placeholder={discountType === "percent" ? "0%" : "0.00"}
                 />
-                <span className="text-sm text-slate-500">%</span>
+                <span className="text-sm text-slate-500">
+                  {discountType === "percent" ? "%" : ""}
+                </span>
                 <span className="ml-auto font-medium text-sm">
                   -{formatCurrency(totals.totalDiscount)}
                 </span>

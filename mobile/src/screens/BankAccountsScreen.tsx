@@ -1,146 +1,96 @@
-import React, { useState, useMemo } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
-  RefreshControl,
-  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@powersync/react-native";
-import { BankAccountRecord } from "../lib/powersync";
-import { Search, ChevronRight, Landmark } from "lucide-react-native";
+import { Wallet, Plus, ChevronRight, Landmark } from "lucide-react-native";
 import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
-import { CustomHeader } from "../components/CustomHeader";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
+import { CustomHeader } from "../components/CustomHeader";
 
-function BankAccountCard({ account, styles, colors }: { account: BankAccountRecord, styles: any, colors: ThemeColors }) {
-  const navigation = useNavigation();
+interface BankAccount {
+  id: string;
+  name: string;
+  bank_name: string;
+  account_number: string;
+  current_balance: number;
+}
 
+function AccountCard({ item, styles, colors, onPress }: any) {
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.7}
-      onPress={() => {
-        navigation.navigate("BankAccountForm", { id: account.id } as any);
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {account.bank_name ? account.bank_name.charAt(0).toUpperCase() : "B"}
-          </Text>
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle}>{account.name}</Text>
-          <Text style={styles.bankName}>{account.bank_name}</Text>
-          <View style={styles.cardMeta}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{account.account_type}</Text>
-            </View>
-          </View>
-        </View>
-        <ChevronRight size={18} color={colors.textMuted} />
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <View style={styles.iconContainer}>
+        <Landmark size={24} color={colors.primary} />
       </View>
-      <View style={styles.cardFooter}>
-        <Text style={styles.cardDetail}>
-          {account.account_number ? `**** ${account.account_number.slice(-4)}` : "No Account #"}
-        </Text>
-        <Text
-          style={[
-            styles.balance,
-            { color: (account.current_balance || 0) >= 0 ? colors.success : colors.danger },
-          ]}
-        >
-          ${Math.abs(account.current_balance || 0).toFixed(2)}
-        </Text>
+      <View style={styles.info}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.details}>{item.bank_name} •••• {item.account_number?.slice(-4)}</Text>
+      </View>
+      <View style={styles.right}>
+        <Text style={styles.balance}>${(item.current_balance || 0).toFixed(2)}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
 export function BankAccountsScreen() {
-  const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  const [search, setSearch] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
+  // Note: Rename file/export to CashBankScreen if we want to unify, but existing nav might rely on "BankAccountsScreen".
+  // I am creating this file as "CashBankScreen" but exporting "BankAccountsScreen" for compat or just making a new one.
+  // Actually, looking at AppNavigator, "BankAccountsScreen" is registered.
+  // I will overwrite `BankAccountsScreen` content here or create `CashBankScreen`.
+  // The implementation plan said "Create CashBankScreen".
+
+  const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  const { data: accounts, isLoading } = useQuery<BankAccountRecord>(
-    `SELECT * FROM bank_accounts 
-     WHERE ($1 IS NULL OR name LIKE $1 OR bank_name LIKE $1) 
-     ORDER BY name ASC`,
-    [search ? `%${search}%` : null]
-  );
+  const { data: accounts } = useQuery<BankAccount>("SELECT * FROM bank_accounts ORDER BY name ASC");
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  };
+  // Also get Cash In Hand balance?
+  // const { data: cash } = useQuery("...");
 
   return (
     <View style={styles.container}>
-      <CustomHeader />
+      <CustomHeader title="Cash & Bank" showBack />
 
-      <View style={styles.searchBar}>
-        <View style={styles.searchInput}>
-          <Search size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchText}
-            placeholder="Search bank accounts..."
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.mainAction} onPress={() => navigation.navigate("CashInHand")}>
+          <View style={styles.actionIcon}>
+            <Wallet size={24} color="white" />
+          </View>
+          <Text style={styles.actionText}>Cash In Hand</Text>
+        </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={accounts || []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BankAccountCard account={item} styles={styles} colors={colors} />}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-        ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.empty}>
-              <Landmark size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>No bank accounts</Text>
-              <Text style={styles.emptySubtext}>
-                Add your first bank account
-              </Text>
-              <TouchableOpacity
-                style={styles.addBtn}
-                onPress={() => (navigation as any).navigate("BankAccountForm")}
-              >
-                <Text style={styles.addBtnText}>+ Add Account</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null
-        }
-      />
+      <View style={styles.listContainer}>
+        <Text style={styles.sectionTitle}>Bank Accounts</Text>
+        <FlatList
+          data={accounts}
+          renderItem={({ item }) => (
+            <AccountCard
+              item={item}
+              styles={styles}
+              colors={colors}
+              onPress={() => navigation.navigate("BankAccountForm", { id: item.id })}
+            />
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.empty}>No bank accounts found.</Text>}
+        />
+      </View>
 
       {/* FAB */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
-        onPress={() => (navigation as any).navigate("BankAccountForm")}
+        style={styles.fab}
+        onPress={() => navigation.navigate("BankAccountForm")}
       >
-        <Text style={styles.fabText}>+ Add</Text>
+        <Plus size={24} color="white" />
       </TouchableOpacity>
     </View>
   );
@@ -151,140 +101,102 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  searchBar: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+  actions: {
+    padding: spacing.lg,
+    flexDirection: 'row',
+    gap: spacing.md,
   },
-  searchInput: {
+  mainAction: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    gap: spacing.md,
+    ...shadows.md,
+  },
+  actionIcon: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 8,
     borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+  },
+  actionText: {
+    color: 'white',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: spacing.lg,
+    ...shadows.sm,
+  },
+  sectionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  list: {
+    gap: spacing.md,
+    paddingBottom: 80,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  searchText: {
-    flex: 1,
-    fontSize: fontSize.md,
-    color: colors.text,
-  },
-  list: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 100,
-    gap: spacing.sm,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadows.sm,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
+  iconContainer: {
+    width: 40,
+    height: 40,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: "#ffffff",
-  },
-  cardInfo: {
+  info: {
     flex: 1,
+    marginLeft: spacing.md,
   },
-  cardTitle: {
+  name: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
     color: colors.text,
   },
-  bankName: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-  },
-  cardMeta: {
-    flexDirection: "row",
-    marginTop: 4,
-  },
-  badge: {
-    backgroundColor: colors.surfaceHover,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  badgeText: {
+  details: {
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
-    textTransform: "capitalize",
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  cardDetail: {
-    fontSize: fontSize.sm,
     color: colors.textMuted,
-    fontFamily: Platform.OS === 'ios' ? "Courier" : "monospace",
+  },
+  right: {
+    alignItems: 'flex-end',
   },
   balance: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
+    color: colors.success,
   },
   empty: {
-    alignItems: "center",
-    paddingVertical: 60,
-    gap: spacing.sm,
-  },
-  emptyText: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-    marginTop: spacing.md,
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
+    textAlign: 'center',
     color: colors.textMuted,
-  },
-  addBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.full,
-    marginTop: spacing.md,
-  },
-  addBtnText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: "#ffffff",
+    marginTop: spacing.xl,
   },
   fab: {
     position: 'absolute',
+    bottom: spacing.xl,
     right: spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.full,
-    ...shadows.md,
-  },
-  fabText: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: "#ffffff",
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.lg,
   },
 });

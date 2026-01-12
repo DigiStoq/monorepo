@@ -6,7 +6,7 @@ import { PowerSyncContext } from "@powersync/react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { AppNavigator } from "./src/navigation/AppNavigator";
-import { getPowerSyncDatabase } from "./src/lib/powersync";
+import { initializePowerSync } from "./src/lib/powersync";
 import type { PowerSyncDatabase } from "@powersync/react-native";
 
 function AppContent(): JSX.Element | null {
@@ -16,17 +16,21 @@ function AppContent(): JSX.Element | null {
 
   useEffect(() => {
     if (isAuthenticated && !db) {
-      try {
-        const database = getPowerSyncDatabase();
-        setDb(database);
-      } catch (error) {
-        console.error("Failed to initialize database:", error);
-        setDbError(
-          error instanceof Error
-            ? error.message
-            : "Database initialization failed"
-        );
-      }
+      const initDb = async () => {
+        try {
+          const database = await initializePowerSync();
+          setDb(database);
+        } catch (error) {
+          console.error("Failed to initialize database:", error);
+          setDbError(
+            error instanceof Error
+              ? error.message
+              : "Database initialization failed"
+          );
+        }
+      };
+
+      initDb();
     }
   }, [isAuthenticated, db]);
 

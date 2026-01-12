@@ -49,6 +49,8 @@ export interface SaleInvoiceFormData {
   dueDate?: string | undefined;
   items: SaleInvoiceItemFormData[];
   discountPercent?: number | undefined;
+  discountAmount?: number | undefined;
+  discountType?: "percent" | "amount";
   notes?: string | undefined;
   terms?: string | undefined;
   transportName?: string | undefined;

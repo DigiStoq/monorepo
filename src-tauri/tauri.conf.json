@@ -29,19 +29,24 @@
   },
   "plugins": {
     "shell": {
-      "open": true
+      "open": "^.*$"
     },
     "sql": {
       "preload": ["sqlite:digistoq.db"]
     }
   },
   "bundle": {
-    "targets": "all",
+    "active": true,
+    "publisher": "DigiStoq",
+    "targets": ["nsis", "msi"],
     "windows": {
       "nsis": {
         "installMode": "currentUser",
         "displayLanguageSelector": false,
         "languages": ["English"]
+      },
+      "wix": {
+        "language": ["en-US"]
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper"

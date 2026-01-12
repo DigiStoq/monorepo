@@ -341,7 +341,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ) => {
     const inputId = id ?? `textarea-${Math.random().toString(36).slice(2, 9)}`;
     const computedState = error ? "error" : state;
-    const internalRef = React.useRef<HTMLTextAreaElement>(null);
+    const internalRef = React.useRef<HTMLTextAreaElement | null>(null);
 
     // Merge refs
     const setRef = React.useCallback(

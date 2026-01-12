@@ -638,11 +638,23 @@ export function getPowerSyncDatabase(): PowerSyncDatabase {
 export async function initializePowerSync(): Promise<PowerSyncDatabase> {
   const db = getPowerSyncDatabase();
 
+  const powersyncUrl = process.env.EXPO_PUBLIC_POWERSYNC_URL;
+  if (!powersyncUrl) {
+    console.error("Error: EXPO_PUBLIC_POWERSYNC_URL is not defined in .env");
+  }
+
   const connector = new SupabaseConnector(
     supabase,
-    process.env.EXPO_PUBLIC_POWERSYNC_URL
+    powersyncUrl || ""
   );
 
+  if (db.connected) {
+    console.log("[Powersync] Already connected, reusing connection.");
+    return db;
+  }
+
+  console.log(`[Powersync] Connecting to: ${powersyncUrl || 'MISSING URL'}`);
+  
   await db.connect(connector);
 
   return db;
