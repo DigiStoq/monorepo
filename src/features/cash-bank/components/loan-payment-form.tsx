@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Button, Input, Select, Textarea, type SelectOption } from "@/components/ui";
+import {
+  Button,
+  Input,
+  NumberInput,
+  Select,
+  Textarea,
+  type SelectOption,
+} from "@/components/ui";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { LoanPaymentFormData } from "../types";
 
 // ============================================================================
@@ -34,13 +42,17 @@ export function LoanPaymentForm({
   suggestedEmiAmount,
   onSubmit,
   onCancel,
-}: LoanPaymentFormProps) {
+}: LoanPaymentFormProps): React.ReactNode {
   const today = new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<LoanPaymentFormData>({
     date: today,
-    principalAmount: suggestedEmiAmount ? Math.round(suggestedEmiAmount * 0.7) : 0,
-    interestAmount: suggestedEmiAmount ? Math.round(suggestedEmiAmount * 0.3) : 0,
+    principalAmount: suggestedEmiAmount
+      ? Math.round(suggestedEmiAmount * 0.7)
+      : 0,
+    interestAmount: suggestedEmiAmount
+      ? Math.round(suggestedEmiAmount * 0.3)
+      : 0,
     paymentMethod: "bank",
     referenceNumber: "",
     notes: "",
@@ -51,13 +63,15 @@ export function LoanPaymentForm({
   const totalAmount = formData.principalAmount + formData.interestAmount;
 
   // Handlers
-  const handleChange = (field: keyof LoanPaymentFormData, value: string | number | undefined) => {
+  const handleChange = (
+    field: keyof LoanPaymentFormData,
+    value: string | number | undefined
+  ): void => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
+        const { [field]: _, ...rest } = prev;
+        return rest;
       });
     }
   };
@@ -82,19 +96,14 @@ export function LoanPaymentForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (validate()) {
       onSubmit(formData);
     }
   };
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,7 +116,9 @@ export function LoanPaymentForm({
           </div>
           <div className="text-right">
             <p className="text-xs text-slate-500">Outstanding</p>
-            <p className="font-bold text-slate-900">{formatCurrency(outstandingAmount)}</p>
+            <p className="font-bold text-slate-900">
+              {formatCurrency(outstandingAmount)}
+            </p>
           </div>
         </div>
       </div>
@@ -120,7 +131,9 @@ export function LoanPaymentForm({
         <Input
           type="date"
           value={formData.date}
-          onChange={(e) => handleChange("date", e.target.value)}
+          onChange={(e) => {
+            handleChange("date", e.target.value);
+          }}
           error={errors.date}
         />
       </div>
@@ -131,36 +144,36 @@ export function LoanPaymentForm({
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Principal Amount
           </label>
-          <Input
-            type="number"
-            value={formData.principalAmount || ""}
-            onChange={(e) => handleChange("principalAmount", parseFloat(e.target.value) || 0)}
+          <NumberInput
+            value={formData.principalAmount}
+            onChange={(val) => {
+              handleChange("principalAmount", val);
+            }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.principalAmount}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Interest Amount
           </label>
-          <Input
-            type="number"
-            value={formData.interestAmount || ""}
-            onChange={(e) => handleChange("interestAmount", parseFloat(e.target.value) || 0)}
+          <NumberInput
+            value={formData.interestAmount}
+            onChange={(val) => {
+              handleChange("interestAmount", val);
+            }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.interestAmount}
           />
         </div>
       </div>
 
       {/* Total Amount Display */}
       <div className="p-3 bg-primary-50 rounded-lg flex items-center justify-between">
-        <span className="text-sm font-medium text-primary-700">Total Payment</span>
-        <span className="text-lg font-bold text-primary-700">{formatCurrency(totalAmount)}</span>
+        <span className="text-sm font-medium text-primary-700">
+          Total Payment
+        </span>
+        <span className="text-lg font-bold text-primary-700">
+          {formatCurrency(totalAmount)}
+        </span>
       </div>
 
       {/* Payment Method */}
@@ -171,7 +184,9 @@ export function LoanPaymentForm({
         <Select
           options={paymentMethodOptions}
           value={formData.paymentMethod}
-          onChange={(value) => handleChange("paymentMethod", value as "cash" | "bank" | "cheque")}
+          onChange={(value) => {
+            handleChange("paymentMethod", value as "cash" | "bank" | "cheque");
+          }}
         />
       </div>
 
@@ -183,17 +198,23 @@ export function LoanPaymentForm({
         <Input
           type="text"
           value={formData.referenceNumber ?? ""}
-          onChange={(e) => handleChange("referenceNumber", e.target.value || undefined)}
+          onChange={(e) => {
+            handleChange("referenceNumber", e.target.value || undefined);
+          }}
           placeholder="Transaction ID, cheque number, etc."
         />
       </div>
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Notes
+        </label>
         <Textarea
           value={formData.notes ?? ""}
-          onChange={(e) => handleChange("notes", e.target.value || undefined)}
+          onChange={(e) => {
+            handleChange("notes", e.target.value || undefined);
+          }}
           placeholder="Additional notes..."
           rows={2}
         />

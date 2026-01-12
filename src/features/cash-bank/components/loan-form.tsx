@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Button, Input, Select, Textarea, type SelectOption } from "@/components/ui";
+import {
+  Button,
+  Input,
+  NumberInput,
+  Select,
+  Textarea,
+  type SelectOption,
+} from "@/components/ui";
 import type { Customer } from "@/features/customers";
 import type { LoanFormData, LoanType, BankAccount } from "../types";
 
@@ -39,7 +46,7 @@ export function LoanForm({
   bankAccounts = [],
   onSubmit,
   onCancel,
-}: LoanFormProps) {
+}: LoanFormProps): React.ReactNode {
   const today = new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<LoanFormData>({
@@ -62,13 +69,15 @@ export function LoanForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Handlers
-  const handleChange = (field: keyof LoanFormData, value: string | number | undefined) => {
+  const handleChange = (
+    field: keyof LoanFormData,
+    value: string | number | undefined
+  ): void => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
+        const { [field]: _, ...rest } = prev;
+        return rest;
       });
     }
   };
@@ -99,7 +108,7 @@ export function LoanForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (validate()) {
       onSubmit(formData);
@@ -132,7 +141,9 @@ export function LoanForm({
         <Select
           options={typeOptions}
           value={formData.type}
-          onChange={(value) => handleChange("type", value as LoanType)}
+          onChange={(value) => {
+            handleChange("type", value as LoanType);
+          }}
         />
       </div>
 
@@ -144,7 +155,9 @@ export function LoanForm({
         <Input
           type="text"
           value={formData.name}
-          onChange={(e) => handleChange("name", e.target.value)}
+          onChange={(e) => {
+            handleChange("name", e.target.value);
+          }}
           placeholder="e.g., Equipment Loan, Personal Loan"
           error={errors.name}
         />
@@ -159,7 +172,9 @@ export function LoanForm({
           <Input
             type="text"
             value={formData.lenderName ?? ""}
-            onChange={(e) => handleChange("lenderName", e.target.value)}
+            onChange={(e) => {
+              handleChange("lenderName", e.target.value);
+            }}
             placeholder="Bank or lender name"
             error={errors.lenderName}
           />
@@ -175,7 +190,9 @@ export function LoanForm({
           <Select
             options={customerOptions}
             value={formData.customerId ?? ""}
-            onChange={(value) => handleChange("customerId", value)}
+            onChange={(value) => {
+              handleChange("customerId", value);
+            }}
           />
           {errors.customerId && (
             <p className="mt-1 text-sm text-error">{errors.customerId}</p>
@@ -189,28 +206,24 @@ export function LoanForm({
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Principal Amount <span className="text-error">*</span>
           </label>
-          <Input
-            type="number"
-            value={formData.principalAmount || ""}
-            onChange={(e) => handleChange("principalAmount", parseFloat(e.target.value) || 0)}
+          <NumberInput
+            value={formData.principalAmount}
+            onChange={(val) => {
+              handleChange("principalAmount", val);
+            }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.principalAmount}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Interest Rate (% per annum)
           </label>
-          <Input
-            type="number"
-            value={formData.interestRate || ""}
-            onChange={(e) => handleChange("interestRate", parseFloat(e.target.value) || 0)}
+          <NumberInput
+            value={formData.interestRate}
+            onChange={(val) => {
+              handleChange("interestRate", val);
+            }}
             placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.interestRate}
           />
         </div>
       </div>
@@ -223,7 +236,9 @@ export function LoanForm({
         <Select
           options={interestTypeOptions}
           value={formData.interestType}
-          onChange={(value) => handleChange("interestType", value as "simple" | "compound")}
+          onChange={(value) => {
+            handleChange("interestType", value as "simple" | "compound");
+          }}
         />
       </div>
 
@@ -236,7 +251,9 @@ export function LoanForm({
           <Input
             type="date"
             value={formData.startDate}
-            onChange={(e) => handleChange("startDate", e.target.value)}
+            onChange={(e) => {
+              handleChange("startDate", e.target.value);
+            }}
             error={errors.startDate}
           />
         </div>
@@ -247,26 +264,29 @@ export function LoanForm({
           <Input
             type="date"
             value={formData.endDate ?? ""}
-            onChange={(e) => handleChange("endDate", e.target.value || undefined)}
+            onChange={(e) => {
+              handleChange("endDate", e.target.value || undefined);
+            }}
           />
         </div>
       </div>
 
       {/* EMI Details */}
       <div className="p-4 bg-slate-50 rounded-lg space-y-4">
-        <h4 className="text-sm font-medium text-slate-700">EMI Details (Optional)</h4>
+        <h4 className="text-sm font-medium text-slate-700">
+          EMI Details (Optional)
+        </h4>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">EMI Amount</label>
-            <Input
-              type="number"
-              value={formData.emiAmount ?? ""}
-              onChange={(e) =>
-                handleChange("emiAmount", e.target.value ? parseFloat(e.target.value) : undefined)
-              }
+            <label className="block text-xs text-slate-500 mb-1">
+              EMI Amount
+            </label>
+            <NumberInput
+              value={formData.emiAmount}
+              onChange={(val) => {
+                handleChange("emiAmount", val || undefined);
+              }}
               placeholder="0.00"
-              min={0}
-              step={0.01}
             />
           </div>
           <div>
@@ -274,22 +294,30 @@ export function LoanForm({
             <Input
               type="number"
               value={formData.emiDay ?? ""}
-              onChange={(e) =>
-                handleChange("emiDay", e.target.value ? parseInt(e.target.value) : undefined)
-              }
+              onChange={(e) => {
+                handleChange(
+                  "emiDay",
+                  e.target.value ? parseInt(e.target.value) : undefined
+                );
+              }}
               placeholder="1-31"
               min={1}
               max={31}
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Total EMIs</label>
+            <label className="block text-xs text-slate-500 mb-1">
+              Total EMIs
+            </label>
             <Input
               type="number"
               value={formData.totalEmis ?? ""}
-              onChange={(e) =>
-                handleChange("totalEmis", e.target.value ? parseInt(e.target.value) : undefined)
-              }
+              onChange={(e) => {
+                handleChange(
+                  "totalEmis",
+                  e.target.value ? parseInt(e.target.value) : undefined
+                );
+              }}
               placeholder="e.g., 36"
               min={1}
             />
@@ -306,7 +334,9 @@ export function LoanForm({
           <Select
             options={bankAccountOptions}
             value={formData.linkedBankAccountId ?? ""}
-            onChange={(value) => handleChange("linkedBankAccountId", value || undefined)}
+            onChange={(value) => {
+              handleChange("linkedBankAccountId", value || undefined);
+            }}
           />
           <p className="text-xs text-slate-500 mt-1">
             Payments will be automatically linked to this account
@@ -316,10 +346,14 @@ export function LoanForm({
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Notes
+        </label>
         <Textarea
           value={formData.notes ?? ""}
-          onChange={(e) => handleChange("notes", e.target.value || undefined)}
+          onChange={(e) => {
+            handleChange("notes", e.target.value || undefined);
+          }}
           placeholder="Additional notes about this loan..."
           rows={2}
         />
@@ -330,7 +364,9 @@ export function LoanForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">{isEditing ? "Update Loan" : "Create Loan"}</Button>
+        <Button type="submit">
+          {isEditing ? "Update Loan" : "Create Loan"}
+        </Button>
       </div>
     </form>
   );

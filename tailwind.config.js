@@ -1,49 +1,70 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Primary - Teal (Main brand color)
-        primary: {
-          50: "#f0fdfa",
-          100: "#ccfbf1",
-          200: "#99f6e4",
-          300: "#5eead4",
-          400: "#2dd4bf",
-          500: "#14b8a6",
-          600: "#0d9488",
-          700: "#0f766e",
-          800: "#115e59",
-          900: "#134e4a",
-          950: "#042f2e",
+        // Theme-aware semantic colors (use CSS variables)
+        app: "rgb(var(--color-bg-app) / <alpha-value>)",
+        card: "rgb(var(--color-bg-card) / <alpha-value>)",
+        elevated: "rgb(var(--color-bg-elevated) / <alpha-value>)",
+        subtle: "rgb(var(--color-bg-subtle) / <alpha-value>)",
+        muted: "rgb(var(--color-bg-muted) / <alpha-value>)",
+        
+        // Text colors
+        "text-primary": "rgb(var(--color-text-primary) / <alpha-value>)",
+        "text-heading": "rgb(var(--color-text-heading) / <alpha-value>)",
+        "text-number": "rgb(var(--color-text-number) / <alpha-value>)",
+        "text-secondary": "rgb(var(--color-text-secondary) / <alpha-value>)",
+        "text-tertiary": "rgb(var(--color-text-tertiary) / <alpha-value>)",
+        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+        
+        // Border colors
+        "border-primary": "rgb(var(--color-border-primary) / <alpha-value>)",
+        "border-secondary": "rgb(var(--color-border-secondary) / <alpha-value>)",
+        
+        // Sidebar
+        sidebar: {
+          DEFAULT: "rgb(var(--color-sidebar-bg) / <alpha-value>)",
+          hover: "rgb(var(--color-sidebar-hover) / <alpha-value>)",
+          active: "rgb(var(--color-sidebar-active) / <alpha-value>)",
         },
+        
+        // Primary - Teal (using CSS variables for theme awareness)
+        primary: {
+          50: "rgb(var(--color-primary-50) / <alpha-value>)",
+          100: "rgb(var(--color-primary-100) / <alpha-value>)",
+          200: "rgb(var(--color-primary-200) / <alpha-value>)",
+          300: "rgb(var(--color-primary-300) / <alpha-value>)",
+          400: "rgb(var(--color-primary-400) / <alpha-value>)",
+          500: "rgb(var(--color-primary-500) / <alpha-value>)",
+          600: "rgb(var(--color-primary-600) / <alpha-value>)",
+          700: "rgb(var(--color-primary-700) / <alpha-value>)",
+          800: "rgb(var(--color-primary-800) / <alpha-value>)",
+          900: "rgb(var(--color-primary-900) / <alpha-value>)",
+        },
+        
         // Semantic colors
         success: {
-          light: "#dcfce7",
-          DEFAULT: "#22c55e",
-          dark: "#15803d",
+          light: "rgb(var(--color-success-light) / <alpha-value>)",
+          DEFAULT: "rgb(var(--color-success) / <alpha-value>)",
+          dark: "rgb(var(--color-success-dark) / <alpha-value>)",
         },
         warning: {
-          light: "#fef3c7",
-          DEFAULT: "#f59e0b",
-          dark: "#b45309",
+          light: "rgb(var(--color-warning-light) / <alpha-value>)",
+          DEFAULT: "rgb(var(--color-warning) / <alpha-value>)",
+          dark: "rgb(var(--color-warning-dark) / <alpha-value>)",
         },
         error: {
-          light: "#fee2e2",
-          DEFAULT: "#ef4444",
-          dark: "#b91c1c",
+          light: "rgb(var(--color-error-light) / <alpha-value>)",
+          DEFAULT: "rgb(var(--color-error) / <alpha-value>)",
+          dark: "rgb(var(--color-error-dark) / <alpha-value>)",
         },
         info: {
-          light: "#dbeafe",
-          DEFAULT: "#3b82f6",
-          dark: "#1d4ed8",
-        },
-        // Sidebar dark background
-        sidebar: {
-          DEFAULT: "#0f172a",
-          hover: "#1e293b",
-          active: "#334155",
+          light: "rgb(var(--color-info-light) / <alpha-value>)",
+          DEFAULT: "rgb(var(--color-info) / <alpha-value>)",
+          dark: "rgb(var(--color-info-dark) / <alpha-value>)",
         },
       },
       fontFamily: {
@@ -72,6 +93,9 @@ export default {
         DEFAULT: "0.625rem", // 10px
         lg: "1rem", // 16px
         xl: "1.5rem", // 24px
+      },
+      borderColor: {
+        DEFAULT: "rgb(var(--color-border-primary) / <alpha-value>)",
       },
       boxShadow: {
         soft: "0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 16px -4px rgb(0 0 0 / 0.12)",

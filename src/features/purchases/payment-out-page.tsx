@@ -1,15 +1,25 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ConfirmDeleteDialog,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { PaymentOutList, PaymentOutDetail, PaymentOutForm } from "./components";
 import { usePaymentOuts, usePaymentOutMutations } from "@/hooks/usePaymentOuts";
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices";
 import { useCustomers } from "@/hooks/useCustomers";
-import type { PaymentOut, PaymentOutFormData } from "./types";
+import type { PaymentOut, PaymentOutFormData, PaymentOutMode } from "./types";
+import { SearchInput, Select, type SelectOption } from "@/components/ui";
+import { Wallet, Banknote, Building2 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
-export function PaymentOutPage() {
+export function PaymentOutPage(): React.ReactNode {
   // Data from PowerSync
   const { payments, isLoading, error } = usePaymentOuts();
   const { customers } = useCustomers({ type: "supplier" });
@@ -17,9 +27,114 @@ export function PaymentOutPage() {
   const { createPayment, deletePayment } = usePaymentOutMutations();
 
   // State
-  const [selectedPayment, setSelectedPayment] = useState<PaymentOut | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentOut | null>(
+    null
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  interface PaymentFilters {
+    search: string;
+    paymentMode: PaymentOutMode | "all";
+    sortBy: "date" | "amount" | "supplier";
+    sortOrder: "asc" | "desc";
+  }
+
+  // Filter State
+  const [filters, setFilters] = useState<PaymentFilters>({
+    search: "",
+    paymentMode: "all",
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+
+  const paymentModeOptions: SelectOption[] = [
+    { value: "all", label: "All Modes" },
+    { value: "cash", label: "Cash" },
+    { value: "bank", label: "Bank Transfer" },
+    { value: "card", label: "Card" },
+    { value: "ach", label: "ACH Transfer" },
+    { value: "cheque", label: "Cheque" },
+    { value: "other", label: "Other" },
+  ];
+
+  // Filter Logic
+  const filteredPayments = useMemo(() => {
+    return payments
+      .filter((payment) => {
+        // Search filter
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const matchesNumber = payment.paymentNumber
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesCustomer = payment.customerName
+            .toLowerCase()
+            .includes(searchLower);
+          const matchesRef = payment.referenceNumber
+            ?.toLowerCase()
+            .includes(searchLower);
+          if (!matchesNumber && !matchesCustomer && !matchesRef) return false;
+        }
+
+        // Payment mode filter
+        if (
+          filters.paymentMode !== "all" &&
+          payment.paymentMode !== filters.paymentMode
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+
+        switch (filters.sortBy) {
+          case "date":
+            comparison =
+              new Date(b.date).getTime() - new Date(a.date).getTime();
+            break;
+          case "amount":
+            comparison = b.amount - a.amount;
+            break;
+          case "supplier":
+            comparison = a.customerName.localeCompare(b.customerName);
+            break;
+        }
+
+        return filters.sortOrder === "desc" ? comparison : -comparison;
+      });
+  }, [payments, filters]);
+
+  // Totals Calculation
+  const totals = useMemo(() => {
+    if (!filteredPayments.length)
+      return { total: 0, cash: 0, bank: 0, other: 0 };
+
+    return filteredPayments.reduce(
+      (acc, payment) => {
+        acc.total += payment.amount;
+        if (payment.paymentMode === "cash") {
+          acc.cash += payment.amount;
+        } else if (payment.paymentMode === "bank") {
+          acc.bank += payment.amount;
+        } else {
+          acc.other += payment.amount;
+        }
+        return acc;
+      },
+      { total: 0, cash: 0, bank: 0, other: 0 }
+    );
+  }, [filteredPayments]);
+
+  const { formatCurrency } = useCurrency();
+
+  // Delete confirmation state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<PaymentOut | null>(
+    null
+  );
 
   // Update selected payment when data changes
   const currentSelectedPayment = useMemo(() => {
@@ -28,26 +143,41 @@ export function PaymentOutPage() {
   }, [payments, selectedPayment]);
 
   // Handlers
-  const handlePaymentClick = (payment: PaymentOut) => {
+  const handlePaymentClick = (payment: PaymentOut): void => {
     setSelectedPayment(payment);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedPayment(null);
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitPayment = async (data: PaymentOutFormData) => {
+  const handleSubmitPayment = async (
+    data: PaymentOutFormData
+  ): Promise<void> => {
     setIsSubmitting(true);
     try {
-      await createPayment(data);
+      const customer = customers.find((c) => c.id === data.customerId);
+      const invoice = invoices.find((i) => i.id === data.invoiceId);
+      await createPayment({
+        paymentNumber: `PAY-${Date.now()}`, // Generate payment number
+        supplierId: data.customerId,
+        supplierName: customer?.name ?? "Unknown",
+        date: data.date,
+        amount: data.amount,
+        paymentMode: data.paymentMode,
+        referenceNumber: data.referenceNumber,
+        invoiceId: data.invoiceId,
+        invoiceNumber: invoice?.invoiceNumber,
+        notes: data.notes,
+      });
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to record payment:", err);
@@ -56,12 +186,21 @@ export function PaymentOutPage() {
     }
   };
 
-  const handleDeletePayment = async () => {
+  const handleDeleteClick = (): void => {
     if (currentSelectedPayment) {
+      setPaymentToDelete(currentSelectedPayment);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (paymentToDelete) {
       setIsSubmitting(true);
       try {
-        await deletePayment(currentSelectedPayment.id);
+        await deletePayment(paymentToDelete.id);
         setSelectedPayment(null);
+        setIsDeleteModalOpen(false);
+        setPaymentToDelete(null);
       } catch (err) {
         console.error("Failed to delete payment:", err);
       } finally {
@@ -87,13 +226,93 @@ export function PaymentOutPage() {
         title="Payment Out"
         description="Record payments made to suppliers"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleRecordPayment}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleRecordPayment}
+          >
             Record Payment
           </Button>
         }
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Filters Header - Full Width */}
+      <div className="bg-card border-b border-border-primary px-6 py-4">
+        <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <SearchInput
+              placeholder="Search payments..."
+              value={filters.search}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, search: e.target.value }));
+              }}
+              className="w-full sm:w-72"
+            />
+
+            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <Select
+                options={paymentModeOptions}
+                value={filters.paymentMode}
+                onChange={(value) => {
+                  setFilters((f) => ({
+                    ...f,
+                    paymentMode: value as PaymentOutMode | "all",
+                  }));
+                }}
+                size="md"
+                className="min-w-[140px]"
+              />
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Wallet className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Total Paid
+                </p>
+                <p className="text-lg font-bold text-slate-900 leading-none">
+                  {formatCurrency(totals.total)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-green-50 rounded-lg border border-green-100 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Banknote className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs text-green-600 font-medium uppercase tracking-wider">
+                  Cash
+                </p>
+                <p className="text-lg font-bold text-green-700 leading-none">
+                  {formatCurrency(totals.cash)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
+              <div className="p-1.5 bg-white rounded-md shadow-sm">
+                <Building2 className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">
+                  Bank
+                </p>
+                <p className="text-lg font-bold text-blue-700 leading-none">
+                  {formatCurrency(totals.bank)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden bg-app">
         {/* Payment List */}
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
@@ -101,47 +320,98 @@ export function PaymentOutPage() {
               <Spinner size="lg" />
             </div>
           ) : (
-            <PaymentOutList
-              payments={payments}
-              onPaymentClick={handlePaymentClick}
-              onRecordPayment={handleRecordPayment}
-            />
+            <div className="max-w-5xl mx-auto flex gap-4">
+              <div className="w-full max-w-[420px] shrink-0 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <PaymentOutList
+                    payments={filteredPayments}
+                    onPaymentClick={handlePaymentClick}
+                    hasActiveFilters={
+                      !!filters.search || filters.paymentMode !== "all"
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Detail View */}
+              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-slate-200 shadow-sm">
+                {currentSelectedPayment ? (
+                  <div className="h-full overflow-y-auto">
+                    <PaymentOutDetail
+                      payment={currentSelectedPayment}
+                      onClose={handleCloseDetail}
+                      onEdit={() => {
+                        setIsFormOpen(true);
+                      }}
+                      onDelete={handleDeleteClick}
+                      onPrint={() => {
+                        /* TODO: Implement print */
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                    <Wallet className="h-16 w-16 mb-4 opacity-20" />
+                    <p className="text-lg font-medium">
+                      Select a payment to view details
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Payment Detail Panel */}
-        {currentSelectedPayment && (
-          <div className="w-96 border-l border-slate-200 bg-white overflow-hidden">
-            <PaymentOutDetail
-              payment={currentSelectedPayment}
-              onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeletePayment}
-              onPrint={() => console.log("Print payment")}
-              onShare={() => console.log("Share payment")}
-            />
-          </div>
-        )}
       </div>
 
       {/* Payment Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>
-            Record Payment
-          </ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>Record Payment</ModalHeader>
           <ModalBody className="p-0">
             <PaymentOutForm
               customers={customers}
               invoices={invoices}
-              onSubmit={handleSubmitPayment}
+              onSubmit={(data) => {
+                void handleSubmitPayment(data);
+              }}
               onCancel={handleCloseForm}
-              isSubmitting={isSubmitting}
               className="p-6"
             />
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPaymentToDelete(null);
+        }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+        title="Delete Payment"
+        itemName={paymentToDelete?.paymentNumber ?? ""}
+        itemType="Payment"
+        warningMessage={
+          paymentToDelete?.invoiceId
+            ? "This will delete the payment and reverse the balance on the linked invoice."
+            : "This will permanently delete this payment record and reverse the supplier balance."
+        }
+        linkedItems={
+          paymentToDelete?.invoiceId
+            ? [
+              {
+                type: "Invoice Link",
+                count: 1,
+                description: "Balance will be reversed",
+              },
+            ]
+            : undefined
+        }
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

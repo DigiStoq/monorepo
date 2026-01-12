@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { PaymentIn, PaymentFormData } from "@/features/sales/types";
+import type { PaymentIn, PaymentMode } from "@/features/sales/types";
 
 // Database row type (snake_case columns from SQLite)
 interface PaymentInRow {
@@ -34,7 +34,7 @@ function mapRowToPaymentIn(row: PaymentInRow): PaymentIn {
     customerName: row.customer_name,
     date: row.date,
     amount: row.amount,
-    paymentMode: row.payment_mode,
+    paymentMode: row.payment_mode as PaymentMode,
     referenceNumber: row.reference_number ?? undefined,
     invoiceId: row.invoice_id ?? undefined,
     invoiceNumber: row.invoice_number ?? undefined,
@@ -51,24 +51,53 @@ export function usePaymentIns(filters?: {
   dateTo?: string;
   search?: string;
 }): { payments: PaymentIn[]; isLoading: boolean; error: Error | undefined } {
-  const customerFilter = filters?.customerId ?? null;
-  const modeFilter = filters?.paymentMode ?? null;
-  const dateFromFilter = filters?.dateFrom ?? null;
-  const dateToFilter = filters?.dateTo ?? null;
-  const searchFilter = filters?.search ? `%${filters.search}%` : null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: string[] = [];
 
-  const { data, isLoading, error } = useQuery<PaymentInRow>(
-    `SELECT * FROM payment_ins
-     WHERE ($1 IS NULL OR customer_id = $1)
-     AND ($2 IS NULL OR payment_mode = $2)
-     AND ($3 IS NULL OR date >= $3)
-     AND ($4 IS NULL OR date <= $4)
-     AND ($5 IS NULL OR receipt_number LIKE $5 OR customer_name LIKE $5)
-     ORDER BY date DESC, created_at DESC`,
-    [customerFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter]
-  );
+    if (filters?.customerId) {
+      conditions.push("customer_id = ?");
+      params.push(filters.customerId);
+    }
 
-  const payments = data.map(mapRowToPaymentIn);
+    if (filters?.paymentMode) {
+      conditions.push("payment_mode = ?");
+      params.push(filters.paymentMode);
+    }
+
+    if (filters?.dateFrom) {
+      conditions.push("date >= ?");
+      params.push(filters.dateFrom);
+    }
+
+    if (filters?.dateTo) {
+      conditions.push("date <= ?");
+      params.push(filters.dateTo);
+    }
+
+    if (filters?.search) {
+      conditions.push("(receipt_number LIKE ? OR customer_name LIKE ?)");
+      const searchPattern = `%${filters.search}%`;
+      params.push(searchPattern, searchPattern);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM payment_ins ${whereClause} ORDER BY date DESC, created_at DESC`,
+      params,
+    };
+  }, [
+    filters?.customerId,
+    filters?.paymentMode,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
+
+  const { data, isLoading, error } = useQuery<PaymentInRow>(query, params);
+
+  const payments = useMemo(() => data.map(mapRowToPaymentIn), [data]);
 
   return { payments, isLoading, error };
 }
@@ -79,7 +108,9 @@ export function usePaymentInById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<PaymentInRow>(
-    id ? `SELECT * FROM payment_ins WHERE id = ?` : `SELECT * FROM payment_ins WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM payment_ins WHERE id = ?`
+      : `SELECT * FROM payment_ins WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -88,8 +119,22 @@ export function usePaymentInById(id: string | null): {
   return { payment, isLoading, error };
 }
 
+// Internal type for creating a payment (includes receiptNumber, customerName, invoiceNumber)
+interface CreatePaymentData {
+  receiptNumber: string;
+  customerId: string;
+  customerName: string;
+  date: string;
+  amount: number;
+  paymentMode: string;
+  referenceNumber?: string;
+  invoiceId?: string;
+  invoiceNumber?: string;
+  notes?: string;
+}
+
 interface PaymentInMutations {
-  createPayment: (data: PaymentFormData) => Promise<string>;
+  createPayment: (data: CreatePaymentData) => Promise<string>;
   deletePayment: (id: string) => Promise<void>;
 }
 
@@ -97,7 +142,7 @@ export function usePaymentInMutations(): PaymentInMutations {
   const db = getPowerSyncDatabase();
 
   const createPayment = useCallback(
-    async (data: PaymentFormData): Promise<string> => {
+    async (data: CreatePaymentData): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
@@ -130,7 +175,7 @@ export function usePaymentInMutations(): PaymentInMutations {
           `UPDATE sale_invoices
            SET amount_paid = amount_paid + ?,
                amount_due = amount_due - ?,
-               status = CASE WHEN amount_due - ? <= 0 THEN 'paid' ELSE 'partial' END,
+               status = CASE WHEN amount_due <= ? THEN 'paid' ELSE 'partial' END,
                updated_at = ?
            WHERE id = ?`,
           [data.amount, data.amount, data.amount, now, data.invoiceId]
@@ -157,10 +202,10 @@ export function usePaymentInMutations(): PaymentInMutations {
         `SELECT customer_id, invoice_id, amount FROM payment_ins WHERE id = ?`,
         [id]
       );
-      const rows = result.rows._array as PaymentQueryRow[];
-      const payment = rows[0];
+      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
 
-      if (payment) {
+      if (rows.length > 0) {
+        const payment = rows[0];
         const now = new Date().toISOString();
 
         // Reverse customer balance
@@ -180,7 +225,13 @@ export function usePaymentInMutations(): PaymentInMutations {
                  status = CASE WHEN amount_paid - ? <= 0 THEN 'sent' ELSE 'partial' END,
                  updated_at = ?
              WHERE id = ?`,
-            [payment.amount, payment.amount, payment.amount, now, payment.invoice_id]
+            [
+              payment.amount,
+              payment.amount,
+              payment.amount,
+              now,
+              payment.invoice_id,
+            ]
           );
         }
       }

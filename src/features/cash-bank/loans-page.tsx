@@ -1,16 +1,25 @@
 import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
-import { Button, Modal, ModalContent, ModalHeader, ModalBody } from "@/components/ui";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+} from "@/components/ui";
 import { Spinner } from "@/components/common";
 import { Plus } from "lucide-react";
 import { LoanList, LoanDetail, LoanForm, LoanPaymentForm } from "./components";
 import { useLoans, useLoanMutations } from "@/hooks/useLoans";
-import { useLoanPayments, useLoanPaymentMutations } from "@/hooks/useLoanPayments";
+import {
+  useLoanPayments,
+  useLoanPaymentMutations,
+} from "@/hooks/useLoanPayments";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import type { Loan, LoanFormData, LoanPaymentFormData } from "./types";
 
-export function LoansPage() {
+export function LoansPage(): React.ReactNode {
   // Data from PowerSync
   const { loans, isLoading, error } = useLoans();
   const { customers } = useCustomers();
@@ -35,26 +44,28 @@ export function LoansPage() {
   );
 
   // Handlers
-  const handleLoanClick = (loan: Loan) => {
+  const handleLoanClick = (loan: Loan): void => {
     setSelectedLoan(loan);
   };
 
-  const handleCloseDetail = () => {
+  const handleCloseDetail = (): void => {
     setSelectedLoan(null);
   };
 
-  const handleCreateLoan = () => {
+  const handleCreateLoan = (): void => {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseForm = (): void => {
     setIsFormOpen(false);
   };
 
-  const handleSubmitLoan = async (data: LoanFormData) => {
+  const handleSubmitLoan = async (data: LoanFormData): Promise<void> => {
     try {
       // Find customer name if customer ID is provided
-      const customer = data.customerId ? customers.find((c) => c.id === data.customerId) : null;
+      const customer = data.customerId
+        ? customers.find((c) => c.id === data.customerId)
+        : null;
       await createLoan({
         name: data.name,
         type: data.type,
@@ -77,7 +88,7 @@ export function LoansPage() {
     }
   };
 
-  const handleDeleteLoan = async () => {
+  const handleDeleteLoan = async (): Promise<void> => {
     if (currentSelectedLoan) {
       try {
         await deleteLoan(currentSelectedLoan.id);
@@ -88,15 +99,17 @@ export function LoansPage() {
     }
   };
 
-  const handleOpenPaymentForm = () => {
+  const handleOpenPaymentForm = (): void => {
     setIsPaymentFormOpen(true);
   };
 
-  const handleClosePaymentForm = () => {
+  const handleClosePaymentForm = (): void => {
     setIsPaymentFormOpen(false);
   };
 
-  const handleSubmitPayment = async (data: LoanPaymentFormData) => {
+  const handleSubmitPayment = async (
+    data: LoanPaymentFormData
+  ): Promise<void> => {
     if (!currentSelectedLoan) return;
 
     try {
@@ -134,7 +147,10 @@ export function LoansPage() {
         title="Loans"
         description="Manage loans taken and given"
         actions={
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleCreateLoan}>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={handleCreateLoan}
+          >
             Add Loan
           </Button>
         }
@@ -148,10 +164,7 @@ export function LoansPage() {
               <Spinner size="lg" />
             </div>
           ) : (
-            <LoanList
-              loans={loans}
-              onLoanClick={handleLoanClick}
-            />
+            <LoanList loans={loans} onLoanClick={handleLoanClick} />
           )}
         </div>
 
@@ -162,8 +175,12 @@ export function LoansPage() {
               loan={currentSelectedLoan}
               payments={loanPayments}
               onClose={handleCloseDetail}
-              onEdit={() => setIsFormOpen(true)}
-              onDelete={handleDeleteLoan}
+              onEdit={() => {
+                setIsFormOpen(true);
+              }}
+              onDelete={() => {
+                void handleDeleteLoan();
+              }}
               onAddPayment={handleOpenPaymentForm}
             />
           </div>
@@ -173,14 +190,14 @@ export function LoansPage() {
       {/* Loan Form Modal */}
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="xl">
         <ModalContent>
-          <ModalHeader onClose={handleCloseForm}>
-            Add Loan
-          </ModalHeader>
+          <ModalHeader onClose={handleCloseForm}>Add Loan</ModalHeader>
           <ModalBody>
             <LoanForm
               customers={customers}
               bankAccounts={bankAccounts}
-              onSubmit={handleSubmitLoan}
+              onSubmit={(data) => {
+                void handleSubmitLoan(data);
+              }}
               onCancel={handleCloseForm}
             />
           </ModalBody>
@@ -188,7 +205,11 @@ export function LoansPage() {
       </Modal>
 
       {/* Payment Form Modal */}
-      <Modal isOpen={isPaymentFormOpen} onClose={handleClosePaymentForm} size="md">
+      <Modal
+        isOpen={isPaymentFormOpen}
+        onClose={handleClosePaymentForm}
+        size="md"
+      >
         <ModalContent>
           <ModalHeader onClose={handleClosePaymentForm}>
             Record Loan Payment
@@ -199,7 +220,9 @@ export function LoansPage() {
                 loanName={currentSelectedLoan.name}
                 outstandingAmount={currentSelectedLoan.outstandingAmount}
                 suggestedEmiAmount={currentSelectedLoan.emiAmount}
-                onSubmit={handleSubmitPayment}
+                onSubmit={(data) => {
+                  void handleSubmitPayment(data);
+                }}
                 onCancel={handleClosePaymentForm}
               />
             )}

@@ -6,7 +6,10 @@ interface PageTransitionProps {
   className?: string;
 }
 
-export function PageTransition({ children, className }: PageTransitionProps) {
+export function PageTransition({
+  children,
+  className,
+}: PageTransitionProps): React.ReactNode {
   return (
     <motion.div
       initial="initial"

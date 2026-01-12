@@ -50,7 +50,7 @@ export function Breadcrumbs({
   showHomeIcon = true,
   onNavigate,
   className,
-}: BreadcrumbsProps) {
+}: BreadcrumbsProps): React.ReactNode {
   if (items.length === 0) return null;
 
   return (
@@ -63,13 +63,13 @@ export function Breadcrumbs({
               <button
                 type="button"
                 onClick={() => onNavigate?.({ label: "Home", href: "/" })}
-                className="p-1 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100"
+                className="p-1 text-text-muted hover:text-text-secondary transition-colors rounded hover:bg-subtle"
                 aria-label="Home"
               >
                 <Home className="h-4 w-4" />
               </button>
             </li>
-            <li className="text-slate-300">
+            <li className="text-text-muted">
               <ChevronRight className="h-4 w-4" />
             </li>
           </>
@@ -87,7 +87,7 @@ export function Breadcrumbs({
                   onClick={() => onNavigate?.(item)}
                   className={cn(
                     "flex items-center gap-1.5 px-1.5 py-0.5 rounded",
-                    "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+                    "text-text-tertiary hover:text-text-secondary hover:bg-subtle",
                     "transition-colors"
                   )}
                 >
@@ -98,7 +98,7 @@ export function Breadcrumbs({
                 <span
                   className={cn(
                     "flex items-center gap-1.5 px-1.5 py-0.5",
-                    isLast ? "text-slate-900 font-medium" : "text-slate-500"
+                    isLast ? "text-text-primary font-medium" : "text-text-tertiary"
                   )}
                   aria-current={isLast ? "page" : undefined}
                 >
@@ -107,9 +107,7 @@ export function Breadcrumbs({
                 </span>
               )}
 
-              {!isLast && (
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              )}
+              {!isLast && <ChevronRight className="h-4 w-4 text-text-muted" />}
             </li>
           );
         })}
@@ -142,20 +140,20 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
       <div
         ref={ref}
         className={cn(
-          "bg-white border-b border-slate-200",
+          "bg-card border-b border-border-primary shadow-sm shadow-slate-200/50 dark:shadow-none transition-all duration-200",
           sticky && "sticky top-0 z-sticky",
           className
         )}
         {...props}
       >
-        <div className="px-6 py-4">
+        <div className="px-8 py-6">
           {/* Breadcrumbs */}
           {breadcrumbs && breadcrumbs.length > 0 && (
             <Breadcrumbs
               items={breadcrumbs}
               showHomeIcon={showHomeIcon}
               {...(onNavigate ? { onNavigate } : {})}
-              className="mb-3"
+              className="mb-4"
             />
           )}
 
@@ -163,29 +161,29 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {/* Back + Title */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {onBack && (
                   <button
                     type="button"
                     onClick={onBack}
                     className={cn(
-                      "p-1.5 -ml-1.5 rounded-lg",
-                      "text-slate-400 hover:text-slate-600 hover:bg-slate-100",
+                      "p-2 -ml-2 rounded-xl",
+                      "text-text-muted hover:text-text-secondary hover:bg-subtle",
                       "transition-colors"
                     )}
                     aria-label="Go back"
                   >
-                    <ChevronRight className="h-5 w-5 rotate-180" />
+                    <ChevronRight className="h-5 w-5 rotate-180" strokeWidth={2.5} />
                   </button>
                 )}
-                <h1 className="text-2xl font-bold text-slate-900 font-display truncate">
+                <h1 className="text-3xl font-black text-text-primary font-display tracking-tight truncate">
                   {title}
                 </h1>
               </div>
 
               {/* Description */}
               {description && (
-                <p className="mt-1 text-sm text-slate-500 max-w-2xl">
+                <p className="mt-1 text-sm text-text-tertiary max-w-2xl">
                   {description}
                 </p>
               )}
@@ -193,9 +191,7 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
 
             {/* Actions */}
             {actions && (
-              <div className="shrink-0 flex items-center gap-2">
-                {actions}
-              </div>
+              <div className="shrink-0 flex items-center gap-2">{actions}</div>
             )}
           </div>
         </div>
@@ -254,11 +250,11 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(
         {...props}
       >
         <div className="flex-1 min-w-0">
-          <h2 className={cn("text-slate-900 font-display", styles.title)}>
+          <h2 className={cn("text-text-primary font-display", styles.title)}>
             {title}
           </h2>
           {description && (
-            <p className={cn("mt-1 text-slate-500", styles.description)}>
+            <p className={cn("mt-1 text-text-tertiary", styles.description)}>
               {description}
             </p>
           )}

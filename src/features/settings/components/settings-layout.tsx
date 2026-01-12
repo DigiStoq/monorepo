@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -18,9 +18,9 @@ export function SettingsLayout({
   children,
   actions,
   showBackButton = true,
-}: SettingsLayoutProps) {
+}: SettingsLayoutProps): React.ReactNode {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-app">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -34,12 +34,14 @@ export function SettingsLayout({
           )}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+              <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
               {description && (
-                <p className="mt-1 text-slate-500">{description}</p>
+                <p className="mt-1 text-text-tertiary">{description}</p>
               )}
             </div>
-            {actions && <div className="flex items-center gap-3">{actions}</div>}
+            {actions && (
+              <div className="flex items-center gap-3">{actions}</div>
+            )}
           </div>
         </div>
 

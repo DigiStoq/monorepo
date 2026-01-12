@@ -54,15 +54,15 @@ const variantStyles: Record<ButtonVariant, string> = {
   ].join(" "),
 
   secondary: [
-    "bg-slate-100 text-slate-700",
-    "hover:bg-slate-200",
-    "focus-visible:ring-slate-400",
+    "bg-muted text-text-primary",
+    "hover:bg-subtle",
+    "focus-visible:ring-border-secondary",
   ].join(" "),
 
   ghost: [
-    "bg-transparent text-slate-600",
-    "hover:bg-slate-100 hover:text-slate-900",
-    "focus-visible:ring-slate-400",
+    "bg-transparent text-text-secondary",
+    "hover:bg-subtle hover:text-text-primary",
+    "focus-visible:ring-border-secondary",
   ].join(" "),
 
   danger: [
@@ -123,7 +123,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           fullWidth && "w-full",
           className
         )}
-        disabled={disabled || isLoading}
+        disabled={(disabled ?? false) || isLoading}
         {...props}
       >
         {isLoading ? (
@@ -153,8 +153,10 @@ Button.displayName = "Button";
 // ICON BUTTON VARIANT
 // ============================================================================
 
-export interface IconButtonProps
-  extends Omit<ButtonProps, "leftIcon" | "rightIcon" | "children"> {
+export interface IconButtonProps extends Omit<
+  ButtonProps,
+  "leftIcon" | "rightIcon" | "children"
+> {
   /** Icon to display */
   icon: ReactNode;
   /** Accessible label */

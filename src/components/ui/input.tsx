@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useState,
 } from "react";
+import * as React from "react";
 import { cn } from "@/lib/cn";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
@@ -14,8 +15,10 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 export type InputSize = "sm" | "md" | "lg";
 export type InputState = "default" | "error" | "success";
 
-export interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+export interface InputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "size"
+> {
   /** Input size */
   size?: InputSize;
   /** Validation state */
@@ -43,7 +46,7 @@ export interface InputProps
 const wrapperStyles = "relative flex flex-col gap-1.5";
 
 const labelStyles = [
-  "text-sm font-medium text-slate-700",
+  "text-sm font-medium text-text-secondary",
   "cursor-pointer",
 ].join(" ");
 
@@ -51,13 +54,13 @@ const inputWrapperStyles = "relative flex items-center";
 
 const baseInputStyles = [
   "w-full",
-  "bg-white",
-  "border border-slate-300",
+  "bg-card",
+  "border border-border-secondary",
   "rounded-[10px]",
-  "text-slate-900 placeholder:text-slate-400",
+  "text-text-primary placeholder:text-text-muted",
   "transition-all duration-200",
   "focus:outline-none focus:ring-2 focus:ring-offset-0",
-  "disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed",
+  "disabled:bg-subtle disabled:text-text-tertiary disabled:cursor-not-allowed",
 ].join(" ");
 
 const sizeStyles: Record<InputSize, string> = {
@@ -68,8 +71,8 @@ const sizeStyles: Record<InputSize, string> = {
 
 const stateStyles: Record<InputState, string> = {
   default: [
-    "border-slate-300",
-    "hover:border-slate-400",
+    "border-border-secondary",
+    "hover:border-border-primary",
     "focus:border-primary-500 focus:ring-primary-500/20",
   ].join(" "),
   error: [
@@ -84,13 +87,13 @@ const stateStyles: Record<InputState, string> = {
   ].join(" "),
 };
 
-const iconStyles = "absolute text-slate-400 pointer-events-none";
+const iconStyles = "absolute text-text-muted pointer-events-none";
 const leftIconStyles = "left-3";
 const rightIconStyles = "right-3";
 
 const helperTextStyles = "text-xs";
 const errorTextStyles = "text-error";
-const defaultHelperStyles = "text-slate-500";
+const defaultHelperStyles = "text-text-tertiary";
 
 // ============================================================================
 // COMPONENT
@@ -125,7 +128,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Compute actual type
     const computedType =
-      isPasswordType && showPassword ? "text" : type ?? "text";
+      isPasswordType && showPassword ? "text" : (type ?? "text");
 
     // Compute state from error prop
     const computedState = error ? "error" : state;
@@ -135,10 +138,23 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Compute padding for icons
     const hasLeftIcon = !!leftIcon;
-    const hasRightIcon = !!rightIcon || shouldShowToggle || computedState !== "default";
+    const hasRightIcon =
+      !!rightIcon || shouldShowToggle || computedState !== "default";
 
-    const paddingLeft = hasLeftIcon ? (size === "sm" ? "pl-8" : size === "lg" ? "pl-12" : "pl-10") : "";
-    const paddingRight = hasRightIcon ? (size === "sm" ? "pr-8" : size === "lg" ? "pr-12" : "pr-10") : "";
+    const paddingLeft = hasLeftIcon
+      ? size === "sm"
+        ? "pl-8"
+        : size === "lg"
+          ? "pl-12"
+          : "pl-10"
+      : "";
+    const paddingRight = hasRightIcon
+      ? size === "sm"
+        ? "pr-8"
+        : size === "lg"
+          ? "pr-12"
+          : "pr-10"
+      : "";
 
     // State icon
     const stateIcon =
@@ -159,9 +175,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className={inputWrapperStyles}>
           {/* Left Icon */}
           {leftIcon && (
-            <span className={cn(iconStyles, leftIconStyles)}>
-              {leftIcon}
-            </span>
+            <span className={cn(iconStyles, leftIconStyles)}>{leftIcon}</span>
           )}
 
           {/* Input */}
@@ -182,7 +196,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {/* Right Side Icons */}
-          <div className={cn(iconStyles, rightIconStyles, "flex items-center gap-1 pointer-events-auto")}>
+          <div
+            className={cn(
+              iconStyles,
+              rightIconStyles,
+              "flex items-center gap-1 pointer-events-auto"
+            )}
+          >
             {/* Custom right icon */}
             {rightIcon && !shouldShowToggle && !stateIcon && (
               <span className="pointer-events-none">{rightIcon}</span>
@@ -197,7 +217,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {shouldShowToggle && (
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
                 className="p-1 rounded hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
@@ -213,7 +235,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {/* Helper/Error Text */}
-        {(error || helperText) && (
+        {(error ?? helperText) && (
           <p
             className={cn(
               helperTextStyles,
@@ -236,7 +258,10 @@ Input.displayName = "Input";
 
 import { Search, X } from "lucide-react";
 
-export interface SearchInputProps extends Omit<InputProps, "leftIcon" | "type"> {
+export interface SearchInputProps extends Omit<
+  InputProps,
+  "leftIcon" | "type"
+> {
   /** Callback when clear button is clicked */
   onClear?: () => void;
   /** Show clear button when value exists */
@@ -246,6 +271,7 @@ export interface SearchInputProps extends Omit<InputProps, "leftIcon" | "type"> 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   ({ onClear, showClearButton = true, value, className, ...props }, ref) => {
     const hasValue = value !== undefined && value !== "";
+    const showClear = hasValue && showClearButton && !!onClear;
 
     return (
       <div className="relative">
@@ -254,10 +280,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           type="search"
           leftIcon={<Search size={16} />}
           value={value}
-          className={cn(hasValue && showClearButton && "pr-10", className)}
+          className={cn(showClear && "pr-10", className)}
           {...props}
         />
-        {hasValue && showClearButton && onClear && (
+        {showClear && (
           <button
             type="button"
             onClick={onClear}
@@ -278,8 +304,10 @@ SearchInput.displayName = "SearchInput";
 // TEXTAREA
 // ============================================================================
 
-export interface TextareaProps
-  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {
+export interface TextareaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "size"
+> {
   /** Textarea size (affects padding/font) */
   size?: InputSize;
   /** Validation state */
@@ -305,12 +333,48 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       label,
       fullWidth = true,
       id,
+      onChange,
+      value,
       ...props
     },
     ref
   ) => {
     const inputId = id ?? `textarea-${Math.random().toString(36).slice(2, 9)}`;
     const computedState = error ? "error" : state;
+    const internalRef = React.useRef<HTMLTextAreaElement>(null);
+
+    // Merge refs
+    const setRef = React.useCallback(
+      (node: HTMLTextAreaElement | null) => {
+        // internal ref
+        internalRef.current = node;
+
+        // forwarded ref
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          (
+            ref as unknown as React.MutableRefObject<HTMLTextAreaElement | null>
+          ).current = node;
+        }
+      },
+      [ref]
+    );
+
+    // Auto-resize
+    React.useLayoutEffect(() => {
+      if (internalRef.current) {
+        internalRef.current.style.height = "inherit"; // Reset to recalculate
+        // Get compute styles to calculate paddings
+        const computed = window.getComputedStyle(internalRef.current);
+        // Calculate min height based on size prop
+        const minHeight = parseInt(computed.minHeight) || 0;
+
+        const scrollHeight = internalRef.current.scrollHeight;
+
+        internalRef.current.style.height = `${Math.max(minHeight, scrollHeight)}px`;
+      }
+    }, [value]);
 
     const textareaSizeStyles: Record<InputSize, string> = {
       sm: "px-3 py-2 text-xs min-h-[80px]",
@@ -327,19 +391,21 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
 
         <textarea
-          ref={ref}
+          ref={setRef}
           id={inputId}
+          value={value}
+          onChange={onChange}
           className={cn(
             baseInputStyles,
             textareaSizeStyles[size],
             stateStyles[computedState],
-            "resize-y",
+            "resize-none overflow-hidden", // Disable manual resize and scrollbar
             className
           )}
           {...props}
         />
 
-        {(error || helperText) && (
+        {(error ?? helperText) && (
           <p
             className={cn(
               helperTextStyles,

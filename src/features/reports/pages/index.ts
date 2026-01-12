@@ -26,4 +26,5 @@ export { ItemProfitabilityReport } from "./item-profitability-report";
 export { DayBookReport } from "./day-book-report";
 export { ProfitLossReportPage } from "./profit-loss-report";
 export { CashFlowReportPage } from "./cash-flow-report";
+export { CashMovementReportPage } from "./cash-movement-report";
 export { TaxSummaryReport } from "./tax-summary-report";

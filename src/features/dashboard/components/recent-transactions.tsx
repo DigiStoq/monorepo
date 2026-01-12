@@ -2,17 +2,22 @@ import { cn } from "@/lib/cn";
 import { Card, CardHeader, CardBody, Badge, Button } from "@/components/ui";
 import { TableSkeleton } from "@/components/common";
 import { ArrowUpRight, ArrowDownLeft, ChevronRight } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type TransactionType = "sale" | "purchase" | "payment-in" | "payment-out";
+export type TransactionType =
+  | "sale"
+  | "purchase"
+  | "payment-in"
+  | "payment-out";
 
 export interface Transaction {
   id: string;
   type: TransactionType;
-  partyName: string;
+  name: string;
   amount: number;
   date: string;
   invoiceNumber?: string;
@@ -32,7 +37,11 @@ export interface RecentTransactionsProps {
 
 const typeConfig: Record<
   TransactionType,
-  { label: string; color: "success" | "error" | "primary" | "warning"; isIncoming: boolean }
+  {
+    label: string;
+    color: "success" | "error" | "primary" | "warning";
+    isIncoming: boolean;
+  }
 > = {
   sale: { label: "Sale", color: "success", isIncoming: true },
   purchase: { label: "Purchase", color: "error", isIncoming: false },
@@ -50,19 +59,14 @@ export function RecentTransactions({
   onViewAll,
   onTransactionClick,
   className,
-}: RecentTransactionsProps) {
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+}: RecentTransactionsProps): React.ReactNode {
+  const { formatCurrency } = useCurrency();
 
   if (isLoading) {
     return <TableSkeleton className={className} rows={5} columns={4} />;
   }
 
-  const displayTransactions = transactions || [];
+  const displayTransactions = transactions ?? [];
 
   return (
     <Card className={className}>
@@ -108,13 +112,9 @@ export function RecentTransactions({
                     )}
                   >
                     {isIncoming ? (
-                      <ArrowDownLeft
-                        className={cn("h-5 w-5", isIncoming ? "text-success" : "text-error")}
-                      />
+                      <ArrowDownLeft className="h-5 w-5 text-success" />
                     ) : (
-                      <ArrowUpRight
-                        className={cn("h-5 w-5", isIncoming ? "text-success" : "text-error")}
-                      />
+                      <ArrowUpRight className="h-5 w-5 text-error" />
                     )}
                   </div>
 
@@ -122,14 +122,15 @@ export function RecentTransactions({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-slate-900 truncate">
-                        {transaction.partyName}
+                        {transaction.name}
                       </span>
                       <Badge variant={config.color} size="sm">
                         {config.label}
                       </Badge>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {transaction.invoiceNumber && `${transaction.invoiceNumber} • `}
+                      {transaction.invoiceNumber &&
+                        `${transaction.invoiceNumber} • `}
                       {transaction.date}
                     </div>
                   </div>

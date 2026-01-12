@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { LoanPayment } from "@/features/cash-bank/types";
 
@@ -34,7 +34,7 @@ function mapRowToLoanPayment(row: LoanPaymentRow): LoanPayment {
     principalAmount: row.principal_amount,
     interestAmount: row.interest_amount,
     totalAmount: row.total_amount,
-    paymentMethod: row.payment_method ?? undefined,
+    paymentMethod: (row.payment_method ?? "cash") as "cash" | "bank" | "cheque",
     referenceNumber: row.reference_number ?? undefined,
     notes: row.notes ?? undefined,
     createdAt: row.created_at,
@@ -46,16 +46,26 @@ export function useLoanPayments(filters?: { loanId?: string }): {
   isLoading: boolean;
   error: Error | undefined;
 } {
-  const loanIdFilter = filters?.loanId ?? null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: string[] = [];
 
-  const { data, isLoading, error } = useQuery<LoanPaymentRow>(
-    `SELECT * FROM loan_payments
-     WHERE ($1 IS NULL OR loan_id = $1)
-     ORDER BY date DESC, created_at DESC`,
-    [loanIdFilter]
-  );
+    if (filters?.loanId) {
+      conditions.push("loan_id = ?");
+      params.push(filters.loanId);
+    }
 
-  const payments = data.map(mapRowToLoanPayment);
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM loan_payments ${whereClause} ORDER BY date DESC, created_at DESC`,
+      params,
+    };
+  }, [filters?.loanId]);
+
+  const { data, isLoading, error } = useQuery<LoanPaymentRow>(query, params);
+
+  const payments = useMemo(() => data.map(mapRowToLoanPayment), [data]);
 
   return { payments, isLoading, error };
 }
@@ -120,14 +130,13 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
         [data.principalAmount, now, data.loanId]
       );
 
-      // Check if loan is fully paid and update status
       const result = await db.execute(
         `SELECT outstanding_amount FROM loans WHERE id = ?`,
         [data.loanId]
       );
-      const rows = result.rows._array as LoanQueryRow[];
+      const rows = (result.rows?._array ?? []) as LoanQueryRow[];
       const loan = rows[0];
-      if (loan && loan.outstanding_amount <= 0) {
+      if (rows.length > 0 && loan.outstanding_amount <= 0) {
         await db.execute(
           `UPDATE loans SET status = 'closed', updated_at = ? WHERE id = ?`,
           [now, data.loanId]
@@ -146,10 +155,10 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
         `SELECT loan_id, principal_amount FROM loan_payments WHERE id = ?`,
         [id]
       );
-      const rows = result.rows._array as PaymentQueryRow[];
+      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
       const payment = rows[0];
 
-      if (payment) {
+      if (rows.length > 0) {
         const now = new Date().toISOString();
         // Reverse the loan outstanding amount
         await db.execute(
