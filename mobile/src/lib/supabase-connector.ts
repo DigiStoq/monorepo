@@ -11,17 +11,49 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     private powersyncUrl: string
   ) {}
 
+  // Cache the session to avoid hitting Supabase Auth rate limits
+  private currentSession: { access_token: string; expires_at?: number } | null = null;
+  
+  // Buffer time in seconds to refresh token before it strictly expires
+  private readonly TOKEN_EXPIRY_BUFFER = 60; // 1 minute
+
   async fetchCredentials() {
+    // Check if we have a valid cached session
+    if (this.currentSession?.expires_at) {
+        const now = Math.floor(Date.now() / 1000);
+        // If token expires in more than BUFFER seconds, reuse it
+        if (this.currentSession.expires_at > now + this.TOKEN_EXPIRY_BUFFER) {
+             // console.log("[SupabaseConnector] Using cached credentials.");
+             const endpoint = this.powersyncUrl.replace(/\/$/, "");
+             return {
+                 endpoint,
+                 token: this.currentSession.access_token
+             };
+        }
+    }
+
+    console.log("[SupabaseConnector] Fetching credentials...");
     const {
       data: { session },
     } = await this.client.auth.getSession();
 
     if (!session) {
+      console.warn("[SupabaseConnector] No active session found.");
       return null;
     }
 
+    // Cache the new session
+    this.currentSession = {
+        access_token: session.access_token,
+        expires_at: session.expires_at
+    };
+
+    console.log(`[SupabaseConnector] Session found. Token length: ${session.access_token?.length}`);
+    const endpoint = this.powersyncUrl.replace(/\/$/, "");
+    console.log(`[SupabaseConnector] Using PowerSync URL: ${endpoint}`);
+
     return {
-      endpoint: this.powersyncUrl,
+      endpoint,
       token: session.access_token,
     };
   }

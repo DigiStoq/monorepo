@@ -215,7 +215,8 @@ function getCurrencyName(currency = "USD"): { main: string; sub: string } {
 export function buildBaseDocument(
   data: PDFInvoiceData,
   companyInfo: PDFCompanyInfo,
-  options: PDFGenerationOptions
+  options: PDFGenerationOptions,
+  customContent: Content[] = []
 ): TDocumentDefinitions {
   const margins = options.margins ?? DEFAULT_MARGINS;
   // currencyNames unused here
@@ -236,6 +237,9 @@ export function buildBaseDocument(
 
     // Items Table
     buildItemsTable(data.items, options.currency, options.locale),
+
+    // Custom Content (e.g. for estimates or credit notes)
+    ...customContent,
 
     // Footer Layout (Amounts, Words, Terms, Signature)
     buildFooterLayout(data, companyInfo, options),

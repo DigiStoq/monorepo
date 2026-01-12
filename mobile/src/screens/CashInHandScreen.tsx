@@ -86,7 +86,7 @@ export function CashInHandScreen() {
 
   return (
     <View style={styles.container}>
-      <CustomHeader />
+      <CustomHeader title="Cash In Hand" showBack />
 
       <View style={styles.searchBar}>
         <View style={styles.searchInput}>

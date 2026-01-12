@@ -47,7 +47,7 @@ export function SalesSummaryScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader title="Sales Summary" />
+            <CustomHeader title="Sales Summary" showBack />
 
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Date Display */}

@@ -42,7 +42,7 @@ export function StockSummaryScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader title="Stock Summary" />
+            <CustomHeader title="Stock Summary" showBack />
 
             <View style={styles.mainContent}>
                 {/* Overview Cards */}

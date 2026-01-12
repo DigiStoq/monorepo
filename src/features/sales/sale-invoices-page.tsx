@@ -307,8 +307,12 @@ export function SaleInvoicesPage(): React.ReactNode {
       });
 
       // Calculate discount amount from percentage
+      // Calculate discount amount
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
-      const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
+      const discountAmount =
+        data.discountType === "amount"
+          ? data.discountAmount ?? 0
+          : subtotal * ((data.discountPercent ?? 0) / 100);
 
       await createInvoice(
         {
@@ -606,7 +610,10 @@ export function SaleInvoicesPage(): React.ReactNode {
 
       // Calculate discount amount
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
-      const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
+      const discountAmount =
+        data.discountType === "amount"
+          ? data.discountAmount ?? 0
+          : subtotal * ((data.discountPercent ?? 0) / 100);
 
       await updateInvoice(
         currentSelectedInvoice.id,

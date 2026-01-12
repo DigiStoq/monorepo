@@ -37,7 +37,7 @@ export function PurchasesBySupplierScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader title="Purchase By Supplier" />
+            <CustomHeader title="Purchase By Supplier" showBack />
 
             <View style={styles.content}>
                 <View style={styles.dateDisplay}>

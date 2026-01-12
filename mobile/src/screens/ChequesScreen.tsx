@@ -41,7 +41,7 @@ export function ChequesScreen() {
 
     return (
         <View style={styles.container}>
-            <CustomHeader />
+            <CustomHeader title="Cheques" showBack />
 
             <View style={styles.subHeader}>
                 <View style={styles.filterContainer}>
