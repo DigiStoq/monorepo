@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -11,7 +11,16 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText, Truck, Percent, DollarSign } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Calendar,
+  User,
+  FileText,
+  Truck,
+  Percent,
+  DollarSign,
+} from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useInvoiceSettings, useTaxRates } from "@/hooks/useSettings";
 import type { SaleInvoiceFormData } from "../types";
@@ -87,8 +96,8 @@ export function InvoiceForm({
   );
   const [discountValue, setDiscountValue] = useState(
     initialData?.discountType === "amount"
-      ? initialData?.discountAmount ?? 0
-      : initialData?.discountPercent ?? 0
+      ? (initialData.discountAmount ?? 0)
+      : (initialData?.discountPercent ?? 0)
   );
   const [showValidation, setShowValidation] = useState(false);
 
@@ -225,17 +234,29 @@ export function InvoiceForm({
       return (
         sum +
         (item.quantity || 0) *
-        (item.unitPrice || 0) *
-        ((item.discountPercent || 0) / 100)
+          (item.unitPrice || 0) *
+          ((item.discountPercent || 0) / 100)
       );
     }, 0);
 
-    const totalDiscount = itemDiscounts;
+    let invoiceDiscount = 0;
+    if (discountType === "percent") {
+      invoiceDiscount =
+        (subtotal - itemDiscounts) * ((discountValue || 0) / 100);
+    } else {
+      invoiceDiscount = discountValue || 0;
+    }
+
+    const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
     const taxAmount = lineItems.reduce((sum, item) => {
       const itemSubtotal = (item.quantity || 0) * (item.unitPrice || 0);
       const itemDiscount = itemSubtotal * ((item.discountPercent || 0) / 100);
+      // Note: Tax calculation here assumes tax applies to (ItemAmount - ItemDiscount).
+      // It does NOT currently account for the distributed invoice-level discount.
+      // If we want exact tax accuracy with invoice-level discounts, we'd need to distribute it.
+      // But for now, preserving existing 'independent' behavior as requested.
       return (
         sum + (itemSubtotal - itemDiscount) * ((item.taxPercent || 0) / 100)
       );
@@ -244,27 +265,7 @@ export function InvoiceForm({
     const total = taxableAmount + taxAmount;
 
     return { subtotal, totalDiscount, taxAmount, total };
-    return { subtotal, totalDiscount, taxAmount, total };
-  }, [lineItems]);
-
-  // Sync global discountValue with calculated item totals
-  useEffect(() => {
-    if (discountType === "percent") {
-      const pct =
-        totals.subtotal > 0
-          ? (totals.totalDiscount / totals.subtotal) * 100
-          : 0;
-      // Avoid circular update/cursor jumping if value is effectively the same (tolerance 0.01)
-      if (Math.abs(pct - discountValue) > 0.01) {
-        setDiscountValue(parseFloat(pct.toFixed(2)));
-      }
-    } else {
-      if (Math.abs(totals.totalDiscount - discountValue) > 0.01) {
-        setDiscountValue(parseFloat(totals.totalDiscount.toFixed(2)));
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totals, discountType]);
+  }, [lineItems, discountType, discountValue]);
 
   // Format currency
   const { formatCurrency } = useCurrency();
@@ -360,7 +361,9 @@ export function InvoiceForm({
                     onChange={setCustomerId}
                     placeholder="Select customer"
                     className={cn(
-                      showValidation && !customerId && "border-red-500 ring-red-500"
+                      showValidation &&
+                        !customerId &&
+                        "border-red-500 ring-red-500"
                     )}
                   />
                 </div>
@@ -540,8 +543,8 @@ export function InvoiceForm({
                               size="sm"
                               className={cn(
                                 showValidation &&
-                                !item.itemId &&
-                                "border-red-500 focus:ring-red-500"
+                                  !item.itemId &&
+                                  "border-red-500 focus:ring-red-500"
                               )}
                             />
                           </td>
@@ -599,9 +602,9 @@ export function InvoiceForm({
                                 discountType === "percent"
                                   ? item.discountPercent
                                   : (item.unitPrice *
-                                    item.quantity *
-                                    item.discountPercent) /
-                                  100
+                                      item.quantity *
+                                      item.discountPercent) /
+                                    100
                               }
                               onChange={(val) => {
                                 if (discountType === "percent") {
@@ -712,7 +715,9 @@ export function InvoiceForm({
                 <div className="flex items-center border border-slate-300 rounded-md overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => setDiscountType("percent")}
+                    onClick={() => {
+                      setDiscountType("percent");
+                    }}
                     className={cn(
                       "p-1.5 hover:bg-slate-100 transition-colors",
                       discountType === "percent"
@@ -725,7 +730,9 @@ export function InvoiceForm({
                   <div className="w-[1px] h-full bg-slate-200" />
                   <button
                     type="button"
-                    onClick={() => setDiscountType("amount")}
+                    onClick={() => {
+                      setDiscountType("amount");
+                    }}
                     className={cn(
                       "p-1.5 hover:bg-slate-100 transition-colors",
                       discountType === "amount"
@@ -743,49 +750,6 @@ export function InvoiceForm({
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 0;
                     setDiscountValue(val);
-
-                    // Apply to all items
-                    if (discountType === "percent") {
-                      setLineItems((prev) =>
-                        prev.map((item) => {
-                          const subtotal = item.quantity * item.unitPrice;
-                          const discountAmount = subtotal * (val / 100);
-                          const taxableAmount = subtotal - discountAmount;
-                          const taxAmount = taxableAmount * (item.taxPercent / 100);
-                          return {
-                            ...item,
-                            discountPercent: val,
-                            amount: taxableAmount + taxAmount,
-                          };
-                        })
-                      );
-                    } else {
-                      // Amount
-                      // Calculate effective % based on current subtotal?
-                      // We need the *current* subtotal of items before discount for this to be accurate,
-                      // but lineItems state has the items.
-                      // Let's calculate total item value (gross).
-                      const totalGross = lineItems.reduce(
-                        (sum, i) => sum + i.quantity * i.unitPrice,
-                        0
-                      );
-
-                      const pct = totalGross > 0 ? (val / totalGross) * 100 : 0;
-
-                      setLineItems((prev) =>
-                        prev.map((item) => {
-                          const subtotal = item.quantity * item.unitPrice;
-                          const discountAmount = subtotal * (pct / 100);
-                          const taxableAmount = subtotal - discountAmount;
-                          const taxAmount = taxableAmount * (item.taxPercent / 100);
-                          return {
-                            ...item,
-                            discountPercent: pct,
-                            amount: taxableAmount + taxAmount,
-                          };
-                        })
-                      );
-                    }
                   }}
                   size="sm"
                   className="w-20 text-right"
