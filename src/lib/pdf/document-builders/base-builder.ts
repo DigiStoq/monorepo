@@ -348,7 +348,11 @@ function buildFooterLayout(
   };
 
   addAmountRow("Sub Total", data.subtotal);
-  if (data.discountAmount > 0) addAmountRow("Discount", -data.discountAmount);
+  const discountLabel = data.discountPercent
+    ? `Discount (${data.discountPercent}%)`
+    : "Discount";
+  if (data.discountAmount > 0)
+    addAmountRow(discountLabel, -data.discountAmount);
   if (data.taxAmount > 0) addAmountRow("Tax", data.taxAmount);
   addAmountRow("Total", data.total, true);
   addAmountRow("Received", data.amountPaid ?? 0);
