@@ -211,6 +211,13 @@ export function usePDFGenerator(): UsePDFGeneratorReturn {
         subtotal: invoice.subtotal,
         taxAmount: invoice.taxAmount,
         discountAmount: invoice.discountAmount,
+        discountPercent:
+          invoice.discountPercent ??
+          (invoice.discountAmount > 0 && invoice.subtotal > 0
+            ? Number(
+                ((invoice.discountAmount / invoice.subtotal) * 100).toFixed(2)
+              )
+            : undefined),
         total: invoice.total,
       };
 

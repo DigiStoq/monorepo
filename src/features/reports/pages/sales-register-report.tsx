@@ -271,7 +271,16 @@ export function SalesRegisterReport(): React.ReactNode {
                             {formatCurrency(entry.tax)}
                           </td>
                           <td className="px-4 py-3 text-right text-slate-600">
-                            {formatCurrency(entry.discount)}
+                            <div>{formatCurrency(entry.discount)}</div>
+                            {entry.discount > 0 && entry.subtotal > 0 && (
+                              <div className="text-xs text-slate-400">
+                                {(
+                                  (entry.discount / entry.subtotal) *
+                                  100
+                                ).toFixed(0)}
+                                %
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-text-heading">
                             {formatCurrency(entry.total)}

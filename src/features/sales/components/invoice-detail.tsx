@@ -432,7 +432,17 @@ export function InvoiceDetail({
 
               {invoice.discountAmount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Discount</span>
+                  <span className="text-slate-500">
+                    Discount
+                    {invoice.discountPercent
+                      ? ` (${invoice.discountPercent}%)`
+                      : invoice.subtotal > 0
+                        ? ` (${(
+                            (invoice.discountAmount / invoice.subtotal) *
+                            100
+                          ).toFixed(0)}%)`
+                        : ""}
+                  </span>
                   <span className="font-medium text-success">
                     -{formatCurrency(invoice.discountAmount)}
                   </span>
@@ -619,7 +629,7 @@ function HistorySection({
                         entry.action === "updated" && "bg-primary-100",
                         entry.action === "status_changed" && "bg-warning-light",
                         entry.action === "payment_recorded" &&
-                        "bg-success-light",
+                          "bg-success-light",
                         entry.action === "deleted" && "bg-error-light"
                       )}
                     >

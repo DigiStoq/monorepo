@@ -16,6 +16,7 @@ export interface SaleInvoice {
   subtotal: number;
   taxAmount: number;
   discountAmount: number;
+  discountPercent?: number; // Added field
   total: number;
   amountPaid: number;
   amountDue: number;
