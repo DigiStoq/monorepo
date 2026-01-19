@@ -22,34 +22,34 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* ========== Light Theme Colors ========== */
-  
+
   /* Backgrounds */
-  --color-bg-app: 248 250 252;         /* slate-50 - main app bg */
-  --color-bg-card: 255 255 255;        /* white - cards, panels */
-  --color-bg-elevated: 255 255 255;    /* white - modals, dropdowns */
-  --color-bg-subtle: 241 245 249;      /* slate-100 - subtle sections */
-  --color-bg-muted: 226 232 240;       /* slate-200 - disabled, hover */
-  --color-bg-inverse: 15 23 42;        /* slate-900 - inverse elements */
-  
+  --color-bg-app: 248 250 252; /* slate-50 - main app bg */
+  --color-bg-card: 255 255 255; /* white - cards, panels */
+  --color-bg-elevated: 255 255 255; /* white - modals, dropdowns */
+  --color-bg-subtle: 241 245 249; /* slate-100 - subtle sections */
+  --color-bg-muted: 226 232 240; /* slate-200 - disabled, hover */
+  --color-bg-inverse: 15 23 42; /* slate-900 - inverse elements */
+
   /* Sidebar */
-  --color-sidebar-bg: 15 23 42;        /* slate-900 */
-  --color-sidebar-hover: 30 41 59;     /* slate-800 */
-  --color-sidebar-active: 51 65 85;    /* slate-700 */
-  
+  --color-sidebar-bg: 15 23 42; /* slate-900 */
+  --color-sidebar-hover: 30 41 59; /* slate-800 */
+  --color-sidebar-active: 51 65 85; /* slate-700 */
+
   /* Text */
-  --color-text-primary: 15 23 42;      /* slate-900 */
-  --color-text-heading: 15 23 42;      /* slate-900 - same as primary in light */
-  --color-text-number: 15 23 42;       /* slate-900 - for numbers */
-  --color-text-secondary: 71 85 105;   /* slate-600 */
-  --color-text-tertiary: 100 116 139;  /* slate-500 */
-  --color-text-muted: 148 163 184;     /* slate-400 */
-  --color-text-inverse: 255 255 255;   /* white */
-  
+  --color-text-primary: 15 23 42; /* slate-900 */
+  --color-text-heading: 15 23 42; /* slate-900 - same as primary in light */
+  --color-text-number: 15 23 42; /* slate-900 - for numbers */
+  --color-text-secondary: 71 85 105; /* slate-600 */
+  --color-text-tertiary: 100 116 139; /* slate-500 */
+  --color-text-muted: 148 163 184; /* slate-400 */
+  --color-text-inverse: 255 255 255; /* white */
+
   /* Borders */
   --color-border-primary: 226 232 240; /* slate-200 */
   --color-border-secondary: 203 213 225; /* slate-300 */
-  --color-border-focus: 14 165 233;    /* sky-500 */
-  
+  --color-border-focus: 14 165 233; /* sky-500 */
+
   /* Primary (Teal) */
   --color-primary-50: 240 253 250;
   --color-primary-100: 204 251 241;
@@ -61,27 +61,27 @@
   --color-primary-700: 15 118 110;
   --color-primary-800: 17 94 89;
   --color-primary-900: 19 78 74;
-  
+
   /* Success */
   --color-success-light: 220 252 231;
   --color-success: 34 197 94;
   --color-success-dark: 21 128 61;
-  
+
   /* Warning */
   --color-warning-light: 254 243 199;
   --color-warning: 245 158 11;
   --color-warning-dark: 180 83 9;
-  
+
   /* Error */
   --color-error-light: 254 226 226;
   --color-error: 239 68 68;
   --color-error-dark: 185 28 28;
-  
+
   /* Info */
   --color-info-light: 219 234 254;
   --color-info: 59 130 246;
   --color-info-dark: 29 78 216;
-  
+
   /* Scrollbar */
   --color-scrollbar-track: transparent;
   --color-scrollbar-thumb: 203 213 225;
@@ -104,31 +104,31 @@
 /* ========== Dark Theme ========== */
 html.dark {
   /* Backgrounds */
-  --color-bg-app: 15 23 42;            /* slate-900 */
-  --color-bg-card: 30 41 59;           /* slate-800 */
-  --color-bg-elevated: 51 65 85;       /* slate-700 */
-  --color-bg-subtle: 30 41 59;         /* slate-800 */
-  --color-bg-muted: 51 65 85;          /* slate-700 */
-  --color-bg-inverse: 248 250 252;     /* slate-50 */
-  
+  --color-bg-app: 15 23 42; /* slate-900 */
+  --color-bg-card: 30 41 59; /* slate-800 */
+  --color-bg-elevated: 51 65 85; /* slate-700 */
+  --color-bg-subtle: 30 41 59; /* slate-800 */
+  --color-bg-muted: 51 65 85; /* slate-700 */
+  --color-bg-inverse: 248 250 252; /* slate-50 */
+
   /* Sidebar stays dark */
-  --color-sidebar-bg: 2 6 23;          /* slate-950 */
-  --color-sidebar-hover: 15 23 42;     /* slate-900 */
-  --color-sidebar-active: 30 41 59;    /* slate-800 */
-  
+  --color-sidebar-bg: 2 6 23; /* slate-950 */
+  --color-sidebar-hover: 15 23 42; /* slate-900 */
+  --color-sidebar-active: 30 41 59; /* slate-800 */
+
   /* Text - D3DAD9 for body, 715A5A for headers/accents */
-  --color-text-primary: 232 237 236;   /* #E8EDEC - lighter main text */
-  --color-text-heading: 180 180 180;   /* brighter for dark mode */
-  --color-text-number: 232 237 236;    /* same as primary - for numbers */
+  --color-text-primary: 232 237 236; /* #E8EDEC - lighter main text */
+  --color-text-heading: 180 180 180; /* brighter for dark mode */
+  --color-text-number: 232 237 236; /* same as primary - for numbers */
   --color-text-secondary: 211 218 217; /* #D3DAD9 - slightly muted */
-  --color-text-tertiary: 148 163 184;  /* slate-400 */
-  --color-text-muted: 100 116 139;     /* slate-500 */
-  --color-text-inverse: 15 23 42;      /* slate-900 */
-  
+  --color-text-tertiary: 148 163 184; /* slate-400 */
+  --color-text-muted: 100 116 139; /* slate-500 */
+  --color-text-inverse: 15 23 42; /* slate-900 */
+
   /* Borders */
-  --color-border-primary: 51 65 85;    /* slate-700 */
+  --color-border-primary: 51 65 85; /* slate-700 */
   --color-border-secondary: 71 85 105; /* slate-600 */
-  
+
   /* Scrollbar */
   --color-scrollbar-thumb: 71 85 105;
   --color-scrollbar-thumb-hover: 100 116 139;
@@ -152,7 +152,9 @@ html.dark {
 body {
   background-color: rgb(var(--color-bg-app));
   color: rgb(var(--color-text-primary));
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Prevent text selection on UI elements for native feel */

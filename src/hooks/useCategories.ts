@@ -49,7 +49,9 @@ export function useCategoryById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<CategoryRow>(
-    id ? `SELECT * FROM categories WHERE id = ?` : `SELECT * FROM categories WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM categories WHERE id = ?`
+      : `SELECT * FROM categories WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -59,8 +61,14 @@ export function useCategoryById(id: string | null): {
 }
 
 interface CategoryMutations {
-  createCategory: (data: { name: string; description?: string }) => Promise<string>;
-  updateCategory: (id: string, data: { name?: string; description?: string }) => Promise<void>;
+  createCategory: (data: {
+    name: string;
+    description?: string;
+  }) => Promise<string>;
+  updateCategory: (
+    id: string,
+    data: { name?: string; description?: string }
+  ) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 }
 
@@ -84,7 +92,10 @@ export function useCategoryMutations(): CategoryMutations {
   );
 
   const updateCategory = useCallback(
-    async (id: string, data: { name?: string; description?: string }): Promise<void> => {
+    async (
+      id: string,
+      data: { name?: string; description?: string }
+    ): Promise<void> => {
       const fields: string[] = [];
       const values: (string | number)[] = [];
 
@@ -100,7 +111,10 @@ export function useCategoryMutations(): CategoryMutations {
       values.push(id);
 
       if (fields.length > 0) {
-        await db.execute(`UPDATE categories SET ${fields.join(", ")} WHERE id = ?`, values);
+        await db.execute(
+          `UPDATE categories SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
       }
     },
     [db]
@@ -109,7 +123,10 @@ export function useCategoryMutations(): CategoryMutations {
   const deleteCategory = useCallback(
     async (id: string): Promise<void> => {
       // First, unlink items from this category
-      await db.execute(`UPDATE items SET category_id = NULL WHERE category_id = ?`, [id]);
+      await db.execute(
+        `UPDATE items SET category_id = NULL WHERE category_id = ?`,
+        [id]
+      );
       // Then delete the category
       await db.execute(`DELETE FROM categories WHERE id = ?`, [id]);
     },

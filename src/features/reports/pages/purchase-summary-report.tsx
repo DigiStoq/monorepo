@@ -238,7 +238,9 @@ export function PurchaseSummaryReport(): React.ReactNode {
                         {index + 1}
                       </span>
                       <div>
-                        <span className="text-text-heading">{item.itemName}</span>
+                        <span className="text-text-heading">
+                          {item.itemName}
+                        </span>
                         <span className="text-xs text-slate-500 ml-2">
                           ({item.quantity} units)
                         </span>

@@ -76,6 +76,18 @@ module.exports = {
     eqeqeq: ["error", "always"],
   },
   overrides: [
+    // Test files - relax strict rules for mocking
+    {
+      files: ["**/__tests__/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unnecessary-condition": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      },
+    },
     {
       files: ["mobile/**/*.{ts,tsx}"],
       rules: {

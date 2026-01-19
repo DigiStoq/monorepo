@@ -1,0 +1,28 @@
+appId: com.anonymous.mobile
+---
+- launchApp
+
+# Login Flow
+- tapOn: "Sign In" # Adjust based on actual button text (e.g., "Login" or "Sign In")
+- inputText: "admin@example.com"
+- tapOn: "Password"
+- inputText: "password"
+- tapOn: "Sign In" # Submit button
+
+# Dashboard Verification
+- assertVisible: "Dashboard"
+- assertVisible: "Total Sales"
+
+# Create Invoice Flow
+- tapOn: "Sales"
+- assertVisible: "Sale Invoices"
+- tapOn: "New Invoice" # FAB or Button
+- tapOn: "Select Customer"
+- tapOn: "Walk-in Customer" # Assuming this exists or create one
+- tapOn: "Add Item"
+- tapOn: "Service" # Select an item
+- tapOn: "Save" # Finish item selection
+- tapOn: "Save Invoice" # Finish invoice
+
+# Verification
+- assertVisible: "Walk-in Customer" # Should appear in list

@@ -106,7 +106,8 @@ export function useLoans(filters?: {
       params.push(filters.customerId);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM loans ${whereClause} ORDER BY start_date DESC`,
       params,
@@ -130,12 +131,13 @@ export function useLoanById(id: string | null): {
     id ? [id] : []
   );
 
-  const { data: paymentsData, isLoading: paymentsLoading } = useQuery<LoanPaymentRow>(
-    id
-      ? `SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY date DESC`
-      : `SELECT * FROM loan_payments WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: paymentsData, isLoading: paymentsLoading } =
+    useQuery<LoanPaymentRow>(
+      id
+        ? `SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY date DESC`
+        : `SELECT * FROM loan_payments WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
   const loan = loanData[0] ? mapRowToLoan(loanData[0]) : null;
   const payments = paymentsData.map(mapRowToLoanPayment);
@@ -174,7 +176,10 @@ interface LoanMutations {
     referenceNumber?: string;
     notes?: string;
   }) => Promise<string>;
-  updateLoanStatus: (id: string, status: "active" | "closed" | "defaulted") => Promise<void>;
+  updateLoanStatus: (
+    id: string,
+    status: "active" | "closed" | "defaulted"
+  ) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
 }
 
@@ -289,13 +294,15 @@ export function useLoanMutations(): LoanMutations {
   );
 
   const updateLoanStatus = useCallback(
-    async (id: string, status: "active" | "closed" | "defaulted"): Promise<void> => {
+    async (
+      id: string,
+      status: "active" | "closed" | "defaulted"
+    ): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE loans SET status = ?, updated_at = ? WHERE id = ?`, [
-        status,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE loans SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
     },
     [db]
   );

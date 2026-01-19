@@ -501,9 +501,9 @@ export function Table<T>({
                         compact ? "py-2" : "py-3",
                         column.hideOnMobile && "hidden md:table-cell",
                         column.sticky === "left" &&
-                        "sticky left-0 bg-card z-10",
+                          "sticky left-0 bg-card z-10",
                         column.sticky === "right" &&
-                        "sticky right-0 bg-card z-10",
+                          "sticky right-0 bg-card z-10",
                         isSelected && column.sticky && "bg-primary-50"
                       )}
                       style={{ width: column.width }}

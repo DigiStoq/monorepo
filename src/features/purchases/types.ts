@@ -2,7 +2,12 @@
 // PURCHASE INVOICE TYPES
 // ============================================================================
 
-export type PurchaseInvoiceStatus = "draft" | "ordered" | "received" | "paid" | "returned";
+export type PurchaseInvoiceStatus =
+  | "draft"
+  | "ordered"
+  | "received"
+  | "paid"
+  | "returned";
 
 export interface PurchaseInvoice {
   id: string;
@@ -72,7 +77,13 @@ export interface PurchaseFilters {
 // PAYMENT OUT TYPES
 // ============================================================================
 
-export type PaymentOutMode = "cash" | "bank" | "card" | "ach" | "cheque" | "other";
+export type PaymentOutMode =
+  | "cash"
+  | "bank"
+  | "card"
+  | "ach"
+  | "cheque"
+  | "other";
 
 export interface PaymentOut {
   id: string;

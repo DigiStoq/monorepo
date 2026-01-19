@@ -235,7 +235,7 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
         {!isCollapsed && (
           <div
             className="absolute top-0 left-0 right-0 bg-primary-600"
-            style={{ height: 'var(--sidebar-logo-height)' }}
+            style={{ height: "var(--sidebar-logo-height)" }}
           />
         )}
 
@@ -262,10 +262,14 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
         )}
 
         {/* Navigation Content Area */}
-        <div className={cn(
-          "flex-1 flex flex-col overflow-hidden min-h-0",
-          !isCollapsed ? "rounded-tl-[var(--radius-curved)] bg-sidebar relative z-10" : "bg-sidebar"
-        )}>
+        <div
+          className={cn(
+            "flex-1 flex flex-col overflow-hidden min-h-0",
+            !isCollapsed
+              ? "rounded-tl-[var(--radius-curved)] bg-sidebar relative z-10"
+              : "bg-sidebar"
+          )}
+        >
           {/* Scrollable Nav */}
           <nav className="flex-1 overflow-y-auto pt-6 pb-4 space-y-2">
             {items.map((item) => (
@@ -399,10 +403,14 @@ export function SidebarLogo({
       )}
     >
       {logo && (
-        <div className={cn(
-          "shrink-0 flex items-center justify-center rounded-xl",
-          isCollapsed ? "h-10 w-10 bg-primary-600 text-white" : "h-11 w-11 bg-white/10 text-white backdrop-blur-sm"
-        )}>
+        <div
+          className={cn(
+            "shrink-0 flex items-center justify-center rounded-xl",
+            isCollapsed
+              ? "h-10 w-10 bg-primary-600 text-white"
+              : "h-11 w-11 bg-white/10 text-white backdrop-blur-sm"
+          )}
+        >
           {logo}
         </div>
       )}
@@ -483,7 +491,9 @@ export function SidebarUser({
           className={cn(
             "rounded-xl flex items-center justify-center relative z-10",
             "bg-gradient-to-br from-primary-400 to-primary-700 text-white font-bold",
-            isCollapsed ? "h-9 w-9 text-xs" : "h-11 w-11 text-sm shadow-md shadow-primary-950/20"
+            isCollapsed
+              ? "h-9 w-9 text-xs"
+              : "h-11 w-11 text-sm shadow-md shadow-primary-950/20"
           )}
         >
           {avatarUrl ? (
@@ -503,8 +513,14 @@ export function SidebarUser({
 
       {!isCollapsed && (
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-[0.9375rem] font-bold text-white truncate leading-tight mb-0.5">{name}</p>
-          {email && <p className="text-[0.6875rem] font-medium text-slate-500 truncate">{email}</p>}
+          <p className="text-[0.9375rem] font-bold text-white truncate leading-tight mb-0.5">
+            {name}
+          </p>
+          {email && (
+            <p className="text-[0.6875rem] font-medium text-slate-500 truncate">
+              {email}
+            </p>
+          )}
         </div>
       )}
     </button>

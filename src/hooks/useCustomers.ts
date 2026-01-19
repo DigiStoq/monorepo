@@ -1,7 +1,12 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { Customer, CustomerFormData, CustomerType, CustomerTransaction } from "@/features/customers/types";
+import type {
+  Customer,
+  CustomerFormData,
+  CustomerType,
+  CustomerTransaction,
+} from "@/features/customers/types";
 
 // Database row type (snake_case columns from SQLite)
 interface CustomerRow {
@@ -84,7 +89,8 @@ export function useCustomers(filters?: {
       params.push(searchPattern, searchPattern, searchPattern);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
       params,
@@ -104,7 +110,9 @@ export function useCustomerById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<CustomerRow>(
-    id ? `SELECT * FROM customers WHERE id = ?` : `SELECT * FROM customers WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM customers WHERE id = ?`
+      : `SELECT * FROM customers WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -115,7 +123,10 @@ export function useCustomerById(id: string | null): {
 
 interface CustomerMutations {
   createCustomer: (data: CustomerFormData) => Promise<string>;
-  updateCustomer: (id: string, data: Partial<CustomerFormData>) => Promise<void>;
+  updateCustomer: (
+    id: string,
+    data: Partial<CustomerFormData>
+  ) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   toggleCustomerActive: (id: string, isActive: boolean) => Promise<void>;
   updateCustomerBalance: (id: string, amount: number) => Promise<void>;
@@ -222,7 +233,10 @@ export function useCustomerMutations(): CustomerMutations {
       values.push(id);
 
       if (fields.length > 1) {
-        await db.execute(`UPDATE customers SET ${fields.join(", ")} WHERE id = ?`, values);
+        await db.execute(
+          `UPDATE customers SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
       }
     },
     [db]
@@ -238,11 +252,10 @@ export function useCustomerMutations(): CustomerMutations {
   const toggleCustomerActive = useCallback(
     async (id: string, isActive: boolean): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE customers SET is_active = ?, updated_at = ? WHERE id = ?`, [
-        isActive ? 1 : 0,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE customers SET is_active = ?, updated_at = ? WHERE id = ?`,
+        [isActive ? 1 : 0, now, id]
+      );
     },
     [db]
   );
@@ -333,7 +346,9 @@ export function useCustomerTransactions(customerId: string | null): {
   const transactions = useMemo(() => {
     let runningBalance = 0;
     // Sort by date ascending to calculate running balance, then reverse for display
-    const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sortedData = [...data].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
 
     const mapped = sortedData.map((row): CustomerTransaction => {
       // Sales increase balance (customer owes), payments decrease it

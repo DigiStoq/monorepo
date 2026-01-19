@@ -98,7 +98,9 @@ export function Breadcrumbs({
                 <span
                   className={cn(
                     "flex items-center gap-1.5 px-1.5 py-0.5",
-                    isLast ? "text-text-primary font-medium" : "text-text-tertiary"
+                    isLast
+                      ? "text-text-primary font-medium"
+                      : "text-text-tertiary"
                   )}
                   aria-current={isLast ? "page" : undefined}
                 >
@@ -173,7 +175,10 @@ export const PageHeader = forwardRef<HTMLDivElement, PageHeaderProps>(
                     )}
                     aria-label="Go back"
                   >
-                    <ChevronRight className="h-5 w-5 rotate-180" strokeWidth={2.5} />
+                    <ChevronRight
+                      className="h-5 w-5 rotate-180"
+                      strokeWidth={2.5}
+                    />
                   </button>
                 )}
                 <h1 className="text-3xl font-black text-text-primary font-display tracking-tight truncate">

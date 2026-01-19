@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- defensive checks */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
 import {
@@ -19,7 +20,10 @@ import {
 } from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { AppPreferences, DateFormat, DashboardWidget } from "../types";
-import { useUserPreferences, useUserPreferencesMutations } from "@/hooks/useUserPreferences";
+import {
+  useUserPreferences,
+  useUserPreferencesMutations,
+} from "@/hooks/useUserPreferences";
 
 // Default empty state to prevent null access before load
 const defaultPreferences: AppPreferences = {
@@ -59,12 +63,14 @@ function Toggle({
       onClick={() => {
         onChange(!checked);
       }}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-teal-600" : "bg-muted"
-        }`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        checked ? "bg-teal-600" : "bg-muted"
+      }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"
-          }`}
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
       />
     </button>
   );
@@ -75,21 +81,21 @@ const themeOptions: {
   label: string;
   icon: typeof Sun;
 }[] = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
-  ];
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+];
 
 const dateFormatOptions: {
   value: DateFormat;
   label: string;
   example: string;
 }[] = [
-    { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
-    { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
-    { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
-    { value: "DD-MMM-YYYY", label: "DD-MMM-YYYY", example: "25-Dec-2024" },
-  ];
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
+  { value: "DD-MMM-YYYY", label: "DD-MMM-YYYY", example: "25-Dec-2024" },
+];
 
 const widgetOptions: { id: DashboardWidget; label: string }[] = [
   { id: "sales-chart", label: "Sales Chart" },
@@ -109,7 +115,7 @@ export function PreferencesPage(): React.ReactNode {
   const [preferences, setPreferences] =
     useState<AppPreferences>(defaultPreferences);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [_hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     if (!isLoading && storedPreferences) {
@@ -121,7 +127,7 @@ export function PreferencesPage(): React.ReactNode {
     setIsSaving(true);
     try {
       await updateUserPreferences(preferences);
-      setHasChanges(false);
+      setHasChanges(false); // Reset after save
     } catch (error) {
       console.error("Failed to save preferences:", error);
     } finally {

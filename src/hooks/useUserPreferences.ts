@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- defensive coding for runtime safety */
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { AppPreferences, DateFormat, DashboardWidget, PrintSettings } from "@/features/settings/types";
+import type {
+  AppPreferences,
+  DateFormat,
+  DashboardWidget,
+  PrintSettings,
+} from "@/features/settings/types";
 
 // DB Row Interface
 interface UserPreferencesRow {
@@ -29,7 +35,13 @@ const DEFAULT_PREFERENCES: AppPreferences = {
   },
   defaultInvoiceTerms: 30, // Not in DB schema based on review, using default
   defaultPaymentTerms: "Net 30", // Not in DB schema based on review, using default
-  showDashboardWidgets: ["sales-chart", "receivables", "payables", "recent-transactions", "quick-actions"],
+  showDashboardWidgets: [
+    "sales-chart",
+    "receivables",
+    "payables",
+    "recent-transactions",
+    "quick-actions",
+  ],
   compactMode: false,
   autoSave: true,
   printSettings: {
@@ -94,7 +106,9 @@ export function useUserPreferences(): {
   return { preferences, isLoading, error };
 }
 
-export function useUserPreferencesMutations() {
+export function useUserPreferencesMutations(): {
+  updateUserPreferences: (newPrefs: Partial<AppPreferences>) => Promise<void>;
+} {
   const db = getPowerSyncDatabase();
 
   const updateUserPreferences = useCallback(
@@ -171,11 +185,17 @@ export function useUserPreferencesMutations() {
       if (isInsert) {
         // Prepare INSERT - PowerSync requires an 'id' column
         const id = crypto.randomUUID();
-        const insertFields = ["id", "user_id", "created_at", "updated_at", ...fields];
+        const insertFields = [
+          "id",
+          "user_id",
+          "created_at",
+          "updated_at",
+          ...fields,
+        ];
         const placeholders = ["?", "?", "?", "?", ...fields.map(() => "?")];
         const insertValues = [id, userId, now, now, ...values];
 
-        console.log("[Preferences] Inserting new row:", { id, fields, values });
+        // Insert new preferences row
         await db.execute(
           `INSERT INTO user_preferences (${insertFields.join(", ")}) VALUES (${placeholders.join(", ")})`,
           insertValues

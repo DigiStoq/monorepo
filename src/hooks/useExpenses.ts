@@ -71,8 +71,22 @@ export function useExpenses(filters?: {
     const dateFromFilter = filters?.dateFrom ?? null;
     const dateToFilter = filters?.dateTo ?? null;
     const searchFilter = filters?.search ? `%${filters.search}%` : null;
-    return [categoryFilter, supplierFilter, modeFilter, dateFromFilter, dateToFilter, searchFilter];
-  }, [filters?.category, filters?.supplierId, filters?.paymentMode, filters?.dateFrom, filters?.dateTo, filters?.search]);
+    return [
+      categoryFilter,
+      supplierFilter,
+      modeFilter,
+      dateFromFilter,
+      dateToFilter,
+      searchFilter,
+    ];
+  }, [
+    filters?.category,
+    filters?.supplierId,
+    filters?.paymentMode,
+    filters?.dateFrom,
+    filters?.dateTo,
+    filters?.search,
+  ]);
 
   const { data, isLoading, error } = useQuery<ExpenseRow>(
     `SELECT * FROM expenses
@@ -97,7 +111,9 @@ export function useExpenseById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<ExpenseRow>(
-    id ? `SELECT * FROM expenses WHERE id = ?` : `SELECT * FROM expenses WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM expenses WHERE id = ?`
+      : `SELECT * FROM expenses WHERE 1 = 0`,
     id ? [id] : []
   );
 
@@ -272,7 +288,10 @@ export function useExpenseMutations(): ExpenseMutations {
       values.push(id);
 
       if (fields.length > 1) {
-        await db.execute(`UPDATE expenses SET ${fields.join(", ")} WHERE id = ?`, values);
+        await db.execute(
+          `UPDATE expenses SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
       }
     },
     [db]

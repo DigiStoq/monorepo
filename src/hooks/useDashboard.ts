@@ -21,34 +21,44 @@ export interface DashboardTransaction {
   invoiceNumber?: string;
 }
 
-export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: boolean } {
+export function useDashboardMetrics(): {
+  metrics: DashboardMetrics;
+  isLoading: boolean;
+} {
   // Total Receivable (from customers with positive balance)
-  const { data: receivableData, isLoading: receivableLoading } = useQuery<{ sum: number }>(
+  const { data: receivableData, isLoading: receivableLoading } = useQuery<{
+    sum: number;
+  }>(
     `SELECT COALESCE(SUM(current_balance), 0) as sum
      FROM customers
      WHERE type IN ('customer', 'both') AND current_balance > 0`
   );
 
   // Total Payable (from suppliers with negative balance)
-  const { data: payableData, isLoading: payableLoading } = useQuery<{ sum: number }>(
+  const { data: payableData, isLoading: payableLoading } = useQuery<{
+    sum: number;
+  }>(
     `SELECT COALESCE(ABS(SUM(current_balance)), 0) as sum
      FROM customers
      WHERE type IN ('supplier', 'both') AND current_balance < 0`
   );
 
   // Today's Sales
-  const { data: todaySalesData, isLoading: todaySalesLoading } = useQuery<{ sum: number }>(
+  const { data: todaySalesData, isLoading: todaySalesLoading } = useQuery<{
+    sum: number;
+  }>(
     `SELECT COALESCE(SUM(total), 0) as sum
      FROM sale_invoices
      WHERE date = date('now') AND status != 'returned'`
   );
 
   // Today's Purchases
-  const { data: todayPurchasesData, isLoading: todayPurchasesLoading } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum
+  const { data: todayPurchasesData, isLoading: todayPurchasesLoading } =
+    useQuery<{ sum: number }>(
+      `SELECT COALESCE(SUM(total), 0) as sum
      FROM purchase_invoices
      WHERE date = date('now') AND status != 'returned'`
-  );
+    );
 
   // Last month receivable (for change calculation)
   const { data: lastMonthReceivable } = useQuery<{ sum: number }>(
@@ -98,14 +108,23 @@ export function useDashboardMetrics(): { metrics: DashboardMetrics; isLoading: b
     totalPayable,
     todaySales,
     todayPurchases,
-    receivableChange: calculateChange(totalReceivable, lastMonthReceivable[0]?.sum ?? 0),
+    receivableChange: calculateChange(
+      totalReceivable,
+      lastMonthReceivable[0]?.sum ?? 0
+    ),
     payableChange: calculateChange(totalPayable, lastMonthPayable[0]?.sum ?? 0),
     salesChange: calculateChange(todaySales, yesterdaySales[0]?.sum ?? 0),
-    purchasesChange: calculateChange(todayPurchases, yesterdayPurchases[0]?.sum ?? 0),
+    purchasesChange: calculateChange(
+      todayPurchases,
+      yesterdayPurchases[0]?.sum ?? 0
+    ),
   };
 
   const isLoading =
-    receivableLoading || payableLoading || todaySalesLoading || todayPurchasesLoading;
+    receivableLoading ||
+    payableLoading ||
+    todaySalesLoading ||
+    todayPurchasesLoading;
 
   return { metrics, isLoading };
 }
@@ -115,8 +134,9 @@ export function useRecentTransactions(limit = 10): {
   isLoading: boolean;
 } {
   // Combine recent sales, purchases, and payments
-  const { data: salesData, isLoading: salesLoading } = useQuery<DashboardTransaction>(
-    `SELECT
+  const { data: salesData, isLoading: salesLoading } =
+    useQuery<DashboardTransaction>(
+      `SELECT
        id,
        'sale' as type,
        customer_name as name,
@@ -127,11 +147,12 @@ export function useRecentTransactions(limit = 10): {
      WHERE status != 'returned'
      ORDER BY created_at DESC
      LIMIT ?`,
-    [Math.ceil(limit / 4)]
-  );
+      [Math.ceil(limit / 4)]
+    );
 
-  const { data: purchasesData, isLoading: purchasesLoading } = useQuery<DashboardTransaction>(
-    `SELECT
+  const { data: purchasesData, isLoading: purchasesLoading } =
+    useQuery<DashboardTransaction>(
+      `SELECT
        id,
        'purchase' as type,
        customer_name as name,
@@ -142,11 +163,12 @@ export function useRecentTransactions(limit = 10): {
      WHERE status != 'returned'
      ORDER BY created_at DESC
      LIMIT ?`,
-    [Math.ceil(limit / 4)]
-  );
+      [Math.ceil(limit / 4)]
+    );
 
-  const { data: paymentInsData, isLoading: paymentInsLoading } = useQuery<DashboardTransaction>(
-    `SELECT
+  const { data: paymentInsData, isLoading: paymentInsLoading } =
+    useQuery<DashboardTransaction>(
+      `SELECT
        id,
        'payment-in' as type,
        customer_name as name,
@@ -156,11 +178,12 @@ export function useRecentTransactions(limit = 10): {
      FROM payment_ins
      ORDER BY created_at DESC
      LIMIT ?`,
-    [Math.ceil(limit / 4)]
-  );
+      [Math.ceil(limit / 4)]
+    );
 
-  const { data: paymentOutsData, isLoading: paymentOutsLoading } = useQuery<DashboardTransaction>(
-    `SELECT
+  const { data: paymentOutsData, isLoading: paymentOutsLoading } =
+    useQuery<DashboardTransaction>(
+      `SELECT
        id,
        'payment-out' as type,
        customer_name as name,
@@ -170,8 +193,8 @@ export function useRecentTransactions(limit = 10): {
      FROM payment_outs
      ORDER BY created_at DESC
      LIMIT ?`,
-    [Math.ceil(limit / 4)]
-  );
+      [Math.ceil(limit / 4)]
+    );
 
   // Combine and sort all transactions
   const transactions = [
@@ -187,7 +210,8 @@ export function useRecentTransactions(limit = 10): {
       date: formatRelativeDate(tx.date),
     }));
 
-  const isLoading = salesLoading || purchasesLoading || paymentInsLoading || paymentOutsLoading;
+  const isLoading =
+    salesLoading || purchasesLoading || paymentInsLoading || paymentOutsLoading;
 
   return { transactions, isLoading };
 }
@@ -196,7 +220,9 @@ export function useRecentTransactions(limit = 10): {
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   if (diffDays === 0) {
     return `Today, ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
@@ -219,7 +245,10 @@ export function useSalesChartData(days = 7): {
   chartData: ChartDataPoint[];
   isLoading: boolean;
 } {
-  const { data: salesData, isLoading: salesLoading } = useQuery<{ date: string; total: number }>(
+  const { data: salesData, isLoading: salesLoading } = useQuery<{
+    date: string;
+    total: number;
+  }>(
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM sale_invoices
      WHERE date >= date('now', '-${days} days')
@@ -228,7 +257,10 @@ export function useSalesChartData(days = 7): {
      ORDER BY date ASC`
   );
 
-  const { data: purchaseData, isLoading: purchaseLoading } = useQuery<{ date: string; total: number }>(
+  const { data: purchaseData, isLoading: purchaseLoading } = useQuery<{
+    date: string;
+    total: number;
+  }>(
     `SELECT date, COALESCE(SUM(total), 0) as total
      FROM purchase_invoices
      WHERE date >= date('now', '-${days} days')

@@ -311,7 +311,7 @@ export function SaleInvoicesPage(): React.ReactNode {
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
       const discountAmount =
         data.discountType === "amount"
-          ? data.discountAmount ?? 0
+          ? (data.discountAmount ?? 0)
           : subtotal * ((data.discountPercent ?? 0) / 100);
 
       await createInvoice(
@@ -612,7 +612,7 @@ export function SaleInvoicesPage(): React.ReactNode {
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
       const discountAmount =
         data.discountType === "amount"
-          ? data.discountAmount ?? 0
+          ? (data.discountAmount ?? 0)
           : subtotal * ((data.discountPercent ?? 0) / 100);
 
       await updateInvoice(
@@ -688,8 +688,8 @@ export function SaleInvoicesPage(): React.ReactNode {
       discountPercent:
         currentSelectedInvoice.subtotal > 0
           ? (currentSelectedInvoice.discountAmount /
-            currentSelectedInvoice.subtotal) *
-          100
+              currentSelectedInvoice.subtotal) *
+            100
           : 0,
       notes: currentSelectedInvoice.notes,
       terms: currentSelectedInvoice.terms,

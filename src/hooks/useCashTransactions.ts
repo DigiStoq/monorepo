@@ -41,7 +41,11 @@ export function useCashTransactions(filters?: {
   category?: string;
   dateFrom?: string;
   dateTo?: string;
-}): { transactions: CashTransaction[]; isLoading: boolean; error: Error | undefined } {
+}): {
+  transactions: CashTransaction[];
+  isLoading: boolean;
+  error: Error | undefined;
+} {
   const { query, params } = useMemo(() => {
     const conditions: string[] = [];
     const params: (string | number)[] = [];
@@ -66,14 +70,18 @@ export function useCashTransactions(filters?: {
       params.push(filters.dateTo);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM cash_transactions ${whereClause} ORDER BY date DESC, created_at DESC`,
       params,
     };
   }, [filters?.type, filters?.category, filters?.dateFrom, filters?.dateTo]);
 
-  const { data, isLoading, error } = useQuery<CashTransactionRow>(query, params);
+  const { data, isLoading, error } = useQuery<CashTransactionRow>(
+    query,
+    params
+  );
 
   const transactions = useMemo(() => data.map(mapRowToTransaction), [data]);
 

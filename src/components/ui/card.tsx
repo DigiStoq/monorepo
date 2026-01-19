@@ -126,7 +126,9 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
               </h3>
             )}
             {subtitle && (
-              <p className="mt-1 text-sm text-text-tertiary truncate">{subtitle}</p>
+              <p className="mt-1 text-sm text-text-tertiary truncate">
+                {subtitle}
+              </p>
             )}
           </div>
         ) : (

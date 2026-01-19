@@ -298,7 +298,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                     (
                     {formatCurrency(
                       data.expenses.operatingExpenses +
-                      data.expenses.otherExpenses
+                        data.expenses.otherExpenses
                     )}
                     )
                   </td>

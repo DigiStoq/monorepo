@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": ["index.html", "src/main.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["**/*.d.ts", "src-tauri/**/*", "mobile/**/*", "e2e/**/*"],
+  "ignoreDependencies": ["date-fns"],
+  "ignoreExportsUsedInFile": true
+}
