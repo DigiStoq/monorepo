@@ -289,7 +289,7 @@ export function BulkUpdateModal({
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer",
                     selectedIds.has(item.id) &&
-                    "bg-primary/10 border-primary-100"
+                      "bg-primary/10 border-primary-100"
                   )}
                   onClick={() => {
                     toggleSelection(item.id);

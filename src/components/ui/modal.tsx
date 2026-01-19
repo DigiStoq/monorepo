@@ -275,7 +275,10 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
             </h2>
           )}
           {description && (
-            <p id="modal-description" className="mt-1 text-sm text-text-tertiary">
+            <p
+              id="modal-description"
+              className="mt-1 text-sm text-text-tertiary"
+            >
               {description}
             </p>
           )}

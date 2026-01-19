@@ -210,7 +210,9 @@ export function RootLayout(): React.ReactNode {
             onToggleCollapse={toggleSidebar}
             header={
               <SidebarLogo
-                logo={<span className="text-primary-600 font-black text-xl">D</span>}
+                logo={
+                  <span className="text-primary-600 font-black text-xl">D</span>
+                }
                 name="DigiStoq"
                 tagline="Inventory Management"
                 isCollapsed={sidebarCollapsed}

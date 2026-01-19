@@ -54,7 +54,9 @@ function convertHundreds(num: number): string {
   const hundred = Math.floor(num / 100);
   const remainder = num % 100;
   return (
-    (ones[hundred] ?? "") + " Hundred" + (remainder ? " " + convertHundreds(remainder) : "")
+    (ones[hundred] ?? "") +
+    " Hundred" +
+    (remainder ? " " + convertHundreds(remainder) : "")
   );
 }
 

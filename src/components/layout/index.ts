@@ -4,15 +4,14 @@
 
 // App Shell
 export { AppShell, PageContainer, ContentArea } from "./app-shell";
-export type { AppShellProps, PageContainerProps, ContentAreaProps } from "./app-shell";
+export type {
+  AppShellProps,
+  PageContainerProps,
+  ContentAreaProps,
+} from "./app-shell";
 
 // Sidebar
-export {
-  Sidebar,
-  SidebarSection,
-  SidebarLogo,
-  SidebarUser,
-} from "./sidebar";
+export { Sidebar, SidebarSection, SidebarLogo, SidebarUser } from "./sidebar";
 export type {
   SidebarProps,
   SidebarSectionProps,

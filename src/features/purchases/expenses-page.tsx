@@ -356,17 +356,17 @@ export function ExpensesPage(): React.ReactNode {
               initialData={
                 isEditing && currentSelectedExpense
                   ? {
-                    category: currentSelectedExpense.category,
-                    customerId: currentSelectedExpense.customerId,
-                    paidToName: currentSelectedExpense.paidToName,
-                    paidToDetails: currentSelectedExpense.paidToDetails,
-                    date: currentSelectedExpense.date,
-                    amount: currentSelectedExpense.amount,
-                    paymentMode: currentSelectedExpense.paymentMode,
-                    referenceNumber: currentSelectedExpense.referenceNumber,
-                    description: currentSelectedExpense.description,
-                    notes: currentSelectedExpense.notes,
-                  }
+                      category: currentSelectedExpense.category,
+                      customerId: currentSelectedExpense.customerId,
+                      paidToName: currentSelectedExpense.paidToName,
+                      paidToDetails: currentSelectedExpense.paidToDetails,
+                      date: currentSelectedExpense.date,
+                      amount: currentSelectedExpense.amount,
+                      paymentMode: currentSelectedExpense.paymentMode,
+                      referenceNumber: currentSelectedExpense.referenceNumber,
+                      description: currentSelectedExpense.description,
+                      notes: currentSelectedExpense.notes,
+                    }
                   : undefined
               }
               onSubmit={(data) => {

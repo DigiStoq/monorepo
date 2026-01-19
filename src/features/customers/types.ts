@@ -28,7 +28,13 @@ export interface Customer {
 export interface CustomerTransaction {
   id: string;
   customerId: string;
-  type: "sale" | "purchase" | "payment-in" | "payment-out" | "credit-note" | "debit-note";
+  type:
+    | "sale"
+    | "purchase"
+    | "payment-in"
+    | "payment-out"
+    | "credit-note"
+    | "debit-note";
   invoiceNumber?: string;
   date: string;
   amount: number;

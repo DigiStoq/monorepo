@@ -1,7 +1,11 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { Cheque, ChequeType, ChequeStatus } from "@/features/cash-bank/types";
+import type {
+  Cheque,
+  ChequeType,
+  ChequeStatus,
+} from "@/features/cash-bank/types";
 
 // Database row type (snake_case columns from SQLite)
 interface ChequeRow {
@@ -80,12 +84,19 @@ export function useCheques(filters?: {
       params.push(filters.dateTo);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return {
       query: `SELECT * FROM cheques ${whereClause} ORDER BY due_date ASC`,
       params,
     };
-  }, [filters?.type, filters?.status, filters?.customerId, filters?.dateFrom, filters?.dateTo]);
+  }, [
+    filters?.type,
+    filters?.status,
+    filters?.customerId,
+    filters?.dateFrom,
+    filters?.dateTo,
+  ]);
 
   const { data, isLoading, error } = useQuery<ChequeRow>(query, params);
 
@@ -100,7 +111,9 @@ export function useChequeById(id: string | null): {
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<ChequeRow>(
-    id ? `SELECT * FROM cheques WHERE id = ?` : `SELECT * FROM cheques WHERE 1 = 0`,
+    id
+      ? `SELECT * FROM cheques WHERE id = ?`
+      : `SELECT * FROM cheques WHERE 1 = 0`,
     id ? [id] : []
   );
 

@@ -189,7 +189,9 @@ export function AgingReport(): React.ReactNode {
         {/* Aging Chart */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-text-heading">Aging Distribution</h3>
+            <h3 className="font-medium text-text-heading">
+              Aging Distribution
+            </h3>
           </CardHeader>
           <CardBody>
             <div className="space-y-3">

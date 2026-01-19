@@ -182,8 +182,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-        opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
@@ -331,8 +331,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               : "border-border-primary hover:border-border-secondary focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
             disabled && "opacity-50 cursor-not-allowed bg-subtle",
             isOpen &&
-            !hasError &&
-            "border-primary-500 ring-2 ring-primary-500/30"
+              !hasError &&
+              "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -452,7 +452,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                               : "cursor-pointer",
                             highlightedIndex === index && "bg-primary-50",
                             option.value === value &&
-                            "text-primary-600 font-medium"
+                              "text-primary-600 font-medium"
                           )}
                           role="option"
                           aria-selected={option.value === value}
@@ -554,8 +554,8 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // Filter options based on search
     const filteredOptions = searchable
       ? options.filter((opt) =>
-        opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       : options;
 
     // Close on outside click (check both container and portal dropdown)
@@ -659,8 +659,8 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
               : "border-border-primary hover:border-border-secondary focus-visible:ring-primary-500/30 focus-visible:border-primary-500",
             disabled && "opacity-50 cursor-not-allowed bg-subtle",
             isOpen &&
-            !hasError &&
-            "border-primary-500 ring-2 ring-primary-500/30"
+              !hasError &&
+              "border-primary-500 ring-2 ring-primary-500/30"
           )}
           aria-expanded={isOpen}
           aria-haspopup="listbox"

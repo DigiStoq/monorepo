@@ -203,7 +203,9 @@ export function CreditNoteDetail({
               </span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
-              <span className="font-semibold text-text-heading">Total Credit</span>
+              <span className="font-semibold text-text-heading">
+                Total Credit
+              </span>
               <span className="font-bold text-error">
                 {formatCurrency(creditNote.total)}
               </span>

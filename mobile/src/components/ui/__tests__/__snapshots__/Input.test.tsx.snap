@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Input Component renders with full width style when fullWidth is true 1`] = `
+<View
+  style={
+    [
+      {
+        "marginBottom": 4,
+      },
+      {
+        "width": "100%",
+      },
+      undefined,
+    ]
+  }
+>
+  <TextInput
+    placeholderTextColor="#999999"
+    style={
+      [
+        {
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#CCCCCC",
+          "borderRadius": 12,
+          "borderWidth": 1,
+          "color": "#000000",
+          "fontSize": 15,
+          "height": 48,
+          "paddingHorizontal": 12,
+        },
+        null,
+        undefined,
+      ]
+    }
+  />
+</View>
+`;

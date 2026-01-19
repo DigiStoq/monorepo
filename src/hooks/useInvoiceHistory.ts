@@ -46,7 +46,9 @@ interface InvoiceHistoryRow {
 // ============================================================================
 
 // Helper to safely parse JSON values that might be strings, objects, or double-encoded
-function parseJsonValue(value: string | object | null): Record<string, unknown> | null {
+function parseJsonValue(
+  value: string | object | null
+): Record<string, unknown> | null {
   if (!value) return null;
 
   // If it's already an object, return it
@@ -97,7 +99,10 @@ function mapRowToHistory(row: InvoiceHistoryRow): InvoiceHistory {
 // HOOKS
 // ============================================================================
 
-export function useInvoiceHistory(invoiceId: string | null, invoiceType: InvoiceType = "sale"): {
+export function useInvoiceHistory(
+  invoiceId: string | null,
+  invoiceType: InvoiceType = "sale"
+): {
   history: InvoiceHistory[];
   isLoading: boolean;
   error: Error | undefined;

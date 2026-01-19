@@ -103,10 +103,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       return (
         <span
           ref={ref}
-          className={cn(
-            "inline-flex items-center gap-2",
-            className
-          )}
+          className={cn("inline-flex items-center gap-2", className)}
           {...props}
         >
           <span
@@ -119,12 +116,14 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
             )}
           />
           {children && (
-            <span className={cn(
-              "text-slate-700",
-              size === "sm" && "text-2xs",
-              size === "md" && "text-xs",
-              size === "lg" && "text-sm"
-            )}>
+            <span
+              className={cn(
+                "text-slate-700",
+                size === "sm" && "text-2xs",
+                size === "md" && "text-xs",
+                size === "lg" && "text-sm"
+              )}
+            >
               {children}
             </span>
           )}

@@ -157,7 +157,9 @@ export function SalesByItemReport(): React.ReactNode {
         {/* Items Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-text-heading">Item Sales Details</h3>
+            <h3 className="font-medium text-text-heading">
+              Item Sales Details
+            </h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">

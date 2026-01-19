@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- preferences may not be loaded yet */
 import { useEffect, type ReactNode } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface ThemeProviderProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 /**
@@ -12,55 +13,55 @@ interface ThemeProviderProps {
  * to the <html> element by adding/removing CSS classes.
  */
 export function ThemeProvider({ children }: ThemeProviderProps): ReactNode {
-    const { preferences, isLoading } = useUserPreferences();
+  const { preferences, isLoading } = useUserPreferences();
 
-    useEffect(() => {
-        if (isLoading) return;
+  useEffect(() => {
+    if (isLoading) return;
 
-        const root = document.documentElement;
+    const root = document.documentElement;
 
-        // --- Handle Theme ---
-        const theme = preferences.theme ?? "system";
+    // --- Handle Theme ---
+    const theme = preferences.theme ?? "system";
 
-        const applyTheme = (isDark: boolean): void => {
-            if (isDark) {
-                root.classList.add("dark");
-            } else {
-                root.classList.remove("dark");
-            }
-        };
+    const applyTheme = (isDark: boolean): void => {
+      if (isDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+    };
 
-        let cleanupListener: (() => void) | undefined;
+    let cleanupListener: (() => void) | undefined;
 
-        if (theme === "dark") {
-            applyTheme(true);
-        } else if (theme === "light") {
-            applyTheme(false);
-        } else {
-            // System preference
-            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            applyTheme(mediaQuery.matches);
+    if (theme === "dark") {
+      applyTheme(true);
+    } else if (theme === "light") {
+      applyTheme(false);
+    } else {
+      // System preference
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      applyTheme(mediaQuery.matches);
 
-            const handleChange = (e: MediaQueryListEvent): void => {
-                applyTheme(e.matches);
-            };
+      const handleChange = (e: MediaQueryListEvent): void => {
+        applyTheme(e.matches);
+      };
 
-            mediaQuery.addEventListener("change", handleChange);
-            cleanupListener = () => {
-                mediaQuery.removeEventListener("change", handleChange);
-            };
-        }
+      mediaQuery.addEventListener("change", handleChange);
+      cleanupListener = () => {
+        mediaQuery.removeEventListener("change", handleChange);
+      };
+    }
 
-        // --- Handle Compact Mode ---
-        const compactMode = preferences.compactMode ?? false;
-        if (compactMode) {
-            root.classList.add("compact");
-        } else {
-            root.classList.remove("compact");
-        }
+    // --- Handle Compact Mode ---
+    const compactMode = preferences.compactMode ?? false;
+    if (compactMode) {
+      root.classList.add("compact");
+    } else {
+      root.classList.remove("compact");
+    }
 
-        return cleanupListener;
-    }, [preferences, isLoading]);
+    return cleanupListener;
+  }, [preferences, isLoading]);
 
-    return <>{children}</>;
+  return <>{children}</>;
 }

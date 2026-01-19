@@ -55,25 +55,25 @@ const formatOptions: {
   icon: React.ReactNode;
   description: string;
 }[] = [
-    {
-      value: "csv",
-      label: "CSV",
-      icon: <FileSpreadsheet className="h-6 w-6" />,
-      description: "Comma-separated values, compatible with Excel",
-    },
-    {
-      value: "xlsx",
-      label: "Excel",
-      icon: <FileSpreadsheet className="h-6 w-6 text-green-600" />,
-      description: "Microsoft Excel format with formatting",
-    },
-    {
-      value: "pdf",
-      label: "PDF",
-      icon: <FileText className="h-6 w-6 text-red-500" />,
-      description: "Portable document format for printing",
-    },
-  ];
+  {
+    value: "csv",
+    label: "CSV",
+    icon: <FileSpreadsheet className="h-6 w-6" />,
+    description: "Comma-separated values, compatible with Excel",
+  },
+  {
+    value: "xlsx",
+    label: "Excel",
+    icon: <FileSpreadsheet className="h-6 w-6 text-green-600" />,
+    description: "Microsoft Excel format with formatting",
+  },
+  {
+    value: "pdf",
+    label: "PDF",
+    icon: <FileText className="h-6 w-6 text-red-500" />,
+    description: "Portable document format for printing",
+  },
+];
 
 // ============================================================================
 // COMPONENT
@@ -111,8 +111,8 @@ export function ExportModal({
         ...(needsDateRange &&
           dateFrom &&
           dateTo && {
-          dateRange: { from: dateFrom, to: dateTo },
-        }),
+            dateRange: { from: dateFrom, to: dateTo },
+          }),
       };
 
       const exportResult = await onExport(options);

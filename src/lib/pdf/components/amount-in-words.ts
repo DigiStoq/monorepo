@@ -23,7 +23,11 @@ export function buildAmountInWords(
         [
           {
             text: [
-              { text: "Amount in Words: ", bold: true, fontSize: FONT_SIZES.small },
+              {
+                text: "Amount in Words: ",
+                bold: true,
+                fontSize: FONT_SIZES.small,
+              },
               { text: amountWords, italics: true, fontSize: FONT_SIZES.small },
             ],
             margin: [8, 6, 8, 6],

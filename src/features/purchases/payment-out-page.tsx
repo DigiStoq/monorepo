@@ -402,12 +402,12 @@ export function PaymentOutPage(): React.ReactNode {
         linkedItems={
           paymentToDelete?.invoiceId
             ? [
-              {
-                type: "Invoice Link",
-                count: 1,
-                description: "Balance will be reversed",
-              },
-            ]
+                {
+                  type: "Invoice Link",
+                  count: 1,
+                  description: "Balance will be reversed",
+                },
+              ]
             : undefined
         }
         isLoading={isSubmitting}
