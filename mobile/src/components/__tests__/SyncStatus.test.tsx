@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, act } from '@testing-library/react-native';
 import { SyncStatus } from '../SyncStatus';
 import { usePowerSync } from '@powersync/react-native';
@@ -38,7 +37,7 @@ describe('SyncStatus Component', () => {
 
     it('renders online status when connected', () => {
         mockDb.currentStatus.connected = true;
-        const { getByText, rerender } = render(<SyncStatus />);
+        const { getByText } = render(<SyncStatus />);
 
         // Advance timers because of polling interval in useEffect
         act(() => {

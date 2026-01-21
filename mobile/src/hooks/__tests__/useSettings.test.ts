@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import { useCompanySettings, useInvoiceSettings, useTaxRates } from '../useSettings';
 import { useQuery, usePowerSync } from '@powersync/react-native';
 

@@ -5,14 +5,19 @@ import { StatusBar } from "expo-status-bar";
 import { PowerSyncContext } from "@powersync/react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { LoginScreen } from "./src/screens/LoginScreen";
+import { SplashScreen } from "./src/screens/SplashScreen";
+import { WelcomeScreen } from "./src/screens/WelcomeScreen";
 import { AppNavigator } from "./src/navigation/AppNavigator";
 import { initializePowerSync } from "./src/lib/powersync";
 import type { PowerSyncDatabase } from "@powersync/react-native";
+
+type AuthScreen = "splash" | "welcome" | "login" | "signup";
 
 function AppContent(): JSX.Element | null {
   const { isLoading, isAuthenticated } = useAuth();
   const [db, setDb] = useState<PowerSyncDatabase | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
+  const [authScreen, setAuthScreen] = useState<AuthScreen>("splash");
 
   useEffect(() => {
     if (isAuthenticated && !db) {
@@ -34,6 +39,13 @@ function AppContent(): JSX.Element | null {
     }
   }, [isAuthenticated, db]);
 
+  // Reset to welcome screen when user logs out
+  useEffect(() => {
+    if (!isAuthenticated && authScreen !== "splash") {
+      setAuthScreen("welcome");
+    }
+  }, [isAuthenticated]);
+
   if (isLoading) {
     return (
       <View style={styles.loading}>
@@ -43,6 +55,22 @@ function AppContent(): JSX.Element | null {
   }
 
   if (!isAuthenticated) {
+    // Show auth flow screens
+    if (authScreen === "splash") {
+      return <SplashScreen onFinish={() => setAuthScreen("welcome")} />;
+    }
+
+    if (authScreen === "welcome") {
+      return (
+        <WelcomeScreen
+          onSignIn={() => setAuthScreen("login")}
+          onSignUp={() => setAuthScreen("signup")}
+        />
+      );
+    }
+
+    // Both login and signup use the same LoginScreen component
+    // The LoginScreen has its own toggle for signup mode
     return <LoginScreen />;
   }
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { Select } from '../Select';
 
 // Mock useTheme
@@ -45,7 +44,7 @@ describe('Select Component', () => {
     });
 
     it('opens modal on press', () => {
-        const { getByText, queryByText } = render(
+        const { getByText } = render(
             <Select options={options} onChange={jest.fn()} placeholder="Select" />
         );
 

@@ -1,7 +1,6 @@
-import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { SettingsScreen } from '../SettingsScreen';
-import { Alert } from 'react-native';
+import { Alert, Switch } from 'react-native';
 
 // Mocks
 jest.mock('react-native', () => {
@@ -82,7 +81,7 @@ describe('SettingsScreen', () => {
     });
 
     it('toggles dark mode', () => {
-        const { getByRole, getAllByRole, getByText, UNSAFE_getByType } = render(<SettingsScreen />);
+        const { UNSAFE_getByType } = render(<SettingsScreen />);
 
         // Finding the switch. React Native Switch.
         // Testing Library has getByRole('switch')? Not effectively for RN sometimes.
@@ -91,7 +90,6 @@ describe('SettingsScreen', () => {
         // Switch has `value` and `onValueChange`.
         // Let's fire switch value change directly if we can find it.
 
-        const { Switch } = require('react-native');
         const switchComp = UNSAFE_getByType(Switch);
         fireEvent(switchComp, 'onValueChange', true);
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { SalesScreen } from '../SalesScreen';
 import { useQuery } from '@powersync/react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -63,7 +62,7 @@ describe('SalesScreen', () => {
         ];
         (useQuery as jest.Mock).mockReturnValue({ data: mockInvoices, isLoading: false });
 
-        const { getByText, getAllByText } = render(<SalesScreen />);
+        const { getByText } = render(<SalesScreen />);
 
         expect(getByText('INV-001')).toBeTruthy();
         expect(getByText('John Doe')).toBeTruthy();

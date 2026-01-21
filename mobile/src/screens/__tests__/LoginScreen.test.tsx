@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { LoginScreen } from '../LoginScreen';
 import { Alert } from 'react-native';
@@ -68,12 +67,12 @@ describe('LoginScreen', () => {
         mockSignIn.mockResolvedValue({ error: null });
         const { getByText, getByPlaceholderText } = render(<LoginScreen />);
 
-        fireEvent.changeText(getByPlaceholderText('Email'), 'test@example.com');
+        fireEvent.changeText(getByPlaceholderText('Email'), 'admin@example.com');
         fireEvent.changeText(getByPlaceholderText('Password'), 'password123');
         fireEvent.press(getByText('Sign In'));
 
         await waitFor(() => {
-            expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123');
+            expect(mockSignIn).toHaveBeenCalledWith('admin@example.com', 'password123');
         });
     });
 
@@ -97,7 +96,7 @@ describe('LoginScreen', () => {
         mockSignIn.mockResolvedValue({ error: { message: 'Invalid credentials' } });
         const { getByText, getByPlaceholderText } = render(<LoginScreen />);
 
-        fireEvent.changeText(getByPlaceholderText('Email'), 'test@example.com');
+        fireEvent.changeText(getByPlaceholderText('Email'), 'admin@example.com');
         fireEvent.changeText(getByPlaceholderText('Password'), 'wrong');
         fireEvent.press(getByText('Sign In'));
 

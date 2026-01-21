@@ -40,8 +40,8 @@ export function DashboardScreen() {
   const { data: customerCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM customers");
   const { data: itemCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items");
   // Out of stock logic? Assuming quantity = 0
-  const { data: outOfStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE quantity <= 0");
-  const { data: lowStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE quantity > 0 AND quantity < 10"); // Arbitrary low stock threshold
+  const { data: outOfStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE stock_quantity <= 0");
+  const { data: lowStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE stock_quantity > 0 AND stock_quantity < 10"); // Arbitrary low stock threshold
   const { data: totalSales } = useQuery<{ sum: number }>("SELECT COALESCE(SUM(total), 0) as sum FROM sale_invoices WHERE status != 'cancelled'");
 
   // Sales Trend Data (Last 5 days)
@@ -147,59 +147,77 @@ export function DashboardScreen() {
 
           {/* Total Stock */}
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
-                <Box size={20} color={colors.success} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'all' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
+                  <Box size={20} color={colors.success} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
               </View>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>Weekly</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{itemCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Total Stock</Text>
               </View>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.value}>{itemCount?.[0]?.count || 0}</Text>
-              <Text style={styles.label}>Total Stock</Text>
-            </View>
-            <View style={styles.cardFooter}>
-              <ArrowUpRight size={16} color={colors.text} />
-            </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Out of Stock */}
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.danger + '20' }]}>
-                <XCircle size={20} color={colors.danger} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'out' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.danger + '20' }]}>
+                  <XCircle size={20} color={colors.danger} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
               </View>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>Weekly</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{outOfStockCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Out of Stock</Text>
               </View>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.value}>{outOfStockCount?.[0]?.count || 0}</Text>
-              <Text style={styles.label}>Out of Stock</Text>
-            </View>
-            <View style={styles.cardFooter}>
-              <ArrowUpRight size={16} color={colors.text} />
-            </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Low Stock */}
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.warning + '20' }]}>
-                <AlertTriangle size={20} color={colors.warning} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'low' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.warning + '20' }]}>
+                  <AlertTriangle size={20} color={colors.warning} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
               </View>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>Weekly</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{lowStockCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Low Stock</Text>
               </View>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.value}>{lowStockCount?.[0]?.count || 0}</Text>
-              <Text style={styles.label}>Low Stock</Text>
-            </View>
-            <View style={styles.cardFooter}>
-              <ArrowUpRight size={16} color={colors.text} />
-            </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 

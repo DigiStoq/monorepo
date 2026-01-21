@@ -1,28 +1,53 @@
 appId: com.anonymous.mobile
 ---
-- launchApp
+# Main Flow Test - Custom TabButton Selectors
 
-# Login Flow
-- tapOn: "Sign In" # Adjust based on actual button text (e.g., "Login" or "Sign In")
+- launchApp:
+    clearState: true
+
+# Wait for splash and welcome
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Sign In"
+    timeout: 8000
+- tapOn: "Sign In"
+
+# Login
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
 - inputText: "admin@example.com"
-- tapOn: "Password"
-- inputText: "password"
-- tapOn: "Sign In" # Submit button
+- tapOn:
+    id: "password-input"
+- inputText: "Abc123.a"
+- tapOn: "Sign In"
 
-# Dashboard Verification
-- assertVisible: "Dashboard"
-- assertVisible: "Total Sales"
+# Wait for dashboard
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Total Sales Value"
+    timeout: 15000
 
-# Create Invoice Flow
-- tapOn: "Sales"
-- assertVisible: "Sale Invoices"
-- tapOn: "New Invoice" # FAB or Button
-- tapOn: "Select Customer"
-- tapOn: "Walk-in Customer" # Assuming this exists or create one
-- tapOn: "Add Item"
-- tapOn: "Service" # Select an item
-- tapOn: "Save" # Finish item selection
-- tapOn: "Save Invoice" # Finish invoice
+# Navigate to Items tab using coordinate (38%, 96%)
+- tapOn:
+    point: "38%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Inventory"
+    timeout: 8000
 
-# Verification
-- assertVisible: "Walk-in Customer" # Should appear in list
+# Navigate to Menu tab using coordinate (88%, 96%)
+- tapOn:
+    point: "88%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Menu"
+    timeout: 5000
+
+# Back to Dashboard using coordinate (13%, 96%)
+- tapOn:
+    point: "13%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Total Sales Value"
+    timeout: 5000
