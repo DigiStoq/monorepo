@@ -14,7 +14,18 @@ export interface ReportFilters {
   categoryId?: string;
 }
 
-export type ReportPeriod = "today" | "yesterday" | "this_week" | "last_week" | "this_month" | "last_month" | "this_quarter" | "last_quarter" | "this_year" | "last_year" | "custom";
+export type ReportPeriod =
+  | "today"
+  | "yesterday"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "this_quarter"
+  | "last_quarter"
+  | "this_year"
+  | "last_year"
+  | "custom";
 
 export interface ReportCategory {
   id: string;
@@ -42,7 +53,12 @@ export interface SalesSummary {
   totalDue: number;
   averageOrderValue: number;
   topCustomers: { customerId: string; customerName: string; amount: number }[];
-  topItems: { itemId: string; itemName: string; quantity: number; amount: number }[];
+  topItems: {
+    itemId: string;
+    itemName: string;
+    quantity: number;
+    amount: number;
+  }[];
   salesByMonth: { month: string; amount: number }[];
 }
 
@@ -72,7 +88,12 @@ export interface PurchaseSummary {
   totalDue: number;
   averageOrderValue: number;
   topSuppliers: { supplierId: string; supplierName: string; amount: number }[];
-  topItems: { itemId: string; itemName: string; quantity: number; amount: number }[];
+  topItems: {
+    itemId: string;
+    itemName: string;
+    quantity: number;
+    amount: number;
+  }[];
   purchasesByMonth: { month: string; amount: number }[];
 }
 
@@ -164,7 +185,13 @@ export interface ItemProfitability {
 export interface DayBookEntry {
   id: string;
   date: string;
-  type: "sale" | "purchase" | "payment_in" | "payment_out" | "expense" | "adjustment";
+  type:
+    | "sale"
+    | "purchase"
+    | "payment_in"
+    | "payment_out"
+    | "expense"
+    | "adjustment";
   referenceNumber: string;
   customerName?: string;
   description: string;
@@ -223,4 +250,40 @@ export interface TaxSummary {
     taxPaid: number;
   };
   netTaxLiability: number;
+}
+
+// ============================================================================
+// CASH MOVEMENT REPORT TYPES
+// ============================================================================
+
+export type PaymentMode = "cash" | "bank" | "card" | "ach" | "cheque" | "other";
+
+export interface PaymentModeMovement {
+  mode: PaymentMode;
+  label: string;
+  moneyIn: number;
+  moneyOut: number;
+  net: number;
+  transactionCount: number;
+}
+
+export interface CashMovementTransaction {
+  id: string;
+  date: string;
+  type: "payment_in" | "payment_out" | "expense";
+  referenceNumber: string;
+  partyName?: string;
+  description: string;
+  paymentMode: PaymentMode;
+  moneyIn: number;
+  moneyOut: number;
+}
+
+export interface CashMovementReport {
+  period: DateRange;
+  byMode: PaymentModeMovement[];
+  totalMoneyIn: number;
+  totalMoneyOut: number;
+  netMovement: number;
+  transactions: CashMovementTransaction[];
 }

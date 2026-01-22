@@ -1,13 +1,32 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- defensive checks */
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
-import { Settings, Palette, Calendar, Hash, FileText, Save, Monitor, Sun, Moon } from "lucide-react";
+import {
+  Settings,
+  Palette,
+  Calendar,
+  Hash,
+  FileText,
+  Save,
+  Monitor,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { AppPreferences, DateFormat, DashboardWidget } from "../types";
+import {
+  useUserPreferences,
+  useUserPreferencesMutations,
+} from "@/hooks/useUserPreferences";
 
-// Mock data
-const mockPreferences: AppPreferences = {
+// Default empty state to prevent null access before load
+const defaultPreferences: AppPreferences = {
   theme: "system",
   dateFormat: "DD/MM/YYYY",
   numberFormat: {
@@ -17,13 +36,7 @@ const mockPreferences: AppPreferences = {
   },
   defaultInvoiceTerms: 30,
   defaultPaymentTerms: "Net 30",
-  showDashboardWidgets: [
-    "sales-chart",
-    "receivables",
-    "payables",
-    "recent-transactions",
-    "quick-actions",
-  ],
+  showDashboardWidgets: [],
   compactMode: false,
   autoSave: true,
   printSettings: {
@@ -41,15 +54,17 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}) {
+}): React.ReactNode {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => {
+        onChange(!checked);
+      }}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? "bg-teal-600" : "bg-slate-200"
+        checked ? "bg-teal-600" : "bg-muted"
       }`}
     >
       <span
@@ -61,13 +76,21 @@ function Toggle({
   );
 }
 
-const themeOptions: { value: AppPreferences["theme"]; label: string; icon: typeof Sun }[] = [
+const themeOptions: {
+  value: AppPreferences["theme"];
+  label: string;
+  icon: typeof Sun;
+}[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
 ];
 
-const dateFormatOptions: { value: DateFormat; label: string; example: string }[] = [
+const dateFormatOptions: {
+  value: DateFormat;
+  label: string;
+  example: string;
+}[] = [
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "25/12/2024" },
   { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/25/2024" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2024-12-25" },
@@ -85,38 +108,76 @@ const widgetOptions: { id: DashboardWidget; label: string }[] = [
   { id: "monthly-comparison", label: "Monthly Comparison" },
 ];
 
-export function PreferencesPage() {
-  const [preferences, setPreferences] = useState<AppPreferences>(mockPreferences);
-  const [isSaving, setIsSaving] = useState(false);
+export function PreferencesPage(): React.ReactNode {
+  const { preferences: storedPreferences, isLoading } = useUserPreferences();
+  const { updateUserPreferences } = useUserPreferencesMutations();
 
-  const handleSave = async () => {
+  const [preferences, setPreferences] =
+    useState<AppPreferences>(defaultPreferences);
+  const [isSaving, setIsSaving] = useState(false);
+  const [_hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && storedPreferences) {
+      setPreferences(storedPreferences);
+    }
+  }, [storedPreferences, isLoading]);
+
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      await updateUserPreferences(preferences);
+      setHasChanges(false); // Reset after save
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateField = <K extends keyof AppPreferences>(
     field: K,
     value: AppPreferences[K]
-  ) => {
+  ): void => {
     setPreferences((prev) => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
-  const toggleWidget = (widgetId: DashboardWidget) => {
-    setPreferences((prev) => ({
-      ...prev,
-      showDashboardWidgets: prev.showDashboardWidgets.includes(widgetId)
-        ? prev.showDashboardWidgets.filter((w) => w !== widgetId)
-        : [...prev.showDashboardWidgets, widgetId],
-    }));
+  const toggleWidget = (widgetId: DashboardWidget): void => {
+    setPreferences((prev) => {
+      const currentWidgets = prev.showDashboardWidgets || [];
+      const newWidgets = currentWidgets.includes(widgetId)
+        ? currentWidgets.filter((w) => w !== widgetId)
+        : [...currentWidgets, widgetId];
+
+      return {
+        ...prev,
+        showDashboardWidgets: newWidgets,
+      };
+    });
+    setHasChanges(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-slate-500">Loading preferences...</p>
+      </div>
+    );
+  }
 
   return (
     <SettingsLayout
       title="Preferences"
       description="Customize your app experience"
       actions={
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button
+          onClick={() => {
+            void handleSave();
+          }}
+          disabled={isSaving}
+          className="gap-2"
+        >
           <Save className="h-4 w-4" />
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
@@ -130,7 +191,10 @@ export function PreferencesPage() {
           icon={Palette}
         >
           <SettingsGroup>
-            <SettingsRow label="Theme" description="Choose your preferred color scheme">
+            <SettingsRow
+              label="Theme"
+              description="Choose your preferred color scheme"
+            >
               <div className="flex gap-2">
                 {themeOptions.map((option) => {
                   const Icon = option.icon;
@@ -138,7 +202,9 @@ export function PreferencesPage() {
                   return (
                     <button
                       key={option.value}
-                      onClick={() => updateField("theme", option.value)}
+                      onClick={() => {
+                        updateField("theme", option.value);
+                      }}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
                         isActive
@@ -147,16 +213,23 @@ export function PreferencesPage() {
                       )}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{option.label}</span>
+                      <span className="text-sm font-medium">
+                        {option.label}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </SettingsRow>
-            <SettingsRow label="Compact Mode" description="Use smaller spacing and fonts">
+            <SettingsRow
+              label="Compact Mode"
+              description="Use smaller spacing and fonts"
+            >
               <Toggle
                 checked={preferences.compactMode}
-                onChange={(v) => updateField("compactMode", v)}
+                onChange={(v) => {
+                  updateField("compactMode", v);
+                }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -172,7 +245,9 @@ export function PreferencesPage() {
             <SettingsRow label="Date Format">
               <select
                 value={preferences.dateFormat}
-                onChange={(e) => updateField("dateFormat", e.target.value as DateFormat)}
+                onChange={(e) => {
+                  updateField("dateFormat", e.target.value as DateFormat);
+                }}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {dateFormatOptions.map((opt) => (
@@ -185,15 +260,16 @@ export function PreferencesPage() {
             <SettingsRow label="Decimal Separator">
               <select
                 value={preferences.numberFormat.decimalSeparator}
-                onChange={(e) =>
+                onChange={(e) => {
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalSeparator: e.target.value as "." | ",",
                     },
-                  }))
-                }
+                  }));
+                  setHasChanges(true);
+                }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value=".">Period (.)</option>
@@ -203,15 +279,16 @@ export function PreferencesPage() {
             <SettingsRow label="Thousands Separator">
               <select
                 value={preferences.numberFormat.thousandsSeparator}
-                onChange={(e) =>
+                onChange={(e) => {
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       thousandsSeparator: e.target.value as "," | "." | " ",
                     },
-                  }))
-                }
+                  }));
+                  setHasChanges(true);
+                }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value=",">Comma (,)</option>
@@ -222,15 +299,16 @@ export function PreferencesPage() {
             <SettingsRow label="Decimal Places">
               <select
                 value={preferences.numberFormat.decimalPlaces}
-                onChange={(e) =>
+                onChange={(e) => {
                   setPreferences((prev) => ({
                     ...prev,
                     numberFormat: {
                       ...prev.numberFormat,
                       decimalPlaces: parseInt(e.target.value),
                     },
-                  }))
-                }
+                  }));
+                  setHasChanges(true);
+                }}
                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value={0}>0</option>
@@ -249,12 +327,15 @@ export function PreferencesPage() {
           icon={Hash}
         >
           <SettingsGroup>
-            <SettingsRow label="Default Invoice Terms" description="Days until payment is due">
+            <SettingsRow
+              label="Default Invoice Terms"
+              description="Days until payment is due"
+            >
               <select
                 value={preferences.defaultInvoiceTerms}
-                onChange={(e) =>
-                  updateField("defaultInvoiceTerms", parseInt(e.target.value))
-                }
+                onChange={(e) => {
+                  updateField("defaultInvoiceTerms", parseInt(e.target.value));
+                }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value={7}>7 days</option>
@@ -269,7 +350,9 @@ export function PreferencesPage() {
             <SettingsRow label="Payment Terms Text">
               <select
                 value={preferences.defaultPaymentTerms}
-                onChange={(e) => updateField("defaultPaymentTerms", e.target.value)}
+                onChange={(e) => {
+                  updateField("defaultPaymentTerms", e.target.value);
+                }}
                 className="w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="Due on Receipt">Due on Receipt</option>
@@ -280,10 +363,15 @@ export function PreferencesPage() {
                 <option value="Net 60">Net 60</option>
               </select>
             </SettingsRow>
-            <SettingsRow label="Auto-Save" description="Automatically save changes">
+            <SettingsRow
+              label="Auto-Save"
+              description="Automatically save changes"
+            >
               <Toggle
                 checked={preferences.autoSave}
-                onChange={(v) => updateField("autoSave", v)}
+                onChange={(v) => {
+                  updateField("autoSave", v);
+                }}
               />
             </SettingsRow>
           </SettingsGroup>
@@ -297,11 +385,15 @@ export function PreferencesPage() {
         >
           <div className="grid grid-cols-2 gap-3">
             {widgetOptions.map((widget) => {
-              const isActive = preferences.showDashboardWidgets.includes(widget.id);
+              const isActive = preferences.showDashboardWidgets.includes(
+                widget.id
+              );
               return (
                 <button
                   key={widget.id}
-                  onClick={() => toggleWidget(widget.id)}
+                  onClick={() => {
+                    toggleWidget(widget.id);
+                  }}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left",
                     isActive
@@ -357,15 +449,15 @@ export function PreferencesPage() {
             <SettingsRow label="Paper Size">
               <select
                 value={preferences.printSettings.paperSize}
-                onChange={(e) =>
+                onChange={(e) => {
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: {
                       ...prev.printSettings,
                       paperSize: e.target.value as "A4" | "Letter" | "Legal",
                     },
-                  }))
-                }
+                  }));
+                }}
                 className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="A4">A4</option>
@@ -373,15 +465,18 @@ export function PreferencesPage() {
                 <option value="Legal">Legal</option>
               </select>
             </SettingsRow>
-            <SettingsRow label="Show Company Logo" description="Include logo on printed documents">
+            <SettingsRow
+              label="Show Company Logo"
+              description="Include logo on printed documents"
+            >
               <Toggle
                 checked={preferences.printSettings.showLogo}
-                onChange={(v) =>
+                onChange={(v) => {
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showLogo: v },
-                  }))
-                }
+                  }));
+                }}
               />
             </SettingsRow>
             <SettingsRow
@@ -390,12 +485,12 @@ export function PreferencesPage() {
             >
               <Toggle
                 checked={preferences.printSettings.showSignature}
-                onChange={(v) =>
+                onChange={(v) => {
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showSignature: v },
-                  }))
-                }
+                  }));
+                }}
               />
             </SettingsRow>
             <SettingsRow
@@ -404,12 +499,12 @@ export function PreferencesPage() {
             >
               <Toggle
                 checked={preferences.printSettings.showTerms}
-                onChange={(v) =>
+                onChange={(v) => {
                   setPreferences((prev) => ({
                     ...prev,
                     printSettings: { ...prev.printSettings, showTerms: v },
-                  }))
-                }
+                  }));
+                }}
               />
             </SettingsRow>
           </SettingsGroup>

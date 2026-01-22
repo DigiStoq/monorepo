@@ -1519,3 +1519,24 @@ npm install -D @types/node
 - [ ] Sub-200ms interaction response times
 - [ ] Accessible (WCAG 2.1 AA)
 - [ ] TypeScript strict mode compliant
+
+---
+
+## Mobile Implementation
+
+### Initialization
+
+- Scaffold new Expo application in `mobile` directory.
+
+### Shared Logic Integration
+
+- **Metro Config**: Configure Metro Bundler to allow imports from `../src/lib`.
+- **Schema**: Import shared PowerSync schema from `src/lib/schema.ts`.
+- **Authentication**: Setup Supabase client using Expo environment variables.
+- **Sync**: Utilize Refactored `SupabaseConnector` for data synchronization.
+
+### Dependencies
+
+- `@powersync/react-native` (Native SQLite support)
+- `@supabase/supabase-js`
+- `expo-file-system` (Likely needed for PowerSync adapter)

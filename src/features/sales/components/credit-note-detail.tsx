@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   MoreHorizontal,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { CreditNote, CreditNoteReason } from "../types";
 
 // ============================================================================
@@ -34,7 +35,14 @@ export interface CreditNoteDetailProps {
 // REASON CONFIG
 // ============================================================================
 
-const reasonConfig: Record<CreditNoteReason, { label: string; icon: typeof RotateCcw; variant: "info" | "warning" | "error" | "secondary" }> = {
+const reasonConfig: Record<
+  CreditNoteReason,
+  {
+    label: string;
+    icon: typeof RotateCcw;
+    variant: "info" | "warning" | "error" | "secondary";
+  }
+> = {
   return: { label: "Return", icon: RotateCcw, variant: "info" },
   discount: { label: "Discount", icon: Percent, variant: "warning" },
   error: { label: "Error Correction", icon: AlertTriangle, variant: "error" },
@@ -53,18 +61,13 @@ export function CreditNoteDetail({
   onPrint,
   onShare,
   className,
-}: CreditNoteDetailProps) {
+}: CreditNoteDetailProps): React.ReactNode {
   const reason = reasonConfig[creditNote.reason];
   const ReasonIcon = reason.icon;
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
-  const formatDate = (dateStr: string) =>
+  const formatDate = (dateStr: string): string =>
     new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
@@ -77,7 +80,7 @@ export function CreditNoteDetail({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-text-heading">
             {creditNote.creditNoteNumber}
           </h2>
           <p className="text-sm text-slate-500">Credit Note</p>
@@ -100,8 +103,12 @@ export function CreditNoteDetail({
         {/* Amount Card */}
         <Card className="bg-error-light border-error/20">
           <CardBody className="text-center py-6">
-            <p className="text-sm text-error-dark font-medium mb-1">Credit Amount</p>
-            <p className="text-3xl font-bold text-error">-{formatCurrency(creditNote.total)}</p>
+            <p className="text-sm text-error-dark font-medium mb-1">
+              Credit Amount
+            </p>
+            <p className="text-3xl font-bold text-error">
+              -{formatCurrency(creditNote.total)}
+            </p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <Badge variant={reason.variant} size="md">
                 <ReasonIcon className="h-4 w-4 mr-1" />
@@ -121,7 +128,9 @@ export function CreditNoteDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-medium text-slate-900">{creditNote.customerName}</p>
+                <p className="font-medium text-text-heading">
+                  {creditNote.customerName}
+                </p>
               </div>
             </div>
 
@@ -131,7 +140,9 @@ export function CreditNoteDetail({
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date</p>
-                <p className="font-medium text-slate-900">{formatDate(creditNote.date)}</p>
+                <p className="font-medium text-text-heading">
+                  {formatDate(creditNote.date)}
+                </p>
               </div>
             </div>
 
@@ -142,7 +153,9 @@ export function CreditNoteDetail({
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Original Invoice</p>
-                  <p className="font-medium text-primary-600">{creditNote.invoiceNumber}</p>
+                  <p className="font-medium text-primary-600">
+                    {creditNote.invoiceNumber}
+                  </p>
                 </div>
               </div>
             )}
@@ -157,12 +170,17 @@ export function CreditNoteDetail({
               {creditNote.items.map((item) => (
                 <div key={item.id} className="p-4 flex justify-between">
                   <div>
-                    <p className="font-medium text-slate-900">{item.itemName}</p>
+                    <p className="font-medium text-text-heading">
+                      {item.itemName}
+                    </p>
                     <p className="text-sm text-slate-500">
-                      {item.quantity} {item.unit} × {formatCurrency(item.unitPrice)}
+                      {item.quantity} {item.unit} ×{" "}
+                      {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <p className="font-medium text-slate-900">{formatCurrency(item.amount)}</p>
+                  <p className="font-medium text-text-heading">
+                    {formatCurrency(item.amount)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -174,15 +192,23 @@ export function CreditNoteDetail({
           <CardBody className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium">{formatCurrency(creditNote.subtotal)}</span>
+              <span className="font-medium">
+                {formatCurrency(creditNote.subtotal)}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Tax</span>
-              <span className="font-medium">{formatCurrency(creditNote.taxAmount)}</span>
+              <span className="font-medium">
+                {formatCurrency(creditNote.taxAmount)}
+              </span>
             </div>
             <div className="pt-2 border-t border-slate-200 flex justify-between">
-              <span className="font-semibold text-slate-900">Total Credit</span>
-              <span className="font-bold text-error">{formatCurrency(creditNote.total)}</span>
+              <span className="font-semibold text-text-heading">
+                Total Credit
+              </span>
+              <span className="font-bold text-error">
+                {formatCurrency(creditNote.total)}
+              </span>
             </div>
           </CardBody>
         </Card>
@@ -192,7 +218,9 @@ export function CreditNoteDetail({
           <Card>
             <CardHeader title="Notes" />
             <CardBody>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{creditNote.notes}</p>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                {creditNote.notes}
+              </p>
             </CardBody>
           </Card>
         )}
@@ -208,7 +236,12 @@ export function CreditNoteDetail({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-slate-200 space-y-2">
-        <Button fullWidth variant="outline" leftIcon={<Edit className="h-4 w-4" />} onClick={onEdit}>
+        <Button
+          fullWidth
+          variant="outline"
+          leftIcon={<Edit className="h-4 w-4" />}
+          onClick={onEdit}
+        >
           Edit Credit Note
         </Button>
         <Button

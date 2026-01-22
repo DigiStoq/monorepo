@@ -10,10 +10,19 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, Building2, FileText, Hash } from "lucide-react";
-import type { PurchaseInvoiceFormData, PurchaseInvoiceItemFormData } from "../types";
+import { Plus, Trash2, FileText } from "lucide-react";
+import type {
+  PurchaseInvoiceFormData,
+  PurchaseInvoiceItemFormData,
+} from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
+import { useCurrency } from "@/hooks/useCurrency";
+import {
+  PurchaseItemModal,
+  type PurchaseLineItem,
+} from "./purchase-item-modal";
+import { Edit2 } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -29,17 +38,8 @@ export interface PurchaseInvoiceFormProps {
   className?: string;
 }
 
-interface LineItem {
-  id: string;
-  itemId: string;
-  itemName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  discountPercent: number;
-  taxPercent: number;
-  amount: number;
-}
+// Use shared type
+type LineItem = PurchaseLineItem;
 
 // ============================================================================
 // COMPONENT
@@ -53,89 +53,67 @@ export function PurchaseInvoiceForm({
   onSubmit,
   onCancel,
   className,
-}: PurchaseInvoiceFormProps) {
+}: PurchaseInvoiceFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(initialData?.supplierInvoiceNumber ?? "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
-  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate !== undefined ? initialData.dueDate : "");
+  const [customerId, setCustomerId] = useState<string>(
+    initialData?.customerId ?? ""
+  );
+  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(
+    initialData?.supplierInvoiceNumber ?? ""
+  );
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [dueDate, setDueDate] = useState<string>(initialData?.dueDate ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
-  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
+  const [discountPercent, setDiscountPercent] = useState(
+    initialData?.discountPercent ?? 0
+  );
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
-  // Customer options (suppliers only)
+  // Customer options (suppliers) - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a supplier..." },
-      ...customers
-        .filter((c) => c.type === "supplier" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
-  // Item options
-  const itemOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select an item..." },
-      ...items.filter((i) => i.isActive).map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.purchasePrice.toFixed(2)}`,
-      })),
-    ];
-  }, [items]);
-
   // Add line item
-  const handleAddItem = () => {
-    const newItem: LineItem = {
-      id: `line-${Date.now()}`,
-      itemId: "",
-      itemName: "",
-      quantity: 1,
-      unit: "pcs",
-      unitPrice: 0,
-      discountPercent: 0,
-      taxPercent: 0,
-      amount: 0,
-    };
-    setLineItems([...lineItems, newItem]);
+  const handleAddItem = (): void => {
+    setEditingItem(undefined);
+    setIsItemModalOpen(true);
   };
 
-  // Update line item
-  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
-    setLineItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
+  // Edit line item
+  const handleEditItem = (item: LineItem): void => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
+  };
 
-        const updated = { ...item, [field]: value };
-
-        // If item selected, populate details with purchase price
-        if (field === "itemId" && value) {
-          const selectedItem = items.find((i) => i.id === value);
-          if (selectedItem) {
-            updated.itemName = selectedItem.name;
-            updated.unit = selectedItem.unit;
-            updated.unitPrice = selectedItem.purchasePrice; // Use purchase price
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-          }
-        }
-
-        // Recalculate amount
-        const subtotal = updated.quantity * updated.unitPrice;
-        const discountAmount = subtotal * (updated.discountPercent / 100);
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = taxableAmount * (updated.taxPercent / 100);
-        updated.amount = taxableAmount + taxAmount;
-
-        return updated;
-      })
-    );
+  // Save line item (from modal)
+  const handleSaveItem = (item: LineItem): void => {
+    setLineItems((prev) => {
+      const index = prev.findIndex((i) => i.id === item.id);
+      if (index >= 0) {
+        // Update existing
+        const newItems = [...prev];
+        newItems[index] = item;
+        return newItems;
+      } else {
+        // Add new
+        return [...prev, item];
+      }
+    });
   };
 
   // Remove line item
-  const handleRemoveLineItem = (id: string) => {
+  const handleRemoveLineItem = (id: string): void => {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -146,10 +124,13 @@ export function PurchaseInvoiceForm({
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice * (item.discountPercent / 100);
+      return (
+        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
+      );
     }, 0);
 
-    const invoiceDiscount = (subtotal - itemDiscounts) * (discountPercent / 100);
+    const invoiceDiscount =
+      (subtotal - itemDiscounts) * (discountPercent / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
@@ -165,15 +146,10 @@ export function PurchaseInvoiceForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!customerId || lineItems.length === 0) return;
 
     const formData: PurchaseInvoiceFormData = {
@@ -181,13 +157,15 @@ export function PurchaseInvoiceForm({
       supplierInvoiceNumber: supplierInvoiceNumber || undefined,
       date,
       dueDate: dueDate || undefined,
-      items: lineItems.map((item): PurchaseInvoiceItemFormData => ({
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discountPercent: item.discountPercent || undefined,
-        taxPercent: item.taxPercent || undefined,
-      })),
+      items: lineItems.map(
+        (item): PurchaseInvoiceItemFormData => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discountPercent: item.discountPercent || undefined,
+          taxPercent: item.taxPercent || undefined,
+        })
+      ),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
     };
@@ -202,7 +180,9 @@ export function PurchaseInvoiceForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">New Purchase Invoice</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            New Purchase Invoice
+          </h1>
           <p className="text-slate-500">Record a purchase from your supplier</p>
         </div>
         <div className="flex gap-2">
@@ -227,11 +207,9 @@ export function PurchaseInvoiceForm({
             <CardBody>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Building2 className="h-4 w-4 inline mr-1" />
-                    Supplier
-                  </label>
                   <Select
+                    label="Supplier"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={setCustomerId}
@@ -240,14 +218,14 @@ export function PurchaseInvoiceForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Hash className="h-4 w-4 inline mr-1" />
-                    Supplier Invoice #
-                  </label>
                   <Input
                     type="text"
+                    label="Supplier Invoice #"
+                    showOptionalLabel
                     value={supplierInvoiceNumber}
-                    onChange={(e) => setSupplierInvoiceNumber(e.target.value)}
+                    onChange={(e) => {
+                      setSupplierInvoiceNumber(e.target.value);
+                    }}
                     placeholder="Supplier's invoice number"
                   />
                 </div>
@@ -255,35 +233,39 @@ export function PurchaseInvoiceForm({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Invoice Date
-                  </label>
                   <Input
                     type="date"
+                    label="Invoice Date"
+                    required
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Due Date
-                  </label>
                   <Input
                     type="date"
+                    label="Due Date"
+                    showOptionalLabel
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={(e) => {
+                      setDueDate(e.target.value);
+                    }}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedCustomer.name}
+                  </p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
+                    <p className="text-xs text-slate-500">
+                      {selectedCustomer.phone}
+                    </p>
                   )}
                 </div>
               )}
@@ -294,6 +276,7 @@ export function PurchaseInvoiceForm({
           <Card>
             <CardHeader
               title="Items"
+              className="pb-4"
               action={
                 <Button
                   variant="outline"
@@ -325,118 +308,76 @@ export function PurchaseInvoiceForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Price
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Amount
                         </th>
-                        <th className="w-12"></th>
+                        <th className="w-20"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {lineItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
+                        <tr key={item.id} className="group hover:bg-slate-50">
                           <td className="px-4 py-3">
-                            <Select
-                              options={itemOptions}
-                              value={item.itemId}
-                              onChange={(value) =>
-                                handleUpdateLineItem(item.id, "itemId", value)
-                              }
-                              size="sm"
-                            />
+                            <div className="font-medium text-slate-900">
+                              {item.itemName || "Select Item"}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {item.unit}{" "}
+                              {item.batchNumber &&
+                                `• Batch: ${item.batchNumber}`}
+                            </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "quantity",
-                                  parseInt(e.target.value) || 1
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.quantity}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.unitPrice}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "unitPrice",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={item.discountPercent}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "discountPercent",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={item.taxPercent}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "taxPercent",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.taxPercent}%
                           </td>
-                          <td className="px-4 py-3 text-right font-medium">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-2 py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveLineItem(item.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-error" />
-                            </Button>
+                          <td className="px-2 py-3 text-right">
+                            <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditItem(item);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4 text-slate-400 hover:text-primary-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleRemoveLineItem(item.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-slate-400 hover:text-error" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -452,10 +393,13 @@ export function PurchaseInvoiceForm({
             <CardBody>
               <Textarea
                 label="Notes"
+                showOptionalLabel
                 placeholder="Add any notes about this purchase..."
                 rows={3}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                }}
               />
             </CardBody>
           </Card>
@@ -468,7 +412,9 @@ export function PurchaseInvoiceForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.subtotal)}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -478,7 +424,9 @@ export function PurchaseInvoiceForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    setDiscountPercent(parseFloat(e.target.value) || 0);
+                  }}
                   size="sm"
                   className="w-16 text-right"
                 />
@@ -490,12 +438,16 @@ export function PurchaseInvoiceForm({
 
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tax</span>
-                <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.taxAmount)}
+                </span>
               </div>
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">Total</span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    Total
+                  </span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatCurrency(totals.total)}
                   </span>
@@ -522,6 +474,16 @@ export function PurchaseInvoiceForm({
           </Card>
         </div>
       </div>
+
+      <PurchaseItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+        }}
+        onSave={handleSaveItem}
+        item={editingItem}
+        items={items}
+      />
     </div>
   );
 }

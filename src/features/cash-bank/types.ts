@@ -2,7 +2,12 @@
 // BANK ACCOUNT TYPES
 // ============================================================================
 
-export type BankAccountType = "savings" | "checking" | "credit" | "loan" | "other";
+export type BankAccountType =
+  | "savings"
+  | "checking"
+  | "credit"
+  | "loan"
+  | "other";
 
 export interface BankAccount {
   id: string;

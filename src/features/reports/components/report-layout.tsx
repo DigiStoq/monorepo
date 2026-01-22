@@ -34,60 +34,79 @@ export function ReportLayout({
   onPrint,
   isLoading,
   actions,
-  filters,
   children,
   className,
-}: ReportLayoutProps) {
+}: ReportLayoutProps): React.ReactNode {
   return (
-    <div className={cn("h-full flex flex-col", className)}>
+    <div className={cn("h-full flex flex-col bg-app", className)}>
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white px-6 py-4">
+      <div className="border-b border-border-primary bg-card px-8 py-6 shadow-sm shadow-slate-200/50 dark:shadow-none">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to={backPath}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl p-2 h-10 w-10"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
-              {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+              <h1 className="text-3xl font-black text-text-primary tracking-tight">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-sm text-text-tertiary mt-1 font-medium">
+                  {subtitle}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {onRefresh && (
-              <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isLoading}>
-                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRefresh}
+                disabled={isLoading}
+                className="rounded-xl p-2 h-10 w-10"
+              >
+                <RefreshCw
+                  className={cn("h-5 w-5", isLoading && "animate-spin")}
+                  strokeWidth={2}
+                />
               </Button>
             )}
             {onPrint && (
-              <Button variant="ghost" size="sm" onClick={onPrint}>
-                <Printer className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onPrint}
+                className="rounded-xl p-2 h-10 w-10"
+              >
+                <Printer className="h-5 w-5" strokeWidth={2} />
               </Button>
             )}
             {onExport && (
-              <Button variant="outline" size="sm" onClick={onExport}>
-                <Download className="h-4 w-4 mr-1" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onExport}
+                className="rounded-xl h-10"
+              >
+                <Download className="h-5 w-5 mr-2" strokeWidth={2} />
                 Export
               </Button>
             )}
             {actions}
           </div>
         </div>
-
-        {/* Filters */}
-        {filters && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            {filters}
-          </div>
-        )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-        {children}
-      </div>
+      <div className="flex-1 overflow-y-auto p-8">{children}</div>
     </div>
   );
 }

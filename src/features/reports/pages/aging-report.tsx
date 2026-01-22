@@ -1,29 +1,17 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { Card, CardBody, CardHeader, Input, Select, type SelectOption } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Input,
+  Select,
+  type SelectOption,
+} from "@/components/ui";
 import { Search, Users, AlertTriangle } from "lucide-react";
 import { ReportLayout } from "../components/report-layout";
-import type { CustomerAging } from "../types";
-
-// ============================================================================
-// MOCK DATA
-// ============================================================================
-
-const mockReceivableAging: CustomerAging[] = [
-  { customerId: "1", customerName: "Acme Corporation", current: 3500, days30: 2000, days60: 800, days90: 200, over90: 0, total: 6500 },
-  { customerId: "2", customerName: "Tech Solutions Inc", current: 4200, days30: 2000, days60: 0, days90: 0, over90: 0, total: 6200 },
-  { customerId: "4", customerName: "Metro Retail", current: 0, days30: 0, days60: 2500, days90: 1500, over90: 500, total: 4500 },
-  { customerId: "5", customerName: "City Electronics", current: 4000, days30: 2000, days60: 800, days90: 200, over90: 0, total: 7000 },
-  { customerId: "7", customerName: "Eastside Hardware", current: 2800, days30: 1500, days60: 1000, days90: 500, over90: 0, total: 5800 },
-];
-
-const mockPayableAging: CustomerAging[] = [
-  { customerId: "1", customerName: "Alpha Distributors", current: 2500, days30: 1500, days60: 0, days90: 0, over90: 0, total: 4000 },
-  { customerId: "2", customerName: "Premier Wholesale", current: 2000, days30: 1500, days60: 800, days90: 200, over90: 0, total: 4500 },
-  { customerId: "4", customerName: "Metro Traders", current: 2000, days30: 1500, days60: 1500, days90: 1000, over90: 500, total: 6500 },
-  { customerId: "5", customerName: "Eastern Imports", current: 2200, days30: 1000, days60: 0, days90: 0, over90: 0, total: 3200 },
-  { customerId: "7", customerName: "Central Supplies Co", current: 2000, days30: 1500, days60: 600, days90: 300, over90: 0, total: 4400 },
-];
+import { useAgingReport } from "@/hooks/useReports";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // ============================================================================
 // HELPERS
@@ -38,18 +26,21 @@ const typeOptions: SelectOption[] = [
 // COMPONENT
 // ============================================================================
 
-export function AgingReport() {
-  const [reportType, setReportType] = useState<"receivable" | "payable">("receivable");
+export function AgingReport(): React.ReactNode {
+  const [reportType, setReportType] = useState<"receivable" | "payable">(
+    "receivable"
+  );
   const [search, setSearch] = useState("");
 
-  const data = reportType === "receivable" ? mockReceivableAging : mockPayableAging;
+  // Fetch data from PowerSync
+  const { data: agingData, isLoading } = useAgingReport(reportType);
 
   // Filter data
   const filteredData = useMemo(() => {
-    return data.filter((entry) =>
+    return agingData.filter((entry) =>
       entry.customerName.toLowerCase().includes(search.toLowerCase())
     );
-  }, [data, search]);
+  }, [agingData, search]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -75,28 +66,54 @@ export function AgingReport() {
     { label: "90+ Days", amount: totals.over90, color: "bg-error" },
   ];
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
-  const maxBucket = Math.max(...agingBuckets.map((b) => b.amount));
+  const maxBucket = Math.max(...agingBuckets.map((b) => b.amount), 1);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ReportLayout
+        title="Aging Report"
+        subtitle="Outstanding amounts by age"
+        backPath="/reports"
+        filters={
+          <Select
+            options={typeOptions}
+            value={reportType}
+            onChange={(value) => {
+              setReportType(value as "receivable" | "payable");
+            }}
+            className="w-56"
+          />
+        }
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading report data...</div>
+        </div>
+      </ReportLayout>
+    );
+  }
 
   return (
     <ReportLayout
       title="Aging Report"
       subtitle="Outstanding amounts by age"
       backPath="/reports"
-      onExport={() => console.log("Export aging report")}
-      onPrint={() => window.print()}
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
       filters={
         <div className="flex flex-wrap items-center gap-4">
           <Select
             options={typeOptions}
             value={reportType}
-            onChange={(value) => setReportType(value as "receivable" | "payable")}
+            onChange={(value) => {
+              setReportType(value as "receivable" | "payable");
+            }}
             className="w-56"
           />
           <div className="flex-1 min-w-[200px]">
@@ -104,7 +121,9 @@ export function AgingReport() {
               type="text"
               placeholder={`Search ${reportType === "receivable" ? "customers" : "suppliers"}...`}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
@@ -113,29 +132,37 @@ export function AgingReport() {
     >
       <div className="space-y-6">
         {/* Aging Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-green-600">Current</p>
-              <p className="text-lg font-bold text-green-700">{formatCurrency(totals.current)}</p>
+              <p className="text-lg font-bold text-green-700">
+                {formatCurrency(totals.current)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-teal-50 border-teal-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-teal-600">1-30 Days</p>
-              <p className="text-lg font-bold text-teal-700">{formatCurrency(totals.days30)}</p>
+              <p className="text-lg font-bold text-teal-700">
+                {formatCurrency(totals.days30)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-amber-50 border-amber-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-amber-600">31-60 Days</p>
-              <p className="text-lg font-bold text-amber-700">{formatCurrency(totals.days60)}</p>
+              <p className="text-lg font-bold text-amber-700">
+                {formatCurrency(totals.days60)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-orange-50 border-orange-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-orange-600">61-90 Days</p>
-              <p className="text-lg font-bold text-orange-700">{formatCurrency(totals.days90)}</p>
+              <p className="text-lg font-bold text-orange-700">
+                {formatCurrency(totals.days90)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-red-50 border-red-100">
@@ -144,13 +171,17 @@ export function AgingReport() {
                 <AlertTriangle className="h-3 w-3 text-error" />
                 <p className="text-xs text-red-600">90+ Days</p>
               </div>
-              <p className="text-lg font-bold text-error">{formatCurrency(totals.over90)}</p>
+              <p className="text-lg font-bold text-error">
+                {formatCurrency(totals.over90)}
+              </p>
             </CardBody>
           </Card>
           <Card className="bg-slate-100">
             <CardBody className="py-3 text-center">
               <p className="text-xs text-slate-600">Total</p>
-              <p className="text-lg font-bold text-slate-900">{formatCurrency(totals.total)}</p>
+              <p className="text-lg font-bold text-text-heading">
+                {formatCurrency(totals.total)}
+              </p>
             </CardBody>
           </Card>
         </div>
@@ -158,21 +189,35 @@ export function AgingReport() {
         {/* Aging Chart */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">Aging Distribution</h3>
+            <h3 className="font-medium text-text-heading">
+              Aging Distribution
+            </h3>
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
               {agingBuckets.map((bucket) => (
                 <div key={bucket.label} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-slate-600">{bucket.label}</div>
+                  <div className="w-24 text-sm text-slate-600">
+                    {bucket.label}
+                  </div>
                   <div className="flex-1">
                     <div className="w-full bg-slate-100 rounded-full h-6 overflow-hidden">
                       <div
-                        className={cn("h-6 rounded-full flex items-center justify-end pr-2", bucket.color)}
-                        style={{ width: maxBucket > 0 ? `${(bucket.amount / maxBucket) * 100}%` : "0%" }}
+                        className={cn(
+                          "h-6 rounded-full flex items-center justify-end pr-2",
+                          bucket.color
+                        )}
+                        style={{
+                          width:
+                            maxBucket > 0
+                              ? `${(bucket.amount / maxBucket) * 100}%`
+                              : "0%",
+                        }}
                       >
                         {bucket.amount > 0 && (
-                          <span className="text-xs font-medium text-white">{formatCurrency(bucket.amount)}</span>
+                          <span className="text-xs font-medium text-white">
+                            {formatCurrency(bucket.amount)}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -186,24 +231,37 @@ export function AgingReport() {
         {/* Detail Table */}
         <Card>
           <CardHeader>
-            <h3 className="font-medium text-slate-900">
-              {reportType === "receivable" ? "Customer" : "Supplier"} Aging Details
+            <h3 className="font-medium text-text-heading">
+              {reportType === "receivable" ? "Customer" : "Supplier"} Aging
+              Details
             </h3>
           </CardHeader>
           <CardBody className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-muted/50">
                     <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
                       {reportType === "receivable" ? "Customer" : "Supplier"}
                     </th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Current</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">1-30 Days</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">31-60 Days</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">61-90 Days</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">90+ Days</th>
-                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">Total</th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Current
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      1-30 Days
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      31-60 Days
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      61-90 Days
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      90+ Days
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Total
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -216,28 +274,64 @@ export function AgingReport() {
                     </tr>
                   ) : (
                     filteredData.map((entry) => (
-                      <tr key={entry.customerId} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-900">{entry.customerName}</td>
-                        <td className="px-4 py-3 text-right text-success">{entry.current > 0 ? formatCurrency(entry.current) : "-"}</td>
-                        <td className="px-4 py-3 text-right text-teal-600">{entry.days30 > 0 ? formatCurrency(entry.days30) : "-"}</td>
-                        <td className="px-4 py-3 text-right text-amber-600">{entry.days60 > 0 ? formatCurrency(entry.days60) : "-"}</td>
-                        <td className="px-4 py-3 text-right text-orange-600">{entry.days90 > 0 ? formatCurrency(entry.days90) : "-"}</td>
-                        <td className="px-4 py-3 text-right text-error">{entry.over90 > 0 ? formatCurrency(entry.over90) : "-"}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-900">{formatCurrency(entry.total)}</td>
+                      <tr key={entry.customerId} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 font-medium text-text-heading">
+                          {entry.customerName}
+                        </td>
+                        <td className="px-4 py-3 text-right text-success">
+                          {entry.current > 0
+                            ? formatCurrency(entry.current)
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-teal-600">
+                          {entry.days30 > 0
+                            ? formatCurrency(entry.days30)
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-amber-600">
+                          {entry.days60 > 0
+                            ? formatCurrency(entry.days60)
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-orange-600">
+                          {entry.days90 > 0
+                            ? formatCurrency(entry.days90)
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right text-error">
+                          {entry.over90 > 0
+                            ? formatCurrency(entry.over90)
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-text-heading">
+                          {formatCurrency(entry.total)}
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
                 {filteredData.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-4 py-3 text-slate-900">Total</td>
-                      <td className="px-4 py-3 text-right text-success">{formatCurrency(totals.current)}</td>
-                      <td className="px-4 py-3 text-right text-teal-600">{formatCurrency(totals.days30)}</td>
-                      <td className="px-4 py-3 text-right text-amber-600">{formatCurrency(totals.days60)}</td>
-                      <td className="px-4 py-3 text-right text-orange-600">{formatCurrency(totals.days90)}</td>
-                      <td className="px-4 py-3 text-right text-error">{formatCurrency(totals.over90)}</td>
-                      <td className="px-4 py-3 text-right text-slate-900">{formatCurrency(totals.total)}</td>
+                    <tr className="bg-muted/50 font-medium">
+                      <td className="px-4 py-3 text-text-heading">Total</td>
+                      <td className="px-4 py-3 text-right text-success">
+                        {formatCurrency(totals.current)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-teal-600">
+                        {formatCurrency(totals.days30)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-amber-600">
+                        {formatCurrency(totals.days60)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-orange-600">
+                        {formatCurrency(totals.days90)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-error">
+                        {formatCurrency(totals.over90)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-text-heading">
+                        {formatCurrency(totals.total)}
+                      </td>
                     </tr>
                   </tfoot>
                 )}

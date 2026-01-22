@@ -18,7 +18,10 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: "none" | "sm" | "md" | "lg";
 }
 
-export interface CardHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
+export interface CardHeaderProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   /** Title text */
   title?: ReactNode;
   /** Subtitle text */
@@ -27,7 +30,7 @@ export interface CardHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
   action?: ReactNode;
 }
 
-export interface CardBodyProps extends HTMLAttributes<HTMLDivElement> {}
+export type CardBodyProps = HTMLAttributes<HTMLDivElement>;
 
 export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
   /** Alignment of footer content */
@@ -38,24 +41,21 @@ export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
 // STYLES
 // ============================================================================
 
-const baseStyles = [
-  "bg-white",
-  "rounded-lg",
-  "overflow-hidden",
-].join(" ");
+const baseStyles = ["bg-card", "rounded-lg"].join(" ");
 
 const variantStyles: Record<CardVariant, string> = {
-  default: "border border-slate-200 shadow-soft",
-  outlined: "border-2 border-slate-200",
-  elevated: "border border-slate-100 shadow-card",
+  default: "border border-border-primary shadow-soft",
+  outlined: "border-2 border-border-primary",
+  elevated: "border border-border-primary shadow-card",
   gradient: [
-    "border border-slate-100",
-    "bg-gradient-to-br from-white via-slate-50/50 to-primary-50/30",
+    "border border-border-primary",
+    "bg-gradient-to-br from-card via-subtle to-primary-50/30",
     "shadow-soft",
   ].join(" "),
 };
 
-const hoverStyles = "transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5";
+const hoverStyles =
+  "transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5";
 const clickStyles = "cursor-pointer active:scale-[0.99] transition-transform";
 
 const paddingStyles = {
@@ -118,15 +118,17 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
         )}
         {...props}
       >
-        {(title || subtitle) ? (
+        {title || subtitle ? (
           <div className="flex-1 min-w-0">
             {title && (
-              <h3 className="text-lg font-semibold text-slate-900 font-display truncate">
+              <h3 className="text-lg font-semibold text-text-heading font-display truncate">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="mt-1 text-sm text-slate-500 truncate">{subtitle}</p>
+              <p className="mt-1 text-sm text-text-tertiary truncate">
+                {subtitle}
+              </p>
             )}
           </div>
         ) : (
@@ -234,7 +236,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative overflow-hidden rounded-xl p-6",
+          "relative rounded-xl p-4 sm:p-6",
           "bg-gradient-to-br",
           metricColorStyles[color],
           "text-white shadow-lg",
@@ -251,11 +253,11 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-white/80">{title}</p>
-              <p className="mt-2 text-3xl font-bold font-display">{value}</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold font-display">
+                {value}
+              </p>
             </div>
-            {icon && (
-              <div className="rounded-lg bg-white/20 p-2.5">{icon}</div>
-            )}
+            {icon && <div className="rounded-lg bg-white/20 p-2.5">{icon}</div>}
           </div>
 
           {/* Change indicator */}

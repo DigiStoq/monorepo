@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
 import { Card, CardBody } from "@/components/ui";
 import {
@@ -16,51 +16,21 @@ import {
   Save,
 } from "lucide-react";
 import { SettingsLayout } from "../components/settings-layout";
-import { SettingsCard, SettingsRow, SettingsGroup } from "../components/settings-card";
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsGroup,
+} from "../components/settings-card";
 import { cn } from "@/lib/cn";
 import type { BackupSettings, BackupRecord } from "../types";
-
-// Mock data
-const mockBackupSettings: BackupSettings = {
-  autoBackupEnabled: true,
-  backupFrequency: "daily",
-  backupTime: "02:00",
-  retentionDays: 30,
-  backupDestination: "both",
-  cloudProvider: "google-drive",
-  lastBackup: "2024-01-20T02:00:00Z",
-  backupHistory: [
-    {
-      id: "1",
-      timestamp: "2024-01-20T02:00:00Z",
-      size: 15728640, // 15 MB
-      destination: "Google Drive",
-      status: "success",
-    },
-    {
-      id: "2",
-      timestamp: "2024-01-19T02:00:00Z",
-      size: 15204352, // 14.5 MB
-      destination: "Local + Google Drive",
-      status: "success",
-    },
-    {
-      id: "3",
-      timestamp: "2024-01-18T02:00:00Z",
-      size: 0,
-      destination: "Google Drive",
-      status: "failed",
-      errorMessage: "Authentication expired",
-    },
-    {
-      id: "4",
-      timestamp: "2024-01-17T02:00:00Z",
-      size: 14680064, // 14 MB
-      destination: "Local + Google Drive",
-      status: "success",
-    },
-  ],
-};
+import {
+  useBackupSettings,
+  useBackupSettingsMutations,
+} from "@/hooks/useBackupSettings";
+import { Spinner } from "@/components/common";
+import { getPowerSyncDatabase } from "@/lib/powersync";
+import { DatabaseBackupService } from "@/lib/backup-service";
+import { supabase } from "@/lib/supabase-client";
 
 function Toggle({
   checked,
@@ -68,13 +38,15 @@ function Toggle({
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-}) {
+}): React.ReactNode {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => {
+        onChange(!checked);
+      }}
       className={cn(
         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
         checked ? "bg-teal-600" : "bg-slate-200"
@@ -90,30 +62,210 @@ function Toggle({
   );
 }
 
-export function BackupSettingsPage() {
-  const [settings, setSettings] = useState<BackupSettings>(mockBackupSettings);
+export function BackupSettingsPage(): React.ReactNode {
+  const { settings: data, isLoading } = useBackupSettings();
+  const { updateBackupSettings, createBackupRecord } =
+    useBackupSettingsMutations();
+
+  const [settings, setSettings] = useState<BackupSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
-  const handleSave = async () => {
+  useEffect(() => {
+    if (data) {
+      setSettings(data);
+    }
+  }, [data]);
+
+  const handleConnectDrive = async (): Promise<void> => {
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: "google",
+        options: {
+          scopes: "https://www.googleapis.com/auth/drive.file",
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+    } catch (err: unknown) {
+      console.error("Failed to connect Google Drive:", err);
+      // Fallback: If linkIdentity fails (e.g. not supported or user conflict), try re-auth which merges if email matches
+      if (err instanceof Error && err.message.includes("identities")) {
+        alert("This Google account is already linked to another user.");
+      } else {
+        alert(
+          "Could not initiate Google Drive connection: " +
+            (err instanceof Error ? err.message : String(err))
+        );
+      }
+    }
+  };
+
+  const handleSave = async (): Promise<void> => {
+    if (!settings) return;
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      await updateBackupSettings(settings);
+    } catch (err) {
+      console.error("Error saving backup settings:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleBackupNow = async () => {
+  const handleBackupNow = async (): Promise<void> => {
     setIsBackingUp(true);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    setIsBackingUp(false);
+    try {
+      const db = getPowerSyncDatabase();
+      const backupService = new DatabaseBackupService(db);
+
+      const jsonContent = await backupService.createBackup();
+      const blob = new Blob([jsonContent], { type: "application/json" });
+      const size = blob.size;
+      const destination = settings?.backupDestination ?? "local";
+      let filePath = "";
+
+      if (destination === "local" || destination === "both") {
+        if (typeof window !== "undefined" && "__TAURI__" in window) {
+          // Tauri Save Dialog
+          const { save } = await import("@tauri-apps/plugin-dialog");
+          const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+
+          const path = await save({
+            filters: [
+              {
+                name: "JSON Backup",
+                extensions: ["json"],
+              },
+            ],
+            defaultPath: `backup-${new Date().toISOString().split("T")[0]}.json`,
+          });
+
+          if (path) {
+            await writeTextFile(path, jsonContent);
+            filePath = path;
+          } else {
+            throw new Error("Backup cancelled by user");
+          }
+        } else {
+          // Web Download
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `backup-${new Date().toISOString().split("T")[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          filePath = "Downloads";
+        }
+      }
+
+      await createBackupRecord({
+        type: "manual",
+        destination: destination,
+        fileSize: size,
+        status: "success",
+        filePath: filePath || "cloud-only",
+      });
+    } catch (err: unknown) {
+      console.error("Backup failed", err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage !== "Backup cancelled by user") {
+        await createBackupRecord({
+          type: "manual",
+          destination: settings?.backupDestination ?? "local",
+          fileSize: 0,
+          status: "failed",
+          errorMessage: errorMessage || "Unknown error",
+        });
+      }
+    } finally {
+      setIsBackingUp(false);
+    }
   };
 
-  const formatSize = (bytes: number) => {
+  const handleRestore = async (): Promise<void> => {
+    setIsRestoring(true);
+    try {
+      let fileContent = "";
+
+      if (typeof window !== "undefined" && "__TAURI__" in window) {
+        const { open } = await import("@tauri-apps/plugin-dialog");
+        const { readTextFile } = await import("@tauri-apps/plugin-fs");
+
+        const selected = await open({
+          filters: [
+            {
+              name: "JSON Backup",
+              extensions: ["json"],
+            },
+          ],
+        });
+
+        if (selected && typeof selected === "string") {
+          fileContent = await readTextFile(selected);
+        } else if (selected) {
+          const path = Array.isArray(selected) ? selected[0] : selected;
+          if (path) fileContent = await readTextFile(path);
+        }
+      } else {
+        // Web Input
+        await new Promise<void>((resolve, reject) => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "application/json";
+          input.onchange = (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) {
+              resolve();
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (re) => {
+              fileContent = re.target?.result as string;
+              resolve();
+            };
+            reader.onerror = reject;
+            reader.readAsText(file);
+          };
+          input.click();
+        });
+      }
+
+      if (!fileContent) return;
+
+      const db = getPowerSyncDatabase();
+      const backupService = new DatabaseBackupService(db);
+      const result = await backupService.restoreBackup(fileContent);
+
+      if (result.success) {
+        alert("Restore successful! The application will reload.");
+        window.location.reload();
+      } else {
+        alert(`Restore failed: ${result.message}`);
+      }
+    } catch (err) {
+      console.error("Restore failed:", err);
+      alert("An unexpected error occurred during restore.");
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const formatSize = (bytes: number): string => {
     if (bytes === 0) return "—";
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(1)} MB`;
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
       month: "short",
@@ -125,17 +277,23 @@ export function BackupSettingsPage() {
     });
   };
 
-  const getTimeSince = (dateString: string) => {
+  const getTimeSince = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const hours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const hours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
     if (hours < 1) return "Less than an hour ago";
     if (hours < 24) return `${hours} hours ago`;
     const days = Math.floor(hours / 24);
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
 
-  const StatusIcon = ({ status }: { status: BackupRecord["status"] }) => {
+  const StatusIcon = ({
+    status,
+  }: {
+    status: BackupRecord["status"];
+  }): React.ReactNode => {
     switch (status) {
       case "success":
         return <CheckCircle className="h-5 w-5 text-success" />;
@@ -148,6 +306,32 @@ export function BackupSettingsPage() {
     }
   };
 
+  if (isLoading && !settings) {
+    return (
+      <SettingsLayout
+        title="Backup & Data"
+        description="Manage your data backups and storage"
+      >
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </SettingsLayout>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <SettingsLayout
+        title="Backup & Data"
+        description="Manage your data backups and storage"
+      >
+        <div className="text-center py-12">
+          <p>Backup settings not found.</p>
+        </div>
+      </SettingsLayout>
+    );
+  }
+
   return (
     <SettingsLayout
       title="Backup & Data"
@@ -156,8 +340,10 @@ export function BackupSettingsPage() {
         <div className="flex gap-3">
           <Button
             variant="secondary"
-            onClick={handleBackupNow}
-            disabled={isBackingUp}
+            onClick={() => {
+              void handleBackupNow();
+            }}
+            disabled={isBackingUp || isRestoring}
             className="gap-2"
           >
             {isBackingUp ? (
@@ -167,7 +353,13 @@ export function BackupSettingsPage() {
             )}
             {isBackingUp ? "Backing up..." : "Backup Now"}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+          <Button
+            onClick={() => {
+              void handleSave();
+            }}
+            disabled={isSaving}
+            className="gap-2"
+          >
             <Save className="h-4 w-4" />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
@@ -222,23 +414,35 @@ export function BackupSettingsPage() {
             >
               <Toggle
                 checked={settings.autoBackupEnabled}
-                onChange={(v) =>
-                  setSettings((prev) => ({ ...prev, autoBackupEnabled: v }))
-                }
+                onChange={(v) => {
+                  setSettings((prev) =>
+                    prev ? { ...prev, autoBackupEnabled: v } : null
+                  );
+                }}
               />
             </SettingsRow>
 
             {settings.autoBackupEnabled && (
               <>
-                <SettingsRow label="Frequency" description="How often to backup">
+                <SettingsRow
+                  label="Frequency"
+                  description="How often to backup"
+                >
                   <select
                     value={settings.backupFrequency}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        backupFrequency: e.target.value as "daily" | "weekly" | "monthly",
-                      }))
-                    }
+                    onChange={(e) => {
+                      setSettings((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              backupFrequency: e.target.value as
+                                | "daily"
+                                | "weekly"
+                                | "monthly",
+                            }
+                          : null
+                      );
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="daily">Daily</option>
@@ -246,18 +450,25 @@ export function BackupSettingsPage() {
                     <option value="monthly">Monthly</option>
                   </select>
                 </SettingsRow>
-                <SettingsRow label="Backup Time" description="When to run backups">
+                <SettingsRow
+                  label="Backup Time"
+                  description="When to run backups"
+                >
                   <input
                     type="time"
                     value={settings.backupTime}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        backupTime: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => {
+                      setSettings((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              backupTime: e.target.value,
+                            }
+                          : null
+                      );
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
+                  ></input>
                 </SettingsRow>
                 <SettingsRow
                   label="Retention Period"
@@ -265,12 +476,16 @@ export function BackupSettingsPage() {
                 >
                   <select
                     value={settings.retentionDays}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        retentionDays: parseInt(e.target.value),
-                      }))
-                    }
+                    onChange={(e) => {
+                      setSettings((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              retentionDays: parseInt(e.target.value),
+                            }
+                          : null
+                      );
+                    }}
                     className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value={7}>7 days</option>
@@ -295,21 +510,43 @@ export function BackupSettingsPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
               {[
-                { value: "local", label: "Local Only", icon: HardDrive, desc: "Store on this device" },
-                { value: "cloud", label: "Cloud Only", icon: Cloud, desc: "Store in cloud" },
-                { value: "both", label: "Both", icon: Database, desc: "Local + Cloud" },
+                {
+                  value: "local",
+                  label: "Local Only",
+                  icon: HardDrive,
+                  desc: "Store on this device",
+                },
+                {
+                  value: "cloud",
+                  label: "Cloud Only",
+                  icon: Cloud,
+                  desc: "Store in cloud",
+                },
+                {
+                  value: "both",
+                  label: "Both",
+                  icon: Database,
+                  desc: "Local + Cloud",
+                },
               ].map((option) => {
                 const Icon = option.icon;
                 const isActive = settings.backupDestination === option.value;
                 return (
                   <button
                     key={option.value}
-                    onClick={() =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        backupDestination: option.value as "local" | "cloud" | "both",
-                      }))
-                    }
+                    onClick={() => {
+                      setSettings((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              backupDestination: option.value as
+                                | "local"
+                                | "cloud"
+                                | "both",
+                            }
+                          : null
+                      );
+                    }}
                     className={cn(
                       "p-4 rounded-lg border text-left transition-all",
                       isActive
@@ -344,12 +581,19 @@ export function BackupSettingsPage() {
                   ].map((provider) => (
                     <button
                       key={provider.value}
-                      onClick={() =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          cloudProvider: provider.value as "google-drive" | "dropbox" | "onedrive",
-                        }))
-                      }
+                      onClick={() => {
+                        setSettings((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                cloudProvider: provider.value as
+                                  | "google-drive"
+                                  | "dropbox"
+                                  | "onedrive",
+                              }
+                            : null
+                        );
+                      }}
                       className={cn(
                         "px-4 py-3 rounded-lg border text-sm font-medium transition-all",
                         settings.cloudProvider === provider.value
@@ -361,7 +605,14 @@ export function BackupSettingsPage() {
                     </button>
                   ))}
                 </div>
-                <Button variant="secondary" size="sm" className="mt-3">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => {
+                    void handleConnectDrive();
+                  }}
+                >
                   Connect Account
                 </Button>
               </div>
@@ -376,36 +627,46 @@ export function BackupSettingsPage() {
           icon={Database}
         >
           <div className="space-y-2">
-            {settings.backupHistory.map((record) => (
-              <div
-                key={record.id}
-                className={cn(
-                  "flex items-center gap-4 p-3 rounded-lg border",
-                  record.status === "failed"
-                    ? "border-red-200 bg-red-50"
-                    : "border-slate-200"
-                )}
-              >
-                <StatusIcon status={record.status} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900">
-                    {formatDate(record.timestamp)}
-                  </p>
-                  <p className="text-xs text-slate-500">{record.destination}</p>
-                  {record.errorMessage && (
-                    <p className="text-xs text-red-600 mt-1">{record.errorMessage}</p>
+            {settings.backupHistory.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                No backup history recorded.
+              </p>
+            ) : (
+              settings.backupHistory.map((record) => (
+                <div
+                  key={record.id}
+                  className={cn(
+                    "flex items-center gap-4 p-3 rounded-lg border",
+                    record.status === "failed"
+                      ? "border-red-200 bg-red-50"
+                      : "border-slate-200"
+                  )}
+                >
+                  <StatusIcon status={record.status} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900">
+                      {formatDate(record.timestamp)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {record.destination}
+                    </p>
+                    {record.errorMessage && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {record.errorMessage}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-sm text-slate-500 tabular-nums">
+                    {formatSize(record.size)}
+                  </span>
+                  {record.status === "success" && (
+                    <Button variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
-                <span className="text-sm text-slate-500 tabular-nums">
-                  {formatSize(record.size)}
-                </span>
-                {record.status === "success" && (
-                  <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </SettingsCard>
 
@@ -432,13 +693,25 @@ export function BackupSettingsPage() {
             <div className="p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
               <div className="flex items-center gap-3 mb-2">
                 <Upload className="h-5 w-5 text-teal-600" />
-                <h4 className="font-medium text-slate-900">Import Data</h4>
+                <h4 className="font-medium text-slate-900">Restore Data</h4>
               </div>
               <p className="text-sm text-slate-500 mb-3">
-                Restore data from a previous export or migrate from another app
+                Restore data from a previous backup file
               </p>
-              <Button variant="secondary" size="sm">
-                Import Data
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  void handleRestore();
+                }}
+                disabled={isRestoring || isBackingUp}
+                leftIcon={
+                  isRestoring ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : undefined
+                }
+              >
+                {isRestoring ? "Restoring..." : "Import Backup"}
               </Button>
             </div>
           </div>

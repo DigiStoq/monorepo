@@ -1,5 +1,5 @@
-import { usePowerSync } from "@powersync/react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@powersync/react";
+import { useMemo } from "react";
 import type { Product } from "../types";
 
 // Type for database record
@@ -39,140 +39,47 @@ function mapRecordToProduct(record: ProductRecord): Product {
 interface UseProductsResult {
   products: Product[];
   isLoading: boolean;
-  error: Error | null;
+  error: Error | undefined;
 }
 
 export function useProducts(): UseProductsResult {
-  const powerSync = usePowerSync();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data, isLoading, error } = useQuery<ProductRecord>(
+    "SELECT * FROM products WHERE is_active = 1 ORDER BY name ASC"
+  );
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchProducts(): Promise<void> {
-      try {
-        setIsLoading(true);
-        const result = await powerSync.getAll<ProductRecord>(
-          "SELECT * FROM products WHERE is_active = 1 ORDER BY name ASC"
-        );
-        if (mounted) {
-          setProducts(result.map(mapRecordToProduct));
-          setError(null);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(
-            err instanceof Error ? err : new Error("Failed to fetch products")
-          );
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void fetchProducts();
-
-    return () => {
-      mounted = false;
-    };
-  }, [powerSync]);
+  const products = useMemo(() => data.map(mapRecordToProduct), [data]);
 
   return { products, isLoading, error };
 }
 
 export function useProductSearch(searchTerm: string): UseProductsResult {
-  const powerSync = usePowerSync();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const params = useMemo(() => {
+    const search = searchTerm ? `%${searchTerm}%` : null;
+    return [search, search, search];
+  }, [searchTerm]);
 
-  useEffect(() => {
-    let mounted = true;
+  const { data, isLoading, error } = useQuery<ProductRecord>(
+    `SELECT * FROM products
+     WHERE is_active = 1
+     AND ($1 IS NULL OR name LIKE $1 OR sku LIKE $2 OR category LIKE $3)
+     ORDER BY name ASC`,
+    params
+  );
 
-    async function fetchProducts(): Promise<void> {
-      try {
-        setIsLoading(true);
-        const result = await powerSync.getAll<ProductRecord>(
-          `SELECT * FROM products
-           WHERE is_active = 1
-           AND (name LIKE ? OR sku LIKE ? OR category LIKE ?)
-           ORDER BY name ASC`,
-          [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]
-        );
-        if (mounted) {
-          setProducts(result.map(mapRecordToProduct));
-          setError(null);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(
-            err instanceof Error ? err : new Error("Failed to search products")
-          );
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void fetchProducts();
-
-    return () => {
-      mounted = false;
-    };
-  }, [powerSync, searchTerm]);
+  const products = useMemo(() => data.map(mapRecordToProduct), [data]);
 
   return { products, isLoading, error };
 }
 
 export function useLowStockProducts(): UseProductsResult {
-  const powerSync = usePowerSync();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data, isLoading, error } = useQuery<ProductRecord>(
+    `SELECT * FROM products
+     WHERE is_active = 1
+     AND quantity_in_stock <= reorder_level
+     ORDER BY quantity_in_stock ASC`
+  );
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchProducts(): Promise<void> {
-      try {
-        setIsLoading(true);
-        const result = await powerSync.getAll<ProductRecord>(
-          `SELECT * FROM products
-           WHERE is_active = 1
-           AND quantity_in_stock <= reorder_level
-           ORDER BY quantity_in_stock ASC`
-        );
-        if (mounted) {
-          setProducts(result.map(mapRecordToProduct));
-          setError(null);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(
-            err instanceof Error
-              ? err
-              : new Error("Failed to fetch low stock products")
-          );
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void fetchProducts();
-
-    return () => {
-      mounted = false;
-    };
-  }, [powerSync]);
+  const products = useMemo(() => data.map(mapRecordToProduct), [data]);
 
   return { products, isLoading, error };
 }

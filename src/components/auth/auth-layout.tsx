@@ -15,7 +15,11 @@ interface AuthLayoutProps {
 // COMPONENT
 // ============================================================================
 
-export function AuthLayout({ children, title, subtitle }: AuthLayoutProps): ReactNode {
+export function AuthLayout({
+  children,
+  title,
+  subtitle,
+}: AuthLayoutProps): ReactNode {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       {/* Background Pattern */}
@@ -27,18 +31,20 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps): Reac
           <div className="h-14 w-14 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-600/20">
             <span className="text-white font-bold text-2xl">D</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 font-display">{title}</h1>
-          {subtitle && (
-            <p className="text-slate-500 mt-2">{subtitle}</p>
-          )}
+          <h1 className="text-2xl font-bold text-slate-900 font-display">
+            {title}
+          </h1>
+          {subtitle && <p className="text-slate-500 mt-2">{subtitle}</p>}
         </div>
 
         {/* Card */}
-        <div className={cn(
-          "bg-white rounded-2xl shadow-xl shadow-slate-200/50",
-          "border border-slate-200/50",
-          "p-8"
-        )}>
+        <div
+          className={cn(
+            "bg-white rounded-2xl shadow-xl shadow-slate-200/50",
+            "border border-slate-200/50",
+            "p-8"
+          )}
+        >
           {children}
         </div>
 

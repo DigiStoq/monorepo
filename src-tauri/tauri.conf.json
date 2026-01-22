@@ -10,9 +10,9 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "DigiStoq",
         "width": 1024,
         "height": 768,
@@ -24,12 +24,12 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.powersync.com wss://*.powersync.co https://rqjsrlxvipbydkbinibr.supabase.co wss://rqjsrlxvipbydkbinibr.supabase.co ipc: http://ipc.localhost; worker-src 'self' blob:"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.powersync.com wss://*.powersync.com https://*.journeyapps.com wss://*.journeyapps.com https://rqjsrlxvipbydkbinibr.supabase.co wss://rqjsrlxvipbydkbinibr.supabase.co ipc: http://ipc.localhost; worker-src 'self' blob:"
     }
   },
   "plugins": {
     "shell": {
-      "open": true
+      "open": "^.*$"
     },
     "sql": {
       "preload": ["sqlite:digistoq.db"]
@@ -37,10 +37,16 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "publisher": "DigiStoq",
+    "targets": ["nsis", "msi"],
     "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "languages": ["English"]
+      },
       "wix": {
-        "language": "en-US"
+        "language": ["en-US"]
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper"

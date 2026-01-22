@@ -1,5 +1,5 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type { Loan, LoanPayment } from "@/features/cash-bank/types";
 
@@ -75,7 +75,7 @@ function mapRowToLoanPayment(row: LoanPaymentRow): LoanPayment {
     principalAmount: row.principal_amount,
     interestAmount: row.interest_amount,
     totalAmount: row.total_amount,
-    paymentMethod: row.payment_method ?? undefined,
+    paymentMethod: (row.payment_method ?? "cash") as "cash" | "bank" | "cheque",
     referenceNumber: row.reference_number ?? undefined,
     notes: row.notes ?? undefined,
     createdAt: row.created_at,
@@ -87,20 +87,36 @@ export function useLoans(filters?: {
   status?: "active" | "closed" | "defaulted";
   customerId?: string;
 }): { loans: Loan[]; isLoading: boolean; error: Error | undefined } {
-  const typeFilter = filters?.type ?? null;
-  const statusFilter = filters?.status ?? null;
-  const customerFilter = filters?.customerId ?? null;
+  const { query, params } = useMemo(() => {
+    const conditions: string[] = [];
+    const params: string[] = [];
 
-  const { data, isLoading, error } = useQuery<LoanRow>(
-    `SELECT * FROM loans
-     WHERE ($1 IS NULL OR type = $1)
-     AND ($2 IS NULL OR status = $2)
-     AND ($3 IS NULL OR customer_id = $3)
-     ORDER BY start_date DESC`,
-    [typeFilter, statusFilter, customerFilter]
-  );
+    if (filters?.type) {
+      conditions.push("type = ?");
+      params.push(filters.type);
+    }
 
-  const loans = data.map(mapRowToLoan);
+    if (filters?.status) {
+      conditions.push("status = ?");
+      params.push(filters.status);
+    }
+
+    if (filters?.customerId) {
+      conditions.push("customer_id = ?");
+      params.push(filters.customerId);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return {
+      query: `SELECT * FROM loans ${whereClause} ORDER BY start_date DESC`,
+      params,
+    };
+  }, [filters?.type, filters?.status, filters?.customerId]);
+
+  const { data, isLoading, error } = useQuery<LoanRow>(query, params);
+
+  const loans = useMemo(() => data.map(mapRowToLoan), [data]);
 
   return { loans, isLoading, error };
 }
@@ -115,12 +131,13 @@ export function useLoanById(id: string | null): {
     id ? [id] : []
   );
 
-  const { data: paymentsData, isLoading: paymentsLoading } = useQuery<LoanPaymentRow>(
-    id
-      ? `SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY date DESC`
-      : `SELECT * FROM loan_payments WHERE 1 = 0`,
-    id ? [id] : []
-  );
+  const { data: paymentsData, isLoading: paymentsLoading } =
+    useQuery<LoanPaymentRow>(
+      id
+        ? `SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY date DESC`
+        : `SELECT * FROM loan_payments WHERE 1 = 0`,
+      id ? [id] : []
+    );
 
   const loan = loanData[0] ? mapRowToLoan(loanData[0]) : null;
   const payments = paymentsData.map(mapRowToLoanPayment);
@@ -159,7 +176,10 @@ interface LoanMutations {
     referenceNumber?: string;
     notes?: string;
   }) => Promise<string>;
-  updateLoanStatus: (id: string, status: "active" | "closed" | "defaulted") => Promise<void>;
+  updateLoanStatus: (
+    id: string,
+    status: "active" | "closed" | "defaulted"
+  ) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
 }
 
@@ -274,13 +294,15 @@ export function useLoanMutations(): LoanMutations {
   );
 
   const updateLoanStatus = useCallback(
-    async (id: string, status: "active" | "closed" | "defaulted"): Promise<void> => {
+    async (
+      id: string,
+      status: "active" | "closed" | "defaulted"
+    ): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(`UPDATE loans SET status = ?, updated_at = ? WHERE id = ?`, [
-        status,
-        now,
-        id,
-      ]);
+      await db.execute(
+        `UPDATE loans SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
     },
     [db]
   );

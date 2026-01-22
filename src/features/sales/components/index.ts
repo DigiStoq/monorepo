@@ -5,12 +5,19 @@ export { InvoiceForm, type InvoiceFormProps } from "./invoice-form";
 
 // Payment In components
 export { PaymentInList, type PaymentInListProps } from "./payment-in-list";
-export { PaymentInDetail, type PaymentInDetailProps } from "./payment-in-detail";
+export {
+  PaymentInDetail,
+  type PaymentInDetailProps,
+} from "./payment-in-detail";
 export { PaymentInForm, type PaymentInFormProps } from "./payment-in-form";
 
 // Credit Note components
 export { CreditNoteList, type CreditNoteListProps } from "./credit-note-list";
-export { CreditNoteDetail, type CreditNoteDetailProps } from "./credit-note-detail";
+export {
+  CreditNoteDetail,
+  type CreditNoteDetailProps,
+} from "./credit-note-detail";
+export { CreditNoteForm, type CreditNoteFormProps } from "./credit-note-form";
 
 // Estimate components
 export { EstimateList, type EstimateListProps } from "./estimate-list";

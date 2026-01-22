@@ -1,6 +1,13 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { Card, CardBody, Input, Badge, Select, type SelectOption } from "@/components/ui";
+import {
+  Card,
+  CardBody,
+  Input,
+  Badge,
+  Select,
+  type SelectOption,
+} from "@/components/ui";
 import {
   Search,
   FileCheck,
@@ -12,6 +19,7 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Cheque, ChequeStatus, ChequeType } from "../types";
 
 // ============================================================================
@@ -28,11 +36,34 @@ export interface ChequeListProps {
 // HELPERS
 // ============================================================================
 
-const statusConfig: Record<ChequeStatus, { label: string; icon: React.ReactNode; variant: "success" | "warning" | "error" | "secondary" }> = {
-  pending: { label: "Pending", icon: <Clock className="h-4 w-4" />, variant: "warning" },
-  cleared: { label: "Cleared", icon: <CheckCircle className="h-4 w-4" />, variant: "success" },
-  bounced: { label: "Bounced", icon: <AlertTriangle className="h-4 w-4" />, variant: "error" },
-  cancelled: { label: "Cancelled", icon: <XCircle className="h-4 w-4" />, variant: "secondary" },
+const statusConfig: Record<
+  ChequeStatus,
+  {
+    label: string;
+    icon: React.ReactNode;
+    variant: "success" | "warning" | "error" | "secondary";
+  }
+> = {
+  pending: {
+    label: "Pending",
+    icon: <Clock className="h-4 w-4" />,
+    variant: "warning",
+  },
+  cleared: {
+    label: "Cleared",
+    icon: <CheckCircle className="h-4 w-4" />,
+    variant: "success",
+  },
+  bounced: {
+    label: "Bounced",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    variant: "error",
+  },
+  cancelled: {
+    label: "Cancelled",
+    icon: <XCircle className="h-4 w-4" />,
+    variant: "secondary",
+  },
 };
 
 const typeOptions: SelectOption[] = [
@@ -53,7 +84,11 @@ const statusOptions: SelectOption[] = [
 // COMPONENT
 // ============================================================================
 
-export function ChequeList({ cheques, onChequeClick, className }: ChequeListProps) {
+export function ChequeList({
+  cheques,
+  onChequeClick,
+  className,
+}: ChequeListProps): React.ReactNode {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ChequeType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<ChequeStatus | "all">("all");
@@ -67,7 +102,8 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
         cheque.bankName.toLowerCase().includes(search.toLowerCase());
 
       const matchesType = typeFilter === "all" || cheque.type === typeFilter;
-      const matchesStatus = statusFilter === "all" || cheque.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || cheque.status === statusFilter;
 
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -85,15 +121,10 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
   }, [filteredCheques]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const { formatCurrency } = useCurrency();
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -103,10 +134,12 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
   };
 
   // Check if due soon (within 7 days)
-  const isDueSoon = (dueDate: string) => {
+  const isDueSoon = (dueDate: string): boolean => {
     const due = new Date(dueDate);
     const today = new Date();
-    const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(
+      (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
     return diffDays >= 0 && diffDays <= 7;
   };
 
@@ -120,7 +153,9 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
               <ArrowDownLeft className="h-5 w-5 text-success" />
               <div>
                 <p className="text-xs text-slate-500">Pending Received</p>
-                <p className="font-semibold text-success">{formatCurrency(totals.received)}</p>
+                <p className="font-semibold text-success">
+                  {formatCurrency(totals.received)}
+                </p>
               </div>
             </div>
           </CardBody>
@@ -131,7 +166,9 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
               <ArrowUpRight className="h-5 w-5 text-error" />
               <div>
                 <p className="text-xs text-slate-500">Pending Issued</p>
-                <p className="font-semibold text-error">{formatCurrency(totals.issued)}</p>
+                <p className="font-semibold text-error">
+                  {formatCurrency(totals.issued)}
+                </p>
               </div>
             </div>
           </CardBody>
@@ -145,20 +182,26 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
             type="text"
             placeholder="Search cheques..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
         <Select
           options={typeOptions}
           value={typeFilter}
-          onChange={(value) => setTypeFilter(value as ChequeType | "all")}
+          onChange={(value) => {
+            setTypeFilter(value as ChequeType | "all");
+          }}
           className="w-36"
         />
         <Select
           options={statusOptions}
           value={statusFilter}
-          onChange={(value) => setStatusFilter(value as ChequeStatus | "all")}
+          onChange={(value) => {
+            setStatusFilter(value as ChequeStatus | "all");
+          }}
           className="w-36"
         />
       </div>
@@ -169,7 +212,9 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
           <Card>
             <CardBody className="py-12 text-center">
               <FileCheck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-slate-900 mb-1">No cheques found</h3>
+              <h3 className="text-lg font-medium text-slate-900 mb-1">
+                No cheques found
+              </h3>
               <p className="text-slate-500">
                 {search || typeFilter !== "all" || statusFilter !== "all"
                   ? "Try adjusting your filters"
@@ -181,21 +226,26 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
           filteredCheques.map((cheque) => {
             const status = statusConfig[cheque.status];
             const isReceived = cheque.type === "received";
-            const dueSoon = cheque.status === "pending" && isDueSoon(cheque.dueDate);
+            const dueSoon =
+              cheque.status === "pending" && isDueSoon(cheque.dueDate);
 
             return (
               <Card
                 key={cheque.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => onChequeClick(cheque)}
+                onClick={() => {
+                  onChequeClick(cheque);
+                }}
               >
                 <CardBody className="py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-2 rounded-lg",
-                        isReceived ? "bg-success-light" : "bg-error-light"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-2 rounded-lg",
+                          isReceived ? "bg-success-light" : "bg-error-light"
+                        )}
+                      >
                         {isReceived ? (
                           <ArrowDownLeft className="h-4 w-4 text-success" />
                         ) : (
@@ -212,11 +262,15 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
                             <span className="ml-1">{status.label}</span>
                           </Badge>
                           {dueSoon && (
-                            <Badge variant="warning" size="sm">Due Soon</Badge>
+                            <Badge variant="warning" size="sm">
+                              Due Soon
+                            </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-slate-500 mt-0.5">
-                          <span className="font-mono">#{cheque.chequeNumber}</span>
+                          <span className="font-mono">
+                            #{cheque.chequeNumber}
+                          </span>
                           <span>•</span>
                           <span>{cheque.bankName}</span>
                           <span className="flex items-center gap-1">
@@ -227,10 +281,12 @@ export function ChequeList({ cheques, onChequeClick, className }: ChequeListProp
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={cn(
-                        "text-lg font-bold",
-                        isReceived ? "text-success" : "text-error"
-                      )}>
+                      <div
+                        className={cn(
+                          "text-lg font-bold",
+                          isReceived ? "text-success" : "text-error"
+                        )}
+                      >
                         {formatCurrency(cheque.amount)}
                       </div>
                       <div className="text-xs text-slate-500">

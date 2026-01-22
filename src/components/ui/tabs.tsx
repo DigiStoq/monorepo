@@ -30,7 +30,10 @@ export interface Tab {
 export type TabsVariant = "default" | "pills" | "underline" | "enclosed";
 export type TabsSize = "sm" | "md" | "lg";
 
-export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface TabsProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "onChange"
+> {
   /** Available tabs */
   tabs?: Tab[];
   /** Currently active tab id */
@@ -82,7 +85,7 @@ interface TabsContextValue {
 
 const TabsContext = createContext<TabsContextValue | null>(null);
 
-function useTabsContext() {
+function useTabsContext(): TabsContextValue {
   const context = useContext(TabsContext);
   if (!context) {
     throw new Error("Tabs components must be used within a Tabs provider");
@@ -111,28 +114,30 @@ const sizeStyles: Record<TabsSize, { trigger: string; icon: string }> = {
 
 const variantStyles = {
   default: {
-    list: "bg-slate-100 p-1 rounded-lg",
+    list: "bg-muted p-1 rounded-lg",
     trigger: "rounded-md",
-    active: "bg-white shadow-sm text-slate-900",
-    inactive: "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+    active: "bg-card shadow-sm text-text-primary",
+    inactive: "text-text-secondary hover:text-text-primary hover:bg-muted/80",
   },
   pills: {
     list: "gap-2",
     trigger: "rounded-full",
     active: "bg-primary-600 text-white shadow-sm",
-    inactive: "text-slate-600 hover:bg-slate-100",
+    inactive: "text-text-secondary hover:bg-muted",
   },
   underline: {
-    list: "border-b border-slate-200 gap-0",
+    list: "border-b border-border-primary gap-0",
     trigger: "rounded-none border-b-2 -mb-px",
     active: "border-primary-600 text-primary-600",
-    inactive: "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300",
+    inactive:
+      "border-transparent text-text-secondary hover:text-text-primary hover:border-border-secondary",
   },
   enclosed: {
-    list: "border-b border-slate-200",
+    list: "border-b border-border-primary",
     trigger: "rounded-t-lg border border-b-0 -mb-px",
-    active: "bg-white border-slate-200 text-slate-900",
-    inactive: "bg-slate-50 border-transparent text-slate-600 hover:text-slate-900",
+    active: "bg-card border-border-primary text-text-primary",
+    inactive:
+      "bg-muted/50 border-transparent text-text-secondary hover:text-text-primary",
   },
 };
 
@@ -157,12 +162,12 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     ref
   ) => {
     const [internalValue, setInternalValue] = useState(
-      defaultValue || tabs?.[0]?.id || ""
+      defaultValue ?? tabs?.[0]?.id ?? ""
     );
 
     const value = controlledValue ?? internalValue;
 
-    const handleChange = (newValue: string) => {
+    const handleChange = (newValue: string): void => {
       if (onChange) {
         onChange(newValue);
       } else {
@@ -174,7 +179,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     if (tabs && !children) {
       return (
         <div ref={ref} className={cn("w-full", className)} {...props}>
-          <TabsContext.Provider value={{ value, onChange: handleChange, variant, size }}>
+          <TabsContext.Provider
+            value={{ value, onChange: handleChange, variant, size }}
+          >
             <TabsList className={cn(fullWidth && "w-full")}>
               {tabs.map((tab) => (
                 <TabsTrigger
@@ -197,7 +204,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     // Compound component mode
     return (
       <div ref={ref} className={cn("w-full", className)} {...props}>
-        <TabsContext.Provider value={{ value, onChange: handleChange, variant, size }}>
+        <TabsContext.Provider
+          value={{ value, onChange: handleChange, variant, size }}
+        >
           {children}
         </TabsContext.Provider>
       </div>
@@ -220,11 +229,7 @@ export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
       <div
         ref={ref}
         role="tablist"
-        className={cn(
-          "inline-flex items-center",
-          styles.list,
-          className
-        )}
+        className={cn("inline-flex items-center", styles.list, className)}
         {...props}
       >
         {children}
@@ -240,7 +245,10 @@ TabsList.displayName = "TabsList";
 // ============================================================================
 
 export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
-  ({ value: tabValue, icon, badge, disabled, className, children, ...props }, ref) => {
+  (
+    { value: tabValue, icon, badge, disabled, className, children, ...props },
+    ref
+  ) => {
     const { value, onChange, variant, size } = useTabsContext();
     const isActive = value === tabValue;
     const styles = variantStyles[variant];
@@ -254,7 +262,9 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         aria-selected={isActive}
         aria-controls={`tabpanel-${tabValue}`}
         disabled={disabled}
-        onClick={() => onChange(tabValue)}
+        onClick={() => {
+          onChange(tabValue);
+        }}
         className={cn(
           "relative inline-flex items-center justify-center font-medium",
           "transition-all duration-200",
@@ -267,11 +277,7 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         )}
         {...props}
       >
-        {icon && (
-          <span className={cn("shrink-0", sizeStyle.icon)}>
-            {icon}
-          </span>
-        )}
+        {icon && <span className={cn("shrink-0", sizeStyle.icon)}>{icon}</span>}
         <span>{children}</span>
         {badge && (
           <span className="ml-1.5 shrink-0 px-1.5 py-0.5 text-xs font-medium bg-slate-200 text-slate-700 rounded-full">

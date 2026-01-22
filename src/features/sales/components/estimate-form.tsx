@@ -10,7 +10,9 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText } from "lucide-react";
+import { Plus, Trash2, FileText, Edit2 } from "lucide-react";
+import { InvoiceItemModal, type InvoiceLineItem } from "./invoice-item-modal";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { EstimateFormData, SaleInvoiceItemFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
@@ -29,17 +31,8 @@ export interface EstimateFormProps {
   className?: string;
 }
 
-interface LineItem {
-  id: string;
-  itemId: string;
-  itemName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  discountPercent: number;
-  taxPercent: number;
-  amount: number;
-}
+// Use shared type
+type LineItem = InvoiceLineItem;
 
 // ============================================================================
 // COMPONENT
@@ -53,91 +46,65 @@ export function EstimateForm({
   onSubmit,
   onCancel,
   className,
-}: EstimateFormProps) {
+}: EstimateFormProps): React.ReactNode {
   // Form state
   const defaultDate = new Date().toISOString().slice(0, 10);
-  const defaultValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // 30 days from now
+  const defaultValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10); // 30 days from now
 
-  const [customerId, setCustomerId] = useState<string>(initialData?.customerId !== undefined ? initialData.customerId : "");
-  const [date, setDate] = useState<string>(initialData?.date !== undefined ? initialData.date : defaultDate);
-  const [validUntil, setValidUntil] = useState<string>(initialData?.validUntil !== undefined ? initialData.validUntil : defaultValidUntil);
+  const [customerId, setCustomerId] = useState<string>(
+    initialData?.customerId ?? ""
+  );
+  const [date, setDate] = useState<string>(initialData?.date ?? defaultDate);
+  const [validUntil, setValidUntil] = useState<string>(
+    initialData?.validUntil ?? defaultValidUntil
+  );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [terms, setTerms] = useState(initialData?.terms ?? "");
-  const [discountPercent, setDiscountPercent] = useState(initialData?.discountPercent ?? 0);
+  const [discountPercent, setDiscountPercent] = useState(
+    initialData?.discountPercent ?? 0
+  );
+
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-  // Customer options
+  // Customer options - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
       { value: "", label: "Select a customer..." },
-      ...customers
-        .filter((c) => c.type === "customer" || c.type === "both")
-        .map((c) => ({ value: c.id, label: c.name })),
+      ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
 
-  // Item options
-  const itemOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select an item..." },
-      ...items.filter((i) => i.isActive).map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.salePrice.toFixed(2)}`,
-      })),
-    ];
-  }, [items]);
-
-  // Add line item
-  const handleAddItem = () => {
-    const newItem: LineItem = {
-      id: `line-${Date.now()}`,
-      itemId: "",
-      itemName: "",
-      quantity: 1,
-      unit: "pcs",
-      unitPrice: 0,
-      discountPercent: 0,
-      taxPercent: 0,
-      amount: 0,
-    };
-    setLineItems([...lineItems, newItem]);
+  // Modal Handlers
+  const handleAddItemClick = (): void => {
+    setEditingItem(undefined);
+    setIsItemModalOpen(true);
   };
 
-  // Update line item
-  const handleUpdateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
-    setLineItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
+  const handleEditItemClick = (item: LineItem): void => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
+  };
 
-        const updated = { ...item, [field]: value };
-
-        // If item selected, populate details
-        if (field === "itemId" && value) {
-          const selectedItem = items.find((i) => i.id === value);
-          if (selectedItem) {
-            updated.itemName = selectedItem.name;
-            updated.unit = selectedItem.unit;
-            updated.unitPrice = selectedItem.salePrice;
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-          }
-        }
-
-        // Recalculate amount
-        const subtotal = updated.quantity * updated.unitPrice;
-        const discountAmount = subtotal * (updated.discountPercent / 100);
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = taxableAmount * (updated.taxPercent / 100);
-        updated.amount = taxableAmount + taxAmount;
-
-        return updated;
-      })
-    );
+  const handleSaveItem = (item: LineItem): void => {
+    setLineItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id);
+      if (exists) {
+        return prev.map((i) => (i.id === item.id ? item : i));
+      }
+      return [...prev, item];
+    });
   };
 
   // Remove line item
-  const handleRemoveLineItem = (id: string) => {
+  const handleRemoveLineItem = (id: string): void => {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -148,10 +115,13 @@ export function EstimateForm({
     }, 0);
 
     const itemDiscounts = lineItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice * (item.discountPercent / 100);
+      return (
+        sum + item.quantity * item.unitPrice * (item.discountPercent / 100)
+      );
     }, 0);
 
-    const invoiceDiscount = (subtotal - itemDiscounts) * (discountPercent / 100);
+    const invoiceDiscount =
+      (subtotal - itemDiscounts) * (discountPercent / 100);
     const totalDiscount = itemDiscounts + invoiceDiscount;
 
     const taxableAmount = subtotal - totalDiscount;
@@ -167,28 +137,26 @@ export function EstimateForm({
   }, [lineItems, discountPercent]);
 
   // Format currency
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+  // Format currency
+  const { formatCurrency } = useCurrency();
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!customerId || lineItems.length === 0) return;
 
     const formData: EstimateFormData = {
       customerId,
       date,
       validUntil,
-      items: lineItems.map((item): SaleInvoiceItemFormData => ({
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discountPercent: item.discountPercent || undefined,
-        taxPercent: item.taxPercent || undefined,
-      })),
+      items: lineItems.map(
+        (item): SaleInvoiceItemFormData => ({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discountPercent: item.discountPercent || undefined,
+          taxPercent: item.taxPercent || undefined,
+        })
+      ),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
       terms: terms || undefined,
@@ -229,11 +197,9 @@ export function EstimateForm({
             <CardBody>
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <User className="h-4 w-4 inline mr-1" />
-                    Customer
-                  </label>
                   <Select
+                    label="Customer"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={setCustomerId}
@@ -242,38 +208,44 @@ export function EstimateForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Estimate Date
-                  </label>
                   <Input
+                    label="Estimate Date"
+                    required
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Valid Until
-                  </label>
                   <Input
+                    label="Valid Until"
+                    showOptionalLabel
                     type="date"
                     value={validUntil}
-                    onChange={(e) => setValidUntil(e.target.value)}
+                    onChange={(e) => {
+                      setValidUntil(e.target.value);
+                    }}
                   />
                 </div>
               </div>
 
               {selectedCustomer && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">{selectedCustomer.name}</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {selectedCustomer.name}
+                  </p>
                   {selectedCustomer.phone && (
-                    <p className="text-xs text-slate-500">{selectedCustomer.phone}</p>
+                    <p className="text-xs text-slate-500">
+                      {selectedCustomer.phone}
+                    </p>
                   )}
                   {selectedCustomer.email && (
-                    <p className="text-xs text-slate-500">{selectedCustomer.email}</p>
+                    <p className="text-xs text-slate-500">
+                      {selectedCustomer.email}
+                    </p>
                   )}
                 </div>
               )}
@@ -284,12 +256,13 @@ export function EstimateForm({
           <Card>
             <CardHeader
               title="Items"
+              className="pb-4"
               action={
                 <Button
                   variant="outline"
                   size="sm"
                   leftIcon={<Plus className="h-4 w-4" />}
-                  onClick={handleAddItem}
+                  onClick={handleAddItemClick}
                 >
                   Add Item
                 </Button>
@@ -304,7 +277,7 @@ export function EstimateForm({
                     variant="outline"
                     size="sm"
                     leftIcon={<Plus className="h-4 w-4" />}
-                    onClick={handleAddItem}
+                    onClick={handleAddItemClick}
                     className="mt-3"
                   >
                     Add First Item
@@ -315,22 +288,22 @@ export function EstimateForm({
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">
+                        <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[200px]">
                           Item
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Qty
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Price
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Disc %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-24">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[80px]">
                           Tax %
                         </th>
-                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 w-28">
+                        <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Amount
                         </th>
                         <th className="w-12"></th>
@@ -338,95 +311,53 @@ export function EstimateForm({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {lineItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
+                        <tr key={item.id} className="hover:bg-slate-50 group">
                           <td className="px-4 py-3">
-                            <Select
-                              options={itemOptions}
-                              value={item.itemId}
-                              onChange={(value) =>
-                                handleUpdateLineItem(item.id, "itemId", value)
-                              }
-                              size="sm"
-                            />
+                            <div className="font-medium text-slate-900">
+                              {item.itemName}
+                            </div>
+                            {item.batchNumber && (
+                              <div className="text-xs text-slate-500">
+                                Batch: {item.batchNumber}
+                              </div>
+                            )}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "quantity",
-                                  parseInt(e.target.value) || 1
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.quantity} {item.unit}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.unitPrice}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "unitPrice",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={item.discountPercent}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "discountPercent",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={item.taxPercent}
-                              onChange={(e) =>
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "taxPercent",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              size="sm"
-                              className="text-right"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.taxPercent}%
                           </td>
-                          <td className="px-4 py-3 text-right font-medium">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-2 py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveLineItem(item.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-error" />
-                            </Button>
+                          <td className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditItemClick(item);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4 text-slate-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleRemoveLineItem(item.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-error" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -443,17 +374,23 @@ export function EstimateForm({
               <div className="grid grid-cols-2 gap-4">
                 <Textarea
                   label="Notes"
+                  showOptionalLabel
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                  }}
                 />
                 <Textarea
                   label="Terms & Conditions"
+                  showOptionalLabel
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
-                  onChange={(e) => setTerms(e.target.value)}
+                  onChange={(e) => {
+                    setTerms(e.target.value);
+                  }}
                 />
               </div>
             </CardBody>
@@ -467,7 +404,9 @@ export function EstimateForm({
             <CardBody className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.subtotal)}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -477,7 +416,9 @@ export function EstimateForm({
                   min="0"
                   max="100"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    setDiscountPercent(parseFloat(e.target.value) || 0);
+                  }}
                   size="sm"
                   className="w-16 text-right"
                 />
@@ -489,12 +430,16 @@ export function EstimateForm({
 
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tax</span>
-                <span className="font-medium">{formatCurrency(totals.taxAmount)}</span>
+                <span className="font-medium">
+                  {formatCurrency(totals.taxAmount)}
+                </span>
               </div>
 
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-slate-900">Total</span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    Total
+                  </span>
                   <span className="text-lg font-bold text-primary-600">
                     {formatCurrency(totals.total)}
                   </span>
@@ -515,12 +460,24 @@ export function EstimateForm({
                 onClick={handleSubmit}
                 isLoading={isLoading}
               >
-                Create & Send
+                Create
               </Button>
             </CardBody>
           </Card>
         </div>
       </div>
+
+      <InvoiceItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+        }}
+        onSave={handleSaveItem}
+        item={editingItem}
+        items={items}
+        // Estimate uses straightforward discount percent usually
+        discountType="percent"
+      />
     </div>
   );
 }

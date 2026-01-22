@@ -76,8 +76,7 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
-      setSidebarCollapsed: (collapsed) =>
-        set({ sidebarCollapsed: collapsed }),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       toggleSidebarSection: (id) =>
         set((state) => {
@@ -90,19 +89,15 @@ export const useUIStore = create<UIState>()(
           return { sidebarExpandedIds: newIds };
         }),
 
-      setSidebarExpandedIds: (ids) =>
-        set({ sidebarExpandedIds: ids }),
+      setSidebarExpandedIds: (ids) => set({ sidebarExpandedIds: ids }),
 
       // Theme actions
-      setTheme: (theme) =>
-        set({ theme }),
+      setTheme: (theme) => set({ theme }),
 
       // Filter actions
-      setDateRange: (range) =>
-        set({ dateRange: range }),
+      setDateRange: (range) => set({ dateRange: range }),
 
-      setSearchQuery: (query) =>
-        set({ searchQuery: query }),
+      setSearchQuery: (query) => set({ searchQuery: query }),
 
       clearFilters: () =>
         set({
@@ -114,8 +109,7 @@ export const useUIStore = create<UIState>()(
       openModal: (modalId, data = {}) =>
         set({ activeModal: modalId, modalData: data }),
 
-      closeModal: () =>
-        set({ activeModal: null, modalData: {} }),
+      closeModal: () => set({ activeModal: null, modalData: {} }),
     }),
     {
       name: "digistoq-ui",
@@ -146,14 +140,14 @@ export const useUIStore = create<UIState>()(
             ...value,
             state: {
               ...value.state,
-              sidebarExpandedIds: Array.from(
-                value.state.sidebarExpandedIds || []
-              ),
+              sidebarExpandedIds: Array.from(value.state.sidebarExpandedIds),
             },
           };
           localStorage.setItem(name, JSON.stringify(toStore));
         },
-        removeItem: (name) => localStorage.removeItem(name),
+        removeItem: (name) => {
+          localStorage.removeItem(name);
+        },
       },
     }
   )

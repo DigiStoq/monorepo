@@ -2,7 +2,7 @@
 // SALE TYPES
 // ============================================================================
 
-export type InvoiceStatus = "draft" | "sent" | "paid" | "partial" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "unpaid" | "paid" | "returned";
 
 export interface SaleInvoice {
   id: string;
@@ -16,11 +16,15 @@ export interface SaleInvoice {
   subtotal: number;
   taxAmount: number;
   discountAmount: number;
+  discountPercent?: number; // Added field
   total: number;
   amountPaid: number;
   amountDue: number;
   notes?: string;
   terms?: string;
+  transportName?: string;
+  deliveryDate?: string;
+  deliveryLocation?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,9 +34,11 @@ export interface SaleInvoiceItem {
   itemId: string;
   itemName: string;
   description?: string;
+  batchNumber?: string;
   quantity: number;
   unit: string;
   unitPrice: number;
+  mrp?: number;
   discountPercent?: number;
   taxPercent?: number;
   amount: number;
@@ -44,14 +50,37 @@ export interface SaleInvoiceFormData {
   dueDate?: string | undefined;
   items: SaleInvoiceItemFormData[];
   discountPercent?: number | undefined;
+  discountAmount?: number | undefined;
+  discountType?: "percent" | "amount";
   notes?: string | undefined;
   terms?: string | undefined;
+  transportName?: string | undefined;
+  deliveryDate?: string | undefined;
+  deliveryLocation?: string | undefined;
+}
+
+// Form data used for creating an invoice (dueDate is required by database)
+export interface InvoiceFormData {
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  date: string;
+  dueDate: string;
+  status?: string;
+  discountAmount?: number;
+  notes?: string;
+  terms?: string;
+  transportName?: string;
+  deliveryDate?: string;
+  deliveryLocation?: string;
 }
 
 export interface SaleInvoiceItemFormData {
   itemId: string;
+  batchNumber?: string | undefined;
   quantity: number;
   unitPrice: number;
+  mrp?: number | undefined;
   discountPercent?: number | undefined;
   taxPercent?: number | undefined;
 }
@@ -59,12 +88,12 @@ export interface SaleInvoiceItemFormData {
 export interface SaleFilters {
   search: string;
   status: InvoiceStatus | "all";
-  customerId: string | "all";
+  customerId: string;
   dateRange: {
     from: string | null;
     to: string | null;
   };
-  sortBy: "date" | "number" | "amount" | "party";
+  sortBy: "date" | "number" | "amount" | "customer";
   sortOrder: "asc" | "desc";
 }
 
@@ -104,7 +133,27 @@ export interface PaymentInFormData {
 // ESTIMATE TYPES
 // ============================================================================
 
-export type EstimateStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "converted";
+export type EstimateStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "converted";
+
+export interface EstimateItem {
+  id: string;
+  estimateId: string;
+  itemId?: string;
+  itemName: string;
+  description?: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+  discountPercent?: number;
+  taxPercent?: number;
+  amount: number;
+}
 
 export interface Estimate {
   id: string;
@@ -114,7 +163,7 @@ export interface Estimate {
   date: string;
   validUntil: string;
   status: EstimateStatus;
-  items: SaleInvoiceItem[];
+  items: EstimateItem[];
   subtotal: number;
   taxAmount: number;
   discountAmount: number;
@@ -142,6 +191,19 @@ export interface EstimateFormData {
 
 export type CreditNoteReason = "return" | "discount" | "error" | "other";
 
+export interface CreditNoteItem {
+  id: string;
+  creditNoteId: string;
+  itemId?: string;
+  itemName: string;
+  description?: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+  taxPercent?: number;
+  amount: number;
+}
+
 export interface CreditNote {
   id: string;
   creditNoteNumber: string;
@@ -158,4 +220,13 @@ export interface CreditNote {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreditNoteFormData {
+  customerId: string;
+  invoiceId?: string | undefined;
+  date: string;
+  reason: CreditNoteReason;
+  items: SaleInvoiceItemFormData[];
+  notes?: string | undefined;
 }

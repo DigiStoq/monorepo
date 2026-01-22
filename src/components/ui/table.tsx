@@ -8,7 +8,13 @@ import {
   type TdHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/cn";
-import { ChevronUp, ChevronDown, ChevronsUpDown, Check, Minus } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Check,
+  Minus,
+} from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -37,7 +43,10 @@ export interface Column<T> {
   hideOnMobile?: boolean;
 }
 
-export interface TableProps<T> extends Omit<HTMLAttributes<HTMLTableElement>, "children"> {
+export interface TableProps<T> extends Omit<
+  HTMLAttributes<HTMLTableElement>,
+  "children"
+> {
   /** Table columns configuration */
   columns: Column<T>[];
   /** Table data */
@@ -80,8 +89,8 @@ export interface TableProps<T> extends Omit<HTMLAttributes<HTMLTableElement>, "c
   onSortChange?: (key: string, direction: SortDirection) => void;
 }
 
-export interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {}
-export interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {}
+export type TableHeaderProps = HTMLAttributes<HTMLTableSectionElement>;
+export type TableBodyProps = HTMLAttributes<HTMLTableSectionElement>;
 export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   selected?: boolean;
   clickable?: boolean;
@@ -91,7 +100,7 @@ export interface TableHeadProps extends ThHTMLAttributes<HTMLTableCellElement> {
   sortDirection?: SortDirection;
   onSort?: () => void;
 }
-export interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {}
+export type TableCellProps = TdHTMLAttributes<HTMLTableCellElement>;
 
 // ============================================================================
 // STYLES
@@ -107,16 +116,21 @@ const alignStyles = {
 // TABLE PRIMITIVES
 // ============================================================================
 
-export const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>(
-  ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("bg-slate-50", className)} {...props} />
-  )
-);
+export const TableHeader = forwardRef<
+  HTMLTableSectionElement,
+  TableHeaderProps
+>(({ className, ...props }, ref) => (
+  <thead ref={ref} className={cn("bg-subtle", className)} {...props} />
+));
 TableHeader.displayName = "TableHeader";
 
 export const TableBody = forwardRef<HTMLTableSectionElement, TableBodyProps>(
   ({ className, ...props }, ref) => (
-    <tbody ref={ref} className={cn("divide-y divide-slate-100", className)} {...props} />
+    <tbody
+      ref={ref}
+      className={cn("divide-y divide-border-primary", className)}
+      {...props}
+    />
   )
 );
 TableBody.displayName = "TableBody";
@@ -128,7 +142,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
       className={cn(
         "transition-colors",
         selected && "bg-primary-50",
-        clickable && "cursor-pointer hover:bg-slate-50",
+        clickable && "cursor-pointer hover:bg-subtle",
         className
       )}
       {...props}
@@ -142,8 +156,8 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
     <th
       ref={ref}
       className={cn(
-        "px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider",
-        sortable && "cursor-pointer select-none hover:bg-slate-100",
+        "px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider",
+        sortable && "cursor-pointer select-none hover:bg-subtle",
         className
       )}
       onClick={sortable ? onSort : undefined}
@@ -158,7 +172,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
             ) : sortDirection === "desc" ? (
               <ChevronDown className="h-3.5 w-3.5 text-primary-600" />
             ) : (
-              <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
+              <ChevronsUpDown className="h-3.5 w-3.5 text-text-muted" />
             )}
           </span>
         )}
@@ -172,7 +186,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={cn("px-4 py-3 text-sm text-slate-700", className)}
+      className={cn("px-4 py-3 text-sm text-text-secondary", className)}
       {...props}
     />
   )
@@ -190,7 +204,12 @@ interface CheckboxProps {
   disabled?: boolean;
 }
 
-function Checkbox({ checked, indeterminate, onChange, disabled }: CheckboxProps) {
+function Checkbox({
+  checked,
+  indeterminate,
+  onChange,
+  disabled,
+}: CheckboxProps): JSX.Element {
   return (
     <button
       type="button"
@@ -207,7 +226,7 @@ function Checkbox({ checked, indeterminate, onChange, disabled }: CheckboxProps)
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30",
         checked || indeterminate
           ? "bg-primary-600 border-primary-600"
-          : "border-slate-300 hover:border-slate-400",
+          : "border-border-secondary hover:border-border-primary",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
@@ -221,14 +240,20 @@ function Checkbox({ checked, indeterminate, onChange, disabled }: CheckboxProps)
 // LOADING SKELETON
 // ============================================================================
 
-function LoadingSkeleton({ columns, rows = 5 }: { columns: number; rows?: number }) {
+function LoadingSkeleton({
+  columns,
+  rows = 5,
+}: {
+  columns: number;
+  rows?: number;
+}): JSX.Element {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i} className="animate-pulse">
           {Array.from({ length: columns }).map((_, j) => (
             <td key={j} className="px-4 py-3">
-              <div className="h-4 bg-slate-200 rounded w-3/4" />
+              <div className="h-4 bg-muted rounded w-3/4" />
             </td>
           ))}
         </tr>
@@ -241,12 +266,18 @@ function LoadingSkeleton({ columns, rows = 5 }: { columns: number; rows?: number
 // EMPTY STATE
 // ============================================================================
 
-function EmptyState({ colSpan, content }: { colSpan: number; content?: ReactNode }) {
+function EmptyState({
+  colSpan,
+  content,
+}: {
+  colSpan: number;
+  content?: ReactNode;
+}): React.ReactNode {
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-12 text-center">
-        {content || (
-          <div className="text-slate-500">
+        {content ?? (
+          <div className="text-text-tertiary">
             <p className="text-sm">No data available</p>
           </div>
         )}
@@ -282,19 +313,20 @@ export function Table<T>({
   onSortChange,
   className,
   ...props
-}: TableProps<T>): JSX.Element {
+}: TableProps<T>): React.ReactNode {
   // Internal sort state (for uncontrolled mode)
-  const [internalSortKey, setInternalSortKey] = useState<string | undefined>(defaultSortKey);
-  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>(
-    defaultSortKey ? defaultSortDirection : null
+  const [internalSortKey, setInternalSortKey] = useState<string | undefined>(
+    defaultSortKey
   );
+  const [internalSortDirection, setInternalSortDirection] =
+    useState<SortDirection>(defaultSortKey ? defaultSortDirection : null);
 
   // Use controlled or internal state
   const sortKey = controlledSortKey ?? internalSortKey;
   const sortDirection = controlledSortDirection ?? internalSortDirection;
 
   // Sort handler
-  const handleSort = (key: string) => {
+  const handleSort = (key: string): void => {
     let newDirection: SortDirection;
 
     if (sortKey === key) {
@@ -325,9 +357,10 @@ export function Table<T>({
     const column = columns.find((col) => col.key === sortKey);
     if (!column?.accessor) return data;
 
+    const accessor = column.accessor;
     return [...data].sort((a, b) => {
-      const aVal = column.accessor!(a);
-      const bVal = column.accessor!(b);
+      const aVal = accessor(a);
+      const bVal = accessor(b);
 
       if (aVal === null || aVal === undefined) return 1;
       if (bVal === null || bVal === undefined) return -1;
@@ -346,11 +379,14 @@ export function Table<T>({
   }, [data, sortKey, sortDirection, columns]);
 
   // Selection handlers
-  const allKeys = useMemo(() => new Set(data.map((row, i) => getRowKey(row, i))), [data, getRowKey]);
+  const allKeys = useMemo(
+    () => new Set(data.map((row, i) => getRowKey(row, i))),
+    [data, getRowKey]
+  );
   const isAllSelected = selectedKeys.size === allKeys.size && allKeys.size > 0;
   const isSomeSelected = selectedKeys.size > 0 && !isAllSelected;
 
-  const handleSelectAll = () => {
+  const handleSelectAll = (): void => {
     if (isAllSelected) {
       onSelectionChange?.(new Set());
     } else {
@@ -358,7 +394,7 @@ export function Table<T>({
     }
   };
 
-  const handleSelectRow = (key: string | number) => {
+  const handleSelectRow = (key: string | number): void => {
     if (singleSelect) {
       onSelectionChange?.(new Set([key]));
     } else {
@@ -377,13 +413,13 @@ export function Table<T>({
   return (
     <div
       className={cn(
-        "overflow-auto rounded-lg border border-slate-200",
+        "overflow-auto rounded-lg border border-border-primary",
         maxHeight && "overflow-y-auto"
       )}
       style={{ maxHeight }}
     >
       <table
-        className={cn("min-w-full divide-y divide-slate-200", className)}
+        className={cn("min-w-full divide-y divide-border-primary", className)}
         {...props}
       >
         <TableHeader className={cn(stickyHeader && "sticky top-0 z-10")}>
@@ -406,12 +442,14 @@ export function Table<T>({
                 key={column.key}
                 sortable={column.sortable ?? false}
                 sortDirection={sortKey === column.key ? sortDirection : null}
-                onSort={() => column.sortable && handleSort(column.key)}
+                onSort={() => {
+                  if (column.sortable) handleSort(column.key);
+                }}
                 className={cn(
-                  alignStyles[column.align || "left"],
+                  alignStyles[column.align ?? "left"],
                   column.hideOnMobile && "hidden md:table-cell",
-                  column.sticky === "left" && "sticky left-0 bg-slate-50 z-10",
-                  column.sticky === "right" && "sticky right-0 bg-slate-50 z-10"
+                  column.sticky === "left" && "sticky left-0 bg-subtle z-10",
+                  column.sticky === "right" && "sticky right-0 bg-subtle z-10"
                 )}
                 style={{ width: column.width }}
               >
@@ -438,8 +476,8 @@ export function Table<T>({
                   clickable={Boolean(onRowClick)}
                   onClick={() => onRowClick?.(row, index)}
                   className={cn(
-                    striped && index % 2 === 1 && "bg-slate-50/50",
-                    hoverable && "hover:bg-slate-50"
+                    striped && index % 2 === 1 && "bg-subtle",
+                    hoverable && "hover:bg-subtle"
                   )}
                 >
                   {/* Selection Cell */}
@@ -447,7 +485,9 @@ export function Table<T>({
                     <TableCell className="w-12">
                       <Checkbox
                         checked={isSelected}
-                        onChange={() => handleSelectRow(rowKey)}
+                        onChange={() => {
+                          handleSelectRow(rowKey);
+                        }}
                       />
                     </TableCell>
                   )}
@@ -457,11 +497,13 @@ export function Table<T>({
                     <TableCell
                       key={column.key}
                       className={cn(
-                        alignStyles[column.align || "left"],
+                        alignStyles[column.align ?? "left"],
                         compact ? "py-2" : "py-3",
                         column.hideOnMobile && "hidden md:table-cell",
-                        column.sticky === "left" && "sticky left-0 bg-white z-10",
-                        column.sticky === "right" && "sticky right-0 bg-white z-10",
+                        column.sticky === "left" &&
+                          "sticky left-0 bg-card z-10",
+                        column.sticky === "right" &&
+                          "sticky right-0 bg-card z-10",
                         isSelected && column.sticky && "bg-primary-50"
                       )}
                       style={{ width: column.width }}
@@ -469,8 +511,8 @@ export function Table<T>({
                       {column.cell
                         ? column.cell(row, index)
                         : column.accessor
-                        ? String(column.accessor(row) ?? "")
-                        : null}
+                          ? String(column.accessor(row) ?? "")
+                          : null}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -520,7 +562,7 @@ export function TablePagination({
   const canGoNext = page < totalPages;
 
   // Calculate visible page numbers
-  const getVisiblePages = () => {
+  const getVisiblePages = (): (number | "ellipsis")[] => {
     const pages: (number | "ellipsis")[] = [];
     const maxVisible = 5;
 
@@ -561,12 +603,12 @@ export function TablePagination({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 px-4 py-3 bg-white border-t border-slate-200",
+        "flex items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border-primary",
         className
       )}
     >
       {/* Left side - showing info */}
-      <div className="text-sm text-slate-600">
+      <div className="text-sm text-text-secondary">
         {totalItems !== undefined && pageSize !== undefined && (
           <span>
             Showing {Math.min((page - 1) * pageSize + 1, totalItems)} -{" "}
@@ -580,12 +622,14 @@ export function TablePagination({
         {/* Page size selector */}
         {onPageSizeChange && pageSize && (
           <div className="flex items-center gap-2 mr-4">
-            <span className="text-sm text-slate-600">Rows:</span>
+            <span className="text-sm text-text-secondary">Rows:</span>
             <select
               value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              onChange={(e) => {
+                onPageSizeChange(Number(e.target.value));
+              }}
               className={cn(
-                "h-8 px-2 text-sm border border-slate-200 rounded-md",
+                "h-8 px-2 text-sm border border-border-primary rounded-md bg-card text-text-primary",
                 "focus:outline-none focus:ring-2 focus:ring-primary-500/30"
               )}
             >
@@ -602,7 +646,9 @@ export function TablePagination({
         <button
           type="button"
           disabled={!canGoPrev}
-          onClick={() => onPageChange(page - 1)}
+          onClick={() => {
+            onPageChange(page - 1);
+          }}
           className={cn(
             "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
             canGoPrev
@@ -624,7 +670,9 @@ export function TablePagination({
               <button
                 key={p}
                 type="button"
-                onClick={() => onPageChange(p)}
+                onClick={() => {
+                  onPageChange(p);
+                }}
                 className={cn(
                   "min-w-[32px] h-8 px-2 text-sm font-medium rounded-md transition-colors",
                   p === page
@@ -642,7 +690,9 @@ export function TablePagination({
         <button
           type="button"
           disabled={!canGoNext}
-          onClick={() => onPageChange(page + 1)}
+          onClick={() => {
+            onPageChange(page + 1);
+          }}
           className={cn(
             "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
             canGoNext

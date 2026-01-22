@@ -1,47 +1,64 @@
+import { UpdateType } from "@powersync/web";
 import type {
-  AbstractPowerSyncDatabase,
   CrudEntry,
   PowerSyncBackendConnector,
-  PowerSyncCredentials,
+  AbstractPowerSyncDatabase,
 } from "@powersync/web";
-import { UpdateType } from "@powersync/web";
-import { createClient } from "@supabase/supabase-js";
-
-// Environment variables for Supabase connection
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISABLE_KEY;
-const POWERSYNC_URL = import.meta.env.VITE_POWERSYNC_URL;
-
-// Shared Supabase client instance
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class SupabaseConnector implements PowerSyncBackendConnector {
-  private supabase = supabase;
+  constructor(
+    private client: SupabaseClient,
+    private powersyncUrl: string
+  ) {}
 
-  async fetchCredentials(): Promise<PowerSyncCredentials> {
-    // Get the current session
+  // Cache the session to avoid hitting Supabase Auth rate limits
+  private currentSession: { access_token: string; expires_at?: number } | null =
+    null;
+
+  // Buffer time in seconds to refresh token before it strictly expires
+  private readonly TOKEN_EXPIRY_BUFFER = 60; // 1 minute
+
+  async fetchCredentials(): Promise<{
+    endpoint: string;
+    token: string;
+  } | null> {
+    // Basic online check to avoid hammering when offline
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return null;
+    }
+
+    // Check if we have a valid cached session
+    if (this.currentSession?.expires_at) {
+      const now = Math.floor(Date.now() / 1000);
+      // If token expires in more than BUFFER seconds, reuse it
+      if (this.currentSession.expires_at > now + this.TOKEN_EXPIRY_BUFFER) {
+        const endpoint = this.powersyncUrl.replace(/\/$/, "");
+        return {
+          endpoint,
+          token: this.currentSession.access_token,
+        };
+      }
+    }
+
     const {
       data: { session },
-    } = await this.supabase.auth.getSession();
+    } = await this.client.auth.getSession();
 
-    // If no session, return null credentials - sync won't work but local db will
     if (!session) {
-      console.warn("No auth session - PowerSync sync disabled. Data stored locally only.");
-      // Return empty credentials - PowerSync will work offline-only
-      return {
-        endpoint: POWERSYNC_URL,
-        token: "", // Empty token means no sync
-      };
+      return null;
     }
 
-    const credentials: PowerSyncCredentials = {
-      endpoint: POWERSYNC_URL,
-      token: session.access_token,
+    // Cache the new session
+    this.currentSession = {
+      access_token: session.access_token,
+      expires_at: session.expires_at,
     };
 
-    if (session.expires_at) {
-      credentials.expiresAt = new Date(session.expires_at * 1000);
-    }
+    const credentials = {
+      endpoint: this.powersyncUrl.replace(/\/$/, ""),
+      token: session.access_token,
+    };
 
     return credentials;
   }
@@ -53,63 +70,88 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       return;
     }
 
+    // Get current user ID for this batch
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+    const userId = session?.user.id;
+
     try {
       for (const operation of transaction.crud) {
-        await this.applyOperation(operation);
+        await this.applyOperation(operation, userId);
       }
       await transaction.complete();
     } catch (error) {
-      console.error("Error uploading data:", error);
-      throw error;
+      console.error(error);
     }
   }
 
-  private async applyOperation(operation: CrudEntry): Promise<void> {
+  private async applyOperation(
+    operation: CrudEntry,
+    userId?: string
+  ): Promise<void> {
     const { op, table, opData, id } = operation;
+
+    // Transform data to handle null values for required fields and inject user_id
+    const transformedData = this.transformData(table, opData, userId);
 
     switch (op) {
       case UpdateType.PUT: {
-        // Insert or update
-        const { error } = await this.supabase
+        const { error } = await this.client
           .from(table)
-          .upsert({ id, ...opData });
+          .upsert({ id, ...transformedData });
 
         if (error) {
+          console.error(`Error upserting ${table}:`, error);
           throw error;
         }
         break;
       }
-
       case UpdateType.PATCH: {
-        // Update existing record
-        const { error } = await this.supabase
+        const { error } = await this.client
           .from(table)
-          .update(opData ?? {})
+          .update(transformedData)
           .eq("id", id);
 
         if (error) {
+          console.error(`Error updating ${table}:`, error);
           throw error;
         }
         break;
       }
-
       case UpdateType.DELETE: {
-        // Delete record
-        const { error } = await this.supabase.from(table).delete().eq("id", id);
+        const { error } = await this.client.from(table).delete().eq("id", id);
 
         if (error) {
+          console.error(`Error deleting ${table}:`, error);
           throw error;
         }
         break;
       }
-
-      default:
-        throw new Error(`Unknown operation type: ${op as string}`);
     }
   }
 
-  // Get the Supabase client for direct queries if needed
-  getSupabaseClient(): typeof this.supabase {
-    return this.supabase;
+  // Transform data to provide default values for required fields that might be null/undefined/empty
+  private transformData(
+    table: string,
+    data: Record<string, unknown> | undefined,
+    userId?: string
+  ): Record<string, unknown> | undefined {
+    if (!data) return data;
+
+    const transformed: Record<string, unknown> = { ...data };
+
+    if (userId) {
+      transformed.user_id = userId;
+    }
+
+    // Sanitize empty strings to null to comply with Postgres check constraints (e.g. status enums)
+    Object.keys(transformed).forEach((key) => {
+      if (transformed[key] === "") {
+        transformed[key] = null;
+      }
+    });
+
+    return transformed;
   }
 }

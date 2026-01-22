@@ -30,10 +30,10 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
       sidebar,
       header,
       children,
-      sidebarCollapsed = false,
       hideSidebar = false,
       fixedHeader = true,
       className,
+      sidebarCollapsed: _sidebarCollapsed,
       ...props
     },
     ref
@@ -41,14 +41,12 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
     return (
       <div
         ref={ref}
-        className={cn("flex h-screen bg-slate-50 overflow-hidden", className)}
+        className={cn("flex h-screen bg-app overflow-hidden", className)}
         {...props}
       >
         {/* Sidebar */}
         {!hideSidebar && sidebar && (
-          <div className="relative shrink-0">
-            {sidebar}
-          </div>
+          <div className="relative shrink-0">{sidebar}</div>
         )}
 
         {/* Main Area */}
@@ -57,7 +55,8 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
           {header && (
             <header
               className={cn(
-                "shrink-0 bg-white border-b border-slate-200 z-sticky",
+                "shrink-0 bg-card border-b border-border-primary z-sticky",
+                "shadow-sm shadow-slate-200/50 dark:shadow-none",
                 fixedHeader && "sticky top-0"
               )}
             >
@@ -66,9 +65,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
           )}
 
           {/* Content */}
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
     );
@@ -105,7 +102,10 @@ const paddingStyles = {
 };
 
 export const PageContainer = forwardRef<HTMLDivElement, PageContainerProps>(
-  ({ maxWidth = "2xl", padding = "md", className, children, ...props }, ref) => {
+  (
+    { maxWidth = "2xl", padding = "md", className, children, ...props },
+    ref
+  ) => {
     return (
       <div
         ref={ref}
