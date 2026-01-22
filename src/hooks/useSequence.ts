@@ -65,10 +65,34 @@ export function useSequenceMutations(): SequenceMutations {
         [type]
       );
       const rows = (result.rows?._array ?? []) as SequenceCounter[];
-      const counter = rows[0];
+      let counter = rows[0];
 
+      // If no counter exists, create one with default values
       if (rows.length === 0) {
-        throw new Error(`Sequence counter not found for type: ${type}`);
+        const defaults: Record<
+          SequenceType,
+          { prefix: string; nextNumber: number }
+        > = {
+          sale_invoice: { prefix: "INV", nextNumber: 1001 },
+          purchase_invoice: { prefix: "PUR", nextNumber: 1001 },
+          estimate: { prefix: "EST", nextNumber: 1001 },
+          credit_note: { prefix: "CN", nextNumber: 1001 },
+          payment_in: { prefix: "REC", nextNumber: 1001 },
+          payment_out: { prefix: "PAY", nextNumber: 1001 },
+          expense: { prefix: "EXP", nextNumber: 1001 },
+          cheque: { prefix: "CHQ", nextNumber: 1001 },
+        };
+        const def = defaults[type];
+        await db.execute(
+          `INSERT INTO sequence_counters (id, prefix, next_number, padding, updated_at) VALUES (?, ?, ?, ?, ?)`,
+          [type, def.prefix, def.nextNumber, 4, now]
+        );
+        counter = {
+          id: type,
+          prefix: def.prefix,
+          next_number: def.nextNumber,
+          padding: 4,
+        };
       }
 
       const { prefix, next_number, padding } = counter;
@@ -94,31 +118,54 @@ export function useSequenceMutations(): SequenceMutations {
       data: { prefix?: string; nextNumber?: number; padding?: number }
     ): Promise<void> => {
       const now = new Date().toISOString();
-      const fields: string[] = [];
-      const values: (string | number)[] = [];
 
-      if (data.prefix !== undefined) {
-        fields.push("prefix = ?");
-        values.push(data.prefix);
-      }
-      if (data.nextNumber !== undefined) {
-        fields.push("next_number = ?");
-        values.push(data.nextNumber);
-      }
-      if (data.padding !== undefined) {
-        fields.push("padding = ?");
-        values.push(data.padding);
-      }
+      // Check if the sequence counter exists
+      const result = await db.execute(
+        `SELECT id FROM sequence_counters WHERE id = ?`,
+        [type]
+      );
+      const exists = (result.rows?._array ?? []).length > 0;
 
-      fields.push("updated_at = ?");
-      values.push(now);
-      values.push(type);
-
-      if (fields.length > 1) {
+      if (!exists) {
+        // Insert new sequence counter
         await db.execute(
-          `UPDATE sequence_counters SET ${fields.join(", ")} WHERE id = ?`,
-          values
+          `INSERT INTO sequence_counters (id, prefix, next_number, padding, updated_at) VALUES (?, ?, ?, ?, ?)`,
+          [
+            type,
+            data.prefix ?? "INV",
+            data.nextNumber ?? 1001,
+            data.padding ?? 4,
+            now,
+          ]
         );
+      } else {
+        // Update existing
+        const fields: string[] = [];
+        const values: (string | number)[] = [];
+
+        if (data.prefix !== undefined) {
+          fields.push("prefix = ?");
+          values.push(data.prefix);
+        }
+        if (data.nextNumber !== undefined) {
+          fields.push("next_number = ?");
+          values.push(data.nextNumber);
+        }
+        if (data.padding !== undefined) {
+          fields.push("padding = ?");
+          values.push(data.padding);
+        }
+
+        fields.push("updated_at = ?");
+        values.push(now);
+        values.push(type);
+
+        if (fields.length > 1) {
+          await db.execute(
+            `UPDATE sequence_counters SET ${fields.join(", ")} WHERE id = ?`,
+            values
+          );
+        }
       }
     },
     [db]

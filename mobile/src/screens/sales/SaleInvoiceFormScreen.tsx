@@ -569,7 +569,7 @@ export function SaleInvoiceFormScreen() {
           isLoading={isLoading}
           style={styles.submitButton}
         >
-          {isEditing ? "Save Changes" : "Create & Send"}
+          {isEditing ? "Save Changes" : "Create"}
         </Button>
       </ScrollView>
 

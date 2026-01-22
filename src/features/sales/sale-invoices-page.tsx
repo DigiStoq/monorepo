@@ -41,6 +41,7 @@ import { useChequeMutations } from "@/hooks/useCheques";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useItems, useItemMutations } from "@/hooks/useItems";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
+import { useSequenceMutations } from "@/hooks/useSequence";
 import type {
   SaleInvoice,
   SaleInvoiceFormData,
@@ -50,8 +51,28 @@ import type {
 } from "./types";
 
 export function SaleInvoicesPage(): React.ReactNode {
-  // Data from PowerSync
-  const { invoices, isLoading: invoicesLoading, error } = useSaleInvoices();
+  // Filter State - moved before hook usage
+  const [filters, setFilters] = useState<SaleFilters>({
+    search: "",
+    status: "all",
+    customerId: "all",
+    dateRange: { from: null, to: null },
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+
+  // Data from PowerSync - pass filters to hook for SQL-level search
+  const {
+    invoices,
+    isLoading: invoicesLoading,
+    error,
+  } = useSaleInvoices({
+    search: filters.search || undefined,
+    status: filters.status !== "all" ? filters.status : undefined,
+    customerId: filters.customerId !== "all" ? filters.customerId : undefined,
+    dateFrom: filters.dateRange.from ?? undefined,
+    dateTo: filters.dateRange.to ?? undefined,
+  });
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
@@ -65,6 +86,7 @@ export function SaleInvoicesPage(): React.ReactNode {
   const { createCheque } = useChequeMutations();
   const { createAccount: createBankAccount } = useBankAccountMutations();
   const { adjustStock } = useItemMutations();
+  const { getNextNumber } = useSequenceMutations();
 
   // PDF Generator
   const {
@@ -85,16 +107,6 @@ export function SaleInvoicesPage(): React.ReactNode {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter State
-  const [filters, setFilters] = useState<SaleFilters>({
-    search: "",
-    status: "all",
-    customerId: "all",
-    dateRange: { from: null, to: null },
-    sortBy: "date",
-    sortOrder: "desc",
-  });
-
   const statusOptions: SelectOption[] = [
     { value: "all", label: "All Status" },
     { value: "draft", label: "Draft" },
@@ -103,50 +115,29 @@ export function SaleInvoicesPage(): React.ReactNode {
     { value: "returned", label: "Returned" },
   ];
 
-  // Filter Logic
+  // Filter Logic - search, status, customer, and date are now handled by useSaleInvoices hook at SQL level
+  // Client-side only handles sorting
   const filteredInvoices = useMemo(() => {
-    return invoices
-      .filter((invoice) => {
-        // Search filter
-        if (filters.search) {
-          const searchLower = filters.search.toLowerCase();
-          const matchesNumber = invoice.invoiceNumber
-            .toLowerCase()
-            .includes(searchLower);
-          const matchesCustomer = invoice.customerName
-            .toLowerCase()
-            .includes(searchLower);
-          if (!matchesNumber && !matchesCustomer) return false;
-        }
+    return invoices.sort((a, b) => {
+      let comparison = 0;
 
-        // Status filter
-        if (filters.status !== "all" && invoice.status !== filters.status) {
-          return false;
-        }
+      switch (filters.sortBy) {
+        case "date":
+          comparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+          break;
+        case "number":
+          comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
+          break;
+        case "amount":
+          comparison = b.total - a.total;
+          break;
+        case "customer":
+          comparison = a.customerName.localeCompare(b.customerName);
+          break;
+      }
 
-        return true;
-      })
-      .sort((a, b) => {
-        let comparison = 0;
-
-        switch (filters.sortBy) {
-          case "date":
-            comparison =
-              new Date(b.date).getTime() - new Date(a.date).getTime();
-            break;
-          case "number":
-            comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
-            break;
-          case "amount":
-            comparison = b.total - a.total;
-            break;
-          case "customer":
-            comparison = a.customerName.localeCompare(b.customerName);
-            break;
-        }
-
-        return filters.sortOrder === "desc" ? comparison : -comparison;
-      });
+      return filters.sortOrder === "desc" ? comparison : -comparison;
+    });
   }, [invoices, filters]);
 
   // Totals Calculation
@@ -268,8 +259,8 @@ export function SaleInvoicesPage(): React.ReactNode {
   const handleFormSubmit = async (data: SaleInvoiceFormData): Promise<void> => {
     setIsSubmitting(true);
     try {
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}`;
+      // Generate invoice number from sequence counter (uses prefix, padding, and auto-increments)
+      const invoiceNumber = await getNextNumber("sale_invoice");
 
       // Lookup customer name from customerId
       const customer = customers.find((c) => c.id === data.customerId);
@@ -758,6 +749,30 @@ export function SaleInvoicesPage(): React.ReactNode {
                 }}
                 size="md"
                 className="min-w-[140px]"
+              />
+              <Input
+                type="date"
+                value={filters.dateRange.from ?? ""}
+                onChange={(e) => {
+                  setFilters((f) => ({
+                    ...f,
+                    dateRange: { ...f.dateRange, from: e.target.value || null },
+                  }));
+                }}
+                className="w-36"
+                aria-label="From date"
+              />
+              <Input
+                type="date"
+                value={filters.dateRange.to ?? ""}
+                onChange={(e) => {
+                  setFilters((f) => ({
+                    ...f,
+                    dateRange: { ...f.dateRange, to: e.target.value || null },
+                  }));
+                }}
+                className="w-36"
+                aria-label="To date"
               />
             </div>
           </div>

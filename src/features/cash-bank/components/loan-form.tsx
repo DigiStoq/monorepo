@@ -134,141 +134,110 @@ export function LoanForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Loan Type */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Loan Type <span className="text-error">*</span>
-        </label>
-        <Select
-          options={typeOptions}
-          value={formData.type}
-          onChange={(value) => {
-            handleChange("type", value as LoanType);
-          }}
-        />
-      </div>
+      <Select
+        label="Loan Type"
+        required
+        options={typeOptions}
+        value={formData.type}
+        onChange={(value) => {
+          handleChange("type", value as LoanType);
+        }}
+      />
 
-      {/* Loan Name */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Loan Name <span className="text-error">*</span>
-        </label>
-        <Input
-          type="text"
-          value={formData.name}
-          onChange={(e) => {
-            handleChange("name", e.target.value);
-          }}
-          placeholder="e.g., Equipment Loan, Personal Loan"
-          error={errors.name}
-        />
-      </div>
+      <Input
+        label="Loan Name"
+        required
+        type="text"
+        value={formData.name}
+        onChange={(e) => {
+          handleChange("name", e.target.value);
+        }}
+        placeholder="e.g., Equipment Loan, Personal Loan"
+        error={errors.name}
+      />
 
       {/* Lender Name (for loans taken) */}
       {formData.type === "taken" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Lender Name <span className="text-error">*</span>
-          </label>
-          <Input
-            type="text"
-            value={formData.lenderName ?? ""}
-            onChange={(e) => {
-              handleChange("lenderName", e.target.value);
-            }}
-            placeholder="Bank or lender name"
-            error={errors.lenderName}
-          />
-        </div>
+        <Input
+          label="Lender Name"
+          required
+          type="text"
+          value={formData.lenderName ?? ""}
+          onChange={(e) => {
+            handleChange("lenderName", e.target.value);
+          }}
+          placeholder="Bank or lender name"
+          error={errors.lenderName}
+        />
       )}
 
       {/* Customer (for loans given) */}
       {formData.type === "given" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Borrower <span className="text-error">*</span>
-          </label>
-          <Select
-            options={customerOptions}
-            value={formData.customerId ?? ""}
-            onChange={(value) => {
-              handleChange("customerId", value);
-            }}
-          />
-          {errors.customerId && (
-            <p className="mt-1 text-sm text-error">{errors.customerId}</p>
-          )}
-        </div>
+        <Select
+          label="Borrower"
+          required
+          options={customerOptions}
+          value={formData.customerId ?? ""}
+          onChange={(value) => {
+            handleChange("customerId", value);
+          }}
+          error={errors.customerId}
+        />
       )}
 
-      {/* Principal Amount and Interest Rate */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Principal Amount <span className="text-error">*</span>
-          </label>
-          <NumberInput
-            value={formData.principalAmount}
-            onChange={(val) => {
-              handleChange("principalAmount", val);
-            }}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Interest Rate (% per annum)
-          </label>
-          <NumberInput
-            value={formData.interestRate}
-            onChange={(val) => {
-              handleChange("interestRate", val);
-            }}
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-
-      {/* Interest Type */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Interest Type
-        </label>
-        <Select
-          options={interestTypeOptions}
-          value={formData.interestType}
-          onChange={(value) => {
-            handleChange("interestType", value as "simple" | "compound");
+        <NumberInput
+          label="Principal Amount"
+          required
+          value={formData.principalAmount}
+          onChange={(val) => {
+            handleChange("principalAmount", val);
           }}
+          placeholder="0.00"
+          error={errors.principalAmount}
+        />
+        <NumberInput
+          label="Interest Rate (% per annum)"
+          showOptionalLabel
+          value={formData.interestRate}
+          onChange={(val) => {
+            handleChange("interestRate", val);
+          }}
+          placeholder="0.00"
+          error={errors.interestRate}
         />
       </div>
 
-      {/* Dates */}
+      <Select
+        label="Interest Type"
+        required
+        options={interestTypeOptions}
+        value={formData.interestType}
+        onChange={(value) => {
+          handleChange("interestType", value as "simple" | "compound");
+        }}
+      />
+
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Start Date <span className="text-error">*</span>
-          </label>
-          <Input
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => {
-              handleChange("startDate", e.target.value);
-            }}
-            error={errors.startDate}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            End Date
-          </label>
-          <Input
-            type="date"
-            value={formData.endDate ?? ""}
-            onChange={(e) => {
-              handleChange("endDate", e.target.value || undefined);
-            }}
-          />
-        </div>
+        <Input
+          label="Start Date"
+          required
+          type="date"
+          value={formData.startDate}
+          onChange={(e) => {
+            handleChange("startDate", e.target.value);
+          }}
+          error={errors.startDate}
+        />
+        <Input
+          label="End Date"
+          showOptionalLabel
+          type="date"
+          value={formData.endDate ?? ""}
+          onChange={(e) => {
+            handleChange("endDate", e.target.value || undefined);
+          }}
+        />
       </div>
 
       {/* EMI Details */}
@@ -277,87 +246,72 @@ export function LoanForm({
           EMI Details (Optional)
         </h4>
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">
-              EMI Amount
-            </label>
-            <NumberInput
-              value={formData.emiAmount}
-              onChange={(val) => {
-                handleChange("emiAmount", val || undefined);
-              }}
-              placeholder="0.00"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">EMI Day</label>
-            <Input
-              type="number"
-              value={formData.emiDay ?? ""}
-              onChange={(e) => {
-                handleChange(
-                  "emiDay",
-                  e.target.value ? parseInt(e.target.value) : undefined
-                );
-              }}
-              placeholder="1-31"
-              min={1}
-              max={31}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">
-              Total EMIs
-            </label>
-            <Input
-              type="number"
-              value={formData.totalEmis ?? ""}
-              onChange={(e) => {
-                handleChange(
-                  "totalEmis",
-                  e.target.value ? parseInt(e.target.value) : undefined
-                );
-              }}
-              placeholder="e.g., 36"
-              min={1}
-            />
-          </div>
+          <NumberInput
+            label="EMI Amount"
+            showOptionalLabel
+            value={formData.emiAmount}
+            onChange={(val) => {
+              handleChange("emiAmount", val || undefined);
+            }}
+            placeholder="0.00"
+          />
+          <Input
+            label="EMI Day"
+            showOptionalLabel
+            type="number"
+            value={formData.emiDay ?? ""}
+            onChange={(e) => {
+              handleChange(
+                "emiDay",
+                e.target.value ? parseInt(e.target.value) : undefined
+              );
+            }}
+            placeholder="1-31"
+            min={1}
+            max={31}
+          />
+          <Input
+            label="Total EMIs"
+            showOptionalLabel
+            type="number"
+            value={formData.totalEmis ?? ""}
+            onChange={(e) => {
+              handleChange(
+                "totalEmis",
+                e.target.value ? parseInt(e.target.value) : undefined
+              );
+            }}
+            placeholder="e.g., 36"
+            min={1}
+          />
         </div>
       </div>
 
       {/* Linked Bank Account */}
       {bankAccounts.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Linked Bank Account
-          </label>
-          <Select
-            options={bankAccountOptions}
-            value={formData.linkedBankAccountId ?? ""}
-            onChange={(value) => {
-              handleChange("linkedBankAccountId", value || undefined);
-            }}
-          />
-          <p className="text-xs text-slate-500 mt-1">
-            Payments will be automatically linked to this account
-          </p>
-        </div>
+        <Select
+          label="Linked Bank Account"
+          showOptionalLabel
+          options={bankAccountOptions}
+          value={formData.linkedBankAccountId ?? ""}
+          onChange={(value) => {
+            handleChange("linkedBankAccountId", value || undefined);
+          }}
+          helperText="Payments will be automatically linked to this account"
+        />
       )}
 
       {/* Notes */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Notes
-        </label>
-        <Textarea
-          value={formData.notes ?? ""}
-          onChange={(e) => {
-            handleChange("notes", e.target.value || undefined);
-          }}
-          placeholder="Additional notes about this loan..."
-          rows={2}
-        />
-      </div>
+      <Textarea
+        label="Notes"
+        showOptionalLabel
+        value={formData.notes ?? ""}
+        onChange={(e) => {
+          handleChange("notes", e.target.value || undefined);
+        }}
+        placeholder="Additional notes about this loan..."
+        rows={2}
+      />
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

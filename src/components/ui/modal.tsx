@@ -197,7 +197,7 @@ export function Modal({
             <motion.div
               className={cn(
                 "relative w-full",
-                "bg-card rounded-xl shadow-elevated",
+                "bg-card rounded-xl shadow-elevated overflow-hidden",
                 "flex flex-col max-h-[calc(100vh-2rem)]",
                 sizeStyles[size],
                 className
@@ -260,7 +260,7 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
         ref={ref}
         className={cn(
           "flex items-start justify-between gap-4 px-6 pt-6 pb-4",
-          "border-b border-border-primary",
+          "border-b border-border-primary rounded-t-xl",
           className
         )}
         {...props}
@@ -339,7 +339,7 @@ export const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
         ref={ref}
         className={cn(
           "flex items-center gap-3 px-6 py-4",
-          "border-t border-border-primary bg-subtle",
+          "border-t border-border-primary bg-subtle rounded-b-xl",
           footerAlignStyles[align],
           className
         )}

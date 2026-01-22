@@ -59,6 +59,10 @@ export interface SelectProps {
   id?: string;
   /** Name for form submission */
   name?: string;
+  /** Mark field as required (shows asterisk) */
+  required?: boolean;
+  /** Show (Optional) label for non-required fields */
+  showOptionalLabel?: boolean;
 }
 
 export interface MultiSelectProps extends Omit<
@@ -147,6 +151,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       className,
       id,
       name,
+      required,
+      showOptionalLabel = false,
     },
     ref
   ) => {
@@ -299,6 +305,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             className="block text-sm font-medium text-text-secondary mb-1.5"
           >
             {label}
+            {required && <span className="text-error ml-0.5">*</span>}
+            {!required && showOptionalLabel && (
+              <span className="text-text-tertiary text-xs ml-1">
+                (Optional)
+              </span>
+            )}
           </label>
         )}
 

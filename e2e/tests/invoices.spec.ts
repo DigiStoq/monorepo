@@ -68,7 +68,7 @@ test('create invoice with new customer and item', async ({ page }) => {
   await expect(page.locator('.text-lg.font-bold.text-primary-600', { hasText: '$100.00' })).toBeVisible();
   
   // Submit
-  await page.getByRole('button', { name: 'Create & Send' }).click();
+  await page.getByRole('button', { name: 'Send' }).click();
   
   // Verify Modal Closes
   await expect(page.getByText('New Sale Invoice')).not.toBeVisible();

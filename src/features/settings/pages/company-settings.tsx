@@ -267,6 +267,7 @@ export function CompanySettingsPage(): React.ReactNode {
             <SettingsGroup>
               <SettingsRow
                 label="Business Name"
+                required
                 description="Display name for your business"
               >
                 <Input
@@ -280,6 +281,7 @@ export function CompanySettingsPage(): React.ReactNode {
               </SettingsRow>
               <SettingsRow
                 label="Legal Name"
+                showOptionalLabel
                 description="Registered legal name"
               >
                 <Input
@@ -302,7 +304,7 @@ export function CompanySettingsPage(): React.ReactNode {
           icon={MapPin}
         >
           <SettingsGroup>
-            <SettingsRow label="Street Address">
+            <SettingsRow label="Street Address" showOptionalLabel>
               <Input
                 type="text"
                 value={settings.address.street}
@@ -312,7 +314,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-64"
               />
             </SettingsRow>
-            <SettingsRow label="City">
+            <SettingsRow label="City" showOptionalLabel>
               <Input
                 type="text"
                 value={settings.address.city}
@@ -322,7 +324,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-64"
               />
             </SettingsRow>
-            <SettingsRow label="State">
+            <SettingsRow label="State" showOptionalLabel>
               <Input
                 type="text"
                 value={settings.address.state}
@@ -332,7 +334,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-64"
               />
             </SettingsRow>
-            <SettingsRow label="Postal Code">
+            <SettingsRow label="Postal Code" showOptionalLabel>
               <Input
                 type="text"
                 value={settings.address.postalCode}
@@ -342,7 +344,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-40"
               />
             </SettingsRow>
-            <SettingsRow label="Country">
+            <SettingsRow label="Country" showOptionalLabel>
               <Input
                 type="text"
                 value={settings.address.country}
@@ -362,7 +364,7 @@ export function CompanySettingsPage(): React.ReactNode {
           icon={Phone}
         >
           <SettingsGroup>
-            <SettingsRow label="Phone Number">
+            <SettingsRow label="Phone Number" showOptionalLabel>
               <Input
                 type="tel"
                 value={settings.contact.phone}
@@ -372,7 +374,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-64"
               />
             </SettingsRow>
-            <SettingsRow label="Email Address">
+            <SettingsRow label="Email Address" showOptionalLabel>
               <Input
                 type="email"
                 value={settings.contact.email}
@@ -382,7 +384,7 @@ export function CompanySettingsPage(): React.ReactNode {
                 className="w-64"
               />
             </SettingsRow>
-            <SettingsRow label="Website">
+            <SettingsRow label="Website" showOptionalLabel>
               <Input
                 type="url"
                 value={settings.contact.website ?? ""}
@@ -405,6 +407,7 @@ export function CompanySettingsPage(): React.ReactNode {
           <SettingsGroup>
             <SettingsRow
               label="Tax ID"
+              showOptionalLabel
               description="Federal Tax Identification Number"
             >
               <Input
@@ -419,6 +422,7 @@ export function CompanySettingsPage(): React.ReactNode {
             </SettingsRow>
             <SettingsRow
               label="EIN"
+              showOptionalLabel
               description="Employer Identification Number"
             >
               <Input

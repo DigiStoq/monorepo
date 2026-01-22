@@ -11,13 +11,7 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import {
-  Building2,
-  Calendar,
-  Hash,
-  ArrowDownLeft,
-  ArrowUpRight,
-} from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ChequeFormData, ChequeType } from "../types";
 import type { Customer } from "@/features/customers";
@@ -152,58 +146,43 @@ export function ChequeForm({
           <Card>
             <CardHeader title="Cheque Details" />
             <CardBody className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Hash className="h-4 w-4 inline mr-1" />
-                  Cheque Number
-                </label>
-                <Input
-                  type="text"
-                  value={chequeNumber}
-                  onChange={(e) => {
-                    setChequeNumber(e.target.value);
-                  }}
-                  placeholder="Enter cheque number"
-                />
-              </div>
+              <Input
+                label="Cheque Number"
+                required
+                type="text"
+                value={chequeNumber}
+                onChange={(e) => {
+                  setChequeNumber(e.target.value);
+                }}
+                placeholder="Enter cheque number"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  {isReceived ? "Received From" : "Issued To"}
-                </label>
-                <Select
-                  options={customerOptions}
-                  value={customerId}
-                  onChange={setCustomerId}
-                />
-              </div>
+              <Select
+                label={isReceived ? "Received From" : "Issued To"}
+                required
+                options={customerOptions}
+                value={customerId}
+                onChange={setCustomerId}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  Bank Name
-                </label>
-                <Input
-                  type="text"
-                  value={bankName}
-                  onChange={(e) => {
-                    setBankName(e.target.value);
-                  }}
-                  placeholder="e.g., Chase Bank"
-                />
-              </div>
+              <Input
+                label="Bank Name"
+                required
+                type="text"
+                value={bankName}
+                onChange={(e) => {
+                  setBankName(e.target.value);
+                }}
+                placeholder="e.g., Chase Bank"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Amount
-                </label>
-                <NumberInput
-                  value={amount}
-                  onChange={setAmount}
-                  placeholder="0.00"
-                />
-              </div>
+              <NumberInput
+                label="Amount"
+                required
+                value={amount}
+                onChange={setAmount}
+                placeholder="0.00"
+              />
             </CardBody>
           </Card>
         </div>
@@ -213,40 +192,33 @@ export function ChequeForm({
           <Card>
             <CardHeader title="Dates" />
             <CardBody className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Cheque Date
-                </label>
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                  }}
-                />
-              </div>
+              <Input
+                label="Cheque Date"
+                required
+                type="date"
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                }}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Due Date
-                </label>
-                <Input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => {
-                    setDueDate(e.target.value);
-                  }}
-                />
-              </div>
+              <Input
+                label="Due Date"
+                required
+                type="date"
+                value={dueDate}
+                onChange={(e) => {
+                  setDueDate(e.target.value);
+                }}
+              />
             </CardBody>
           </Card>
 
           <Card>
             <CardBody>
               <Textarea
-                label="Notes (Optional)"
+                label="Notes"
+                showOptionalLabel
                 placeholder="Add any notes about this cheque..."
                 rows={3}
                 value={notes}

@@ -8,7 +8,7 @@ import {
   NumberInput,
   Textarea,
 } from "@/components/ui";
-import { ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { CashAdjustmentFormData } from "../types";
 
@@ -104,42 +104,34 @@ export function CashAdjustmentForm({
       {/* Form Fields */}
       <Card>
         <CardBody className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              <Calendar className="h-4 w-4 inline mr-1" />
-              Date
-            </label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-              }}
-            />
-          </div>
+          <Input
+            label="Date"
+            required
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+            }}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Amount
-            </label>
-            <NumberInput
-              value={amount}
-              onChange={setAmount}
-              placeholder="0.00"
-            />
-          </div>
+          <NumberInput
+            label="Amount"
+            required
+            value={amount}
+            onChange={setAmount}
+            placeholder="0.00"
+          />
 
-          <div>
-            <Textarea
-              label="Description"
-              placeholder="Reason for this adjustment..."
-              rows={3}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-              }}
-            />
-          </div>
+          <Textarea
+            label="Description"
+            required
+            placeholder="Reason for this adjustment..."
+            rows={3}
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+            }}
+          />
         </CardBody>
       </Card>
 

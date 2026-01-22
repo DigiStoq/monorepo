@@ -123,6 +123,7 @@ export function LoginPage(): ReactNode {
         <Input
           type="email"
           label="Email address"
+          required
           placeholder="you@example.com"
           value={email}
           onChange={(e) => {
@@ -137,6 +138,7 @@ export function LoginPage(): ReactNode {
         <Input
           type="password"
           label="Password"
+          required
           placeholder="Enter your password"
           value={password}
           onChange={(e) => {

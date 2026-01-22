@@ -11,14 +11,6 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import {
-  Calendar,
-  User,
-  DollarSign,
-  CreditCard,
-  FileText,
-  Hash,
-} from "lucide-react";
 import type { PaymentInFormData, PaymentMode, SaleInvoice } from "../types";
 import type { Customer } from "@/features/customers";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -158,11 +150,9 @@ export function PaymentInForm({
             <CardBody>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <User className="h-4 w-4 inline mr-1" />
-                    Customer
-                  </label>
                   <Select
+                    label="Customer"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={(value) => {
@@ -174,12 +164,10 @@ export function PaymentInForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Payment Date
-                  </label>
                   <Input
                     type="date"
+                    label="Payment Date"
+                    required
                     value={date}
                     onChange={(e) => {
                       setDate(e.target.value);
@@ -209,11 +197,9 @@ export function PaymentInForm({
             <CardBody>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <DollarSign className="h-4 w-4 inline mr-1" />
-                    Amount
-                  </label>
                   <NumberInput
+                    label="Amount"
+                    required
                     value={amount}
                     onChange={setAmount}
                     placeholder="0.00"
@@ -221,11 +207,9 @@ export function PaymentInForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <CreditCard className="h-4 w-4 inline mr-1" />
-                    Payment Mode
-                  </label>
                   <Select
+                    label="Payment Mode"
+                    required
                     options={paymentModeOptions}
                     value={paymentMode}
                     onChange={(value) => {
@@ -235,12 +219,10 @@ export function PaymentInForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Hash className="h-4 w-4 inline mr-1" />
-                    Reference Number
-                  </label>
                   <Input
                     type="text"
+                    label="Reference Number"
+                    showOptionalLabel
                     value={referenceNumber}
                     onChange={(e) => {
                       setReferenceNumber(e.target.value);
@@ -250,11 +232,9 @@ export function PaymentInForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <FileText className="h-4 w-4 inline mr-1" />
-                    Against Invoice
-                  </label>
                   <Select
+                    label="Against Invoice"
+                    showOptionalLabel
                     options={invoiceOptions}
                     value={invoiceId}
                     onChange={setInvoiceId}

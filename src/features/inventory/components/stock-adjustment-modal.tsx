@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Modal, Button, Input } from "@/components/ui";
-import { Package, Plus, Minus, AlertTriangle } from "lucide-react";
+import { Package, Plus, Minus } from "lucide-react";
 import type { Item } from "../types";
 
 // ============================================================================
@@ -143,22 +143,19 @@ export function StockAdjustmentModal({
           </button>
         </div>
 
-        {/* Quantity Input */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Quantity to {adjustmentType === "add" ? "Add" : "Remove"}
-          </label>
-          <Input
-            type="number"
-            min={0}
-            value={quantity || ""}
-            onChange={(e) => {
-              setQuantity(parseInt(e.target.value) || 0);
-            }}
-            placeholder="Enter quantity"
-            autoFocus
-          />
-        </div>
+        <Input
+          label={`Quantity to ${adjustmentType === "add" ? "Add" : "Remove"}`}
+          required
+          type="number"
+          min={0}
+          value={quantity || ""}
+          onChange={(e) => {
+            setQuantity(parseInt(e.target.value) || 0);
+          }}
+          placeholder="Enter quantity"
+          error={quantity > 0 ? (errorMessage ?? undefined) : undefined}
+          autoFocus
+        />
 
         {/* New Stock Preview */}
         {quantity > 0 && (
@@ -191,14 +188,6 @@ export function StockAdjustmentModal({
                 {quantity}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {errorMessage && quantity > 0 && (
-          <div className="flex items-center gap-2 text-error text-sm">
-            <AlertTriangle className="h-4 w-4" />
-            <span>{errorMessage}</span>
           </div>
         )}
       </div>

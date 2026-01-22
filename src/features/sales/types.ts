@@ -221,3 +221,12 @@ export interface CreditNote {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CreditNoteFormData {
+  customerId: string;
+  invoiceId?: string | undefined;
+  date: string;
+  reason: CreditNoteReason;
+  items: SaleInvoiceItemFormData[];
+  notes?: string | undefined;
+}

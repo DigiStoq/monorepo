@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useStockSummaryReport } from "@/hooks/useReports";
 import { useCurrency } from "@/hooks/useCurrency";
+import { TableSkeleton, EmptyState } from "@/components/common";
 
 // ============================================================================
 // COMPONENT
@@ -102,8 +103,16 @@ export function StockSummaryReport(): React.ReactNode {
         title="Stock Summary"
         subtitle="Current inventory levels and valuations"
       >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-500">Loading report data...</div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-24 bg-slate-100 animate-pulse rounded-xl"
+              />
+            ))}
+          </div>
+          <TableSkeleton rows={8} columns={7} />
         </div>
       </ReportLayout>
     );
@@ -251,67 +260,79 @@ export function StockSummaryReport(): React.ReactNode {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredItems.map((item) => (
-                <tr
-                  key={item.itemId}
-                  className={cn(
-                    "hover:bg-muted/50",
-                    item.isLowStock && "bg-warning-light"
-                  )}
-                >
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-text-heading">
-                      {item.itemName}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm font-mono text-slate-600">
-                      {item.sku}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="secondary" size="sm">
-                      {item.category}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        item.isLowStock ? "text-warning" : "text-text-heading"
-                      )}
-                    >
-                      {item.stockQuantity} {item.unit}
-                    </span>
-                    {item.isLowStock && (
-                      <span className="text-xs text-warning block">
-                        Min: {item.lowStockAlert}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-600">
-                    {formatCurrency(item.purchasePrice)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-text-heading">
-                    {formatCurrency(item.salePrice)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-green-600">
-                    {formatCurrency(item.stockValue)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    {item.isLowStock ? (
-                      <Badge variant="warning" size="sm">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Low Stock
-                      </Badge>
-                    ) : (
-                      <Badge variant="success" size="sm">
-                        In Stock
-                      </Badge>
-                    )}
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12">
+                    <EmptyState
+                      variant="search"
+                      title="No items found"
+                      description="Try adjusting your filters or search query"
+                    />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredItems.map((item) => (
+                  <tr
+                    key={item.itemId}
+                    className={cn(
+                      "hover:bg-muted/50",
+                      item.isLowStock && "bg-warning-light"
+                    )}
+                  >
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-text-heading">
+                        {item.itemName}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-mono text-slate-600">
+                        {item.sku}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="secondary" size="sm">
+                        {item.category}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        className={cn(
+                          "font-medium",
+                          item.isLowStock ? "text-warning" : "text-text-heading"
+                        )}
+                      >
+                        {item.stockQuantity} {item.unit}
+                      </span>
+                      {item.isLowStock && (
+                        <span className="text-xs text-warning block">
+                          Min: {item.lowStockAlert}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-slate-600">
+                      {formatCurrency(item.purchasePrice)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-text-heading">
+                      {formatCurrency(item.salePrice)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-green-600">
+                      {formatCurrency(item.stockValue)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {item.isLowStock ? (
+                        <Badge variant="warning" size="sm">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Low Stock
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" size="sm">
+                          In Stock
+                        </Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
             <tfoot className="bg-slate-100 border-t-2 border-slate-300">
               <tr>

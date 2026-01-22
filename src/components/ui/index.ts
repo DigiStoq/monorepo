@@ -65,6 +65,16 @@ export type {
   ModalSize,
 } from "./modal";
 
+// Sheet
+export { Sheet, SheetHeader, SheetBody, SheetFooter } from "./sheet";
+export type {
+  SheetProps,
+  SheetHeaderProps,
+  SheetBodyProps,
+  SheetFooterProps,
+  SheetSize,
+} from "./sheet";
+
 // Confirm Delete Dialog
 export { ConfirmDeleteDialog } from "./confirm-delete-dialog";
 export type {

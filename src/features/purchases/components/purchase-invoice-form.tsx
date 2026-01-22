@@ -6,19 +6,11 @@ import {
   CardBody,
   Button,
   Input,
-  TableNumberInput,
   Textarea,
   Select,
   type SelectOption,
 } from "@/components/ui";
-import {
-  Plus,
-  Trash2,
-  Calendar,
-  Building2,
-  FileText,
-  Hash,
-} from "lucide-react";
+import { Plus, Trash2, FileText } from "lucide-react";
 import type {
   PurchaseInvoiceFormData,
   PurchaseInvoiceItemFormData,
@@ -26,6 +18,11 @@ import type {
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
 import { useCurrency } from "@/hooks/useCurrency";
+import {
+  PurchaseItemModal,
+  type PurchaseLineItem,
+} from "./purchase-item-modal";
+import { Edit2 } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -41,18 +38,8 @@ export interface PurchaseInvoiceFormProps {
   className?: string;
 }
 
-interface LineItem {
-  id: string;
-  itemId: string;
-  itemName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  discountPercent: number;
-  taxPercent: number;
-  batchNumber: string;
-  amount: number;
-}
+// Use shared type
+type LineItem = PurchaseLineItem;
 
 // ============================================================================
 // COMPONENT
@@ -84,6 +71,10 @@ export function PurchaseInvoiceForm({
 
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
   // Customer options (suppliers) - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
@@ -93,68 +84,32 @@ export function PurchaseInvoiceForm({
     ];
   }, [customers]);
 
-  // Item options - hook already filters by isActive
-  const itemOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select an item..." },
-      ...items.map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.purchasePrice.toFixed(2)}`,
-      })),
-    ];
-  }, [items]);
-
   // Add line item
   const handleAddItem = (): void => {
-    const newItem: LineItem = {
-      id: `line-${Date.now()}`,
-      itemId: "",
-      itemName: "",
-      quantity: 1,
-      unit: "pcs",
-      unitPrice: 0,
-      discountPercent: 0,
-      taxPercent: 0,
-      batchNumber: "",
-      amount: 0,
-    };
-    setLineItems([...lineItems, newItem]);
+    setEditingItem(undefined);
+    setIsItemModalOpen(true);
   };
 
-  // Update line item
-  const handleUpdateLineItem = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ): void => {
-    setLineItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
+  // Edit line item
+  const handleEditItem = (item: LineItem): void => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
+  };
 
-        const updated = { ...item, [field]: value };
-
-        // If item selected, populate details with purchase price
-        if (field === "itemId" && value) {
-          const selectedItem = items.find((i) => i.id === value);
-          if (selectedItem) {
-            updated.itemName = selectedItem.name;
-            updated.unit = selectedItem.unit;
-            updated.unitPrice = selectedItem.purchasePrice; // Use purchase price
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-            updated.batchNumber = selectedItem.batchNumber ?? "";
-          }
-        }
-
-        // Recalculate amount
-        const subtotal = updated.quantity * updated.unitPrice;
-        const discountAmount = subtotal * (updated.discountPercent / 100);
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = taxableAmount * (updated.taxPercent / 100);
-        updated.amount = taxableAmount + taxAmount;
-
-        return updated;
-      })
-    );
+  // Save line item (from modal)
+  const handleSaveItem = (item: LineItem): void => {
+    setLineItems((prev) => {
+      const index = prev.findIndex((i) => i.id === item.id);
+      if (index >= 0) {
+        // Update existing
+        const newItems = [...prev];
+        newItems[index] = item;
+        return newItems;
+      } else {
+        // Add new
+        return [...prev, item];
+      }
+    });
   };
 
   // Remove line item
@@ -252,11 +207,9 @@ export function PurchaseInvoiceForm({
             <CardBody>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Building2 className="h-4 w-4 inline mr-1" />
-                    Supplier
-                  </label>
                   <Select
+                    label="Supplier"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={setCustomerId}
@@ -265,12 +218,10 @@ export function PurchaseInvoiceForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Hash className="h-4 w-4 inline mr-1" />
-                    Supplier Invoice #
-                  </label>
                   <Input
                     type="text"
+                    label="Supplier Invoice #"
+                    showOptionalLabel
                     value={supplierInvoiceNumber}
                     onChange={(e) => {
                       setSupplierInvoiceNumber(e.target.value);
@@ -282,12 +233,10 @@ export function PurchaseInvoiceForm({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Invoice Date
-                  </label>
                   <Input
                     type="date"
+                    label="Invoice Date"
+                    required
                     value={date}
                     onChange={(e) => {
                       setDate(e.target.value);
@@ -296,12 +245,10 @@ export function PurchaseInvoiceForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Due Date
-                  </label>
                   <Input
                     type="date"
+                    label="Due Date"
+                    showOptionalLabel
                     value={dueDate}
                     onChange={(e) => {
                       setDueDate(e.target.value);
@@ -379,87 +326,58 @@ export function PurchaseInvoiceForm({
                         <th className="text-right text-xs font-medium text-slate-500 uppercase px-4 py-3 min-w-[100px]">
                           Amount
                         </th>
-                        <th className="w-12"></th>
+                        <th className="w-20"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {lineItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
+                        <tr key={item.id} className="group hover:bg-slate-50">
                           <td className="px-4 py-3">
-                            <Select
-                              options={itemOptions}
-                              value={item.itemId}
-                              onChange={(value) => {
-                                handleUpdateLineItem(item.id, "itemId", value);
-                              }}
-                              size="sm"
-                            />
+                            <div className="font-medium text-slate-900">
+                              {item.itemName || "Select Item"}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {item.unit}{" "}
+                              {item.batchNumber &&
+                                `• Batch: ${item.batchNumber}`}
+                            </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.quantity}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "quantity", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.quantity}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.unitPrice}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "unitPrice", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[80px]"
-                              placeholder="0.00"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.discountPercent}
-                              onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "discountPercent",
-                                  val
-                                );
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.taxPercent}
-                              onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "taxPercent",
-                                  val
-                                );
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.taxPercent}%
                           </td>
-                          <td className="px-4 py-3 text-right font-medium">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-2 py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                handleRemoveLineItem(item.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-error" />
-                            </Button>
+                          <td className="px-2 py-3 text-right">
+                            <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditItem(item);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4 text-slate-400 hover:text-primary-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleRemoveLineItem(item.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-slate-400 hover:text-error" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -475,6 +393,7 @@ export function PurchaseInvoiceForm({
             <CardBody>
               <Textarea
                 label="Notes"
+                showOptionalLabel
                 placeholder="Add any notes about this purchase..."
                 rows={3}
                 value={notes}
@@ -555,6 +474,16 @@ export function PurchaseInvoiceForm({
           </Card>
         </div>
       </div>
+
+      <PurchaseItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+        }}
+        onSave={handleSaveItem}
+        item={editingItem}
+        items={items}
+      />
     </div>
   );
 }

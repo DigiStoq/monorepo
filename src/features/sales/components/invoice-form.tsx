@@ -6,7 +6,6 @@ import {
   CardBody,
   Button,
   Input,
-  TableNumberInput,
   Textarea,
   Select,
   type SelectOption,
@@ -15,17 +14,18 @@ import {
   Plus,
   Trash2,
   Calendar,
-  User,
   FileText,
   Truck,
   Percent,
   DollarSign,
+  Edit2,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useInvoiceSettings, useTaxRates } from "@/hooks/useSettings";
+import { useTaxRates } from "@/hooks/useSettings";
 import type { SaleInvoiceFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
+import { InvoiceItemModal, type InvoiceLineItem } from "./invoice-item-modal";
 
 // ============================================================================
 // TYPES
@@ -43,19 +43,8 @@ export interface InvoiceFormProps {
   className?: string;
 }
 
-interface LineItem {
-  id: string;
-  itemId: string;
-  itemName: string;
-  batchNumber: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  mrp: number;
-  discountPercent: number;
-  taxPercent: number;
-  amount: number;
-}
+// Use shared type
+type LineItem = InvoiceLineItem;
 
 // ============================================================================
 // COMPONENT
@@ -100,6 +89,10 @@ export function InvoiceForm({
       : (initialData?.discountPercent ?? 0)
   );
   const [showValidation, setShowValidation] = useState(false);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
   // Initialize line items from initialData if editing
   const getInitialLineItems = (): LineItem[] => {
@@ -146,77 +139,27 @@ export function InvoiceForm({
     [customers]
   );
 
-  // Item options - hook already filters by isActive, no need to filter again
-  const itemOptions: SelectOption[] = useMemo(
-    () => [
-      { value: "", label: "Select an item..." },
-      ...items.map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.salePrice.toFixed(2)}`,
-      })),
-    ],
-    [items]
-  );
-
-  const { settings: invoiceSettings } = useInvoiceSettings();
   const { taxRates } = useTaxRates();
 
-  // Add line item
-  const handleAddItem = (): void => {
-    const defaultTaxRate = taxRates.find((r) => r.isDefault)?.rate ?? 0;
-    const taxEnabled = invoiceSettings?.taxEnabled ?? false;
-    const effectiveTaxRate = taxEnabled ? defaultTaxRate : 0;
-
-    const newItem: LineItem = {
-      id: `line-${Date.now()}`,
-      itemId: "",
-      itemName: "",
-      batchNumber: "",
-      quantity: 1,
-      unit: "pcs",
-      unitPrice: 0,
-      mrp: 0,
-      discountPercent: 0,
-      taxPercent: effectiveTaxRate,
-      amount: 0,
-    };
-    setLineItems([...lineItems, newItem]);
+  // Modal Handlers
+  const handleAddItemClick = (): void => {
+    setEditingItem(undefined);
+    setIsItemModalOpen(true);
   };
 
-  // Update line item
-  const handleUpdateLineItem = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ): void => {
-    setLineItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
+  const handleEditItemClick = (item: LineItem): void => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
+  };
 
-        const updated = { ...item, [field]: value };
-
-        // If item selected, populate details
-        if (field === "itemId" && value) {
-          const selectedItem = items.find((i) => i.id === value);
-          if (selectedItem) {
-            updated.itemName = selectedItem.name;
-            updated.unit = selectedItem.unit;
-            updated.unitPrice = selectedItem.salePrice;
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-            updated.batchNumber = selectedItem.batchNumber ?? "";
-          }
-        }
-
-        // Recalculate amount
-        const subtotal = updated.quantity * updated.unitPrice;
-        const discountAmount = subtotal * (updated.discountPercent / 100);
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = taxableAmount * (updated.taxPercent / 100);
-        updated.amount = taxableAmount + taxAmount;
-
-        return updated;
-      })
-    );
+  const handleSaveItem = (item: LineItem): void => {
+    setLineItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id);
+      if (exists) {
+        return prev.map((i) => (i.id === item.id ? item : i));
+      }
+      return [...prev, item];
+    });
   };
 
   // Remove line item
@@ -351,30 +294,26 @@ export function InvoiceForm({
             <CardBody>
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <User className="h-4 w-4 inline mr-1" />
-                    Customer
-                  </label>
                   <Select
+                    label="Customer"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select customer"
-                    className={cn(
-                      showValidation &&
-                        !customerId &&
-                        "border-red-500 ring-red-500"
-                    )}
+                    error={
+                      showValidation && !customerId
+                        ? "Customer is required"
+                        : undefined
+                    }
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Invoice Date
-                  </label>
                   <Input
                     type="date"
+                    label="Invoice Date"
+                    required
                     value={date}
                     onChange={(e) => {
                       setDate(e.target.value);
@@ -383,12 +322,10 @@ export function InvoiceForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Due Date
-                  </label>
                   <Input
                     type="date"
+                    label="Due Date"
+                    showOptionalLabel
                     value={dueDate}
                     onChange={(e) => {
                       setDueDate(e.target.value);
@@ -477,7 +414,7 @@ export function InvoiceForm({
                   variant="outline"
                   size="sm"
                   leftIcon={<Plus className="h-4 w-4" />}
-                  onClick={handleAddItem}
+                  onClick={handleAddItemClick}
                 >
                   Add Item
                 </Button>
@@ -492,7 +429,7 @@ export function InvoiceForm({
                     variant="outline"
                     size="sm"
                     leftIcon={<Plus className="h-4 w-4" />}
-                    onClick={handleAddItem}
+                    onClick={handleAddItemClick}
                     className="mt-3"
                   >
                     Add First Item
@@ -532,135 +469,59 @@ export function InvoiceForm({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {lineItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
+                        <tr key={item.id} className="hover:bg-slate-50 group">
                           <td className="px-4 py-3">
-                            <Select
-                              options={itemOptions}
-                              value={item.itemId}
-                              onChange={(value) => {
-                                handleUpdateLineItem(item.id, "itemId", value);
-                              }}
-                              size="sm"
-                              className={cn(
-                                showValidation &&
-                                  !item.itemId &&
-                                  "border-red-500 focus:ring-red-500"
-                              )}
-                            />
+                            <div className="font-medium text-slate-900">
+                              {item.itemName}
+                            </div>
+                            {item.batchNumber && (
+                              <div className="text-xs text-slate-500">
+                                Batch: {item.batchNumber}
+                              </div>
+                            )}
                           </td>
-                          <td className="px-4 py-3">
-                            <Input
-                              type="text"
-                              value={item.batchNumber}
-                              onChange={(e) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "batchNumber",
-                                  e.target.value
-                                );
-                              }}
-                              size="sm"
-                              placeholder="Batch"
-                            />
+                          <td className="px-4 py-3 text-slate-600">
+                            {item.batchNumber || "-"}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.mrp}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "mrp", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[80px]"
-                              placeholder="0.00"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.mrp)}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.quantity}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "quantity", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.quantity} {item.unit}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.unitPrice}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "unitPrice", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[80px]"
-                              placeholder="0.00"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={
-                                discountType === "percent"
-                                  ? item.discountPercent
-                                  : (item.unitPrice *
-                                      item.quantity *
-                                      item.discountPercent) /
-                                    100
-                              }
-                              onChange={(val) => {
-                                if (discountType === "percent") {
-                                  handleUpdateLineItem(
-                                    item.id,
-                                    "discountPercent",
-                                    val
-                                  );
-                                } else {
-                                  // Convert amount to percent
-                                  const totalAmount =
-                                    item.unitPrice * item.quantity;
-                                  const pct =
-                                    totalAmount > 0
-                                      ? (val / totalAmount) * 100
-                                      : 0;
-                                  handleUpdateLineItem(
-                                    item.id,
-                                    "discountPercent",
-                                    pct
-                                  );
-                                }
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.taxPercent}
-                              onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "taxPercent",
-                                  val
-                                );
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.taxPercent}%
                           </td>
-                          <td className="px-4 py-3 text-right font-medium">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-2 py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                handleRemoveLineItem(item.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-error" />
-                            </Button>
+                          <td className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditItemClick(item);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4 text-slate-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleRemoveLineItem(item.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-error" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -797,12 +658,24 @@ export function InvoiceForm({
                 onClick={handleSubmit}
                 isLoading={formLoading}
               >
-                {isEditing ? "Save Changes" : "Create & Send"}
+                {isEditing ? "Save Changes" : "Create"}
               </Button>
             </CardBody>
           </Card>
         </div>
       </div>
+
+      <InvoiceItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+        }}
+        onSave={handleSaveItem}
+        item={editingItem}
+        items={items}
+        discountType={discountType}
+        defaultTaxRate={taxRates.find((r) => r.isDefault)?.rate ?? 0}
+      />
     </div>
   );
 }
