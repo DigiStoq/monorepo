@@ -88,6 +88,7 @@ export interface Product {
   updated_at: string;
 }
 
+// ts-prune-ignore-next (exported for future product form feature)
 export interface ProductFormData {
   name: string;
   sku: string;
@@ -100,6 +101,7 @@ export interface ProductFormData {
   is_active: boolean;
 }
 
+// ts-prune-ignore-next (exported for future product filtering feature)
 export interface ProductFilters {
   search: string;
   category: string | null;

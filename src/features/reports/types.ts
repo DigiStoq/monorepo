@@ -7,6 +7,7 @@ export interface DateRange {
   to: string;
 }
 
+// ts-prune-ignore-next (exported for future report filtering)
 export interface ReportFilters {
   dateRange: DateRange;
   customerId?: string;
@@ -27,6 +28,7 @@ export type ReportPeriod =
   | "last_year"
   | "custom";
 
+// ts-prune-ignore-next (exported for future report navigation feature)
 export interface ReportCategory {
   id: string;
   title: string;
@@ -123,6 +125,7 @@ export interface CustomerStatement {
   entries: CustomerLedgerEntry[];
 }
 
+// ts-prune-ignore-next (exported for future aging report feature)
 export interface AgingBucket {
   label: string;
   amount: number;

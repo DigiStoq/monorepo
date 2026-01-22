@@ -596,45 +596,76 @@ export const AppSchema = new Schema({
 
 export type Database = (typeof AppSchema)["types"];
 
-// Core types
+// Core types - exported for type safety with raw database queries
+// ts-prune-ignore-next
 export type CustomerRecord = Database["customers"];
+// ts-prune-ignore-next
 export type CategoryRecord = Database["categories"];
+// ts-prune-ignore-next
 export type ItemRecord = Database["items"];
 
 // Sales types
+// ts-prune-ignore-next
 export type SaleInvoiceRecord = Database["sale_invoices"];
+// ts-prune-ignore-next
 export type SaleInvoiceItemRecord = Database["sale_invoice_items"];
+// ts-prune-ignore-next
 export type PaymentInRecord = Database["payment_ins"];
+// ts-prune-ignore-next
 export type EstimateRecord = Database["estimates"];
+// ts-prune-ignore-next
 export type EstimateItemRecord = Database["estimate_items"];
+// ts-prune-ignore-next
 export type CreditNoteRecord = Database["credit_notes"];
+// ts-prune-ignore-next
 export type CreditNoteItemRecord = Database["credit_note_items"];
+// ts-prune-ignore-next
 export type InvoiceHistoryRecord = Database["invoice_history"];
 
 // Purchase types
+// ts-prune-ignore-next
 export type PurchaseInvoiceRecord = Database["purchase_invoices"];
+// ts-prune-ignore-next
 export type PurchaseInvoiceItemRecord = Database["purchase_invoice_items"];
+// ts-prune-ignore-next
 export type PaymentOutRecord = Database["payment_outs"];
+// ts-prune-ignore-next
 export type ExpenseRecord = Database["expenses"];
 
 // Cash & Bank types
+// ts-prune-ignore-next
 export type BankAccountRecord = Database["bank_accounts"];
+// ts-prune-ignore-next
 export type BankTransactionRecord = Database["bank_transactions"];
+// ts-prune-ignore-next
 export type CashTransactionRecord = Database["cash_transactions"];
+// ts-prune-ignore-next
 export type ChequeRecord = Database["cheques"];
+// ts-prune-ignore-next
 export type LoanRecord = Database["loans"];
+// ts-prune-ignore-next
 export type LoanPaymentRecord = Database["loan_payments"];
 
 // Company Settings types
+// ts-prune-ignore-next
 export type CompanySettingsRecord = Database["company_settings"];
+// ts-prune-ignore-next
 export type TaxRateRecord = Database["tax_rates"];
+// ts-prune-ignore-next
 export type InvoiceSettingsRecord = Database["invoice_settings"];
+// ts-prune-ignore-next
 export type SequenceCounterRecord = Database["sequence_counters"];
 
 // User Settings types
+// ts-prune-ignore-next
 export type UserProfileRecord = Database["user_profiles"];
+// ts-prune-ignore-next
 export type UserPreferencesRecord = Database["user_preferences"];
+// ts-prune-ignore-next
 export type SecuritySettingsRecord = Database["security_settings"];
+// ts-prune-ignore-next
 export type LoginHistoryRecord = Database["login_history"];
+// ts-prune-ignore-next
 export type BackupSettingsRecord = Database["backup_settings"];
+// ts-prune-ignore-next
 export type BackupHistoryRecord = Database["backup_history"];

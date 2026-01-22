@@ -116,12 +116,14 @@ export interface ChequeFormData {
 // FILTERS
 // ============================================================================
 
+// ts-prune-ignore-next (exported for future bank account filtering feature)
 export interface BankAccountFilters {
   search: string;
   accountType: BankAccountType | "all";
   showInactive: boolean;
 }
 
+// ts-prune-ignore-next (exported for future cheque filtering feature)
 export interface ChequeFilters {
   search: string;
   type: ChequeType | "all";
