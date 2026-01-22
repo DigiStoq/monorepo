@@ -54,4 +54,8 @@ logs/
 .mcp.json
 /.claude
 .claude/settings.local.json
+
+
+/mobile/.expo
 /mobile/android
+

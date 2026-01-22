@@ -1,0 +1,40 @@
+appId: com.anonymous.mobile
+---
+# Login Flow Test - Primary E2E test
+# Tests the critical authentication path
+
+- launchApp:
+    clearState: true
+
+# Wait for splash screen (2 seconds auto-advance)
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Sign In"
+    timeout: 8000
+
+# Navigate to login from welcome
+- tapOn: "Sign In"
+
+# Wait for login screen to load
+- waitForAnimationToEnd
+
+# Enter credentials using testID
+- tapOn:
+    id: "email-input"
+- inputText: "admin@example.com"
+- tapOn:
+    id: "password-input"
+- inputText: "Abc123.a"
+
+# Submit login
+- tapOn: "Sign In"
+
+# Wait for dashboard to load
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Total Sales Value"
+    timeout: 15000
+
+# Verify dashboard elements are visible
+- assertVisible: "Total Sales Value"
+- assertVisible: "Total Stock"
