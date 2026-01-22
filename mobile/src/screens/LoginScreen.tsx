@@ -70,6 +70,8 @@ export function LoginScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            testID="email-input"
+            accessibilityLabel="Email"
           />
 
           <TextInput
@@ -86,6 +88,8 @@ export function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            testID="password-input"
+            accessibilityLabel="Password"
           />
 
           <TouchableOpacity

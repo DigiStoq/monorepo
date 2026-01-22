@@ -37,6 +37,10 @@ export interface InputProps extends Omit<
   fullWidth?: boolean;
   /** Show password toggle for password inputs */
   showPasswordToggle?: boolean;
+  /** Mark field as required (shows asterisk) */
+  required?: boolean;
+  /** Show (Optional) label for non-required fields */
+  showOptionalLabel?: boolean;
 }
 
 // ============================================================================
@@ -112,6 +116,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       label,
       fullWidth = true,
       showPasswordToggle = false,
+      required,
+      showOptionalLabel = false,
       type,
       id,
       disabled,
@@ -169,6 +175,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label htmlFor={inputId} className={labelStyles}>
             {label}
+            {required && <span className="text-error ml-0.5">*</span>}
+            {!required && showOptionalLabel && (
+              <span className="text-text-tertiary text-xs ml-1">
+                (Optional)
+              </span>
+            )}
           </label>
         )}
 
@@ -237,6 +249,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {/* Helper/Error Text */}
         {(error ?? helperText) && (
           <p
+            role={error ? "alert" : undefined}
+            aria-live={error ? "polite" : undefined}
             className={cn(
               helperTextStyles,
               error ? errorTextStyles : defaultHelperStyles
@@ -320,6 +334,10 @@ export interface TextareaProps extends Omit<
   label?: string;
   /** Full width */
   fullWidth?: boolean;
+  /** Mark field as required (shows asterisk) */
+  required?: boolean;
+  /** Show (Optional) label for non-required fields */
+  showOptionalLabel?: boolean;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -332,6 +350,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       helperText,
       label,
       fullWidth = true,
+      required,
+      showOptionalLabel = false,
       id,
       onChange,
       value,
@@ -387,6 +407,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label htmlFor={inputId} className={labelStyles}>
             {label}
+            {required && <span className="text-error ml-0.5">*</span>}
+            {!required && showOptionalLabel && (
+              <span className="text-text-tertiary text-xs ml-1">
+                (Optional)
+              </span>
+            )}
           </label>
         )}
 
@@ -407,6 +433,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {(error ?? helperText) && (
           <p
+            role={error ? "alert" : undefined}
+            aria-live={error ? "polite" : undefined}
             className={cn(
               helperTextStyles,
               error ? errorTextStyles : defaultHelperStyles

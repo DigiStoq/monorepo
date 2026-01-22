@@ -11,14 +11,6 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import {
-  Building2,
-  Calendar,
-  CreditCard,
-  FileText,
-  Hash,
-  User,
-} from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type {
   ExpenseFormData,
@@ -145,10 +137,9 @@ export function ExpenseForm({
             <CardHeader title="Expense Details" />
             <CardBody className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Category
-                </label>
                 <Select
+                  label="Category"
+                  required
                   options={categoryOptions}
                   value={category}
                   onChange={(value) => {
@@ -158,12 +149,10 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <FileText className="h-4 w-4 inline mr-1" />
-                  Description
-                </label>
                 <Input
                   type="text"
+                  label="Description"
+                  required
                   value={description}
                   onChange={(e) => {
                     setDescription(e.target.value);
@@ -173,12 +162,10 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Date
-                </label>
                 <Input
                   type="date"
+                  label="Date"
+                  required
                   value={date}
                   onChange={(e) => {
                     setDate(e.target.value);
@@ -187,10 +174,9 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Amount
-                </label>
                 <NumberInput
+                  label="Amount"
+                  required
                   value={amount}
                   onChange={setAmount}
                   placeholder="0.00"
@@ -206,11 +192,9 @@ export function ExpenseForm({
             <CardHeader title="Payment Details" />
             <CardBody className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <CreditCard className="h-4 w-4 inline mr-1" />
-                  Payment Mode
-                </label>
                 <Select
+                  label="Payment Mode"
+                  required
                   options={paymentModeOptions}
                   value={paymentMode}
                   onChange={(value) => {
@@ -220,11 +204,9 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  Vendor (Optional)
-                </label>
                 <Select
+                  label="Vendor"
+                  showOptionalLabel
                   options={customerOptions}
                   value={customerId}
                   onChange={setCustomerId}
@@ -233,12 +215,10 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <User className="h-4 w-4 inline mr-1" />
-                  Paid To Name (Optional)
-                </label>
                 <Input
                   type="text"
+                  label="Paid To Name"
+                  showOptionalLabel
                   value={paidToName}
                   onChange={(e) => {
                     setPaidToName(e.target.value);
@@ -248,11 +228,10 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Paid To Details (Optional)
-                </label>
                 <Input
                   type="text"
+                  label="Paid To Details"
+                  showOptionalLabel
                   value={paidToDetails}
                   onChange={(e) => {
                     setPaidToDetails(e.target.value);
@@ -262,12 +241,10 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Hash className="h-4 w-4 inline mr-1" />
-                  Reference Number
-                </label>
                 <Input
                   type="text"
+                  label="Reference Number"
+                  showOptionalLabel
                   value={referenceNumber}
                   onChange={(e) => {
                     setReferenceNumber(e.target.value);
@@ -282,6 +259,7 @@ export function ExpenseForm({
             <CardBody>
               <Textarea
                 label="Notes"
+                showOptionalLabel
                 placeholder="Add any additional notes..."
                 rows={3}
                 value={notes}

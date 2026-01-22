@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import { useUserPreferences } from '../useUserPreferences';
 import { useQuery } from '@powersync/react-native';
 import { db } from '../../lib/powersync';

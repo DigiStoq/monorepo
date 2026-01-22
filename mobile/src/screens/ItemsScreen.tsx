@@ -9,7 +9,7 @@ import {
   RefreshControl,
   Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@powersync/react-native";
 import { Search, ChevronRight, Box, Plus } from "lucide-react-native";
@@ -117,12 +117,24 @@ function ItemCard({ item, styles, colors }: { item: Item, styles: any, colors: T
 
 export function ItemsScreen() {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'out' | 'low'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  // Sync route params with activeTab
+  React.useEffect(() => {
+    console.log("Route Params:", route.params);
+    if (route.params?.filter) {
+      console.log("Setting active tab to:", route.params.filter);
+      setActiveTab(route.params.filter);
+      // Clear params so we don't get stuck on this tab if we navigate away and back
+      navigation.setParams({ filter: undefined } as any);
+    }
+  }, [route.params]);
 
   // Dynamic Query based on tab
   // Note: PowerSync useQuery reactive strings need to be careful. 
@@ -131,9 +143,10 @@ export function ItemsScreen() {
 
   let filterClause = "";
   if (activeTab === 'out') {
-    filterClause = "AND quantity <= 0";
+    filterClause = "AND COALESCE(stock_quantity, 0) <= 0";
   } else if (activeTab === 'low') {
-    filterClause = "AND quantity > 0 AND quantity < 10"; // Hardcoded threshold for now matching dashboard
+    // low but not out
+    filterClause = "AND COALESCE(stock_quantity, 0) > 0 AND COALESCE(stock_quantity, 0) < 10";
   }
 
   const { data: items, isLoading } = useQuery<Item>(

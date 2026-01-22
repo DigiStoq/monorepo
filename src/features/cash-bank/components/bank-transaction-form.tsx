@@ -121,138 +121,105 @@ export function BankTransactionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Transaction Type */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Transaction Type <span className="text-error">*</span>
-        </label>
-        <Select
-          options={transactionTypeOptions}
-          value={formData.type}
-          onChange={(value) => {
-            handleChange("type", value);
-          }}
-        />
-      </div>
+      <Select
+        label="Transaction Type"
+        required
+        options={transactionTypeOptions}
+        value={formData.type}
+        onChange={(value) => {
+          handleChange("type", value);
+        }}
+      />
 
-      {/* Date and Amount Row */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Date <span className="text-error">*</span>
-          </label>
-          <Input
-            type="date"
-            value={formData.date}
-            onChange={(e) => {
-              handleChange("date", e.target.value);
-            }}
-            error={errors.date}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Amount <span className="text-error">*</span>
-          </label>
-          <Input
-            type="number"
-            value={formData.amount || ""}
-            onChange={(e) => {
-              handleChange("amount", parseFloat(e.target.value) || 0);
-            }}
-            placeholder="0.00"
-            min={0}
-            step={0.01}
-            error={errors.amount}
-          />
-        </div>
+        <Input
+          label="Date"
+          required
+          type="date"
+          value={formData.date}
+          onChange={(e) => {
+            handleChange("date", e.target.value);
+          }}
+          error={errors.date}
+        />
+        <Input
+          label="Amount"
+          required
+          type="number"
+          value={formData.amount || ""}
+          onChange={(e) => {
+            handleChange("amount", parseFloat(e.target.value) || 0);
+          }}
+          placeholder="0.00"
+          min={0}
+          step={0.01}
+          error={errors.amount}
+        />
       </div>
 
       {/* Transfer Destination (only for transfers) */}
       {formData.type === "transfer" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Transfer To <span className="text-error">*</span>
-          </label>
-          <Select
-            options={accountOptions}
-            value={formData.transferToAccountId ?? ""}
-            onChange={(value) => {
-              handleChange("transferToAccountId", value);
-            }}
-          />
-          {errors.transferToAccountId && (
-            <p className="mt-1 text-sm text-error">
-              {errors.transferToAccountId}
-            </p>
-          )}
-        </div>
+        <Select
+          label="Transfer To"
+          required
+          options={accountOptions}
+          value={formData.transferToAccountId ?? ""}
+          onChange={(value) => {
+            handleChange("transferToAccountId", value);
+          }}
+          error={errors.transferToAccountId}
+        />
       )}
 
-      {/* Reference Number */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Reference Number
-        </label>
-        <Input
-          type="text"
-          value={formData.referenceNumber ?? ""}
-          onChange={(e) => {
-            handleChange("referenceNumber", e.target.value);
-          }}
-          placeholder="e.g., CHK-1234, TRF-001"
-        />
-      </div>
+      <Input
+        label="Reference Number"
+        showOptionalLabel
+        type="text"
+        value={formData.referenceNumber ?? ""}
+        onChange={(e) => {
+          handleChange("referenceNumber", e.target.value);
+        }}
+        placeholder="e.g., CHK-1234, TRF-001"
+      />
 
       {/* Related Customer (for deposits/withdrawals) */}
       {formData.type !== "transfer" && customers.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Related Customer
-          </label>
-          <Select
-            options={customerOptions}
-            value={formData.relatedCustomerId ?? ""}
-            onChange={(value) => {
-              handleChange("relatedCustomerId", value);
-            }}
-          />
-        </div>
+        <Select
+          label="Related Customer"
+          showOptionalLabel
+          options={customerOptions}
+          value={formData.relatedCustomerId ?? ""}
+          onChange={(value) => {
+            handleChange("relatedCustomerId", value);
+          }}
+        />
       )}
 
       {/* Related Invoice */}
       {formData.type !== "transfer" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Related Invoice/Bill Number
-          </label>
-          <Input
-            type="text"
-            value={formData.relatedInvoiceNumber ?? ""}
-            onChange={(e) => {
-              handleChange("relatedInvoiceNumber", e.target.value);
-            }}
-            placeholder="e.g., INV-1234"
-          />
-        </div>
+        <Input
+          label="Related Invoice/Bill Number"
+          showOptionalLabel
+          type="text"
+          value={formData.relatedInvoiceNumber ?? ""}
+          onChange={(e) => {
+            handleChange("relatedInvoiceNumber", e.target.value);
+          }}
+          placeholder="e.g., INV-1234"
+        />
       )}
 
-      {/* Description */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Description <span className="text-error">*</span>
-        </label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) => {
-            handleChange("description", e.target.value);
-          }}
-          placeholder="Enter transaction description..."
-          rows={2}
-        />
-        {errors.description && (
-          <p className="mt-1 text-sm text-error">{errors.description}</p>
-        )}
-      </div>
+      <Textarea
+        label="Description"
+        required
+        value={formData.description}
+        onChange={(e) => {
+          handleChange("description", e.target.value);
+        }}
+        placeholder="Enter transaction description..."
+        rows={2}
+        error={errors.description}
+      />
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

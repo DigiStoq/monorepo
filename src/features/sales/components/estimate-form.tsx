@@ -6,12 +6,12 @@ import {
   CardBody,
   Button,
   Input,
-  TableNumberInput,
   Textarea,
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Plus, Trash2, Calendar, User, FileText } from "lucide-react";
+import { Plus, Trash2, FileText, Edit2 } from "lucide-react";
+import { InvoiceItemModal, type InvoiceLineItem } from "./invoice-item-modal";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { EstimateFormData, SaleInvoiceItemFormData } from "../types";
 import type { Customer } from "@/features/customers";
@@ -31,18 +31,8 @@ export interface EstimateFormProps {
   className?: string;
 }
 
-interface LineItem {
-  id: string;
-  itemId: string;
-  itemName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  discountPercent: number;
-  taxPercent: number;
-  batchNumber: string;
-  amount: number;
-}
+// Use shared type
+type LineItem = InvoiceLineItem;
 
 // ============================================================================
 // COMPONENT
@@ -76,6 +66,11 @@ export function EstimateForm({
     initialData?.discountPercent ?? 0
   );
 
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
+
   // Line items state
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
@@ -87,68 +82,25 @@ export function EstimateForm({
     ];
   }, [customers]);
 
-  // Item options - hook already filters by isActive
-  const itemOptions: SelectOption[] = useMemo(() => {
-    return [
-      { value: "", label: "Select an item..." },
-      ...items.map((i) => ({
-        value: i.id,
-        label: `${i.name} - $${i.salePrice.toFixed(2)}`,
-      })),
-    ];
-  }, [items]);
-
-  // Add line item
-  const handleAddItem = (): void => {
-    const newItem: LineItem = {
-      id: `line-${Date.now()}`,
-      itemId: "",
-      itemName: "",
-      quantity: 1,
-      unit: "pcs",
-      unitPrice: 0,
-      discountPercent: 0,
-      taxPercent: 0,
-      batchNumber: "",
-      amount: 0,
-    };
-    setLineItems([...lineItems, newItem]);
+  // Modal Handlers
+  const handleAddItemClick = (): void => {
+    setEditingItem(undefined);
+    setIsItemModalOpen(true);
   };
 
-  // Update line item
-  const handleUpdateLineItem = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ): void => {
-    setLineItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
+  const handleEditItemClick = (item: LineItem): void => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
+  };
 
-        const updated = { ...item, [field]: value };
-
-        // If item selected, populate details
-        if (field === "itemId" && value) {
-          const selectedItem = items.find((i) => i.id === value);
-          if (selectedItem) {
-            updated.itemName = selectedItem.name;
-            updated.unit = selectedItem.unit;
-            updated.unitPrice = selectedItem.salePrice;
-            updated.taxPercent = selectedItem.taxRate ?? 0;
-            updated.batchNumber = selectedItem.batchNumber ?? "";
-          }
-        }
-
-        // Recalculate amount
-        const subtotal = updated.quantity * updated.unitPrice;
-        const discountAmount = subtotal * (updated.discountPercent / 100);
-        const taxableAmount = subtotal - discountAmount;
-        const taxAmount = taxableAmount * (updated.taxPercent / 100);
-        updated.amount = taxableAmount + taxAmount;
-
-        return updated;
-      })
-    );
+  const handleSaveItem = (item: LineItem): void => {
+    setLineItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id);
+      if (exists) {
+        return prev.map((i) => (i.id === item.id ? item : i));
+      }
+      return [...prev, item];
+    });
   };
 
   // Remove line item
@@ -245,11 +197,9 @@ export function EstimateForm({
             <CardBody>
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <User className="h-4 w-4 inline mr-1" />
-                    Customer
-                  </label>
                   <Select
+                    label="Customer"
+                    required
                     options={customerOptions}
                     value={customerId}
                     onChange={setCustomerId}
@@ -258,11 +208,9 @@ export function EstimateForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Estimate Date
-                  </label>
                   <Input
+                    label="Estimate Date"
+                    required
                     type="date"
                     value={date}
                     onChange={(e) => {
@@ -272,11 +220,9 @@ export function EstimateForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Valid Until
-                  </label>
                   <Input
+                    label="Valid Until"
+                    showOptionalLabel
                     type="date"
                     value={validUntil}
                     onChange={(e) => {
@@ -316,7 +262,7 @@ export function EstimateForm({
                   variant="outline"
                   size="sm"
                   leftIcon={<Plus className="h-4 w-4" />}
-                  onClick={handleAddItem}
+                  onClick={handleAddItemClick}
                 >
                   Add Item
                 </Button>
@@ -331,7 +277,7 @@ export function EstimateForm({
                     variant="outline"
                     size="sm"
                     leftIcon={<Plus className="h-4 w-4" />}
-                    onClick={handleAddItem}
+                    onClick={handleAddItemClick}
                     className="mt-3"
                   >
                     Add First Item
@@ -365,82 +311,53 @@ export function EstimateForm({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {lineItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
+                        <tr key={item.id} className="hover:bg-slate-50 group">
                           <td className="px-4 py-3">
-                            <Select
-                              options={itemOptions}
-                              value={item.itemId}
-                              onChange={(value) => {
-                                handleUpdateLineItem(item.id, "itemId", value);
-                              }}
-                              size="sm"
-                            />
+                            <div className="font-medium text-slate-900">
+                              {item.itemName}
+                            </div>
+                            {item.batchNumber && (
+                              <div className="text-xs text-slate-500">
+                                Batch: {item.batchNumber}
+                              </div>
+                            )}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.quantity}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "quantity", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.quantity} {item.unit}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.unitPrice}
-                              onChange={(val) => {
-                                handleUpdateLineItem(item.id, "unitPrice", val);
-                              }}
-                              size="sm"
-                              className="text-right min-w-[80px]"
-                              placeholder="0.00"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.discountPercent}
-                              onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "discountPercent",
-                                  val
-                                );
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-3">
-                            <TableNumberInput
-                              value={item.taxPercent}
-                              onChange={(val) => {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "taxPercent",
-                                  val
-                                );
-                              }}
-                              size="sm"
-                              className="text-right min-w-[60px]"
-                              placeholder="0"
-                            />
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {item.taxPercent}%
                           </td>
-                          <td className="px-4 py-3 text-right font-medium">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {formatCurrency(item.amount)}
                           </td>
-                          <td className="px-2 py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                handleRemoveLineItem(item.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-error" />
-                            </Button>
+                          <td className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditItemClick(item);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4 text-slate-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleRemoveLineItem(item.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-error" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -457,6 +374,7 @@ export function EstimateForm({
               <div className="grid grid-cols-2 gap-4">
                 <Textarea
                   label="Notes"
+                  showOptionalLabel
                   placeholder="Notes visible to customer..."
                   rows={3}
                   value={notes}
@@ -466,6 +384,7 @@ export function EstimateForm({
                 />
                 <Textarea
                   label="Terms & Conditions"
+                  showOptionalLabel
                   placeholder="Payment terms, delivery terms..."
                   rows={3}
                   value={terms}
@@ -541,12 +460,24 @@ export function EstimateForm({
                 onClick={handleSubmit}
                 isLoading={isLoading}
               >
-                Create & Send
+                Create
               </Button>
             </CardBody>
           </Card>
         </div>
       </div>
+
+      <InvoiceItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+        }}
+        onSave={handleSaveItem}
+        item={editingItem}
+        items={items}
+        // Estimate uses straightforward discount percent usually
+        discountType="percent"
+      />
     </div>
   );
 }

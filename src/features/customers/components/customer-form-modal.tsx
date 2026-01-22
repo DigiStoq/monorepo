@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Modal,
+  Sheet,
   Button,
   Input,
   Textarea,
@@ -160,10 +160,10 @@ export function CustomerFormModal({
   ] as const;
 
   return (
-    <Modal
+    <Sheet
       isOpen={isOpen}
       onClose={onClose}
-      size="lg"
+      size="md"
       title={isEditing ? "Edit Customer" : "Add New Customer"}
       description={
         isEditing ? `Update ${customer?.name}` : "Add a customer or supplier"
@@ -210,6 +210,7 @@ export function CustomerFormModal({
           <>
             <Input
               label="Customer Name"
+              required
               placeholder="Enter customer name"
               leftIcon={<User className="h-4 w-4" />}
               error={errors.name?.message}
@@ -218,6 +219,7 @@ export function CustomerFormModal({
 
             <Select
               label="Customer Type"
+              required
               options={typeOptions}
               value={selectedType}
               onChange={(value) => {
@@ -335,6 +337,6 @@ export function CustomerFormModal({
           </>
         )}
       </form>
-    </Modal>
+    </Sheet>
   );
 }

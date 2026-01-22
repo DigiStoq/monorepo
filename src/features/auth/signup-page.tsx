@@ -150,7 +150,8 @@ export function SignupPage(): ReactNode {
         {/* Name */}
         <Input
           type="text"
-          label="Full name (optional)"
+          label="Full name"
+          showOptionalLabel
           placeholder="John Doe"
           value={name}
           onChange={(e) => {
@@ -165,6 +166,7 @@ export function SignupPage(): ReactNode {
         <Input
           type="email"
           label="Email address"
+          required
           placeholder="you@example.com"
           value={email}
           onChange={(e) => {
@@ -179,6 +181,7 @@ export function SignupPage(): ReactNode {
         <Input
           type="password"
           label="Password"
+          required
           placeholder="Create a password"
           value={password}
           onChange={(e) => {
@@ -195,6 +198,7 @@ export function SignupPage(): ReactNode {
         <Input
           type="password"
           label="Confirm password"
+          required
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => {

@@ -192,7 +192,7 @@ export function UserProfilePage(): React.ReactNode {
             </div>
 
             <SettingsGroup>
-              <SettingsRow label="First Name">
+              <SettingsRow label="First Name" required>
                 <Input
                   type="text"
                   value={profile.firstName}
@@ -202,7 +202,7 @@ export function UserProfilePage(): React.ReactNode {
                   className="w-48"
                 />
               </SettingsRow>
-              <SettingsRow label="Last Name">
+              <SettingsRow label="Last Name" required>
                 <Input
                   type="text"
                   value={profile.lastName}
@@ -223,7 +223,7 @@ export function UserProfilePage(): React.ReactNode {
                   className="w-64 bg-slate-50"
                 />
               </SettingsRow>
-              <SettingsRow label="Phone Number">
+              <SettingsRow label="Phone Number" showOptionalLabel>
                 <Input
                   type="tel"
                   value={profile.phone ?? ""}

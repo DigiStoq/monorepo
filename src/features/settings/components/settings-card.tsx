@@ -50,6 +50,8 @@ interface SettingsRowProps {
   description?: string;
   children: ReactNode;
   className?: string;
+  required?: boolean;
+  showOptionalLabel?: boolean;
 }
 
 export function SettingsRow({
@@ -57,6 +59,8 @@ export function SettingsRow({
   description,
   children,
   className,
+  required,
+  showOptionalLabel,
 }: SettingsRowProps): React.ReactNode {
   return (
     <div
@@ -66,7 +70,13 @@ export function SettingsRow({
       )}
     >
       <div className="flex-1 min-w-0 pr-4">
-        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-sm font-medium text-text-secondary">
+          {label}
+          {required && <span className="text-error ml-0.5">*</span>}
+          {!required && showOptionalLabel && (
+            <span className="text-text-tertiary text-xs ml-1">(Optional)</span>
+          )}
+        </p>
         {description && (
           <p className="text-xs text-text-tertiary mt-0.5">{description}</p>
         )}

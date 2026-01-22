@@ -11,7 +11,7 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Building2, Hash, CreditCard, Wallet } from "lucide-react";
+import { Hash, CreditCard, Wallet } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { BankAccountFormData, BankAccountType } from "../types";
 
@@ -296,81 +296,62 @@ export function BankAccountForm({
           <Card>
             <CardHeader title="Account Details" />
             <CardBody className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Account Name
-                </label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                  }}
-                  placeholder="e.g., Business Checking"
-                />
-              </div>
+              <Input
+                label="Account Name"
+                required
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+                placeholder="e.g., Business Checking"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <CreditCard className="h-4 w-4 inline mr-1" />
-                  Account Type
-                </label>
-                <Select
-                  options={accountTypeOptions}
-                  value={accountType}
-                  onChange={(value) => {
-                    setAccountType(value as BankAccountType);
-                  }}
-                />
-              </div>
+              <Select
+                label="Account Type"
+                required
+                options={accountTypeOptions}
+                value={accountType}
+                onChange={(value) => {
+                  setAccountType(value as BankAccountType);
+                }}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  Bank Name
-                </label>
-                <Input
-                  type="text"
-                  value={bankName}
-                  onChange={(e) => {
-                    setBankName(e.target.value);
-                  }}
-                  placeholder="e.g., Chase Bank"
-                />
-              </div>
+              <Input
+                label="Bank Name"
+                required
+                type="text"
+                value={bankName}
+                onChange={(e) => {
+                  setBankName(e.target.value);
+                }}
+                placeholder="e.g., Chase Bank"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <fieldConfig.icon className="h-4 w-4 inline mr-1" />
-                  {fieldConfig.label}
-                </label>
-                <Input
-                  type="text"
-                  value={accountNumber}
-                  onChange={(e) => {
-                    setAccountNumber(e.target.value);
-                  }}
-                  onBlur={() => {
-                    setTouched(true);
-                  }}
-                  placeholder={fieldConfig.placeholder}
-                  error={
-                    showAccountError ? accountValidation.message : undefined
-                  }
-                  state={
-                    showAccountError
-                      ? "error"
-                      : touched && accountNumber && accountValidation.valid
-                        ? "success"
-                        : "default"
-                  }
-                />
-                {!showAccountError && fieldConfig.helperText && (
-                  <p className="mt-1 text-xs text-slate-500">
-                    {fieldConfig.helperText}
-                  </p>
-                )}
-              </div>
+              <Input
+                label={fieldConfig.label}
+                required
+                type="text"
+                value={accountNumber}
+                onChange={(e) => {
+                  setAccountNumber(e.target.value);
+                }}
+                onBlur={() => {
+                  setTouched(true);
+                }}
+                placeholder={fieldConfig.placeholder}
+                error={showAccountError ? accountValidation.message : undefined}
+                helperText={
+                  !showAccountError ? fieldConfig.helperText : undefined
+                }
+                state={
+                  showAccountError
+                    ? "error"
+                    : touched && accountNumber && accountValidation.valid
+                      ? "success"
+                      : "default"
+                }
+              />
             </CardBody>
           </Card>
         </div>
@@ -380,27 +361,22 @@ export function BankAccountForm({
           <Card>
             <CardHeader title="Opening Balance" />
             <CardBody className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Current Balance
-                </label>
-                <NumberInput
-                  value={openingBalance}
-                  onChange={setOpeningBalance}
-                  placeholder="0.00"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Enter the current balance in this account. Use negative for
-                  credit cards or loans.
-                </p>
-              </div>
+              <NumberInput
+                label="Current Balance"
+                showOptionalLabel
+                value={openingBalance}
+                onChange={setOpeningBalance}
+                placeholder="0.00"
+                helperText="Enter the current balance in this account. Use negative for credit cards or loans."
+              />
             </CardBody>
           </Card>
 
           <Card>
             <CardBody>
               <Textarea
-                label="Notes (Optional)"
+                label="Notes"
+                showOptionalLabel
                 placeholder="Add any notes about this account..."
                 rows={4}
                 value={notes}

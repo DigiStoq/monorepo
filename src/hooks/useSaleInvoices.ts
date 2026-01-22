@@ -133,7 +133,12 @@ export function useSaleInvoices(filters?: {
      AND ($2 IS NULL OR customer_id = $2)
      AND ($3 IS NULL OR date >= $3)
      AND ($4 IS NULL OR date <= $4)
-     AND ($5 IS NULL OR invoice_number LIKE $5 OR customer_name LIKE $5)
+     AND ($5 IS NULL OR invoice_number LIKE $5 OR customer_name LIKE $5
+          OR EXISTS (
+            SELECT 1 FROM sale_invoice_items 
+            WHERE sale_invoice_items.invoice_id = sale_invoices.id 
+            AND sale_invoice_items.item_name LIKE $5
+          ))
      ORDER BY date DESC, created_at DESC`,
     params
   );

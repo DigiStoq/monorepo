@@ -11,7 +11,6 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
-import { Building2, Calendar, CreditCard, FileText, Hash } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type {
   PaymentOutFormData,
@@ -149,11 +148,9 @@ export function PaymentOutForm({
             <CardHeader title="Payment Details" />
             <CardBody className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  Supplier
-                </label>
                 <Select
+                  label="Supplier"
+                  required
                   options={customerOptions}
                   value={customerId}
                   onChange={setCustomerId}
@@ -168,12 +165,10 @@ export function PaymentOutForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Calendar className="h-4 w-4 inline mr-1" />
-                  Payment Date
-                </label>
                 <Input
                   type="date"
+                  label="Payment Date"
+                  required
                   value={date}
                   onChange={(e) => {
                     setDate(e.target.value);
@@ -182,10 +177,9 @@ export function PaymentOutForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Amount
-                </label>
                 <NumberInput
+                  label="Amount"
+                  required
                   value={amount}
                   onChange={setAmount}
                   placeholder="0.00"
@@ -193,11 +187,9 @@ export function PaymentOutForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <CreditCard className="h-4 w-4 inline mr-1" />
-                  Payment Mode
-                </label>
                 <Select
+                  label="Payment Mode"
+                  required
                   options={paymentModeOptions}
                   value={paymentMode}
                   onChange={(value) => {
@@ -207,12 +199,10 @@ export function PaymentOutForm({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <Hash className="h-4 w-4 inline mr-1" />
-                  Reference Number
-                </label>
                 <Input
                   type="text"
+                  label="Reference Number"
+                  showOptionalLabel
                   value={referenceNumber}
                   onChange={(e) => {
                     setReferenceNumber(e.target.value);
@@ -230,11 +220,9 @@ export function PaymentOutForm({
             <CardHeader title="Apply to Invoice (Optional)" />
             <CardBody className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <FileText className="h-4 w-4 inline mr-1" />
-                  Select Invoice
-                </label>
                 <Select
+                  label="Select Invoice"
+                  showOptionalLabel
                   options={invoiceOptions}
                   value={invoiceId}
                   onChange={handleInvoiceChange}
@@ -273,6 +261,7 @@ export function PaymentOutForm({
             <CardBody>
               <Textarea
                 label="Notes"
+                showOptionalLabel
                 placeholder="Add any notes about this payment..."
                 rows={4}
                 value={notes}

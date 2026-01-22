@@ -123,47 +123,38 @@ export function LoanPaymentForm({
         </div>
       </div>
 
-      {/* Date */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Payment Date <span className="text-error">*</span>
-        </label>
-        <Input
-          type="date"
-          value={formData.date}
-          onChange={(e) => {
-            handleChange("date", e.target.value);
-          }}
-          error={errors.date}
-        />
-      </div>
+      <Input
+        label="Payment Date"
+        required
+        type="date"
+        value={formData.date}
+        onChange={(e) => {
+          handleChange("date", e.target.value);
+        }}
+        error={errors.date}
+      />
 
-      {/* Principal and Interest */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Principal Amount
-          </label>
-          <NumberInput
-            value={formData.principalAmount}
-            onChange={(val) => {
-              handleChange("principalAmount", val);
-            }}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Interest Amount
-          </label>
-          <NumberInput
-            value={formData.interestAmount}
-            onChange={(val) => {
-              handleChange("interestAmount", val);
-            }}
-            placeholder="0.00"
-          />
-        </div>
+        <NumberInput
+          label="Principal Amount"
+          required
+          value={formData.principalAmount}
+          onChange={(val) => {
+            handleChange("principalAmount", val);
+          }}
+          placeholder="0.00"
+          error={errors.principalAmount}
+        />
+        <NumberInput
+          label="Interest Amount"
+          showOptionalLabel
+          value={formData.interestAmount}
+          onChange={(val) => {
+            handleChange("interestAmount", val);
+          }}
+          placeholder="0.00"
+          error={errors.interestAmount}
+        />
       </div>
 
       {/* Total Amount Display */}
@@ -176,49 +167,37 @@ export function LoanPaymentForm({
         </span>
       </div>
 
-      {/* Payment Method */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Payment Method
-        </label>
-        <Select
-          options={paymentMethodOptions}
-          value={formData.paymentMethod}
-          onChange={(value) => {
-            handleChange("paymentMethod", value as "cash" | "bank" | "cheque");
-          }}
-        />
-      </div>
+      <Select
+        label="Payment Method"
+        required
+        options={paymentMethodOptions}
+        value={formData.paymentMethod}
+        onChange={(value) => {
+          handleChange("paymentMethod", value as "cash" | "bank" | "cheque");
+        }}
+      />
 
-      {/* Reference Number */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Reference Number
-        </label>
-        <Input
-          type="text"
-          value={formData.referenceNumber ?? ""}
-          onChange={(e) => {
-            handleChange("referenceNumber", e.target.value || undefined);
-          }}
-          placeholder="Transaction ID, cheque number, etc."
-        />
-      </div>
+      <Input
+        label="Reference Number"
+        showOptionalLabel
+        type="text"
+        value={formData.referenceNumber ?? ""}
+        onChange={(e) => {
+          handleChange("referenceNumber", e.target.value || undefined);
+        }}
+        placeholder="Transaction ID, cheque number, etc."
+      />
 
-      {/* Notes */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Notes
-        </label>
-        <Textarea
-          value={formData.notes ?? ""}
-          onChange={(e) => {
-            handleChange("notes", e.target.value || undefined);
-          }}
-          placeholder="Additional notes..."
-          rows={2}
-        />
-      </div>
+      <Textarea
+        label="Notes"
+        showOptionalLabel
+        value={formData.notes ?? ""}
+        onChange={(e) => {
+          handleChange("notes", e.target.value || undefined);
+        }}
+        placeholder="Additional notes..."
+        rows={2}
+      />
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

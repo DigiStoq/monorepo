@@ -413,116 +413,92 @@ export function BulkUpdateModal({
             {updateType === "price" && (
               <>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Change Type
-                    </label>
-                    <Select
-                      options={priceTypeOptions}
-                      value={priceType}
-                      onChange={(v) => {
-                        setPriceType(v as "percentage" | "fixed");
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Value
-                    </label>
-                    <Input
-                      type="number"
-                      value={priceValue || ""}
-                      onChange={(e) => {
-                        setPriceValue(parseFloat(e.target.value) || 0);
-                      }}
-                      placeholder="e.g., 10 or -10"
-                    />
-                  </div>
+                  <Select
+                    label="Change Type"
+                    required
+                    options={priceTypeOptions}
+                    value={priceType}
+                    onChange={(v) => {
+                      setPriceType(v as "percentage" | "fixed");
+                    }}
+                  />
+                  <Input
+                    label="Value"
+                    required
+                    type="number"
+                    value={priceValue || ""}
+                    onChange={(e) => {
+                      setPriceValue(parseFloat(e.target.value) || 0);
+                    }}
+                    placeholder="e.g., 10 or -10"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Apply To
-                    </label>
-                    <Select
-                      options={priceApplyOptions}
-                      value={priceApplyTo}
-                      onChange={(v) => {
-                        setPriceApplyTo(v as "sale" | "purchase" | "both");
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Round to
-                    </label>
-                    <Input
-                      type="number"
-                      value={roundTo}
-                      onChange={(e) => {
-                        setRoundTo(parseInt(e.target.value) || 0);
-                      }}
-                      min={0}
-                    />
-                  </div>
+                  <Select
+                    label="Apply To"
+                    required
+                    options={priceApplyOptions}
+                    value={priceApplyTo}
+                    onChange={(v) => {
+                      setPriceApplyTo(v as "sale" | "purchase" | "both");
+                    }}
+                  />
+                  <Input
+                    label="Round to"
+                    showOptionalLabel
+                    type="number"
+                    value={roundTo}
+                    onChange={(e) => {
+                      setRoundTo(parseInt(e.target.value) || 0);
+                    }}
+                    min={0}
+                  />
                 </div>
               </>
             )}
 
             {updateType === "category" && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  New Category
-                </label>
-                <Select
-                  options={categoryOptions}
-                  value={categoryId}
-                  onChange={setCategoryId}
-                  placeholder="Select a category"
-                />
-              </div>
+              <Select
+                label="New Category"
+                required
+                options={categoryOptions}
+                value={categoryId}
+                onChange={setCategoryId}
+                placeholder="Select a category"
+              />
             )}
 
             {updateType === "status" && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Set Status
-                </label>
-                <Select
-                  options={statusOptions}
-                  value={isActive}
-                  onChange={setIsActive}
-                />
-              </div>
+              <Select
+                label="Set Status"
+                required
+                options={statusOptions}
+                value={isActive}
+                onChange={setIsActive}
+              />
             )}
 
             {updateType === "stock" && (
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Operation
-                  </label>
-                  <Select
-                    options={stockTypeOptions}
-                    value={stockType}
-                    onChange={(v) => {
-                      setStockType(v as "set" | "add" | "subtract");
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Value
-                  </label>
-                  <Input
-                    type="number"
-                    value={stockValue || ""}
-                    onChange={(e) => {
-                      setStockValue(parseInt(e.target.value) || 0);
-                    }}
-                    min={0}
-                  />
-                </div>
+                <Select
+                  label="Operation"
+                  required
+                  options={stockTypeOptions}
+                  value={stockType}
+                  onChange={(v) => {
+                    setStockType(v as "set" | "add" | "subtract");
+                  }}
+                />
+                <Input
+                  label="Value"
+                  required
+                  type="number"
+                  value={stockValue || ""}
+                  onChange={(e) => {
+                    setStockValue(parseInt(e.target.value) || 0);
+                  }}
+                  min={0}
+                />
               </div>
             )}
           </div>

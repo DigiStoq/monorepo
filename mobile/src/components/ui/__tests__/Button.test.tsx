@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Button } from '../Button';
 
@@ -32,7 +31,7 @@ describe('Button Component', () => {
     });
 
     it('shows loading indicator when isLoading is true', () => {
-        const { getByTestId, queryByText } = render(<Button isLoading>Loading</Button>);
+        const { queryByText } = render(<Button isLoading>Loading</Button>);
         // ActivityIndicator doesn't have text, but we can verify children are hidden/replaced?
         // Implementation: {isLoading ? <ActivityIndicator ... /> : <View>...</View>}
         // So "Loading" text should NOT be visible.
@@ -50,7 +49,6 @@ describe('Button Component', () => {
     });
 
     it('is disabled when isLoading is true', () => {
-        const onPress = jest.fn();
         // isLoading replaces text with spinner, so we can't find 'Loading' text to press.
         // But Render result container can be used to find the TouchableOpacity.
         // Let's rely on looking for the touchable?

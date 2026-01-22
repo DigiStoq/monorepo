@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   Modal,
+  Sheet,
   Button,
   Input,
   Textarea,
@@ -273,10 +274,10 @@ export function ItemFormModal({
   ] as const;
 
   return (
-    <Modal
+    <Sheet
       isOpen={isOpen}
       onClose={onClose}
-      size="lg"
+      size="md"
       title={isEditing ? "Edit Item" : "Add New Item"}
       description={
         isEditing ? `Update ${item?.name}` : "Add a product or service"
@@ -323,6 +324,7 @@ export function ItemFormModal({
           <>
             <Input
               label="Item Name"
+              required
               placeholder="Enter item name"
               leftIcon={<Package className="h-4 w-4" />}
               error={errors.name?.message}
@@ -332,6 +334,7 @@ export function ItemFormModal({
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Item Type"
+                required
                 options={typeOptions}
                 value={selectedType}
                 onChange={(value) => {
@@ -341,6 +344,7 @@ export function ItemFormModal({
 
               <Input
                 label="SKU / Item Code"
+                showOptionalLabel
                 placeholder="Optional"
                 error={errors.sku?.message}
                 {...register("sku")}
@@ -376,6 +380,7 @@ export function ItemFormModal({
 
               <Select
                 label="Unit"
+                required
                 options={unitOptions}
                 value={watch("unit")}
                 onChange={(value) => {
@@ -386,6 +391,7 @@ export function ItemFormModal({
 
             <Textarea
               label="Description"
+              showOptionalLabel
               placeholder="Optional description..."
               rows={3}
               error={errors.description?.message}
@@ -410,6 +416,7 @@ export function ItemFormModal({
 
               <Input
                 label="Purchase Price"
+                showOptionalLabel
                 type="number"
                 step="0.01"
                 placeholder="0.00"
@@ -422,6 +429,7 @@ export function ItemFormModal({
 
             <Input
               label="Tax Rate (%)"
+              showOptionalLabel
               type="number"
               step="0.1"
               placeholder="0"
@@ -471,6 +479,7 @@ export function ItemFormModal({
               {!isEditing && (
                 <Input
                   label="Opening Stock"
+                  showOptionalLabel
                   type="number"
                   placeholder="0"
                   leftIcon={<Box className="h-4 w-4" />}
@@ -482,6 +491,7 @@ export function ItemFormModal({
 
               <Input
                 label="Low Stock Alert"
+                showOptionalLabel
                 type="number"
                 placeholder="5"
                 leftIcon={<Layers className="h-4 w-4" />}
@@ -542,6 +552,7 @@ export function ItemFormModal({
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="Batch Number"
+                      showOptionalLabel
                       placeholder="e.g., BATCH-001"
                       helperText="Lot or batch identifier"
                       error={errors.batchNumber?.message}
@@ -549,6 +560,7 @@ export function ItemFormModal({
                     />
                     <Input
                       label="Barcode / UPC"
+                      showOptionalLabel
                       placeholder="e.g., 123456789012"
                       leftIcon={<Barcode className="h-4 w-4" />}
                       error={errors.barcode?.message}
@@ -558,6 +570,7 @@ export function ItemFormModal({
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="HSN / SAC Code"
+                      showOptionalLabel
                       placeholder="e.g., 8471"
                       helperText="Tax classification code"
                       error={errors.hsnCode?.message}
@@ -565,6 +578,7 @@ export function ItemFormModal({
                     />
                     <Input
                       label="Location"
+                      showOptionalLabel
                       placeholder="e.g., Warehouse A, Shelf 3"
                       leftIcon={<MapPin className="h-4 w-4" />}
                       helperText="Storage location"
@@ -583,12 +597,14 @@ export function ItemFormModal({
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="Manufacture Date"
+                      showOptionalLabel
                       type="date"
                       error={errors.manufactureDate?.message}
                       {...register("manufactureDate")}
                     />
                     <Input
                       label="Expiry Date"
+                      showOptionalLabel
                       type="date"
                       error={errors.expiryDate?.message}
                       {...register("expiryDate")}
@@ -605,12 +621,14 @@ export function ItemFormModal({
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="Brand"
+                      showOptionalLabel
                       placeholder="e.g., Samsung, Apple"
                       error={errors.brand?.message}
                       {...register("brand")}
                     />
                     <Input
                       label="Model Number"
+                      showOptionalLabel
                       placeholder="e.g., SM-G950F"
                       error={errors.modelNumber?.message}
                       {...register("modelNumber")}
@@ -618,6 +636,7 @@ export function ItemFormModal({
                   </div>
                   <Input
                     label="Warranty (Days)"
+                    showOptionalLabel
                     type="number"
                     placeholder="e.g., 365"
                     leftIcon={<Shield className="h-4 w-4" />}
@@ -643,22 +662,21 @@ export function ItemFormModal({
         )}
       </form>
 
-      {/* Add Category Mini Modal */}
+      {/* Add Category Mini Modal (Keep as Modal since it's nested) */}
       {isAddCategoryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/20"
-            onClick={() => {
-              setIsAddCategoryOpen(false);
-              setNewCategoryName("");
-            }}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">
-              Add New Category
-            </h3>
+        <Modal
+          isOpen={isAddCategoryOpen}
+          onClose={() => {
+            setIsAddCategoryOpen(false);
+            setNewCategoryName("");
+          }}
+          size="sm"
+          title="Add New Category"
+        >
+          <div className="space-y-4">
             <Input
               label="Category Name"
+              required
               placeholder="e.g., Electronics, Clothing"
               value={newCategoryName}
               onChange={(e) => {
@@ -672,7 +690,7 @@ export function ItemFormModal({
                 }
               }}
             />
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex justify-end gap-2 mt-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -696,8 +714,8 @@ export function ItemFormModal({
               </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
-    </Modal>
+    </Sheet>
   );
 }

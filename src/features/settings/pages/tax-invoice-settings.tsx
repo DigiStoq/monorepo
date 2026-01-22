@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, Textarea } from "@/components/ui";
 import {
   Receipt,
   Percent,
@@ -33,6 +33,7 @@ import {
   useTaxRates,
   useTaxRateMutations,
 } from "@/hooks/useSettings";
+import { useSequenceMutations } from "@/hooks/useSequence";
 
 // Flat type matching what the database returns
 interface FlatInvoiceSettings {
@@ -194,6 +195,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
   const { settings: dbInvoiceSettings, isLoading: isLoadingInvoice } =
     useInvoiceSettings();
   const { updateInvoiceSettings } = useInvoiceSettingsMutations();
+  const { updateSequenceSettings } = useSequenceMutations();
   const { taxRates: dbTaxRates, isLoading: isLoadingTax } = useTaxRates();
   const {
     createTaxRate,
@@ -266,6 +268,13 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
       };
 
       await updateInvoiceSettings(updatePayload);
+
+      // Also sync the sequence_counters table so invoice generation uses these values
+      await updateSequenceSettings("sale_invoice", {
+        prefix: invoiceSettings.prefix,
+        nextNumber: invoiceSettings.nextNumber,
+        padding: invoiceSettings.padding,
+      });
     } catch (error) {
       console.error("Failed to save invoice settings:", error);
     }
@@ -568,7 +577,11 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
           icon={FileText}
         >
           <SettingsGroup>
-            <SettingsRow label="Prefix" description="Text before the number">
+            <SettingsRow
+              label="Prefix"
+              required
+              description="Text before the number"
+            >
               <Input
                 type="text"
                 value={invoiceSettings.prefix}
@@ -581,7 +594,11 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
                 className="w-24 font-mono"
               />
             </SettingsRow>
-            <SettingsRow label="Next Number" description="Next invoice number">
+            <SettingsRow
+              label="Next Number"
+              required
+              description="Next invoice number"
+            >
               <Input
                 type="number"
                 value={invoiceSettings.nextNumber}
@@ -782,7 +799,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
             </SettingsRow>
             {invoiceSettings.showBankDetails && invoiceSettings.bankDetails && (
               <>
-                <SettingsRow label="Account Name">
+                <SettingsRow label="Account Name" required>
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.accountName}
@@ -792,7 +809,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
                     className="w-64"
                   />
                 </SettingsRow>
-                <SettingsRow label="Account Number">
+                <SettingsRow label="Account Number" required>
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.accountNumber}
@@ -802,7 +819,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
                     className="w-48 font-mono"
                   />
                 </SettingsRow>
-                <SettingsRow label="Bank Name">
+                <SettingsRow label="Bank Name" required>
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.bankName}
@@ -812,7 +829,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
                     className="w-48"
                   />
                 </SettingsRow>
-                <SettingsRow label="Routing Number">
+                <SettingsRow label="Routing Number" required>
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.routingNumber}
@@ -822,7 +839,7 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
                     className="w-32 font-mono"
                   />
                 </SettingsRow>
-                <SettingsRow label="SWIFT Code">
+                <SettingsRow label="SWIFT Code" showOptionalLabel>
                   <Input
                     type="text"
                     value={invoiceSettings.bankDetails.swiftCode ?? ""}
@@ -856,40 +873,34 @@ export function TaxInvoiceSettingsPage(): React.ReactNode {
           icon={FileText}
         >
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Terms & Conditions
-              </label>
-              <textarea
-                value={invoiceSettings.termsAndConditions}
-                onChange={(e) => {
-                  setInvoiceSettings((prev) => ({
-                    ...prev,
-                    termsAndConditions: e.target.value,
-                  }));
-                }}
-                rows={4}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-                placeholder="Enter your terms and conditions..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Default Notes
-              </label>
-              <textarea
-                value={invoiceSettings.notes}
-                onChange={(e) => {
-                  setInvoiceSettings((prev) => ({
-                    ...prev,
-                    notes: e.target.value,
-                  }));
-                }}
-                rows={2}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-                placeholder="Thank you message or additional notes..."
-              />
-            </div>
+            <Textarea
+              label="Terms & Conditions"
+              showOptionalLabel
+              value={invoiceSettings.termsAndConditions}
+              onChange={(e) => {
+                setInvoiceSettings((prev) => ({
+                  ...prev,
+                  termsAndConditions: e.target.value,
+                }));
+              }}
+              rows={4}
+              className="resize-none"
+              placeholder="Enter your terms and conditions..."
+            />
+            <Textarea
+              label="Default Notes"
+              showOptionalLabel
+              value={invoiceSettings.notes}
+              onChange={(e) => {
+                setInvoiceSettings((prev) => ({
+                  ...prev,
+                  notes: e.target.value,
+                }));
+              }}
+              rows={2}
+              className="resize-none"
+              placeholder="Thank you message or additional notes..."
+            />
           </div>
         </SettingsCard>
       </div>
