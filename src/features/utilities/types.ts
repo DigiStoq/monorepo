@@ -19,6 +19,7 @@ export interface ImportField {
   type: "string" | "number" | "date" | "boolean";
 }
 
+// ts-prune-ignore-next (exported for future import/export feature)
 export interface ImportMapping {
   entityType: ImportEntityType;
   fields: ImportField[];
@@ -77,15 +78,18 @@ export interface BulkPriceUpdate {
   roundTo?: number;
 }
 
+// ts-prune-ignore-next (exported for future bulk update feature)
 export interface BulkCategoryUpdate {
   categoryId: string;
   categoryName: string;
 }
 
+// ts-prune-ignore-next (exported for future bulk update feature)
 export interface BulkStatusUpdate {
   isActive: boolean;
 }
 
+// ts-prune-ignore-next (exported for future bulk update feature)
 export interface BulkStockUpdate {
   type: "set" | "add" | "subtract";
   value: number;
@@ -102,6 +106,7 @@ export interface BulkUpdateResult {
 // DATA CLEANUP TYPES
 // ============================================================================
 
+// ts-prune-ignore-next (exported for future data cleanup feature)
 export interface DataCleanupOptions {
   deleteInactiveCustomers: boolean;
   deleteZeroStockItems: boolean;
@@ -110,6 +115,7 @@ export interface DataCleanupOptions {
   archiveBeforeDelete: boolean;
 }
 
+// ts-prune-ignore-next (exported for future data cleanup feature)
 export interface DataCleanupResult {
   customersDeleted: number;
   itemsDeleted: number;

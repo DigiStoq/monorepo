@@ -61,6 +61,7 @@ export interface PurchaseInvoiceItemFormData {
   taxPercent?: number | undefined;
 }
 
+// ts-prune-ignore-next (exported for future purchase filtering feature)
 export interface PurchaseFilters {
   search: string;
   status: PurchaseInvoiceStatus | "all";

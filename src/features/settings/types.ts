@@ -236,6 +236,7 @@ export interface BackupRecord {
 }
 
 // Settings Section Navigation
+// ts-prune-ignore-next (exported for future settings navigation feature)
 export interface SettingsSection {
   id: string;
   label: string;
@@ -245,6 +246,7 @@ export interface SettingsSection {
 }
 
 // Combined Settings State
+// ts-prune-ignore-next (exported for future unified settings management)
 export interface AllSettings {
   company: CompanySettings;
   user: UserProfile;
