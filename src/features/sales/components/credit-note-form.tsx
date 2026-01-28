@@ -204,6 +204,7 @@ export function CreditNoteForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select customer"
+                    searchable
                   />
                 </div>
 

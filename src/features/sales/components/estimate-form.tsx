@@ -204,6 +204,7 @@ export function EstimateForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select customer"
+                    searchable
                   />
                 </div>
 

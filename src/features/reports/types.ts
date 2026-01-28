@@ -83,6 +83,21 @@ export interface SalesRegisterEntry {
 // PURCHASE REPORT TYPES
 // ============================================================================
 
+export interface PurchaseRegisterEntry {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  customerName: string; // The hook maps supplierName to customerName or similar field
+  itemCount: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paid: number;
+  due: number;
+  status: string;
+}
+
 export interface PurchaseSummary {
   totalPurchases: number;
   totalInvoices: number;

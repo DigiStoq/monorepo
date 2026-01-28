@@ -214,6 +214,7 @@ export function PurchaseInvoiceForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select supplier"
+                    searchable
                   />
                 </div>
 

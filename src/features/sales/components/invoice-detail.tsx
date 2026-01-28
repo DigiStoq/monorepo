@@ -8,6 +8,7 @@ import {
   Badge,
   Table,
   Select,
+  Input,
   type Column,
   type SelectOption,
 } from "@/components/ui";
@@ -29,6 +30,9 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import {
   useInvoiceHistory,
@@ -47,6 +51,7 @@ export interface InvoiceDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onStatusChange?: (status: InvoiceStatus) => void;
+  onUpdateDetails?: (updates: { invoiceName?: string; date?: string }) => void;
   onRecordPayment?: () => void;
   onDownload?: () => void;
   onPrint?: () => void;
@@ -122,6 +127,7 @@ export function InvoiceDetail({
   onEdit,
   onDelete,
   onStatusChange,
+  onUpdateDetails,
   onRecordPayment,
   onDownload,
   onPrint,
@@ -132,6 +138,12 @@ export function InvoiceDetail({
     invoice?.id ?? null,
     "sale"
   );
+
+  // Inline editing state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const { formatCurrency } = useCurrency();
 
@@ -248,9 +260,61 @@ export function InvoiceDetail({
                 <FileText className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-text-heading">
-                  {invoice.invoiceNumber}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-text-heading">
+                    {invoice.invoiceNumber}
+                  </h2>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editName}
+                        onChange={(e) => { setEditName(e.target.value); }}
+                        className="h-7 w-40 text-sm"
+                        placeholder="Invoice name..."
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          onUpdateDetails?.({ invoiceName: editName });
+                          setIsEditingName(false);
+                        }}
+                      >
+                        <Check className="h-3.5 w-3.5 text-success" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => { setIsEditingName(false); }}
+                      >
+                        <X className="h-3.5 w-3.5 text-error" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      {invoice.invoiceName && (
+                        <span className="text-sm text-text-tertiary">
+                          ({invoice.invoiceName})
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                        onClick={() => {
+                          setEditName(invoice.invoiceName ?? "");
+                          setIsEditingName(true);
+                        }}
+                        title="Edit invoice name"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={status.variant}>
                     <StatusIcon className="h-3 w-3 mr-1" />
@@ -328,9 +392,54 @@ export function InvoiceDetail({
               </p>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-400" />
-                <span className="text-text-heading">
-                  {formatDate(invoice.date)}
-                </span>
+                {isEditingDate ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => { setEditDate(e.target.value); }}
+                      className="h-7 text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => {
+                        onUpdateDetails?.({ date: editDate });
+                        setIsEditingDate(false);
+                      }}
+                    >
+                      <Check className="h-3.5 w-3.5 text-success" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => { setIsEditingDate(false); }}
+                    >
+                      <X className="h-3.5 w-3.5 text-error" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-text-heading">
+                      {formatDate(invoice.date)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                      onClick={() => {
+                        setEditDate(invoice.date);
+                        setIsEditingDate(true);
+                      }}
+                      title="Edit invoice date"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -345,7 +454,7 @@ export function InvoiceDetail({
                       : "text-text-heading"
                   )}
                 >
-                  {formatDate(invoice.dueDate)}
+                  {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                 </span>
               </div>
             </div>
@@ -438,9 +547,9 @@ export function InvoiceDetail({
                       ? ` (${invoice.discountPercent}%)`
                       : invoice.subtotal > 0
                         ? ` (${(
-                            (invoice.discountAmount / invoice.subtotal) *
-                            100
-                          ).toFixed(0)}%)`
+                          (invoice.discountAmount / invoice.subtotal) *
+                          100
+                        ).toFixed(0)}%)`
                         : ""}
                   </span>
                   <span className="font-medium text-success">
@@ -629,7 +738,7 @@ function HistorySection({
                         entry.action === "updated" && "bg-primary-100",
                         entry.action === "status_changed" && "bg-warning-light",
                         entry.action === "payment_recorded" &&
-                          "bg-success-light",
+                        "bg-success-light",
                         entry.action === "deleted" && "bg-error-light"
                       )}
                     >

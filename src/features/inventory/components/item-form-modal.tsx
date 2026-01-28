@@ -39,6 +39,7 @@ const itemSchema = z.object({
   description: z.string().max(500).optional(),
   category: z.string().optional(),
   unit: z.string().min(1, "Unit is required").max(20),
+  mrp: z.number().min(0).optional(),
   salePrice: z.number().min(0, "Sale price must be positive"),
   purchasePrice: z.number().min(0).optional(),
   taxRate: z.number().min(0).max(100).optional(),
@@ -137,6 +138,7 @@ export function ItemFormModal({
       description: "",
       category: "",
       unit: "pcs",
+      mrp: 0,
       salePrice: 0,
       purchasePrice: 0,
       taxRate: 0,
@@ -167,6 +169,7 @@ export function ItemFormModal({
         description: item.description ?? "",
         category: item.category ?? "",
         unit: item.unit,
+        mrp: item.mrp ?? 0,
         salePrice: item.salePrice,
         purchasePrice: item.purchasePrice,
         taxRate: item.taxRate ?? 0,
@@ -204,6 +207,7 @@ export function ItemFormModal({
         description: "",
         category: "",
         unit: "pcs",
+        mrp: 0,
         salePrice: 0,
         purchasePrice: 0,
         taxRate: 0,
@@ -231,6 +235,7 @@ export function ItemFormModal({
       sku: data.sku ?? undefined,
       description: data.description ?? undefined,
       category: data.category ?? undefined,
+      mrp: data.mrp ?? undefined,
       purchasePrice: data.purchasePrice ?? undefined,
       taxRate: data.taxRate ?? undefined,
       openingStock: data.openingStock ?? undefined,
@@ -307,11 +312,10 @@ export function ItemFormModal({
             onClick={() => {
               setActiveTab(tab.id as typeof activeTab);
             }}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === tab.id
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab.id
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             {tab.label}
           </button>
@@ -375,6 +379,7 @@ export function ItemFormModal({
                     setValue("category", value);
                   }}
                   placeholder="Select category"
+                  searchable
                 />
               </div>
 
@@ -410,8 +415,21 @@ export function ItemFormModal({
                 step="0.01"
                 placeholder="0.00"
                 leftIcon={<DollarSign className="h-4 w-4" />}
+                helperText="Actual selling price"
                 error={errors.salePrice?.message}
                 {...register("salePrice", { valueAsNumber: true })}
+              />
+
+              <Input
+                label="MRP"
+                showOptionalLabel
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                leftIcon={<Tag className="h-4 w-4" />}
+                helperText="Maximum Retail Price"
+                error={errors.mrp?.message}
+                {...register("mrp", { valueAsNumber: true })}
               />
 
               <Input

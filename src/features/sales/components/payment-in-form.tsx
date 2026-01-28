@@ -160,6 +160,7 @@ export function PaymentInForm({
                       setInvoiceId(""); // Reset invoice when customer changes
                     }}
                     placeholder="Select customer"
+                    searchable
                   />
                 </div>
 
@@ -239,6 +240,7 @@ export function PaymentInForm({
                     value={invoiceId}
                     onChange={setInvoiceId}
                     disabled={!customerId}
+                    searchable
                   />
                 </div>
               </div>

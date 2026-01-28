@@ -76,7 +76,7 @@ export function SaleInvoicesPage(): React.ReactNode {
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
-  const { createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice } =
+  const { createInvoice, updateInvoice, updateInvoiceDetails, updateInvoiceStatus, deleteInvoice } =
     useSaleInvoiceMutations();
   const { createPayment } = usePaymentInMutations();
   const { createTransaction: createCashTransaction } =
@@ -266,11 +266,8 @@ export function SaleInvoicesPage(): React.ReactNode {
       const customer = customers.find((c) => c.id === data.customerId);
       const customerName = customer?.name ?? "Unknown";
 
-      // Calculate due date - default to 30 days from invoice date if not provided
-      const invoiceDate = new Date(data.date);
-      const defaultDueDate = new Date(invoiceDate);
-      defaultDueDate.setDate(defaultDueDate.getDate() + 30);
-      const dueDate = data.dueDate ?? defaultDueDate.toISOString().slice(0, 10);
+      // Due date is optional - use the value from form if provided
+      const dueDate = data.dueDate;
 
       // Transform form items to include itemName, unit, and amount
       const invoiceItems = data.items.map((formItem) => {
@@ -679,8 +676,8 @@ export function SaleInvoicesPage(): React.ReactNode {
       discountPercent:
         currentSelectedInvoice.subtotal > 0
           ? (currentSelectedInvoice.discountAmount /
-              currentSelectedInvoice.subtotal) *
-            100
+            currentSelectedInvoice.subtotal) *
+          100
           : 0,
       notes: currentSelectedInvoice.notes,
       terms: currentSelectedInvoice.terms,
@@ -856,6 +853,18 @@ export function SaleInvoicesPage(): React.ReactNode {
             }}
             onStatusChange={(status) => {
               void handleStatusChange(status);
+            }}
+            onUpdateDetails={(updates) => {
+              if (currentSelectedInvoice) {
+                void updateInvoiceDetails(
+                  currentSelectedInvoice.id,
+                  updates,
+                  {
+                    invoiceName: currentSelectedInvoice.invoiceName,
+                    date: currentSelectedInvoice.date,
+                  }
+                );
+              }
             }}
             onRecordPayment={handleRecordPayment}
             onDownload={handleDownloadPDF}

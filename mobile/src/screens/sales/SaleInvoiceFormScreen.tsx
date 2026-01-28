@@ -24,7 +24,7 @@ import {
 } from "../../components/ui";
 import { Plus, Trash2, Save, X, Truck, Calendar } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
-import { generateUUID } from "../../lib/utils";
+import { generateUUID, round } from "../../lib/utils";
 import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -167,15 +167,15 @@ export function SaleInvoiceFormScreen() {
     let subVal = 0;
 
     lineItems.forEach((item) => {
-      const base = item.quantity * item.unitPrice;
-      const disc = base * (item.discountPercent / 100);
-      const taxable = base - disc;
-      const tax = taxable * (item.taxPercent / 100);
+      const base = round(item.quantity * item.unitPrice);
+      const disc = round(base * (item.discountPercent / 100));
+      const taxable = round(base - disc);
+      const tax = round(taxable * (item.taxPercent / 100));
 
-      subVal += base;
-      totalDisc += disc;
-      totalTax += tax;
-      totalVal += taxable + tax;
+      subVal = round(subVal + base);
+      totalDisc = round(totalDisc + disc);
+      totalTax = round(totalTax + tax);
+      totalVal = round(totalVal + taxable + tax);
     });
 
     return {
@@ -233,11 +233,11 @@ export function SaleInvoiceFormScreen() {
     const disc = currentItem.discountPercent || 0;
     const tax = currentItem.taxPercent || 0;
 
-    const base = qty * rate;
-    const discAmt = base * (disc / 100);
-    const taxable = base - discAmt;
-    const taxAmt = taxable * (tax / 100);
-    const finalAmt = taxable + taxAmt;
+    const base = round(qty * rate);
+    const discAmt = round(base * (disc / 100));
+    const taxable = round(base - discAmt);
+    const taxAmt = round(taxable * (tax / 100));
+    const finalAmt = round(taxable + taxAmt);
 
     const newItem: LineItem = {
       id: editingItemId || generateUUID(),

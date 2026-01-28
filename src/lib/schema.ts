@@ -41,6 +41,7 @@ const items = new Table({
   description: column.text,
   category_id: column.text,
   unit: column.text,
+  mrp: column.real,
   sale_price: column.real,
   purchase_price: column.real,
   tax_rate: column.real,
@@ -80,6 +81,7 @@ const item_history = new Table({
 const sale_invoices = new Table({
   user_id: column.text,
   invoice_number: column.text,
+  invoice_name: column.text, // Custom display name/title for the invoice
   customer_id: column.text,
   customer_name: column.text,
   date: column.text,

@@ -12,10 +12,11 @@ import type {
 interface SaleInvoiceRow {
   id: string;
   invoice_number: string;
+  invoice_name: string | null;
   customer_id: string;
   customer_name: string;
   date: string;
-  due_date: string;
+  due_date: string | null;
   status: string;
   subtotal: number;
   tax_amount: number;
@@ -55,7 +56,7 @@ function mapRowToSaleInvoice(row: SaleInvoiceRow): SaleInvoice {
     customerId: row.customer_id,
     customerName: row.customer_name,
     date: row.date,
-    dueDate: row.due_date,
+    dueDate: row.due_date ?? undefined,
     status: row.status as SaleInvoice["status"],
     items: [], // Will be populated by useSaleInvoiceById
     subtotal: row.subtotal,
@@ -69,6 +70,7 @@ function mapRowToSaleInvoice(row: SaleInvoiceRow): SaleInvoice {
   };
 
   // Add optional fields only if they have values
+  if (row.invoice_name) invoice.invoiceName = row.invoice_name;
   if (row.notes) invoice.notes = row.notes;
   if (row.terms) invoice.terms = row.terms;
   if (row.transport_name) invoice.transportName = row.transport_name;
@@ -190,6 +192,11 @@ interface SaleInvoiceMutations {
     items: Omit<SaleInvoiceItem, "id" | "invoiceId">[],
     oldInvoice?: SaleInvoice
   ) => Promise<void>;
+  updateInvoiceDetails: (
+    id: string,
+    updates: { invoiceName?: string; date?: string },
+    oldValues?: { invoiceName?: string; date?: string }
+  ) => Promise<void>;
   updateInvoiceStatus: (
     id: string,
     status: string,
@@ -275,7 +282,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           data.customerId,
           data.customerName,
           data.date,
-          data.dueDate,
+          data.dueDate ?? null,
           data.status ?? "draft",
           subtotal,
           taxAmount,
@@ -381,7 +388,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           data.customerId,
           data.customerName,
           data.date,
-          data.dueDate,
+          data.dueDate ?? null,
           subtotal,
           taxAmount,
           data.discountAmount ?? 0,
@@ -526,6 +533,64 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
     [db, addHistoryEntry]
   );
 
+  const updateInvoiceDetails = useCallback(
+    async (
+      id: string,
+      updates: { invoiceName?: string; date?: string },
+      oldValues?: { invoiceName?: string; date?: string }
+    ): Promise<void> => {
+      const now = new Date().toISOString();
+      const setClauses: string[] = [];
+      const params: (string | null)[] = [];
+      const changes: string[] = [];
+      const trackedOldValues: Record<string, unknown> = {};
+      const trackedNewValues: Record<string, unknown> = {};
+
+      if (updates.invoiceName !== undefined) {
+        setClauses.push("invoice_name = ?");
+        params.push(updates.invoiceName || null);
+        if (oldValues?.invoiceName !== updates.invoiceName) {
+          changes.push("name");
+          trackedOldValues.invoiceName = oldValues?.invoiceName ?? "";
+          trackedNewValues.invoiceName = updates.invoiceName;
+        }
+      }
+
+      if (updates.date !== undefined) {
+        setClauses.push("date = ?");
+        params.push(updates.date);
+        if (oldValues?.date !== updates.date) {
+          changes.push("date");
+          trackedOldValues.date = oldValues?.date ?? "";
+          trackedNewValues.date = updates.date;
+        }
+      }
+
+      if (setClauses.length === 0) return;
+
+      setClauses.push("updated_at = ?");
+      params.push(now);
+      params.push(id);
+
+      await db.execute(
+        `UPDATE sale_invoices SET ${setClauses.join(", ")} WHERE id = ?`,
+        params
+      );
+
+      // Log history if there were actual changes
+      if (changes.length > 0) {
+        await addHistoryEntry({
+          invoiceId: id,
+          action: "updated",
+          description: `Updated invoice ${changes.join(" and ")}`,
+          ...(Object.keys(trackedOldValues).length > 0 && { oldValues: trackedOldValues }),
+          ...(Object.keys(trackedNewValues).length > 0 && { newValues: trackedNewValues }),
+        });
+      }
+    },
+    [db, addHistoryEntry]
+  );
+
   const updateInvoiceStatus = useCallback(
     async (
       id: string,
@@ -660,6 +725,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
   return {
     createInvoice,
     updateInvoice,
+    updateInvoiceDetails,
     updateInvoiceStatus,
     recordPayment,
     deleteInvoice,

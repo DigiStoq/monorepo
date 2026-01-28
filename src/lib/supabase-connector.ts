@@ -97,9 +97,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
     switch (op) {
       case UpdateType.PUT: {
+        const options: { onConflict?: string } = {};
+        if (table === "user_preferences") {
+            options.onConflict = "user_id";
+        }
+        
         const { error } = await this.client
           .from(table)
-          .upsert({ id, ...transformedData });
+          .upsert({ id, ...transformedData }, options);
 
         if (error) {
           console.error(`Error upserting ${table}:`, error);

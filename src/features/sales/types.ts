@@ -7,10 +7,11 @@ export type InvoiceStatus = "draft" | "unpaid" | "paid" | "returned";
 export interface SaleInvoice {
   id: string;
   invoiceNumber: string;
+  invoiceName?: string; // Custom display name/title for the invoice
   customerId: string;
   customerName: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   status: InvoiceStatus;
   items: SaleInvoiceItem[];
   subtotal: number;
@@ -59,13 +60,13 @@ export interface SaleInvoiceFormData {
   deliveryLocation?: string | undefined;
 }
 
-// Form data used for creating an invoice (dueDate is required by database)
+// Form data used for creating an invoice
 export interface InvoiceFormData {
   invoiceNumber: string;
   customerId: string;
   customerName: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   status?: string;
   discountAmount?: number;
   notes?: string;

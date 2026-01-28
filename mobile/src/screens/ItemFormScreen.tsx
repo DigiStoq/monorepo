@@ -39,6 +39,7 @@ export function ItemFormScreen() {
   const [type, setType] = useState("product"); // 'product' | 'service'
   const [categoryId, setCategoryId] = useState("");
   const [unit, setUnit] = useState("pcs");
+  const [mrp, setMrp] = useState("");
 
   const [salePrice, setSalePrice] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
@@ -89,6 +90,7 @@ export function ItemFormScreen() {
             setType(data.type || "product");
             setCategoryId(data.category_id || "");
             setUnit(data.unit || "pcs");
+            setMrp(String(data.mrp || 0));
             setSalePrice(String(data.sale_price || 0));
             setPurchasePrice(String(data.purchase_price || 0));
             setTaxRate(String(data.tax_rate || 0));
@@ -119,6 +121,7 @@ export function ItemFormScreen() {
     try {
       const itemId = id || generateUUID();
       const now = new Date().toISOString();
+      const itemMrp = parseFloat(mrp) || 0;
       const sPrice = parseFloat(salePrice) || 0;
       const pPrice = parseFloat(purchasePrice) || 0;
       const tRate = parseFloat(taxRate) || 0;
@@ -130,7 +133,7 @@ export function ItemFormScreen() {
           `
                     UPDATE items 
                     SET name = ?, sku = ?, type = ?, category_id = ?, unit = ?,
-                        sale_price = ?, purchase_price = ?, tax_rate = ?, 
+                        mrp = ?, sale_price = ?, purchase_price = ?, tax_rate = ?, 
                         stock_quantity = ?, low_stock_alert = ?, description = ?,
                         batch_number = ?, expiry_date = ?, barcode = ?, hsn_code = ?,
                         location = ?, brand = ?, model_number = ?,
@@ -165,13 +168,13 @@ export function ItemFormScreen() {
           `
                     INSERT INTO items (
                         id, name, sku, type, category_id, unit,
-                        sale_price, purchase_price, tax_rate,
+                        mrp, sale_price, purchase_price, tax_rate,
                         stock_quantity, low_stock_alert, description,
                         batch_number, expiry_date, barcode, hsn_code,
                         location, brand, model_number,
                         created_at, updated_at, is_active
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                 `,
           [
             itemId,
@@ -180,6 +183,7 @@ export function ItemFormScreen() {
             type,
             categoryId,
             unit,
+            itemMrp,
             sPrice,
             pPrice,
             tRate,
@@ -309,29 +313,40 @@ export function ItemFormScreen() {
           <CardBody>
             <View style={styles.row}>
               <Input
+                label="MRP"
+                value={mrp}
+                onChangeText={setMrp}
+                keyboardType="numeric"
+                placeholder="0.00"
+                containerStyle={{ flex: 1, marginRight: 8 }}
+              />
+              <Input
                 label="Sale Price"
                 value={salePrice}
                 onChangeText={setSalePrice}
                 keyboardType="numeric"
                 placeholder="0.00"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
+            </View>
+            <View style={[styles.row, { marginTop: 12 }]}>
               <Input
                 label="Cost Price"
                 value={purchasePrice}
                 onChangeText={setPurchasePrice}
                 keyboardType="numeric"
                 placeholder="0.00"
+                containerStyle={{ flex: 1, marginRight: 8 }}
+              />
+              <Input
+                label="Tax Rate (%)"
+                value={taxRate}
+                onChangeText={setTaxRate}
+                keyboardType="numeric"
+                placeholder="0"
                 containerStyle={{ flex: 1 }}
               />
             </View>
-            <Input
-              label="Tax Rate (%)"
-              value={taxRate}
-              onChangeText={setTaxRate}
-              keyboardType="numeric"
-              placeholder="0"
-            />
           </CardBody>
         </Card>
 

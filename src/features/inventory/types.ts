@@ -12,6 +12,7 @@ export interface Item {
   description?: string;
   category?: string;
   unit: string;
+  mrp?: number;
   salePrice: number;
   purchasePrice: number;
   taxRate?: number;
@@ -39,6 +40,7 @@ export interface ItemFormData {
   description?: string | undefined;
   category?: string | undefined;
   unit: string;
+  mrp?: number | undefined;
   salePrice: number;
   purchasePrice?: number | undefined;
   taxRate?: number | undefined;
