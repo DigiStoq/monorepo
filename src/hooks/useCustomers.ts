@@ -1,4 +1,6 @@
+import type { PowerSyncDatabase } from "@powersync/web";
 import { useQuery } from "@powersync/react";
+import { queryOptions } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type {
@@ -57,46 +59,71 @@ function mapRowToCustomer(row: CustomerRow): Customer {
   return customer;
 }
 
+const getCustomersQuery = (filters?: {
+  type?: "customer" | "supplier" | "both";
+  isActive?: boolean;
+  search?: string;
+}): { query: string; params: (string | number)[] } => {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filters?.type === "customer")
+    conditions.push("type IN ('customer', 'both')");
+  else if (filters?.type === "supplier")
+    conditions.push("type IN ('supplier', 'both')");
+  else if (filters?.type === "both") conditions.push("type = 'both'");
+
+  if (filters?.isActive !== undefined) {
+    conditions.push("is_active = ?");
+    params.push(filters.isActive ? 1 : 0);
+  }
+
+  if (filters?.search) {
+    conditions.push("(name LIKE ? OR phone LIKE ? OR email LIKE ?)");
+    const searchPattern = `%${filters.search}%`;
+    params.push(searchPattern, searchPattern, searchPattern);
+  }
+
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return {
+    query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
+    params,
+  };
+};
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export const customersQueryOptions = (
+  db: PowerSyncDatabase,
+  filters?: {
+    type?: "customer" | "supplier" | "both";
+    isActive?: boolean;
+    search?: string;
+  }
+) => {
+  const { query, params } = getCustomersQuery(filters);
+  return queryOptions({
+    queryKey: [query, params],
+    queryFn: async () => {
+      return await db.getAll<CustomerRow>(query, params);
+    },
+  });
+};
+
 export function useCustomers(filters?: {
   type?: "customer" | "supplier" | "both";
   isActive?: boolean;
   search?: string;
 }): { customers: Customer[]; isLoading: boolean; error: Error | undefined } {
-  // Memoize query and params to ensure stable references for PowerSync reactivity
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
-
-    // Type filter - include "both" type when filtering for customer or supplier
-    if (filters?.type === "customer") {
-      conditions.push("type IN ('customer', 'both')");
-    } else if (filters?.type === "supplier") {
-      conditions.push("type IN ('supplier', 'both')");
-    } else if (filters?.type === "both") {
-      conditions.push("type = 'both'");
-    }
-
-    // Active filter
-    if (filters?.isActive !== undefined) {
-      conditions.push("is_active = ?");
-      params.push(filters.isActive ? 1 : 0);
-    }
-
-    // Search filter
-    if (filters?.search) {
-      conditions.push("(name LIKE ? OR phone LIKE ? OR email LIKE ?)");
-      const searchPattern = `%${filters.search}%`;
-      params.push(searchPattern, searchPattern, searchPattern);
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
-      params,
-    };
-  }, [filters?.type, filters?.isActive, filters?.search]);
-
+  const { query, params } = useMemo(
+    () =>
+      getCustomersQuery({
+        type: filters?.type,
+        isActive: filters?.isActive,
+        search: filters?.search,
+      }),
+    [filters?.type, filters?.isActive, filters?.search]
+  );
   const { data, isLoading, error } = useQuery<CustomerRow>(query, params);
 
   const customers = useMemo(() => data.map(mapRowToCustomer), [data]);

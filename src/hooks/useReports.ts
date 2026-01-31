@@ -738,14 +738,14 @@ export function useCustomerStatementReport(
     if (customerData.length === 0) return null;
 
     const customer = customerData[0];
-    
+
     // Calculate true opening balance for the period
     let prevNet = 0;
     if (prevBalanceData.length > 0) {
-        const pb = prevBalanceData[0];
-        prevNet = pb.prev_invoices - pb.prev_payments - pb.prev_credits;
+      const pb = prevBalanceData[0];
+      prevNet = pb.prev_invoices - pb.prev_payments - pb.prev_credits;
     }
-    
+
     const reportOpeningBalance = customer.opening_balance + prevNet;
 
     let balance = reportOpeningBalance;

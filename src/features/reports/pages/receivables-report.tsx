@@ -57,9 +57,21 @@ export function ReceivablesReport(): React.ReactNode {
     () => [
       { key: "customerName", label: "Customer" },
       { key: "invoiceCount", label: "Invoices" },
-      { key: "totalDue", label: "Amount Due", format: (val) => formatCurrency(Number(val)) },
-      { key: "overdueAmount", label: "Overdue", format: (val) => formatCurrency(Number(val)) },
-      { key: "overdueAmount", label: "Status", format: (val) => Number(val) > 0 ? "Overdue" : "Pending" },
+      {
+        key: "totalDue",
+        label: "Amount Due",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "overdueAmount",
+        label: "Overdue",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "overdueAmount",
+        label: "Status",
+        format: (val) => (Number(val) > 0 ? "Overdue" : "Pending"),
+      },
     ],
     [formatCurrency]
   );
@@ -85,8 +97,12 @@ export function ReceivablesReport(): React.ReactNode {
         title="Receivables Report"
         subtitle="Outstanding amounts from customers"
         backPath="/reports"
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px]">
@@ -193,7 +209,10 @@ export function ReceivablesReport(): React.ReactNode {
                       </tr>
                     ) : (
                       filteredData.map((entry) => (
-                        <tr key={entry.customerId} className="hover:bg-muted/50">
+                        <tr
+                          key={entry.customerId}
+                          className="hover:bg-muted/50"
+                        >
                           <td className="px-4 py-3 font-medium text-text-heading">
                             {entry.customerName}
                           </td>
@@ -247,7 +266,9 @@ export function ReceivablesReport(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={filteredData}
         columns={exportColumns}
         title="Receivables Report"

@@ -217,10 +217,12 @@ export function useBankAccountMutations(): BankAccountMutations {
 
   const deleteAccount = useCallback(
     async (id: string): Promise<void> => {
-      await db.execute(`DELETE FROM bank_transactions WHERE account_id = ?`, [
-        id,
-      ]);
-      await db.execute(`DELETE FROM bank_accounts WHERE id = ?`, [id]);
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(`DELETE FROM bank_transactions WHERE account_id = ?`, [
+          id,
+        ]);
+        await tx.execute(`DELETE FROM bank_accounts WHERE id = ?`, [id]);
+      });
     },
     [db]
   );

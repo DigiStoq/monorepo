@@ -231,6 +231,7 @@ const purchase_invoices = new Table({
   total: column.real,
   amount_paid: column.real,
   amount_due: column.real,
+  expected_delivery_date: column.text,
   notes: column.text,
   created_at: column.text,
   updated_at: column.text,
@@ -319,6 +320,7 @@ const bank_transactions = new Table({
   related_invoice_number: column.text,
   balance: column.real,
   created_at: column.text,
+  updated_at: column.text,
 });
 
 const cash_transactions = new Table({
@@ -334,6 +336,7 @@ const cash_transactions = new Table({
   related_invoice_number: column.text,
   balance: column.real,
   created_at: column.text,
+  updated_at: column.text,
 });
 
 const cheques = new Table({
@@ -390,6 +393,7 @@ const loan_payments = new Table({
   reference_number: column.text,
   notes: column.text,
   created_at: column.text,
+  updated_at: column.text,
 });
 
 // ============================================================================
@@ -547,6 +551,14 @@ const backup_history = new Table({
   file_path: column.text,
 });
 
+// Write checkpoints for sync coordination (Anti-Gravity Architecture)
+const write_checkpoints = new Table({
+  user_id: column.text,
+  client_id: column.text,
+  checkpoint: column.integer,
+  updated_at: column.text,
+});
+
 // ============================================================================
 // SCHEMA EXPORT
 // ============================================================================
@@ -590,6 +602,8 @@ export const AppSchema = new Schema({
   login_history,
   backup_settings,
   backup_history,
+  // Sync Coordination
+  write_checkpoints,
 });
 
 // ============================================================================

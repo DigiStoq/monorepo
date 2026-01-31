@@ -31,6 +31,7 @@ export interface ItemDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onAdjustStock?: () => void;
+  onViewHistory?: () => void;
   className?: string;
 }
 
@@ -78,6 +79,7 @@ export function ItemDetail({
   onEdit,
   onDelete,
   onAdjustStock,
+  onViewHistory,
   className,
 }: ItemDetailProps): React.ReactNode {
   // Fetch item history
@@ -317,7 +319,15 @@ export function ItemDetail({
 
       {/* Item History Card */}
       <Card>
-        <CardHeader title="History" />
+        <CardHeader
+          title="History"
+          action={
+            <Button variant="ghost" size="sm" onClick={onViewHistory}>
+              <History className="h-4 w-4 mr-2" />
+              Full Ledger
+            </Button>
+          }
+        />
         <CardBody>
           {historyLoading ? (
             <div className="text-center text-slate-500 py-4">

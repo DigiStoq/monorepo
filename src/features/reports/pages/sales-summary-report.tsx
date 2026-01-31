@@ -34,11 +34,23 @@ export function SalesSummaryReport(): React.ReactNode {
   // Format currency
   const { formatCurrency } = useCurrency();
 
+  interface SalesTrendExportRow {
+    month: string;
+    amount: number;
+  }
+
   // Export Columns for Sales By Month (Trend)
-  const exportColumns = useMemo<ExportColumn<any>[]>(() => [
-    { key: "month", label: "Month" },
-    { key: "amount", label: "Sales Amount", format: (val) => formatCurrency(Number(val)) },
-  ], [formatCurrency]);
+  const exportColumns = useMemo<ExportColumn<SalesTrendExportRow>[]>(
+    () => [
+      { key: "month", label: "Month" },
+      {
+        key: "amount",
+        label: "Sales Amount",
+        format: (val) => formatCurrency(Number(val)),
+      },
+    ],
+    [formatCurrency]
+  );
 
   // Loading state
   if (isLoading) {
@@ -104,8 +116,12 @@ export function SalesSummaryReport(): React.ReactNode {
         onRefresh={() => {
           /* TODO: Implement refresh */
         }}
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
       >
         {/* Summary Cards */}
@@ -205,7 +221,9 @@ export function SalesSummaryReport(): React.ReactNode {
                         height: `${(month.amount / maxMonthAmount) * 180}px`,
                       }}
                     />
-                    <span className="text-xs text-slate-500">{month.month}</span>
+                    <span className="text-xs text-slate-500">
+                      {month.month}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -311,7 +329,9 @@ export function SalesSummaryReport(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={data.salesByMonth} // Export Sales Trend by default for summary, as it is simple tabular data
         columns={exportColumns}
         title="Export Sales Summary (Trend)"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -25,12 +25,20 @@ import {
   Tag,
   Shield,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useCategoryMutations } from "@/hooks/useCategories";
 import type { Item, ItemFormData, ItemType, Category } from "../types";
 
 // ============================================================================
 // VALIDATION SCHEMA
 // ============================================================================
+
+// Helper for optional number fields that might be NaN (from valueAsNumber) or empty string
+const optionalNumber = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return undefined;
+  const num = Number(val);
+  return Number.isNaN(num) ? undefined : num;
+}, z.number().min(0).optional());
 
 const itemSchema = z.object({
   name: z.string().min(1, "Item name is required").max(100),
@@ -39,19 +47,23 @@ const itemSchema = z.object({
   description: z.string().max(500).optional(),
   category: z.string().optional(),
   unit: z.string().min(1, "Unit is required").max(20),
-  mrp: z.number().min(0).optional(),
-  salePrice: z.number().min(0, "Sale price must be positive"),
-  purchasePrice: z.number().min(0).optional(),
-  taxRate: z.number().min(0).max(100).optional(),
-  openingStock: z.number().min(0).optional(),
-  lowStockAlert: z.number().min(0).optional(),
+  mrp: optionalNumber,
+  salePrice: z.number().min(0, "Sale price must be positive"), // Required
+  purchasePrice: optionalNumber,
+  taxRate: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = Number(val);
+    return Number.isNaN(num) ? undefined : num;
+  }, z.number().min(0).max(100).optional()),
+  openingStock: optionalNumber,
+  lowStockAlert: optionalNumber,
   // Optional additional fields
   batchNumber: z.string().max(50).optional(),
   expiryDate: z.string().optional(),
   manufactureDate: z.string().optional(),
   barcode: z.string().max(50).optional(),
   hsnCode: z.string().max(20).optional(),
-  warrantyDays: z.number().min(0).optional(),
+  warrantyDays: optionalNumber,
   brand: z.string().max(100).optional(),
   modelNumber: z.string().max(50).optional(),
   location: z.string().max(100).optional(),
@@ -70,6 +82,7 @@ export interface ItemFormModalProps {
   item?: Item | null;
   categories?: Category[];
   isLoading?: boolean;
+  checkSkuUnique?: (sku: string, excludeId?: string) => boolean;
 }
 
 // ============================================================================
@@ -103,6 +116,7 @@ export function ItemFormModal({
   item,
   categories = [],
   isLoading,
+  checkSkuUnique,
 }: ItemFormModalProps): React.ReactNode {
   const isEditing = Boolean(item);
   const [activeTab, setActiveTab] = useState<
@@ -127,10 +141,12 @@ export function ItemFormModal({
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm<ItemSchemaType>({
-    resolver: zodResolver(itemSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(itemSchema) as unknown as any,
     defaultValues: {
       name: "",
       sku: "",
@@ -230,6 +246,19 @@ export function ItemFormModal({
   }, [item, reset, isOpen]);
 
   const handleFormSubmit = (data: ItemSchemaType): void => {
+    // Check SKU uniqueness
+    if (data.sku && checkSkuUnique) {
+      const isUnique = checkSkuUnique(data.sku, item?.id);
+      if (!isUnique) {
+        setError("sku", {
+          type: "manual",
+          message: "This SKU is already in use by another item",
+        });
+        toast.error("SKU must be unique");
+        return;
+      }
+    }
+
     onSubmit({
       ...data,
       sku: data.sku ?? undefined,
@@ -278,6 +307,13 @@ export function ItemFormModal({
     { id: "additional", label: "More Details" },
   ] as const;
 
+  const handleFormError = (errors: FieldErrors<ItemSchemaType>): void => {
+    console.error("Form validation failed:", errors);
+    toast.error("Please check the form for errors", {
+      description: "Fix the highlighted fields to continue.",
+    });
+  };
+
   return (
     <Sheet
       isOpen={isOpen}
@@ -294,7 +330,12 @@ export function ItemFormModal({
           </Button>
           <Button
             onClick={() => {
-              void handleSubmit(handleFormSubmit)();
+              /* eslint-disable @typescript-eslint/no-explicit-any */
+              void (handleSubmit as any)(
+                handleFormSubmit as any,
+                handleFormError as any
+              )();
+              /* eslint-enable @typescript-eslint/no-explicit-any */
             }}
             isLoading={isLoading}
           >
@@ -312,10 +353,11 @@ export function ItemFormModal({
             onClick={() => {
               setActiveTab(tab.id as typeof activeTab);
             }}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab.id
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
-              }`}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === tab.id
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
           >
             {tab.label}
           </button>

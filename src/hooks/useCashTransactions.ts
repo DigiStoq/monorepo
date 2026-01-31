@@ -129,46 +129,48 @@ export function useCashTransactionMutations(): CashTransactionMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      // Get current balance
-      const result = await db.execute(
-        `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
-      );
-      const rows = (result.rows?._array ?? []) as { balance: number }[];
-      const currentBalance: number = rows[0]?.balance ?? 0;
+      await db.writeTransaction(async (tx) => {
+        // Get current balance
+        const result = await tx.execute(
+          `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
+        );
+        const rows = (result.rows?._array ?? []) as { balance: number }[];
+        const currentBalance: number = rows[0]?.balance ?? 0;
 
-      // Calculate new balance
-      let balanceChange: number;
-      if (data.type === "in") {
-        balanceChange = data.amount;
-      } else if (data.type === "out") {
-        balanceChange = -data.amount;
-      } else {
-        // adjustment - amount is the absolute value to set
-        balanceChange = data.amount - currentBalance;
-      }
-      const newBalance = currentBalance + balanceChange;
+        // Calculate new balance
+        let balanceChange: number;
+        if (data.type === "in") {
+          balanceChange = data.amount;
+        } else if (data.type === "out") {
+          balanceChange = -data.amount;
+        } else {
+          // adjustment - amount is the absolute value to set
+          balanceChange = data.amount - currentBalance;
+        }
+        const newBalance = currentBalance + balanceChange;
 
-      await db.execute(
-        `INSERT INTO cash_transactions (
-          id, date, type, amount, description, category,
-          related_customer_id, related_customer_name,
-          related_invoice_id, related_invoice_number, balance, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          data.date,
-          data.type,
-          data.amount,
-          data.description,
-          data.category ?? null,
-          data.relatedCustomerId ?? null,
-          data.relatedCustomerName ?? null,
-          data.relatedInvoiceId ?? null,
-          data.relatedInvoiceNumber ?? null,
-          newBalance,
-          now,
-        ]
-      );
+        await tx.execute(
+          `INSERT INTO cash_transactions (
+            id, date, type, amount, description, category,
+            related_customer_id, related_customer_name,
+            related_invoice_id, related_invoice_number, balance, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            data.date,
+            data.type,
+            data.amount,
+            data.description,
+            data.category ?? null,
+            data.relatedCustomerId ?? null,
+            data.relatedCustomerName ?? null,
+            data.relatedInvoiceId ?? null,
+            data.relatedInvoiceNumber ?? null,
+            newBalance,
+            now,
+          ]
+        );
+      });
 
       return id;
     },

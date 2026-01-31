@@ -89,8 +89,8 @@ export function PaymentOutForm({
   const invoiceOptions: SelectOption[] = useMemo(() => {
     const filteredInvoices = customerId
       ? invoices.filter(
-        (inv) => inv.customerId === customerId && inv.amountDue > 0
-      )
+          (inv) => inv.customerId === customerId && inv.amountDue > 0
+        )
       : invoices.filter((inv) => inv.amountDue > 0);
 
     return [

@@ -38,7 +38,9 @@ import {
   useInvoiceHistory,
   type InvoiceHistoryAction,
 } from "@/hooks/useInvoiceHistory";
+import { usePaymentsByInvoiceId } from "@/hooks/usePaymentIns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { PaymentHistoryCard } from "@/components/common";
 import type { SaleInvoice, SaleInvoiceItem, InvoiceStatus } from "../types";
 
 // ============================================================================
@@ -137,6 +139,11 @@ export function InvoiceDetail({
   const { history, isLoading: historyLoading } = useInvoiceHistory(
     invoice?.id ?? null,
     "sale"
+  );
+
+  // Fetch payments linked to this invoice
+  const { payments, isLoading: paymentsLoading } = usePaymentsByInvoiceId(
+    invoice?.id ?? null
   );
 
   // Inline editing state
@@ -247,7 +254,9 @@ export function InvoiceDetail({
 
   const status = statusConfig[invoice.status];
   const StatusIcon = status.icon;
-  const showPaymentButton = invoice.status === "unpaid";
+  const showPaymentButton =
+    (invoice.status === "unpaid" || invoice.status === "draft") &&
+    invoice.amountDue > 0;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -268,7 +277,9 @@ export function InvoiceDetail({
                     <div className="flex items-center gap-1">
                       <Input
                         value={editName}
-                        onChange={(e) => { setEditName(e.target.value); }}
+                        onChange={(e) => {
+                          setEditName(e.target.value);
+                        }}
                         className="h-7 w-40 text-sm"
                         placeholder="Invoice name..."
                         autoFocus
@@ -288,7 +299,9 @@ export function InvoiceDetail({
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0"
-                        onClick={() => { setIsEditingName(false); }}
+                        onClick={() => {
+                          setIsEditingName(false);
+                        }}
                       >
                         <X className="h-3.5 w-3.5 text-error" />
                       </Button>
@@ -353,26 +366,27 @@ export function InvoiceDetail({
 
         <CardBody>
           {/* Amount Due Alert */}
-          {invoice.amountDue > 0 && invoice.status === "unpaid" && (
-            <div className="p-4 rounded-xl mb-6 bg-warning-light">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-warning-dark">
-                    Amount Due
-                  </p>
-                  <p className="text-2xl font-bold text-warning-dark">
-                    {formatCurrency(invoice.amountDue)}
-                  </p>
+          {invoice.amountDue > 0 &&
+            (invoice.status === "unpaid" || invoice.status === "draft") && (
+              <div className="p-4 rounded-xl mb-6 bg-warning-light">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-warning-dark">
+                      Amount Due
+                    </p>
+                    <p className="text-2xl font-bold text-warning-dark">
+                      {formatCurrency(invoice.amountDue)}
+                    </p>
+                  </div>
+                  {showPaymentButton && (
+                    <Button onClick={onRecordPayment}>
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Record Payment
+                    </Button>
+                  )}
                 </div>
-                {showPaymentButton && (
-                  <Button onClick={onRecordPayment}>
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Record Payment
-                  </Button>
-                )}
               </div>
-            </div>
-          )}
+            )}
 
           {/* Invoice Info Grid */}
           <div className="grid grid-cols-3 gap-6 mb-6">
@@ -397,7 +411,9 @@ export function InvoiceDetail({
                     <Input
                       type="date"
                       value={editDate}
-                      onChange={(e) => { setEditDate(e.target.value); }}
+                      onChange={(e) => {
+                        setEditDate(e.target.value);
+                      }}
                       className="h-7 text-sm"
                       autoFocus
                     />
@@ -416,7 +432,9 @@ export function InvoiceDetail({
                       variant="ghost"
                       size="sm"
                       className="h-7 w-7 p-0"
-                      onClick={() => { setIsEditingDate(false); }}
+                      onClick={() => {
+                        setIsEditingDate(false);
+                      }}
                     >
                       <X className="h-3.5 w-3.5 text-error" />
                     </Button>
@@ -547,9 +565,9 @@ export function InvoiceDetail({
                       ? ` (${invoice.discountPercent}%)`
                       : invoice.subtotal > 0
                         ? ` (${(
-                          (invoice.discountAmount / invoice.subtotal) *
-                          100
-                        ).toFixed(0)}%)`
+                            (invoice.discountAmount / invoice.subtotal) *
+                            100
+                          ).toFixed(0)}%)`
                         : ""}
                   </span>
                   <span className="font-medium text-success">
@@ -607,6 +625,13 @@ export function InvoiceDetail({
           </CardBody>
         </Card>
       )}
+
+      {/* Payment History */}
+      <PaymentHistoryCard
+        payments={payments}
+        isLoading={paymentsLoading}
+        type="in"
+      />
 
       {/* Invoice History */}
       <HistorySection
@@ -738,7 +763,7 @@ function HistorySection({
                         entry.action === "updated" && "bg-primary-100",
                         entry.action === "status_changed" && "bg-warning-light",
                         entry.action === "payment_recorded" &&
-                        "bg-success-light",
+                          "bg-success-light",
                         entry.action === "deleted" && "bg-error-light"
                       )}
                     >

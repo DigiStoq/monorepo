@@ -102,11 +102,31 @@ export function StockSummaryReport(): React.ReactNode {
       { key: "itemName", label: "Item" },
       { key: "sku", label: "SKU" },
       { key: "category", label: "Category" },
-      { key: "stockQuantity", label: "Stock", format: (val, item) => `${val} ${item.unit}` },
-      { key: "purchasePrice", label: "Purchase Price", format: (val) => formatCurrency(Number(val)) },
-      { key: "salePrice", label: "Sale Price", format: (val) => formatCurrency(Number(val)) },
-      { key: "stockValue", label: "Stock Value", format: (val) => formatCurrency(Number(val)) },
-      { key: "isLowStock", label: "Status", format: (val) => val ? "Low Stock" : "In Stock" },
+      {
+        key: "stockQuantity",
+        label: "Stock",
+        format: (val, item) => `${val} ${item.unit}`,
+      },
+      {
+        key: "purchasePrice",
+        label: "Purchase Price",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "salePrice",
+        label: "Sale Price",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "stockValue",
+        label: "Stock Value",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "isLowStock",
+        label: "Status",
+        format: (val) => (val ? "Low Stock" : "In Stock"),
+      },
     ],
     [formatCurrency]
   );
@@ -141,8 +161,12 @@ export function StockSummaryReport(): React.ReactNode {
         onRefresh={() => {
           /* TODO: Implement refresh */
         }}
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={
           <div className="flex items-center gap-4">
             <div className="flex-1 max-w-xs">
@@ -230,7 +254,9 @@ export function StockSummaryReport(): React.ReactNode {
               <p
                 className={cn(
                   "text-xl sm:text-2xl font-bold",
-                  totals.lowStockCount > 0 ? "text-warning" : "text-text-heading"
+                  totals.lowStockCount > 0
+                    ? "text-warning"
+                    : "text-text-heading"
                 )}
               >
                 {totals.lowStockCount}
@@ -310,7 +336,9 @@ export function StockSummaryReport(): React.ReactNode {
                         <span
                           className={cn(
                             "font-medium",
-                            item.isLowStock ? "text-warning" : "text-text-heading"
+                            item.isLowStock
+                              ? "text-warning"
+                              : "text-text-heading"
                           )}
                         >
                           {item.stockQuantity} {item.unit}
@@ -370,7 +398,9 @@ export function StockSummaryReport(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={filteredItems}
         columns={exportColumns}
         title="Export Stock Summary"

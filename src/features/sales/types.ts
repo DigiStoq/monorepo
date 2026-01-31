@@ -58,6 +58,14 @@ export interface SaleInvoiceFormData {
   transportName?: string | undefined;
   deliveryDate?: string | undefined;
   deliveryLocation?: string | undefined;
+  // Payment fields
+  initialPaymentStatus?: "paid" | "unpaid" | "partial";
+  initialAmountPaid?: number;
+  initialPaymentMode?: PaymentMode;
+  initialBankAccountId?: string;
+  initialChequeNumber?: string;
+  initialChequeBankName?: string;
+  initialChequeDueDate?: string;
 }
 
 // Form data used for creating an invoice
@@ -74,6 +82,14 @@ export interface InvoiceFormData {
   transportName?: string;
   deliveryDate?: string;
   deliveryLocation?: string;
+  // Payment fields
+  initialPaymentStatus?: "paid" | "unpaid" | "partial";
+  initialAmountPaid?: number;
+  initialPaymentMode?: PaymentMode;
+  initialBankAccountId?: string;
+  initialChequeNumber?: string;
+  initialChequeBankName?: string;
+  initialChequeDueDate?: string;
 }
 
 export interface SaleInvoiceItemFormData {

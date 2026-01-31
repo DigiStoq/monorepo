@@ -80,11 +80,13 @@ export function useCategoryMutations(): CategoryMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      await db.execute(
-        `INSERT INTO categories (id, name, description, item_count, created_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [id, data.name, data.description ?? null, 0, now]
-      );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO categories (id, name, description, item_count, created_at)
+            VALUES (?, ?, ?, ?, ?)`,
+          [id, data.name, data.description ?? null, 0, now]
+        );
+      });
 
       return id;
     },
@@ -96,39 +98,43 @@ export function useCategoryMutations(): CategoryMutations {
       id: string,
       data: { name?: string; description?: string }
     ): Promise<void> => {
-      const fields: string[] = [];
-      const values: (string | number)[] = [];
+      await db.writeTransaction(async (tx) => {
+        const fields: string[] = [];
+        const values: (string | number)[] = [];
 
-      if (data.name !== undefined) {
-        fields.push("name = ?");
-        values.push(data.name);
-      }
-      if (data.description !== undefined) {
-        fields.push("description = ?");
-        values.push(data.description);
-      }
+        if (data.name !== undefined) {
+          fields.push("name = ?");
+          values.push(data.name);
+        }
+        if (data.description !== undefined) {
+          fields.push("description = ?");
+          values.push(data.description);
+        }
 
-      values.push(id);
+        values.push(id);
 
-      if (fields.length > 0) {
-        await db.execute(
-          `UPDATE categories SET ${fields.join(", ")} WHERE id = ?`,
-          values
-        );
-      }
+        if (fields.length > 0) {
+          await tx.execute(
+            `UPDATE categories SET ${fields.join(", ")} WHERE id = ?`,
+            values
+          );
+        }
+      });
     },
     [db]
   );
 
   const deleteCategory = useCallback(
     async (id: string): Promise<void> => {
-      // First, unlink items from this category
-      await db.execute(
-        `UPDATE items SET category_id = NULL WHERE category_id = ?`,
-        [id]
-      );
-      // Then delete the category
-      await db.execute(`DELETE FROM categories WHERE id = ?`, [id]);
+      await db.writeTransaction(async (tx) => {
+        // First, unlink items from this category
+        await tx.execute(
+          `UPDATE items SET category_id = NULL WHERE category_id = ?`,
+          [id]
+        );
+        // Then delete the category
+        await tx.execute(`DELETE FROM categories WHERE id = ?`, [id]);
+      });
     },
     [db]
   );

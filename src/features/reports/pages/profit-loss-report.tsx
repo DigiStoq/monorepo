@@ -52,31 +52,72 @@ export function ProfitLossReportPage(): React.ReactNode {
   // Format currency
   const { formatCurrency } = useCurrency();
 
+  interface ProfitLossExportRow {
+    section: string;
+    item: string;
+    amount: number;
+  }
+
   // Export Data Preparation
-  const exportData = useMemo(() => {
+  const exportData = useMemo((): ProfitLossExportRow[] => {
     if (!report) return [];
     return [
-      { section: "Revenue", item: "Sales Revenue", amount: report.revenue.sales },
-      { section: "Revenue", item: "Other Income", amount: report.revenue.otherIncome },
-      { section: "Revenue", item: "Total Revenue", amount: report.revenue.total },
-      { section: "Cost of Goods Sold", item: "Inventory Purchases", amount: report.expenses.costOfGoodsSold },
-      { section: "Gross Profit", item: "Gross Profit", amount: report.grossProfit },
-      { section: "Expenses", item: "Operating Expenses", amount: report.expenses.operatingExpenses },
-      { section: "Expenses", item: "Other Expenses", amount: report.expenses.otherExpenses },
-      { section: "Expenses", item: "Total Expenses", amount: report.expenses.total },
+      {
+        section: "Revenue",
+        item: "Sales Revenue",
+        amount: report.revenue.sales,
+      },
+      {
+        section: "Revenue",
+        item: "Other Income",
+        amount: report.revenue.otherIncome,
+      },
+      {
+        section: "Revenue",
+        item: "Total Revenue",
+        amount: report.revenue.total,
+      },
+      {
+        section: "Cost of Goods Sold",
+        item: "Inventory Purchases",
+        amount: report.expenses.costOfGoodsSold,
+      },
+      {
+        section: "Gross Profit",
+        item: "Gross Profit",
+        amount: report.grossProfit,
+      },
+      {
+        section: "Expenses",
+        item: "Operating Expenses",
+        amount: report.expenses.operatingExpenses,
+      },
+      {
+        section: "Expenses",
+        item: "Other Expenses",
+        amount: report.expenses.otherExpenses,
+      },
+      {
+        section: "Expenses",
+        item: "Total Expenses",
+        amount: report.expenses.total,
+      },
       { section: "Net Profit", item: "Net Profit", amount: report.netProfit },
     ];
   }, [report]);
 
-  const exportColumns: ExportColumn<any>[] = useMemo(
+  const exportColumns: ExportColumn<ProfitLossExportRow>[] = useMemo(
     () => [
       { key: "section", label: "Section" },
       { key: "item", label: "Item" },
-      { key: "amount", label: "Amount", format: (val) => formatCurrency(Number(val)) },
+      {
+        key: "amount",
+        label: "Amount",
+        format: (val) => formatCurrency(Number(val)),
+      },
     ],
     [formatCurrency]
   );
-
 
   // Loading state
   if (isLoading || !report) {
@@ -110,8 +151,12 @@ export function ProfitLossReportPage(): React.ReactNode {
         onRefresh={() => {
           /* TODO: Implement refresh */
         }}
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={<DateRangeFilter value={dateRange} onChange={setDateRange} />}
       >
         {/* Summary Cards */}
@@ -323,7 +368,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                       (
                       {formatCurrency(
                         data.expenses.operatingExpenses +
-                        data.expenses.otherExpenses
+                          data.expenses.otherExpenses
                       )}
                       )
                     </td>
@@ -333,7 +378,9 @@ export function ProfitLossReportPage(): React.ReactNode {
                   <tr
                     className={cn(
                       "border-t-2",
-                      data.netProfit >= 0 ? "bg-success-light" : "bg-error-light"
+                      data.netProfit >= 0
+                        ? "bg-success-light"
+                        : "bg-error-light"
                     )}
                   >
                     <td
@@ -432,7 +479,9 @@ export function ProfitLossReportPage(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={exportData}
         columns={exportColumns}
         title="Profit & Loss Statement"

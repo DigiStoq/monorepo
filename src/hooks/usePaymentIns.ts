@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { PaymentIn, PaymentMode } from "@/features/sales/types";
 
 // Database row type (snake_case columns from SQLite)
@@ -18,12 +19,6 @@ interface PaymentInRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
-
-interface PaymentQueryRow {
-  customer_id: string;
-  invoice_id: string | null;
-  amount: number;
 }
 
 function mapRowToPaymentIn(row: PaymentInRow): PaymentIn {
@@ -102,6 +97,27 @@ export function usePaymentIns(filters?: {
   return { payments, isLoading, error };
 }
 
+/**
+ * Fetch all payments linked to a specific invoice.
+ * Used to display payment history on the invoice detail page.
+ */
+export function usePaymentsByInvoiceId(invoiceId: string | null): {
+  payments: PaymentIn[];
+  isLoading: boolean;
+  error: Error | undefined;
+} {
+  const { data, isLoading, error } = useQuery<PaymentInRow>(
+    invoiceId
+      ? `SELECT * FROM payment_ins WHERE invoice_id = ? ORDER BY date DESC, created_at DESC`
+      : `SELECT * FROM payment_ins WHERE 1 = 0`,
+    invoiceId ? [invoiceId] : []
+  );
+
+  const payments = useMemo(() => data.map(mapRowToPaymentIn), [data]);
+
+  return { payments, isLoading, error };
+}
+
 export function usePaymentInById(id: string | null): {
   payment: PaymentIn | null;
   isLoading: boolean;
@@ -145,50 +161,82 @@ export function usePaymentInMutations(): PaymentInMutations {
     async (data: CreatePaymentData): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      await db.execute(
-        `INSERT INTO payment_ins (
-          id, receipt_number, customer_id, customer_name, date, amount,
-          payment_mode, reference_number, invoice_id, invoice_number, notes,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          data.receiptNumber,
-          data.customerId,
-          data.customerName,
-          data.date,
-          data.amount,
-          data.paymentMode,
-          data.referenceNumber ?? null,
-          data.invoiceId ?? null,
-          data.invoiceNumber ?? null,
-          data.notes ?? null,
-          now,
-          now,
-        ]
-      );
-
-      // Update invoice if linked
-      if (data.invoiceId) {
-        await db.execute(
-          `UPDATE sale_invoices
-           SET amount_paid = amount_paid + ?,
-               amount_due = amount_due - ?,
-               status = CASE WHEN amount_due <= ? THEN 'paid' ELSE 'partial' END,
-               updated_at = ?
-           WHERE id = ?`,
-          [data.amount, data.amount, data.amount, now, data.invoiceId]
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO payment_ins (
+            id, receipt_number, customer_id, customer_name, date, amount,
+            payment_mode, reference_number, invoice_id, invoice_number, notes,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            data.receiptNumber,
+            data.customerId,
+            data.customerName,
+            data.date,
+            data.amount,
+            data.paymentMode,
+            data.referenceNumber ?? null,
+            data.invoiceId ?? null,
+            data.invoiceNumber ?? null,
+            data.notes ?? null,
+            now,
+            now,
+          ]
         );
-      }
 
-      // Update customer balance
-      await db.execute(
-        `UPDATE customers
-         SET current_balance = current_balance - ?, updated_at = ?
-         WHERE id = ?`,
-        [data.amount, now, data.customerId]
-      );
+        // Update invoice if linked
+        if (data.invoiceId) {
+          await tx.execute(
+            `UPDATE sale_invoices
+             SET amount_paid = amount_paid + ?,
+                 amount_due = amount_due - ?,
+                 status = CASE 
+                    WHEN amount_due <= ? THEN 'paid' 
+                    ELSE 'unpaid' 
+                 END,
+                 updated_at = ?
+             WHERE id = ?`,
+            [data.amount, data.amount, data.amount, now, data.invoiceId]
+          );
+        }
+
+        // Update customer balance
+        await tx.execute(
+          `UPDATE customers
+           SET current_balance = current_balance - ?, updated_at = ?
+           WHERE id = ?`,
+          [data.amount, now, data.customerId]
+        );
+
+        // Log History
+        const historyId = crypto.randomUUID();
+        await tx.execute(
+          `INSERT INTO invoice_history (
+            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            "payment_in",
+            "created",
+            `Received payment ${data.receiptNumber}`,
+            null,
+            JSON.stringify({
+              amount: data.amount,
+              customer: data.customerName,
+              invoice: data.invoiceNumber,
+            }),
+            user?.id ?? null,
+            userName,
+            now,
+          ]
+        );
+      });
 
       return id;
     },
@@ -197,46 +245,75 @@ export function usePaymentInMutations(): PaymentInMutations {
 
   const deletePayment = useCallback(
     async (id: string): Promise<void> => {
-      // Get payment details first
-      const result = await db.execute(
-        `SELECT customer_id, invoice_id, amount FROM payment_ins WHERE id = ?`,
-        [id]
-      );
-      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
+      const now = new Date().toISOString();
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      if (rows.length > 0) {
-        const payment = rows[0];
-        const now = new Date().toISOString();
-
-        // Reverse customer balance
-        await db.execute(
-          `UPDATE customers
-           SET current_balance = current_balance + ?, updated_at = ?
-           WHERE id = ?`,
-          [payment.amount, now, payment.customer_id]
+      await db.writeTransaction(async (tx) => {
+        // Get payment details first
+        const result = await tx.execute(
+          `SELECT customer_id, invoice_id, amount, receipt_number FROM payment_ins WHERE id = ?`,
+          [id]
         );
+        const payment = result.rows?.item(0);
 
-        // Reverse invoice payment if linked
-        if (payment.invoice_id) {
-          await db.execute(
-            `UPDATE sale_invoices
-             SET amount_paid = amount_paid - ?,
-                 amount_due = amount_due + ?,
-                 status = CASE WHEN amount_paid - ? <= 0 THEN 'sent' ELSE 'partial' END,
-                 updated_at = ?
-             WHERE id = ?`,
+        if (payment) {
+          // Reverse customer balance
+          await tx.execute(
+            `UPDATE customers
+            SET current_balance = current_balance + ?, updated_at = ?
+            WHERE id = ?`,
+            [payment.amount, now, payment.customer_id]
+          );
+
+          // Reverse invoice payment if linked
+          if (payment.invoice_id) {
+            await tx.execute(
+              `UPDATE sale_invoices
+                SET amount_paid = amount_paid - ?,
+                    amount_due = amount_due + ?,
+                    status = CASE 
+                      WHEN amount_paid - ? <= 0 AND status = 'draft' THEN 'draft' 
+                      WHEN amount_paid - ? <= 0 THEN 'unpaid'
+                      ELSE 'unpaid' 
+                    END,
+                    updated_at = ?
+                WHERE id = ?`,
+              [
+                payment.amount,
+                payment.amount,
+                payment.amount,
+                payment.amount,
+                now,
+                payment.invoice_id,
+              ]
+            );
+          }
+
+          // Log History
+          const historyId = crypto.randomUUID();
+          await tx.execute(
+            `INSERT INTO invoice_history (
+                id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              payment.amount,
-              payment.amount,
-              payment.amount,
+              historyId,
+              id,
+              "payment_in",
+              "deleted",
+              `Deleted payment ${payment.receipt_number}`,
+              JSON.stringify(payment),
+              null,
+              user?.id ?? null,
+              userName,
               now,
-              payment.invoice_id,
             ]
           );
         }
-      }
 
-      await db.execute(`DELETE FROM payment_ins WHERE id = ?`, [id]);
+        await tx.execute(`DELETE FROM payment_ins WHERE id = ?`, [id]);
+      });
     },
     [db]
   );

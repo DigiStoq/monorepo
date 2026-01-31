@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 
 // ============================================================================
 // TYPES
@@ -147,6 +148,14 @@ export function useInvoiceHistoryMutations(): InvoiceHistoryMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
+      const { user } = useAuthStore.getState();
+      const userId = user?.id ?? null;
+      const userName =
+        user?.user_metadata.full_name ??
+        user?.email ??
+        entry.userName ??
+        "User";
+
       await db.execute(
         `INSERT INTO invoice_history (
           id, invoice_id, invoice_type, action, description,
@@ -160,8 +169,8 @@ export function useInvoiceHistoryMutations(): InvoiceHistoryMutations {
           entry.description,
           entry.oldValues ? JSON.stringify(entry.oldValues) : null,
           entry.newValues ? JSON.stringify(entry.newValues) : null,
-          null, // user_id - would come from auth context
-          entry.userName ?? "User",
+          userId,
+          userName,
           now,
         ]
       );

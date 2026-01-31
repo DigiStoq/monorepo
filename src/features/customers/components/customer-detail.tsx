@@ -35,6 +35,7 @@ export interface CustomerDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onAddTransaction?: (type: "payment-in" | "payment-out") => void;
+  onTransactionClick?: (transaction: CustomerTransaction) => void;
   className?: string;
 }
 
@@ -77,6 +78,7 @@ export function CustomerDetail({
   onEdit,
   onDelete,
   onAddTransaction,
+  onTransactionClick,
   className,
 }: CustomerDetailProps): React.ReactNode {
   const { formatCurrency } = useCurrency();
@@ -343,6 +345,7 @@ export function CustomerDetail({
               data={transactions}
               getRowKey={(row) => row.id}
               hoverable
+              onRowClick={onTransactionClick}
             />
           )}
         </CardBody>

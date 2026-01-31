@@ -3,10 +3,7 @@ import { Card, CardBody, Select, type SelectOption } from "@/components/ui";
 import { ReportLayout, DateRangeFilter, ExportModal } from "../components";
 import { User, ArrowUpCircle, ArrowDownCircle, Search } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type {
-  DateRange,
-  CustomerLedgerEntry,
-} from "../types";
+import type { DateRange, CustomerLedgerEntry } from "../types";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { ExportColumn } from "../utils/export";
 import { useCustomerStatementReport } from "@/hooks/useReports";
@@ -73,9 +70,21 @@ export function CustomerStatementReport(): React.ReactNode {
       { key: "referenceNumber", label: "Ref No." },
       { key: "description", label: "Description" },
       { key: "type", label: "Type" },
-      { key: "debit", label: "Debit", format: (val) => formatCurrency(Number(val)) },
-      { key: "credit", label: "Credit", format: (val) => formatCurrency(Number(val)) },
-      { key: "balance", label: "Balance", format: (val) => formatCurrency(Number(val)) },
+      {
+        key: "debit",
+        label: "Debit",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "credit",
+        label: "Credit",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "balance",
+        label: "Balance",
+        format: (val) => formatCurrency(Number(val)),
+      },
     ],
     [formatCurrency]
   );
@@ -86,8 +95,12 @@ export function CustomerStatementReport(): React.ReactNode {
         title="Customer Statement"
         subtitle="Detailed ledger of customer transactions"
         backPath="/reports"
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={
           <div className="flex flex-wrap items-center gap-4">
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -124,7 +137,9 @@ export function CustomerStatementReport(): React.ReactNode {
                       <User className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-700 font-medium">Opening Balance</p>
+                      <p className="text-sm text-primary-700 font-medium">
+                        Opening Balance
+                      </p>
                       <p className="text-2xl font-bold text-primary-800">
                         {formatCurrency(statement.openingBalance)}
                       </p>
@@ -140,7 +155,9 @@ export function CustomerStatementReport(): React.ReactNode {
                       <ArrowDownCircle className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm text-emerald-700 font-medium">Total Credits</p>
+                      <p className="text-sm text-emerald-700 font-medium">
+                        Total Credits
+                      </p>
                       <p className="text-2xl font-bold text-emerald-800">
                         {formatCurrency(statement.totalCredit)}
                       </p>
@@ -156,7 +173,9 @@ export function CustomerStatementReport(): React.ReactNode {
                       <ArrowUpCircle className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm text-amber-700 font-medium">Closing Balance</p>
+                      <p className="text-sm text-amber-700 font-medium">
+                        Closing Balance
+                      </p>
                       <p className="text-2xl font-bold text-amber-800">
                         {formatCurrency(statement.closingBalance)}
                       </p>
@@ -173,20 +192,35 @@ export function CustomerStatementReport(): React.ReactNode {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-muted/50 border-b border-border-primary">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Date</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Ref #</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Description</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Debit</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Credit</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Balance</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Ref #
+                        </th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Description
+                        </th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Debit
+                        </th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Credit
+                        </th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                          Balance
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-primary">
                       {statement.entries.map((entry) => (
-                        <tr key={entry.id} className={cn(
-                          "hover:bg-muted/30 transition-colors",
-                          entry.type === 'opening' && "bg-muted/10 italic"
-                        )}>
+                        <tr
+                          key={entry.id}
+                          className={cn(
+                            "hover:bg-muted/30 transition-colors",
+                            entry.type === "opening" && "bg-muted/10 italic"
+                          )}
+                        >
                           <td className="py-3 px-4 text-sm text-text-primary whitespace-nowrap">
                             {formatDate(entry.date)}
                           </td>
@@ -197,10 +231,14 @@ export function CustomerStatementReport(): React.ReactNode {
                             {entry.description}
                           </td>
                           <td className="py-3 px-4 text-sm text-right font-medium text-amber-600">
-                            {entry.debit > 0 ? formatCurrency(entry.debit) : "-"}
+                            {entry.debit > 0
+                              ? formatCurrency(entry.debit)
+                              : "-"}
                           </td>
                           <td className="py-3 px-4 text-sm text-right font-medium text-emerald-600">
-                            {entry.credit > 0 ? formatCurrency(entry.credit) : "-"}
+                            {entry.credit > 0
+                              ? formatCurrency(entry.credit)
+                              : "-"}
                           </td>
                           <td className="py-3 px-4 text-sm text-right font-bold text-text-primary">
                             {formatCurrency(entry.balance)}
@@ -218,7 +256,9 @@ export function CustomerStatementReport(): React.ReactNode {
       {statement && (
         <ExportModal
           isOpen={isExportOpen}
-          onClose={() => { setIsExportOpen(false); }}
+          onClose={() => {
+            setIsExportOpen(false);
+          }}
           data={statement.entries}
           columns={exportColumns}
           title={`Statement - ${statement.customerName}`}

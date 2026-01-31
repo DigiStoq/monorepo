@@ -57,9 +57,21 @@ export function PayablesReport(): React.ReactNode {
     () => [
       { key: "supplierName", label: "Supplier" },
       { key: "invoiceCount", label: "Invoices" },
-      { key: "totalDue", label: "Amount Due", format: (val) => formatCurrency(Number(val)) },
-      { key: "overdueAmount", label: "Overdue", format: (val) => formatCurrency(Number(val)) },
-      { key: "overdueAmount", label: "Status", format: (val) => Number(val) > 0 ? "Overdue" : "Pending" },
+      {
+        key: "totalDue",
+        label: "Amount Due",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "overdueAmount",
+        label: "Overdue",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "overdueAmount",
+        label: "Status",
+        format: (val) => (Number(val) > 0 ? "Overdue" : "Pending"),
+      },
     ],
     [formatCurrency]
   );
@@ -85,8 +97,12 @@ export function PayablesReport(): React.ReactNode {
         title="Payables Report"
         subtitle="Outstanding amounts to suppliers"
         backPath="/reports"
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px]">
@@ -157,7 +173,9 @@ export function PayablesReport(): React.ReactNode {
           {/* Payables Table */}
           <Card>
             <CardHeader>
-              <h3 className="font-medium text-text-heading">Supplier Payables</h3>
+              <h3 className="font-medium text-text-heading">
+                Supplier Payables
+              </h3>
             </CardHeader>
             <CardBody className="p-0">
               <div className="overflow-x-auto">
@@ -191,7 +209,10 @@ export function PayablesReport(): React.ReactNode {
                       </tr>
                     ) : (
                       filteredData.map((entry) => (
-                        <tr key={entry.supplierId} className="hover:bg-muted/50">
+                        <tr
+                          key={entry.supplierId}
+                          className="hover:bg-muted/50"
+                        >
                           <td className="px-4 py-3 font-medium text-text-heading">
                             {entry.supplierName}
                           </td>
@@ -245,7 +266,9 @@ export function PayablesReport(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={filteredData}
         columns={exportColumns}
         title="Payables Report"

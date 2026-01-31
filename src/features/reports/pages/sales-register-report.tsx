@@ -97,17 +97,43 @@ export function SalesRegisterReport(): React.ReactNode {
       { key: "date", label: "Date", format: (val) => formatDate(String(val)) },
       { key: "customerName", label: "Customer" },
       { key: "itemCount", label: "Items" },
-      { key: "subtotal", label: "Subtotal", format: (val) => formatCurrency(Number(val)) },
-      { key: "tax", label: "Tax", format: (val) => formatCurrency(Number(val)) },
-      { key: "discount", label: "Discount", format: (val) => formatCurrency(Number(val)) },
-      { key: "total", label: "Total", format: (val) => formatCurrency(Number(val)) },
-      { key: "paid", label: "Paid", format: (val) => formatCurrency(Number(val)) },
-      { key: "due", label: "Due", format: (val) => formatCurrency(Number(val)) },
       {
-        key: "status", label: "Status", format: (val) => {
+        key: "subtotal",
+        label: "Subtotal",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "tax",
+        label: "Tax",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "discount",
+        label: "Discount",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "total",
+        label: "Total",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "paid",
+        label: "Paid",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "due",
+        label: "Due",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "status",
+        label: "Status",
+        format: (val) => {
           const config = statusConfig[String(val).toLowerCase()];
           return config ? config.label : String(val);
-        }
+        },
       },
     ],
     [formatCurrency]
@@ -139,8 +165,12 @@ export function SalesRegisterReport(): React.ReactNode {
         title="Sales Register"
         subtitle="Detailed list of all sales invoices"
         backPath="/reports"
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }} // Open export modal for print too
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }} // Open export modal for print too
         filters={
           <div className="flex flex-wrap items-center gap-4">
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -359,7 +389,9 @@ export function SalesRegisterReport(): React.ReactNode {
 
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={filteredData}
         columns={exportColumns}
         title="Export Sales Register"

@@ -97,26 +97,47 @@ export function PurchaseRegisterReport(): React.ReactNode {
       { key: "date", label: "Date", format: (val) => formatDate(String(val)) },
       { key: "customerName", label: "Supplier" },
       { key: "itemCount", label: "Items" },
-      { key: "subtotal", label: "Subtotal", format: (val) => formatCurrency(Number(val)) },
-      { key: "tax", label: "Tax", format: (val) => formatCurrency(Number(val)) },
-      // Discount might not be in the type displayed in table but it is in calculations? 
-      // Checked table: no discount column in PurchaseRegister table component view, 
+      {
+        key: "subtotal",
+        label: "Subtotal",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "tax",
+        label: "Tax",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      // Discount might not be in the type displayed in table but it is in calculations?
+      // Checked table: no discount column in PurchaseRegister table component view,
       // but it is in calculations. Safe to omit if not visible or include if needed.
       // Table cols: Invoice, Date, Supplier, Items, Subtotal, Tax, Total, Paid, Due, Status
       // I'll match the table columns.
-      { key: "total", label: "Total", format: (val) => formatCurrency(Number(val)) },
-      { key: "paid", label: "Paid", format: (val) => formatCurrency(Number(val)) },
-      { key: "due", label: "Due", format: (val) => formatCurrency(Number(val)) },
       {
-        key: "status", label: "Status", format: (val) => {
+        key: "total",
+        label: "Total",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "paid",
+        label: "Paid",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "due",
+        label: "Due",
+        format: (val) => formatCurrency(Number(val)),
+      },
+      {
+        key: "status",
+        label: "Status",
+        format: (val) => {
           const config = statusConfig[String(val).toLowerCase()];
           return config ? config.label : String(val);
-        }
+        },
       },
     ],
     [formatCurrency]
   );
-
 
   // Loading state
   if (isLoading) {
@@ -144,8 +165,12 @@ export function PurchaseRegisterReport(): React.ReactNode {
         title="Purchase Register"
         subtitle="Detailed list of all purchase invoices"
         backPath="/reports"
-        onExport={() => { setIsExportOpen(true); }}
-        onPrint={() => { setIsExportOpen(true); }}
+        onExport={() => {
+          setIsExportOpen(true);
+        }}
+        onPrint={() => {
+          setIsExportOpen(true);
+        }}
         filters={
           <div className="flex flex-wrap items-center gap-4">
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -343,7 +368,9 @@ export function PurchaseRegisterReport(): React.ReactNode {
       </ReportLayout>
       <ExportModal
         isOpen={isExportOpen}
-        onClose={() => { setIsExportOpen(false); }}
+        onClose={() => {
+          setIsExportOpen(false);
+        }}
         data={filteredData}
         columns={exportColumns}
         title="Export Purchase Register"

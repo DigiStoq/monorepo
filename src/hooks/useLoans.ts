@@ -258,35 +258,37 @@ export function useLoanMutations(): LoanMutations {
       const now = new Date().toISOString();
       const totalAmount = data.principalAmount + data.interestAmount;
 
-      await db.execute(
-        `INSERT INTO loan_payments (
-          id, loan_id, date, principal_amount, interest_amount, total_amount,
-          payment_method, reference_number, notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          data.loanId,
-          data.date,
-          data.principalAmount,
-          data.interestAmount,
-          totalAmount,
-          data.paymentMethod ?? null,
-          data.referenceNumber ?? null,
-          data.notes ?? null,
-          now,
-        ]
-      );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO loan_payments (
+            id, loan_id, date, principal_amount, interest_amount, total_amount,
+            payment_method, reference_number, notes, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            data.loanId,
+            data.date,
+            data.principalAmount,
+            data.interestAmount,
+            totalAmount,
+            data.paymentMethod ?? null,
+            data.referenceNumber ?? null,
+            data.notes ?? null,
+            now,
+          ]
+        );
 
-      // Update loan outstanding amount and paid EMIs
-      await db.execute(
-        `UPDATE loans
-         SET outstanding_amount = outstanding_amount - ?,
-             paid_emis = paid_emis + 1,
-             status = CASE WHEN outstanding_amount - ? <= 0 THEN 'closed' ELSE status END,
-             updated_at = ?
-         WHERE id = ?`,
-        [data.principalAmount, data.principalAmount, now, data.loanId]
-      );
+        // Update loan outstanding amount and paid EMIs
+        await tx.execute(
+          `UPDATE loans
+            SET outstanding_amount = outstanding_amount - ?,
+                paid_emis = paid_emis + 1,
+                status = CASE WHEN outstanding_amount - ? <= 0 THEN 'closed' ELSE status END,
+                updated_at = ?
+            WHERE id = ?`,
+          [data.principalAmount, data.principalAmount, now, data.loanId]
+        );
+      });
 
       return id;
     },
@@ -309,8 +311,10 @@ export function useLoanMutations(): LoanMutations {
 
   const deleteLoan = useCallback(
     async (id: string): Promise<void> => {
-      await db.execute(`DELETE FROM loan_payments WHERE loan_id = ?`, [id]);
-      await db.execute(`DELETE FROM loans WHERE id = ?`, [id]);
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(`DELETE FROM loan_payments WHERE loan_id = ?`, [id]);
+        await tx.execute(`DELETE FROM loans WHERE id = ?`, [id]);
+      });
     },
     [db]
   );

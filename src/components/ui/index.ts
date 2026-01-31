@@ -124,12 +124,3 @@ export type {
   TabsVariant,
   TabsSize,
 } from "./tabs";
-
-// Toast
-export { ToastProvider, useToast } from "./toast";
-export type {
-  Toast,
-  ToastType,
-  ToastPosition,
-  ToastProviderProps,
-} from "./toast";
