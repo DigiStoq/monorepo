@@ -117,23 +117,6 @@ export function usePaymentOutsByInvoiceId(invoiceId: string | null): {
   return { payments, isLoading, error };
 }
 
-export function usePaymentOutById(id: string | null): {
-  payment: PaymentOut | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<PaymentOutRow>(
-    id
-      ? `SELECT * FROM payment_outs WHERE id = ?`
-      : `SELECT * FROM payment_outs WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const payment = data[0] ? mapRowToPaymentOut(data[0]) : null;
-
-  return { payment, isLoading, error };
-}
-
 import { useAuthStore } from "@/stores/auth-store";
 
 interface PaymentOutMutations {
@@ -325,33 +308,5 @@ export function usePaymentOutMutations(): PaymentOutMutations {
   return {
     createPayment,
     deletePayment,
-  };
-}
-
-interface PaymentOutStats {
-  totalPaid: number;
-  thisMonthPaid: number;
-  todayPaid: number;
-}
-
-export function usePaymentOutStats(): PaymentOutStats {
-  const { data: totalPaid } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs`
-  );
-
-  const { data: thisMonthPaid } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs
-     WHERE date >= date('now', 'start of month')`
-  );
-
-  const { data: todayPaid } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs
-     WHERE date = date('now')`
-  );
-
-  return {
-    totalPaid: totalPaid[0]?.sum ?? 0,
-    thisMonthPaid: thisMonthPaid[0]?.sum ?? 0,
-    todayPaid: todayPaid[0]?.sum ?? 0,
   };
 }

@@ -43,23 +43,6 @@ export function useCategories(): {
   return { categories, isLoading, error };
 }
 
-export function useCategoryById(id: string | null): {
-  category: Category | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<CategoryRow>(
-    id
-      ? `SELECT * FROM categories WHERE id = ?`
-      : `SELECT * FROM categories WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const category = data[0] ? mapRowToCategory(data[0]) : null;
-
-  return { category, isLoading, error };
-}
-
 interface CategoryMutations {
   createCategory: (data: {
     name: string;

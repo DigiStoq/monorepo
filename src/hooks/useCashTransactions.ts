@@ -190,39 +190,3 @@ export function useCashTransactionMutations(): CashTransactionMutations {
     deleteTransaction,
   };
 }
-
-interface CashStats {
-  todayIn: number;
-  todayOut: number;
-  thisMonthIn: number;
-  thisMonthOut: number;
-}
-
-export function useCashStats(): CashStats {
-  const { data: todayIn } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
-     WHERE date = date('now') AND type = 'in'`
-  );
-
-  const { data: todayOut } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
-     WHERE date = date('now') AND type = 'out'`
-  );
-
-  const { data: thisMonthIn } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
-     WHERE date >= date('now', 'start of month') AND type = 'in'`
-  );
-
-  const { data: thisMonthOut } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
-     WHERE date >= date('now', 'start of month') AND type = 'out'`
-  );
-
-  return {
-    todayIn: todayIn[0]?.sum ?? 0,
-    todayOut: todayOut[0]?.sum ?? 0,
-    thisMonthIn: thisMonthIn[0]?.sum ?? 0,
-    thisMonthOut: thisMonthOut[0]?.sum ?? 0,
-  };
-}

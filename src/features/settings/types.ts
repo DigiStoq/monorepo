@@ -234,25 +234,3 @@ export interface BackupRecord {
   status: "success" | "failed" | "in-progress";
   errorMessage?: string;
 }
-
-// Settings Section Navigation
-// ts-prune-ignore-next (exported for future settings navigation feature)
-export interface SettingsSection {
-  id: string;
-  label: string;
-  description: string;
-  icon: string;
-  path: string;
-}
-
-// Combined Settings State
-// ts-prune-ignore-next (exported for future unified settings management)
-export interface AllSettings {
-  company: CompanySettings;
-  user: UserProfile;
-  preferences: AppPreferences;
-  tax: TaxSettings;
-  invoice: InvoiceSettings;
-  security: SecuritySettings;
-  backup: BackupSettings;
-}

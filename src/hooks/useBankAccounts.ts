@@ -67,23 +67,6 @@ export function useBankAccounts(filters?: {
   return { accounts, isLoading, error };
 }
 
-export function useBankAccountById(id: string | null): {
-  account: BankAccount | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<BankAccountRow>(
-    id
-      ? `SELECT * FROM bank_accounts WHERE id = ?`
-      : `SELECT * FROM bank_accounts WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const account = data[0] ? mapRowToAccount(data[0]) : null;
-
-  return { account, isLoading, error };
-}
-
 interface BankAccountMutations {
   createAccount: (data: {
     name: string;
@@ -233,25 +216,5 @@ export function useBankAccountMutations(): BankAccountMutations {
     toggleAccountActive,
     updateBalance,
     deleteAccount,
-  };
-}
-
-interface BankAccountStats {
-  totalBalance: number;
-  accountCount: number;
-}
-
-export function useBankAccountStats(): BankAccountStats {
-  const { data: totalBalance } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(current_balance), 0) as sum FROM bank_accounts WHERE is_active = 1`
-  );
-
-  const { data: accountCount } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM bank_accounts WHERE is_active = 1`
-  );
-
-  return {
-    totalBalance: totalBalance[0]?.sum ?? 0,
-    accountCount: accountCount[0]?.count ?? 0,
   };
 }

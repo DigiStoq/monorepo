@@ -118,23 +118,6 @@ export function usePaymentsByInvoiceId(invoiceId: string | null): {
   return { payments, isLoading, error };
 }
 
-export function usePaymentInById(id: string | null): {
-  payment: PaymentIn | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<PaymentInRow>(
-    id
-      ? `SELECT * FROM payment_ins WHERE id = ?`
-      : `SELECT * FROM payment_ins WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const payment = data[0] ? mapRowToPaymentIn(data[0]) : null;
-
-  return { payment, isLoading, error };
-}
-
 // Internal type for creating a payment (includes receiptNumber, customerName, invoiceNumber)
 interface CreatePaymentData {
   receiptNumber: string;
@@ -321,33 +304,5 @@ export function usePaymentInMutations(): PaymentInMutations {
   return {
     createPayment,
     deletePayment,
-  };
-}
-
-interface PaymentInStats {
-  totalReceived: number;
-  thisMonthReceived: number;
-  todayReceived: number;
-}
-
-export function usePaymentInStats(): PaymentInStats {
-  const { data: totalReceived } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_ins`
-  );
-
-  const { data: thisMonthReceived } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_ins
-     WHERE date >= date('now', 'start of month')`
-  );
-
-  const { data: todayReceived } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_ins
-     WHERE date = date('now')`
-  );
-
-  return {
-    totalReceived: totalReceived[0]?.sum ?? 0,
-    thisMonthReceived: thisMonthReceived[0]?.sum ?? 0,
-    todayReceived: todayReceived[0]?.sum ?? 0,
   };
 }

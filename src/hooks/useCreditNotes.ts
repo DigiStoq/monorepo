@@ -26,19 +26,6 @@ interface CreditNoteRow {
   updated_at: string;
 }
 
-interface CreditNoteItemRow {
-  id: string;
-  credit_note_id: string;
-  item_id: string | null;
-  item_name: string;
-  description: string | null;
-  quantity: number;
-  unit: string | null;
-  unit_price: number;
-  tax_percent: number;
-  amount: number;
-}
-
 function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
   return {
     id: row.id,
@@ -56,21 +43,6 @@ function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
     notes: row.notes ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  };
-}
-
-function mapRowToCreditNoteItem(row: CreditNoteItemRow): CreditNoteItem {
-  return {
-    id: row.id,
-    creditNoteId: row.credit_note_id,
-    itemId: row.item_id ?? undefined,
-    itemName: row.item_name,
-    description: row.description ?? undefined,
-    quantity: row.quantity,
-    unit: row.unit ?? undefined,
-    unitPrice: row.unit_price,
-    taxPercent: row.tax_percent,
-    amount: row.amount,
   };
 }
 
@@ -120,36 +92,6 @@ export function useCreditNotes(filters?: {
   const creditNotes = useMemo(() => data.map(mapRowToCreditNote), [data]);
 
   return { creditNotes, isLoading, error };
-}
-
-export function useCreditNoteById(id: string | null): {
-  creditNote: CreditNote | null;
-  items: CreditNoteItem[];
-  isLoading: boolean;
-} {
-  const { data: noteData, isLoading: noteLoading } = useQuery<CreditNoteRow>(
-    id
-      ? `SELECT * FROM credit_notes WHERE id = ?`
-      : `SELECT * FROM credit_notes WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const { data: itemsData, isLoading: itemsLoading } =
-    useQuery<CreditNoteItemRow>(
-      id
-        ? `SELECT * FROM credit_note_items WHERE credit_note_id = ?`
-        : `SELECT * FROM credit_note_items WHERE 1 = 0`,
-      id ? [id] : []
-    );
-
-  const creditNote = noteData[0] ? mapRowToCreditNote(noteData[0]) : null;
-  const items = itemsData.map(mapRowToCreditNoteItem);
-
-  return {
-    creditNote,
-    items,
-    isLoading: noteLoading || itemsLoading,
-  };
 }
 
 interface CreditNoteMutations {

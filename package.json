@@ -15,6 +15,8 @@
     "mobile:android": "npm --prefix mobile run android",
     "mobile:ios": "npm --prefix mobile run ios",
     "mobile:install": "npm --prefix mobile install",
+    "mobile:lint": "npm --prefix mobile run lint",
+    "mobile:lint:fix": "npm --prefix mobile run lint:fix",
     "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",

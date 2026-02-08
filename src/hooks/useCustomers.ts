@@ -95,7 +95,6 @@ const getCustomersQuery = (filters?: {
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const customersQueryOptions = (
   db: PowerSyncDatabase,
   filters?: {
@@ -137,23 +136,6 @@ export function useCustomers(filters?: {
   const customers = useMemo(() => data.map(mapRowToCustomer), [data]);
 
   return { customers, isLoading, error };
-}
-
-export function useCustomerById(id: string | null): {
-  customer: Customer | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<CustomerRow>(
-    id
-      ? `SELECT * FROM customers WHERE id = ?`
-      : `SELECT * FROM customers WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const customer = data[0] ? mapRowToCustomer(data[0]) : null;
-
-  return { customer, isLoading, error };
 }
 
 interface CustomerMutations {
@@ -312,38 +294,6 @@ export function useCustomerMutations(): CustomerMutations {
     deleteCustomer,
     toggleCustomerActive,
     updateCustomerBalance,
-  };
-}
-
-interface CustomerStats {
-  totalCustomers: number;
-  totalSuppliers: number;
-  totalReceivable: number;
-  totalPayable: number;
-}
-
-export function useCustomerStats(): CustomerStats {
-  const { data: totalCustomers } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM customers WHERE type IN ('customer', 'both') AND is_active = 1`
-  );
-
-  const { data: totalSuppliers } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM customers WHERE type IN ('supplier', 'both') AND is_active = 1`
-  );
-
-  const { data: totalReceivable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(current_balance), 0) as sum FROM customers WHERE type IN ('customer', 'both') AND current_balance > 0`
-  );
-
-  const { data: totalPayable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(ABS(SUM(current_balance)), 0) as sum FROM customers WHERE type IN ('supplier', 'both') AND current_balance < 0`
-  );
-
-  return {
-    totalCustomers: totalCustomers[0]?.count ?? 0,
-    totalSuppliers: totalSuppliers[0]?.count ?? 0,
-    totalReceivable: totalReceivable[0]?.sum ?? 0,
-    totalPayable: totalPayable[0]?.sum ?? 0,
   };
 }
 

@@ -1024,40 +1024,6 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
   };
 }
 
-interface SaleInvoiceStats {
-  totalSales: number;
-  totalReceivable: number;
-  unpaidCount: number;
-  thisMonthSales: number;
-}
-
-export function useSaleInvoiceStats(): SaleInvoiceStats {
-  const { data: totalSales } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM sale_invoices WHERE status != 'returned'`
-  );
-
-  const { data: totalReceivable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM sale_invoices WHERE status = 'unpaid'`
-  );
-
-  const { data: unpaidCount } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM sale_invoices WHERE status = 'unpaid'`
-  );
-
-  const { data: thisMonthSales } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM sale_invoices
-     WHERE status != 'returned'
-     AND date >= date('now', 'start of month')`
-  );
-
-  return {
-    totalSales: totalSales[0]?.sum ?? 0,
-    totalReceivable: totalReceivable[0]?.sum ?? 0,
-    unpaidCount: unpaidCount[0]?.count ?? 0,
-    thisMonthSales: thisMonthSales[0]?.sum ?? 0,
-  };
-}
-
 export interface SaleInvoiceLinkedItems {
   itemsCount: number;
   paymentsCount: number;

@@ -140,39 +140,6 @@ export function usePurchaseInvoices(filters?: {
   return { invoices, isLoading, error };
 }
 
-export function usePurchaseInvoiceById(id: string | null): {
-  invoice: PurchaseInvoice | null;
-  items: PurchaseInvoiceItem[];
-  isLoading: boolean;
-} {
-  const { data: invoiceData, isLoading: invoiceLoading } =
-    useQuery<PurchaseInvoiceRow>(
-      id
-        ? `SELECT * FROM purchase_invoices WHERE id = ?`
-        : `SELECT * FROM purchase_invoices WHERE 1 = 0`,
-      id ? [id] : []
-    );
-
-  const { data: itemsData, isLoading: itemsLoading } =
-    useQuery<PurchaseInvoiceItemRow>(
-      id
-        ? `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`
-        : `SELECT * FROM purchase_invoice_items WHERE 1 = 0`,
-      id ? [id] : []
-    );
-
-  const invoice = invoiceData[0]
-    ? mapRowToPurchaseInvoice(invoiceData[0])
-    : null;
-  const items = itemsData.map(mapRowToPurchaseInvoiceItem);
-
-  return {
-    invoice,
-    items,
-    isLoading: invoiceLoading || itemsLoading,
-  };
-}
-
 interface PurchaseInvoiceMutations {
   createInvoice: (
     data: {
@@ -1031,40 +998,6 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
     updateInvoiceStatus,
     recordPayment,
     deleteInvoice,
-  };
-}
-
-interface PurchaseInvoiceStats {
-  totalPurchases: number;
-  totalPayable: number;
-  returnedCount: number;
-  thisMonthPurchases: number;
-}
-
-export function usePurchaseInvoiceStats(): PurchaseInvoiceStats {
-  const { data: totalPurchases } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices WHERE status != 'returned'`
-  );
-
-  const { data: totalPayable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount_due), 0) as sum FROM purchase_invoices WHERE status IN ('draft', 'ordered', 'received') AND amount_due > 0`
-  );
-
-  const { data: returnedCount } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM purchase_invoices WHERE status = 'returned'`
-  );
-
-  const { data: thisMonthPurchases } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(total), 0) as sum FROM purchase_invoices
-     WHERE status != 'returned'
-     AND date >= date('now', 'start of month')`
-  );
-
-  return {
-    totalPurchases: totalPurchases[0]?.sum ?? 0,
-    totalPayable: totalPayable[0]?.sum ?? 0,
-    returnedCount: returnedCount[0]?.count ?? 0,
-    thisMonthPurchases: thisMonthPurchases[0]?.sum ?? 0,
   };
 }
 

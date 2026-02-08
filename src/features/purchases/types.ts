@@ -73,19 +73,6 @@ export interface PurchaseInvoiceItemFormData {
   taxPercent?: number | undefined;
 }
 
-// ts-prune-ignore-next (exported for future purchase filtering feature)
-export interface PurchaseFilters {
-  search: string;
-  status: PurchaseInvoiceStatus | "all";
-  customerId: string;
-  dateRange: {
-    from: string | null;
-    to: string | null;
-  };
-  sortBy: "date" | "number" | "amount" | "supplier";
-  sortOrder: "asc" | "desc";
-}
-
 // ============================================================================
 // PAYMENT OUT TYPES
 // ============================================================================

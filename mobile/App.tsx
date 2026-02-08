@@ -61,14 +61,14 @@ function AppContent(): JSX.Element | null {
   if (!isAuthenticated) {
     // Show auth flow screens
     if (authScreen === "splash") {
-      return <SplashScreen onFinish={() => setAuthScreen("welcome")} />;
+      return <SplashScreen onFinish={() => { setAuthScreen("welcome"); }} />;
     }
 
     if (authScreen === "welcome") {
       return (
         <WelcomeScreen
-          onSignIn={() => setAuthScreen("login")}
-          onSignUp={() => setAuthScreen("signup")}
+          onSignIn={() => { setAuthScreen("login"); }}
+          onSignUp={() => { setAuthScreen("signup"); }}
         />
       );
     }

@@ -1,7 +1,4 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
-import { getPowerSyncDatabase } from "@/lib/powersync";
-import { useAuthStore } from "@/stores/auth-store";
 
 // ============================================================================
 // TYPES
@@ -118,67 +115,4 @@ export function useInvoiceHistory(
   const history = data.map(mapRowToHistory);
 
   return { history, isLoading, error };
-}
-
-export interface InvoiceHistoryMutations {
-  addHistoryEntry: (entry: {
-    invoiceId: string;
-    invoiceType: InvoiceType;
-    action: InvoiceHistoryAction;
-    description: string;
-    oldValues?: Record<string, unknown>;
-    newValues?: Record<string, unknown>;
-    userName?: string;
-  }) => Promise<string>;
-}
-
-export function useInvoiceHistoryMutations(): InvoiceHistoryMutations {
-  const db = getPowerSyncDatabase();
-
-  const addHistoryEntry = useCallback(
-    async (entry: {
-      invoiceId: string;
-      invoiceType: InvoiceType;
-      action: InvoiceHistoryAction;
-      description: string;
-      oldValues?: Record<string, unknown>;
-      newValues?: Record<string, unknown>;
-      userName?: string;
-    }): Promise<string> => {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-
-      const { user } = useAuthStore.getState();
-      const userId = user?.id ?? null;
-      const userName =
-        user?.user_metadata.full_name ??
-        user?.email ??
-        entry.userName ??
-        "User";
-
-      await db.execute(
-        `INSERT INTO invoice_history (
-          id, invoice_id, invoice_type, action, description,
-          old_values, new_values, user_id, user_name, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          entry.invoiceId,
-          entry.invoiceType,
-          entry.action,
-          entry.description,
-          entry.oldValues ? JSON.stringify(entry.oldValues) : null,
-          entry.newValues ? JSON.stringify(entry.newValues) : null,
-          userId,
-          userName,
-          now,
-        ]
-      );
-
-      return id;
-    },
-    [db]
-  );
-
-  return { addHistoryEntry };
 }

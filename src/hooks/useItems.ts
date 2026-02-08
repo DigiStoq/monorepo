@@ -128,21 +128,6 @@ export function useItems(filters?: {
   return { items, isLoading, error };
 }
 
-export function useItemById(id: string | null): {
-  item: Item | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<ItemRow>(
-    id ? `SELECT * FROM items WHERE id = ?` : `SELECT * FROM items WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const item = data[0] ? mapRowToItem(data[0]) : null;
-
-  return { item, isLoading, error };
-}
-
 // Extended form data type with additional fields used in mutations
 interface ItemMutationData extends ItemFormData {
   categoryId?: string;
@@ -613,37 +598,5 @@ export function useItemMutations(): ItemMutations {
     deleteItem,
     toggleItemActive,
     adjustStock,
-  };
-}
-
-interface ItemStats {
-  totalItems: number;
-  lowStockItems: number;
-  outOfStock: number;
-  totalValue: number;
-}
-
-export function useItemStats(): ItemStats {
-  const { data: totalItems } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1`
-  );
-
-  const { data: lowStockItems } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1 AND stock_quantity <= low_stock_alert`
-  );
-
-  const { data: outOfStock } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1 AND stock_quantity <= 0`
-  );
-
-  const { data: totalValue } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(stock_quantity * purchase_price), 0) as sum FROM items WHERE is_active = 1`
-  );
-
-  return {
-    totalItems: totalItems[0]?.count ?? 0,
-    lowStockItems: lowStockItems[0]?.count ?? 0,
-    outOfStock: outOfStock[0]?.count ?? 0,
-    totalValue: totalValue[0]?.sum ?? 0,
   };
 }
