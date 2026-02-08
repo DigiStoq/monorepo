@@ -1,11 +1,12 @@
 import React, { useRef, useEffect } from "react";
+import type {
+  LayoutChangeEvent} from "react-native";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
-  LayoutChangeEvent,
+  Animated
 } from "react-native";
 import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
 
@@ -66,7 +67,7 @@ export function SegmentedControl({
           <TouchableOpacity
             key={segment.value}
             style={styles.segment}
-            onPress={() => onChange(segment.value)}
+            onPress={() => { onChange(segment.value); }}
             activeOpacity={0.7}
           >
             <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>

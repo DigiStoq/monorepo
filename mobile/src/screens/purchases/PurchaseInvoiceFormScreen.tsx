@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   Platform,
@@ -22,11 +21,10 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { Plus, Trash2, Save, X } from "lucide-react-native";
-import { wp, hp } from "../../lib/responsive";
+import { PlusIcon, TrashIcon, SaveIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
 import { generateUUID } from "../../lib/utils";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { CustomHeader } from "../../components/CustomHeader";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -65,7 +63,6 @@ export function PurchaseInvoiceFormScreen() {
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -122,7 +119,30 @@ export function PurchaseInvoiceFormScreen() {
           }
         }
       );
-      // Load items... (omitted for brevity in this update, focusing on fields)
+
+      db.execute("SELECT * FROM purchase_invoice_items WHERE invoice_id = ?", [id]).then(
+        (res) => {
+          const loadedItems: LineItem[] = [];
+          if (res.rows?.length > 0) {
+            for (let i = 0; i < res.rows.length; i++) {
+              const item = res.rows.item(i);
+              loadedItems.push({
+                id: item.id,
+                itemId: item.item_id,
+                itemName: item.item_name,
+                quantity: item.quantity,
+                unit: item.unit,
+                unitPrice: item.unit_price,
+                taxPercent: item.tax_percent,
+                discountPercent: item.discount_percent,
+                amount: item.amount,
+                batchNumber: "" // Not in schema example but good to have
+              });
+            }
+            setLineItems(loadedItems);
+          }
+        }
+      )
     }
   }, [id]);
 
@@ -309,34 +329,24 @@ export function PurchaseInvoiceFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Purchase" : "New Purchase Invoice"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
-        </Button>
-      </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <CustomHeader
+        title={isEditing ? "Edit Purchase" : "New Purchase Invoice"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-2"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Card>
           <CardHeader title="Supplier Details" />
           <CardBody>
@@ -353,13 +363,13 @@ export function PurchaseInvoiceFormScreen() {
               onChangeText={setSupplierInvoiceNumber}
               placeholder="e.g. INV-2024-001"
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="Date"
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Due Date"
@@ -372,17 +382,18 @@ export function PurchaseInvoiceFormScreen() {
           </CardBody>
         </Card>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Items</Text>
+        <View className="flex-row justify-between items-center mb-3 mt-4">
+          <Text className="text-md font-semibold text-text">Items</Text>
           <Button
             size="sm"
             variant="outline"
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color={colors.text} />}
+            className="flex-row items-center gap-1"
           >
-            Add Item
+            <PlusIcon size={16} color={colors.text} />
+            <Text className="text-sm text-text ml-1">Add Item</Text>
           </Button>
         </View>
 
@@ -393,14 +404,14 @@ export function PurchaseInvoiceFormScreen() {
               openItemModal(item);
             }}
           >
-            <Card style={styles.itemCard}>
+            <Card>
               <CardBody>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemNumber}>
+                <View className="flex-row justify-between mb-1">
+                  <Text className="text-sm font-semibold text-text">
                     #{index + 1} - {item.itemName}
                   </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Text style={styles.itemSummary}>
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-sm font-bold text-text">
                       ${item.amount.toFixed(2)}
                     </Text>
                     <TouchableOpacity
@@ -408,17 +419,17 @@ export function PurchaseInvoiceFormScreen() {
                         e.stopPropagation();
                         setLineItems((p) => p.filter((i) => i.id !== item.id));
                       }}
-                      style={{ marginLeft: 8 }}
+                      className="ml-2"
                     >
-                      <Trash2 size={18} color={colors.danger} />
+                      <TrashIcon size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
-                <Text style={styles.itemMeta}>
+                <Text className="text-xs text-text-secondary">
                   {item.quantity} {item.unit} x ${item.unitPrice}
                 </Text>
                 {item.batchNumber ? (
-                  <Text style={styles.itemMeta}>Batch: {item.batchNumber}</Text>
+                  <Text className="text-xs text-text-secondary">Batch: {item.batchNumber}</Text>
                 ) : null}
               </CardBody>
             </Card>
@@ -435,49 +446,37 @@ export function PurchaseInvoiceFormScreen() {
               numberOfLines={2}
               placeholder="Internal notes..."
             />
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Subtotal</Text>
+              <Text className="text-sm font-medium text-text">
                 ${totals.subtotal.toFixed(2)}
               </Text>
             </View>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 8,
-              }}
-            >
-              <Text style={styles.summaryLabel}>Discount %</Text>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Discount %</Text>
+              <View className="flex-row items-center">
                 <Input
                   value={discountPercent}
                   onChangeText={setDiscountPercent}
                   placeholder="0"
                   keyboardType="numeric"
-                  style={{
-                    width: 60,
-                    height: 36,
-                    textAlign: "right",
-                    marginRight: 8,
-                  }}
-                  containerStyle={{ marginBottom: 0 }}
+                  className="text-right h-9 w-16"
+                  containerStyle={{ marginBottom: 0, marginRight: 8 }}
                 />
-                <Text style={styles.summaryValue}>
+                <Text className="text-sm font-medium text-text">
                   -${totals.discount.toFixed(2)}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax</Text>
-              <Text style={styles.summaryValue}>${totals.tax.toFixed(2)}</Text>
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Tax</Text>
+              <Text className="text-sm font-medium text-text">${totals.tax.toFixed(2)}</Text>
             </View>
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${totals.total.toFixed(2)}</Text>
+            <View className="mt-2 pt-2 border-t border-border flex-row justify-between">
+              <Text className="text-lg font-bold text-text">Total</Text>
+              <Text className="text-lg font-bold text-primary">${totals.total.toFixed(2)}</Text>
             </View>
           </CardBody>
         </Card>
@@ -492,10 +491,10 @@ export function PurchaseInvoiceFormScreen() {
           setModalVisible(false);
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-surface rounded-t-2xl max-h-[90%]">
+            <View className="flex-row justify-between items-center p-4 border-b border-border">
+              <Text className="text-lg font-semibold text-text">
                 {editingItemId ? "Edit Item" : "Add Item"}
               </Text>
               <TouchableOpacity
@@ -503,10 +502,10 @@ export function PurchaseInvoiceFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color={colors.textSecondary} />
+                <XCloseIcon size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={styles.modalBody}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
               <Select
                 label="Item"
                 options={itemOptions}
@@ -514,7 +513,7 @@ export function PurchaseInvoiceFormScreen() {
                 onChange={handleItemSelect}
               />
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Batch Number"
                   value={tempItem.batchNumber}
@@ -526,7 +525,7 @@ export function PurchaseInvoiceFormScreen() {
                 />
               </View>
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Quantity"
                   value={String(tempItem.quantity)}
@@ -537,7 +536,7 @@ export function PurchaseInvoiceFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Unit"
@@ -547,7 +546,7 @@ export function PurchaseInvoiceFormScreen() {
                 />
               </View>
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Cost Price"
                   value={String(tempItem.unitPrice)}
@@ -562,7 +561,7 @@ export function PurchaseInvoiceFormScreen() {
                 />
               </View>
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Discount %"
                   value={String(tempItem.discountPercent)}
@@ -573,7 +572,7 @@ export function PurchaseInvoiceFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Tax %"
@@ -589,7 +588,7 @@ export function PurchaseInvoiceFormScreen() {
                 />
               </View>
 
-              <Button fullWidth onPress={saveItem} style={{ marginTop: 16 }}>
+              <Button fullWidth onPress={saveItem} className="mt-4">
                 {editingItemId ? "Update Item" : "Add Item"}
               </Button>
             </ScrollView>
@@ -599,134 +598,3 @@ export function PurchaseInvoiceFormScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(5),
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  itemCard: {
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
-  },
-  itemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  itemNumber: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  itemSummary: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-  },
-  itemMeta: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  summaryValue: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.text,
-  },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  totalLabel: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-  },
-  totalValue: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.primary,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "90%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  modalBody: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-});

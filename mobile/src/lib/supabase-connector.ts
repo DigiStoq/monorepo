@@ -19,7 +19,7 @@ const MERGE_BATCH_LIMIT = 100;
 interface BatchedOperation {
   table: string;
   op: UpdateType;
-  records: Array<{ id: string; data: Record<string, unknown> }>;
+  records: { id: string; data: Record<string, unknown> }[];
 }
 
 // ============================================================================
@@ -147,7 +147,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
         currentBatch.records.length < MERGE_BATCH_LIMIT;
 
       if (canBatch) {
-        currentBatch!.records.push({ id: op.id, data: transformedData });
+        currentBatch.records.push({ id: op.id, data: transformedData });
       } else {
         // Start new batch
         if (currentBatch) batches.push(currentBatch);

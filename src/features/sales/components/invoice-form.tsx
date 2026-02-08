@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -171,7 +171,7 @@ export function InvoiceForm({
   const [showValidation, setShowValidation] = useState(false);
 
   // Initialize line items from initialData if editing
-  const getInitialLineItems = (): LineItem[] => {
+  const getInitialLineItems = useCallback((): LineItem[] => {
     if (!initialData?.items || initialData.items.length === 0) return [];
 
     return initialData.items.map((formItem, index) => {
@@ -201,10 +201,43 @@ export function InvoiceForm({
         amount,
       };
     });
-  };
+  }, [initialData, items]);
+
+  useEffect(() => {
+    if (initialData) {
+      setCustomerId(initialData.customerId ?? "");
+      setDate(initialData.date ?? defaultDate);
+      setDueDate(initialData.dueDate ?? "");
+      setNotes(initialData.notes ?? "");
+      setTerms(initialData.terms ?? "");
+      setTransportName(initialData.transportName ?? "");
+      setDeliveryDate(initialData.deliveryDate ?? "");
+      setDeliveryLocation(initialData.deliveryLocation ?? "");
+      setDiscountType(initialData.discountType ?? "percent");
+      setDiscountValue(
+        initialData.discountType === "amount"
+          ? (initialData.discountAmount ?? 0)
+          : (initialData.discountPercent ?? 0)
+      );
+      setPaymentStatus(initialData.initialPaymentStatus ?? "unpaid");
+      setAmountPaid(initialData.initialAmountPaid ?? 0);
+      setPaymentMode(
+        (initialData.initialPaymentMode as
+          | "cash"
+          | "bank"
+          | "cheque"
+          | undefined) ?? "cash"
+      );
+      setBankAccountId(initialData.initialBankAccountId ?? "");
+      setChequeNumber(initialData.initialChequeNumber ?? "");
+      setChequeBankName(initialData.initialChequeBankName ?? "");
+      setChequeDueDate(initialData.initialChequeDueDate ?? "");
+      setLineItems(getInitialLineItems());
+    }
+  }, [initialData, defaultDate, getInitialLineItems]);
 
   // Line items state - initialize from initialData if editing
-  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems);
+  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems());
 
   // Customer options - hook already filters by type, no need to filter again
   const customerOptions: SelectOption[] = useMemo(

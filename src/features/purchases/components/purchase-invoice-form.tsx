@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -135,13 +135,6 @@ export function PurchaseInvoiceForm({
 
   const [showValidation, setShowValidation] = useState(false);
 
-  // Line items state
-  const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
-    undefined
-  );
-
   // Customer options (suppliers) - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
@@ -149,6 +142,68 @@ export function PurchaseInvoiceForm({
       ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
+
+  // Initialize line items from initialData if editing
+  const getInitialLineItems = useCallback((): LineItem[] => {
+    if (!initialData?.items || initialData.items.length === 0) return [];
+
+    return initialData.items.map((formItem, index) => {
+      const selectedItem = items.find((i) => i.id === formItem.itemId);
+      const subtotal = formItem.quantity * formItem.unitPrice;
+      const discountPct = formItem.discountPercent ?? 0;
+      const taxPct = formItem.taxPercent ?? 0;
+      const discountAmount = subtotal * (discountPct / 100);
+      const taxableAmount = subtotal - discountAmount;
+      const taxAmount = taxableAmount * (taxPct / 100);
+      const amount = taxableAmount + taxAmount;
+
+      return {
+        id: `line-${Date.now()}-${index}`,
+        itemId: formItem.itemId,
+        itemName: selectedItem?.name ?? "Unknown",
+        batchNumber: formItem.batchNumber ?? "",
+        quantity: formItem.quantity,
+        unit: selectedItem?.unit ?? "pcs",
+        unitPrice: formItem.unitPrice,
+        mrp: formItem.mrp ?? 0,
+        discountPercent: discountPct,
+        taxPercent: taxPct,
+        amount,
+      };
+    });
+  }, [initialData, items]);
+
+  useEffect(() => {
+    if (initialData) {
+      setCustomerId(initialData.customerId ?? "");
+      setSupplierInvoiceNumber(initialData.supplierInvoiceNumber ?? "");
+      setDate(initialData.date ?? defaultDate);
+      setDueDate(initialData.dueDate ?? "");
+      setNotes(initialData.notes ?? "");
+      setDiscountPercent(initialData.discountPercent ?? 0);
+      setPaymentStatus(initialData.initialPaymentStatus ?? "unpaid");
+      setAmountPaid(initialData.initialAmountPaid ?? 0);
+      setPaymentMode(
+        (initialData.initialPaymentMode as
+          | "cash"
+          | "bank"
+          | "cheque"
+          | undefined) ?? "cash"
+      );
+      setBankAccountId(initialData.initialBankAccountId ?? "");
+      setChequeNumber(initialData.initialChequeNumber ?? "");
+      setChequeBankName(initialData.initialChequeBankName ?? "");
+      setChequeDueDate(initialData.initialChequeDueDate ?? "");
+      setLineItems(getInitialLineItems());
+    }
+  }, [initialData, defaultDate, getInitialLineItems]);
+
+  // Line items state
+  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems());
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
   // Add line item
   const handleAddItem = (): void => {

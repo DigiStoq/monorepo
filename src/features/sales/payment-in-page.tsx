@@ -379,6 +379,7 @@ export function PaymentInPage(): React.ReactNode {
           <ModalBody className="p-0">
             <PaymentInForm
               customers={customers}
+              initialData={selectedPayment ?? undefined}
               invoices={invoices}
               onSubmit={(data) => {
                 void handleSubmitPayment(data);

@@ -1,202 +1,96 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useQuery } from "@powersync/react-native";
-import { Wallet, Plus, ChevronRight, Landmark } from "lucide-react-native";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+import { WalletIcon, PlusIcon, BankIcon } from "../components/ui/UntitledIcons";
 import { useTheme } from "../contexts/ThemeContext";
 import { CustomHeader } from "../components/CustomHeader";
+import { useBankAccounts } from "../hooks/useBankAccounts";
+import type { BankAccount } from "../hooks/useBankAccounts";
+import { useCashBalance } from "../hooks/useCashTransactions";
 
-interface BankAccount {
-  id: string;
-  name: string;
-  bank_name: string;
-  account_number: string;
-  current_balance: number;
-}
-
-function AccountCard({ item, styles, colors, onPress }: any) {
+function AccountCard({ item, colors, onPress }: { item: BankAccount, colors: any, onPress: () => void }) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <Landmark size={24} color={colors.primary} />
+    <TouchableOpacity
+      className="flex-row items-center bg-background p-4 rounded-lg border border-border"
+      onPress={onPress}
+    >
+      <View className="w-10 h-10 rounded-full items-center justify-center bg-primary-10" style={{ backgroundColor: `${colors.primary as string}15` }}>
+        <BankIcon size={24} color={colors.primary} />
       </View>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.details}>{item.bank_name} •••• {item.account_number?.slice(-4)}</Text>
+      <View className="flex-1 ml-4">
+        <Text className="text-md font-semibold text-text">{item.name}</Text>
+        <Text className="text-xs text-text-muted mt-0.5">{item.bankName} •••• {item.accountNumber?.slice(-4)}</Text>
       </View>
-      <View style={styles.right}>
-        <Text style={styles.balance}>${(item.current_balance || 0).toFixed(2)}</Text>
+      <View className="items-end">
+        <Text className="text-md font-bold text-success" style={{ color: colors.success }}>${(item.currentBalance || 0).toFixed(2)}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
 export function BankAccountsScreen() {
-  // Note: Rename file/export to CashBankScreen if we want to unify, but existing nav might rely on "BankAccountsScreen".
-  // I am creating this file as "CashBankScreen" but exporting "BankAccountsScreen" for compat or just making a new one.
-  // Actually, looking at AppNavigator, "BankAccountsScreen" is registered.
-  // I will overwrite `BankAccountsScreen` content here or create `CashBankScreen`.
-  // The implementation plan said "Create CashBankScreen".
-
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  const { data: accounts } = useQuery<BankAccount>("SELECT * FROM bank_accounts ORDER BY name ASC");
+  const { accounts, isLoading: accountsLoading } = useBankAccounts();
+  const { balance: cashBalance, isLoading: cashLoading } = useCashBalance();
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Also get Cash In Hand balance?
-  // const { data: cash } = useQuery("...");
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => { setRefreshing(false); }, 1000);
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <CustomHeader title="Cash & Bank" showBack />
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.mainAction} onPress={() => navigation.navigate("CashInHand")}>
-          <View style={styles.actionIcon}>
-            <Wallet size={24} color="white" />
+      <View className="p-5 flex-row gap-4">
+        <TouchableOpacity
+          className="flex-1 bg-primary rounded-xl p-5 flex-row items-center gap-4 shadow-md"
+          style={{ backgroundColor: colors.primary }}
+          onPress={() => navigation.navigate("CashInHand")}
+        >
+          <View className="bg-white/20 p-2 rounded-lg">
+            <WalletIcon size={24} color="white" />
           </View>
-          <Text style={styles.actionText}>Cash In Hand</Text>
+          <View>
+            <Text className="text-white/80 text-sm font-medium">Cash In Hand</Text>
+            <Text className="text-white text-xl font-bold">${(cashBalance || 0).toFixed(2)}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.listContainer}>
-        <Text style={styles.sectionTitle}>Bank Accounts</Text>
+      <View className="flex-1 bg-surface rounded-t-3xl p-5 shadow-sm">
+        <Text className="text-md font-bold text-text mb-4">Bank Accounts</Text>
         <FlatList
-          data={accounts}
+          data={accounts || []}
           renderItem={({ item }) => (
             <AccountCard
               item={item}
-              styles={styles}
               colors={colors}
               onPress={() => navigation.navigate("BankAccountForm", { id: item.id })}
             />
           )}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>No bank accounts found.</Text>}
+          contentContainerStyle={{ gap: 12, paddingBottom: 80 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+          ListEmptyComponent={
+            <Text className="text-center text-text-muted mt-5">No bank accounts found.</Text>
+          }
         />
       </View>
 
       {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        className="absolute bottom-5 right-5 w-14 h-14 rounded-full items-center justify-center shadow-lg"
+        style={{ backgroundColor: colors.primary }}
         onPress={() => navigation.navigate("BankAccountForm")}
       >
-        <Plus size={24} color="white" />
+        <PlusIcon size={24} color="white" />
       </TouchableOpacity>
     </View>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  actions: {
-    padding: spacing.lg,
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  mainAction: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    ...shadows.md,
-  },
-  actionIcon: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: 8,
-    borderRadius: borderRadius.lg,
-  },
-  actionText: {
-    color: 'white',
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-  },
-  listContainer: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: spacing.lg,
-    ...shadows.sm,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  list: {
-    gap: spacing.md,
-    paddingBottom: 80,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  name: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  details: {
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-  },
-  right: {
-    alignItems: 'flex-end',
-  },
-  balance: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
-    color: colors.success,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.xl,
-    right: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.lg,
-  },
-});

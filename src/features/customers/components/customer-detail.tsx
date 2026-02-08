@@ -298,7 +298,7 @@ export function CustomerDetail({
               label="Tax ID"
               value={customer.taxId}
             />
-            {customer.creditLimit && customer.creditLimit > 0 && (
+            {customer.creditLimit !== undefined && customer.creditLimit > 0 && (
               <InfoItem
                 icon={<CreditCard className="h-4 w-4 text-slate-500" />}
                 label="Credit Limit"

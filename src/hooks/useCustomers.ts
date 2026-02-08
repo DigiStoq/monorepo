@@ -1,6 +1,9 @@
 import type { PowerSyncDatabase } from "@powersync/web";
 import { useQuery } from "@powersync/react";
-import { queryOptions } from "@tanstack/react-query";
+import {
+  queryOptions,
+  type UndefinedInitialDataOptions,
+} from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type {
@@ -100,7 +103,12 @@ export const customersQueryOptions = (
     isActive?: boolean;
     search?: string;
   }
-) => {
+): UndefinedInitialDataOptions<
+  CustomerRow[],
+  Error,
+  CustomerRow[],
+  (string | (string | number)[])[]
+> => {
   const { query, params } = getCustomersQuery(filters);
   return queryOptions({
     queryKey: [query, params],

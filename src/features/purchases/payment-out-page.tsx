@@ -376,6 +376,7 @@ export function PaymentOutPage(): React.ReactNode {
             <PaymentOutForm
               customers={customers}
               invoices={invoices}
+              initialData={selectedPayment ?? undefined}
               onSubmit={(data) => {
                 void handleSubmitPayment(data);
               }}

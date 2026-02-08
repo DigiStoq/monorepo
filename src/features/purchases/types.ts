@@ -65,8 +65,10 @@ export interface PurchaseInvoiceFormData {
 
 export interface PurchaseInvoiceItemFormData {
   itemId: string;
+  batchNumber?: string | undefined;
   quantity: number;
   unitPrice: number;
+  mrp?: number | undefined;
   discountPercent?: number | undefined;
   taxPercent?: number | undefined;
 }

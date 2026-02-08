@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import { CustomHeader } from "../components/CustomHeader";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import {
@@ -18,10 +20,8 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { Save, X } from "lucide-react-native";
-import { wp, hp } from "../lib/responsive";
+import { SaveIcon, XCloseIcon } from "../components/ui/UntitledIcons";
 import { generateUUID } from "../lib/utils";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 export function ItemFormScreen() {
@@ -30,7 +30,6 @@ export function ItemFormScreen() {
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -232,34 +231,23 @@ export function ItemFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Item" : "New Item"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          isLoading={isLoading}
-        >
-          <Save size={24} color={colors.primary} />
-        </Button>
-      </View>
+      <CustomHeader
+        title={isEditing ? "Edit Item" : "New Item"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-1.5"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Card>
           <CardHeader title="Basic Details" />
           <CardBody>
@@ -269,13 +257,13 @@ export function ItemFormScreen() {
               onChangeText={setName}
               placeholder="Product Name / Service Name"
             />
-            <View style={styles.row}>
+            <View className="flex-row items-start gap-2">
               <Select
                 label="Type"
                 options={typeOptions}
                 value={type}
                 onChange={setType}
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="SKU"
@@ -311,14 +299,14 @@ export function ItemFormScreen() {
         <Card>
           <CardHeader title="Pricing" />
           <CardBody>
-            <View style={styles.row}>
+            <View className="flex-row items-start gap-2">
               <Input
                 label="MRP"
                 value={mrp}
                 onChangeText={setMrp}
                 keyboardType="numeric"
                 placeholder="0.00"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Sale Price"
@@ -329,14 +317,14 @@ export function ItemFormScreen() {
                 containerStyle={{ flex: 1 }}
               />
             </View>
-            <View style={[styles.row, { marginTop: 12 }]}>
+            <View className="flex-row items-start gap-2 mt-3">
               <Input
                 label="Cost Price"
                 value={purchasePrice}
                 onChangeText={setPurchasePrice}
                 keyboardType="numeric"
                 placeholder="0.00"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Tax Rate (%)"
@@ -354,14 +342,14 @@ export function ItemFormScreen() {
           <Card>
             <CardHeader title="Inventory" />
             <CardBody>
-              <View style={styles.row}>
+              <View className="flex-row items-start gap-2">
                 <Input
                   label={isEditing ? "Current Stock" : "Opening Stock"}
                   value={stockQuantity}
                   onChangeText={setStockQuantity}
                   keyboardType="numeric"
                   placeholder="0"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Low Stock Alert"
@@ -376,7 +364,7 @@ export function ItemFormScreen() {
           </Card>
         )}
 
-        <View style={{ marginTop: 16 }}>
+        <View className="mt-4">
           <Button
             variant="outline"
             onPress={() => {
@@ -390,16 +378,16 @@ export function ItemFormScreen() {
         </View>
 
         {showAdditional && (
-          <View style={{ marginTop: 16, gap: 16 }}>
+          <View className="mt-4 gap-4">
             <Card>
               <CardHeader title="Tracking & Location" />
               <CardBody>
-                <View style={styles.row}>
+                <View className="flex-row items-start gap-2">
                   <Input
                     label="Batch Number"
                     value={batchNumber}
                     onChangeText={setBatchNumber}
-                    containerStyle={{ flex: 1, marginRight: 8 }}
+                    containerStyle={{ flex: 1 }}
                   />
                   <Input
                     label="Expiry Date"
@@ -409,12 +397,12 @@ export function ItemFormScreen() {
                     containerStyle={{ flex: 1 }}
                   />
                 </View>
-                <View style={styles.row}>
+                <View className="flex-row items-start gap-2">
                   <Input
                     label="Barcode"
                     value={barcode}
                     onChangeText={setBarcode}
-                    containerStyle={{ flex: 1, marginRight: 8 }}
+                    containerStyle={{ flex: 1 }}
                   />
                   <Input
                     label="HSN Code"
@@ -435,12 +423,12 @@ export function ItemFormScreen() {
             <Card>
               <CardHeader title="Brand & Model" />
               <CardBody>
-                <View style={styles.row}>
+                <View className="flex-row items-start gap-2">
                   <Input
                     label="Brand"
                     value={brand}
                     onChangeText={setBrand}
-                    containerStyle={{ flex: 1, marginRight: 8 }}
+                    containerStyle={{ flex: 1 }}
                   />
                   <Input
                     label="Model No"
@@ -458,7 +446,7 @@ export function ItemFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          style={styles.submitButton}
+          className="mt-6"
         >
           Save Item
         </Button>
@@ -466,41 +454,3 @@ export function ItemFormScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(5),
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  submitButton: {
-    marginTop: spacing.xl,
-  },
-});
