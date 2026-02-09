@@ -679,7 +679,20 @@ export function useCustomerStatementReport(
     customerId,
   ]);
 
-  // Get all transactions (invoices, payments, credit notes)
+  // Get previous balance (net of transactions before start date)
+  const { data: prevBalanceData } = useQuery<{
+    prev_invoices: number;
+    prev_payments: number;
+    prev_credits: number;
+  }>(
+    `SELECT
+       (SELECT COALESCE(SUM(total), 0) FROM sale_invoices WHERE customer_id = $1 AND date < $2 AND status != 'cancelled') as prev_invoices,
+       (SELECT COALESCE(SUM(amount), 0) FROM payment_ins WHERE customer_id = $1 AND date < $2) as prev_payments,
+       (SELECT COALESCE(SUM(total), 0) FROM credit_notes WHERE customer_id = $1 AND date < $2 AND status != 'cancelled') as prev_credits`,
+    [customerId, dateRange.from]
+  );
+
+  // Get all transactions (invoices, payments, credit notes) in range
   const {
     data: invoiceData,
     isLoading: invLoading,
@@ -726,7 +739,16 @@ export function useCustomerStatementReport(
 
     const customer = customerData[0];
 
-    let balance = customer.opening_balance;
+    // Calculate true opening balance for the period
+    let prevNet = 0;
+    if (prevBalanceData.length > 0) {
+      const pb = prevBalanceData[0];
+      prevNet = pb.prev_invoices - pb.prev_payments - pb.prev_credits;
+    }
+
+    const reportOpeningBalance = customer.opening_balance + prevNet;
+
+    let balance = reportOpeningBalance;
     const entries: CustomerLedgerEntry[] = [
       {
         id: "opening",
@@ -764,13 +786,13 @@ export function useCustomerStatementReport(
       customerId: customer.id,
       customerName: customer.name,
       customerType: customer.type as "customer" | "supplier" | "both",
-      openingBalance: customer.opening_balance,
+      openingBalance: reportOpeningBalance,
       totalDebit,
       totalCredit,
       closingBalance: balance,
       entries,
     };
-  }, [customerData, invoiceData, dateRange.from]);
+  }, [customerData, invoiceData, prevBalanceData, dateRange.from]);
 
   return {
     statement,

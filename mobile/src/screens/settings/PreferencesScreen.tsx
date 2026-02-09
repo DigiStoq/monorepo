@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Switch, Text, TouchableOpacity, Alert } from "react-native";
+import { useState, useEffect } from "react";
+import { View, ScrollView, Switch, Text, TouchableOpacity, Alert, Modal } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { Button } from "../../components/ui/Button";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
-import { Moon, Globe, Bell, Calendar, Hash, FileText, ChevronRight, Check } from "lucide-react-native";
 import { useUserPreferences } from "../../hooks/useUserPreferences";
+import {
+    Moon01Icon,
+    Globe01Icon,
+    Bell01Icon,
+    CalendarIcon,
+    Hash01Icon,
+    FileCheck02Icon,
+    ChevronRightIcon,
+    CheckIcon
+} from "../../components/ui/UntitledIcons";
 
 type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD" | "DD-MMM-YYYY";
 
@@ -28,27 +36,27 @@ const invoiceTermsOptions = [
 
 function PreferenceItem({ icon: Icon, title, value, onValueChange, type = "switch", subtitle, onPress }: any) {
     const { colors } = useTheme();
-    const styles = React.useMemo(() => createStyles(colors), [colors]);
 
     const content = (
-        <View style={styles.item}>
-            <View style={styles.itemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surfaceHover }]}>
+        <View className="flex-row items-center justify-between p-4 border-b border-border bg-surface">
+            <View className="flex-row items-center flex-1">
+                <View className="w-9 h-9 rounded-lg items-center justify-center mr-3 bg-surface-hover" style={{ backgroundColor: colors.surface + '20' }}>
                     <Icon size={20} color={colors.text} />
                 </View>
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.itemTitle}>{title}</Text>
-                    {subtitle && <Text style={styles.itemSubtitle}>{subtitle}</Text>}
+                <View className="flex-1">
+                    <Text className="text-md font-medium text-text">{title}</Text>
+                    {subtitle && <Text className="text-xs text-text-muted mt-0.5">{subtitle}</Text>}
                 </View>
             </View>
             {type === "switch" && (
                 <Switch
                     value={value}
                     onValueChange={onValueChange}
-                    trackColor={{ false: colors.border, true: colors.primary }}
+                    trackColor={{ false: colors.border, true: colors.primary + '80' }}
+                    thumbColor={value ? colors.primary : "#f4f3f4"}
                 />
             )}
-            {type === "arrow" && <ChevronRight size={20} color={colors.textMuted} />}
+            {type === "arrow" && <ChevronRightIcon size={20} color={colors.textMuted} />}
         </View>
     );
 
@@ -58,40 +66,41 @@ function PreferenceItem({ icon: Icon, title, value, onValueChange, type = "switc
     return content;
 }
 
-function SelectModal({ visible, onClose, title, options, value, onSelect, colors, styles }: any) {
+function SelectModal({ visible, onClose, title, options, value, onSelect, colors }: any) {
     if (!visible) return null;
 
     return (
-        <View style={styles.modalOverlay}>
-            <TouchableOpacity style={styles.modalBackdrop} onPress={onClose} activeOpacity={1} />
-            <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>{title}</Text>
-                <ScrollView style={{ maxHeight: 300 }}>
-                    {options.map((opt: any) => (
-                        <TouchableOpacity
-                            key={opt.value}
-                            style={styles.optionItem}
-                            onPress={() => { onSelect(opt.value); onClose(); }}
-                        >
-                            <Text style={styles.optionText}>
-                                {opt.label}{opt.example ? ` (${opt.example})` : ""}
-                            </Text>
-                            {value === opt.value && <Check size={20} color={colors.primary} />}
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-                <Button variant="secondary" onPress={onClose} style={{ marginTop: spacing.md }}>
-                    Cancel
-                </Button>
+        <Modal visible={visible} transparent animationType="fade">
+            <View className="flex-1 justify-center items-center bg-black/50">
+                <TouchableOpacity className="absolute inset-0" onPress={onClose} activeOpacity={1} />
+                <View className="bg-surface rounded-xl p-6 w-11/12 max-w-sm shadow-xl border border-border">
+                    <Text className="text-lg font-bold text-text mb-4 text-center">{title}</Text>
+                    <ScrollView style={{ maxHeight: 300 }}>
+                        {options.map((opt: any) => (
+                            <TouchableOpacity
+                                key={opt.value}
+                                className="flex-row justify-between items-center py-3 border-b border-border"
+                                onPress={() => { onSelect(opt.value); onClose(); }}
+                            >
+                                <Text className="text-md text-text">
+                                    {opt.label}{opt.example ? ` (${opt.example})` : ""}
+                                </Text>
+                                {value === opt.value && <CheckIcon size={20} color={colors.primary} />}
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                    <Button variant="ghost" onPress={onClose} className="mt-4">
+                        Cancel
+                    </Button>
+                </View>
             </View>
-        </View>
+        </Modal>
     );
 }
 
 export function PreferencesScreen() {
     const { colors, isDark, setMode } = useTheme();
-    const styles = React.useMemo(() => createStyles(colors), [colors]);
-    const { preferences, updatePreferences, isLoading } = useUserPreferences();
+    const { preferences, updatePreferences } = useUserPreferences();
 
     const [dateFormat, setDateFormat] = useState<DateFormat>("DD/MM/YYYY");
     const [decimalSeparator, setDecimalSeparator] = useState<"." | ",">(".");
@@ -127,7 +136,7 @@ export function PreferencesScreen() {
                 autoSave,
             });
             Alert.alert("Success", "Preferences saved!");
-        } catch (e) {
+        } catch (_e) {
             Alert.alert("Error", "Failed to save preferences.");
         } finally {
             setIsSaving(false);
@@ -138,17 +147,17 @@ export function PreferencesScreen() {
     const currentTermsLabel = invoiceTermsOptions.find(t => t.value === invoiceTerms)?.label || `${invoiceTerms} days`;
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background-light">
             <CustomHeader title="Preferences" showBack />
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
                 {/* Appearance */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Appearance</Text>
-                    <View style={styles.card}>
+                <View className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Appearance</Text>
+                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
                         <PreferenceItem
-                            icon={Moon}
+                            icon={Moon01Icon}
                             title="Dark Mode"
                             subtitle={isDark ? "On" : "Off"}
                             value={isDark}
@@ -158,19 +167,18 @@ export function PreferencesScreen() {
                 </View>
 
                 {/* Date & Number Format */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Date & Number Format</Text>
-                    <View style={styles.card}>
+                <View className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Date & Number Format</Text>
+                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
                         <PreferenceItem
-                            icon={Calendar}
+                            icon={CalendarIcon}
                             title="Date Format"
                             subtitle={currentDateLabel}
                             type="arrow"
-                            onPress={() => setShowDateModal(true)}
+                            onPress={() => { setShowDateModal(true); }}
                         />
-                        <View style={styles.separator} />
                         <PreferenceItem
-                            icon={Hash}
+                            icon={Hash01Icon}
                             title="Decimal Separator"
                             subtitle={decimalSeparator === "." ? "Period (.)" : "Comma (,)"}
                             type="arrow"
@@ -179,16 +187,15 @@ export function PreferencesScreen() {
                                     "Decimal Separator",
                                     "Select separator",
                                     [
-                                        { text: "Period (.)", onPress: () => setDecimalSeparator(".") },
-                                        { text: "Comma (,)", onPress: () => setDecimalSeparator(",") },
+                                        { text: "Period (.)", onPress: () => { setDecimalSeparator("."); } },
+                                        { text: "Comma (,)", onPress: () => { setDecimalSeparator(","); } },
                                         { text: "Cancel", style: "cancel" }
                                     ]
                                 );
                             }}
                         />
-                        <View style={styles.separator} />
                         <PreferenceItem
-                            icon={Hash}
+                            icon={Hash01Icon}
                             title="Thousands Separator"
                             subtitle={thousandsSeparator === "," ? "Comma (,)" : thousandsSeparator === "." ? "Period (.)" : "Space"}
                             type="arrow"
@@ -197,9 +204,9 @@ export function PreferencesScreen() {
                                     "Thousands Separator",
                                     "Select separator",
                                     [
-                                        { text: "Comma (,)", onPress: () => setThousandsSeparator(",") },
-                                        { text: "Period (.)", onPress: () => setThousandsSeparator(".") },
-                                        { text: "Space", onPress: () => setThousandsSeparator(" ") },
+                                        { text: "Comma (,)", onPress: () => { setThousandsSeparator(","); } },
+                                        { text: "Period (.)", onPress: () => { setThousandsSeparator("."); } },
+                                        { text: "Space", onPress: () => { setThousandsSeparator(" "); } },
                                         { text: "Cancel", style: "cancel" }
                                     ]
                                 );
@@ -209,19 +216,18 @@ export function PreferencesScreen() {
                 </View>
 
                 {/* Default Values */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Default Values</Text>
-                    <View style={styles.card}>
+                <View className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Default Values</Text>
+                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
                         <PreferenceItem
-                            icon={FileText}
+                            icon={FileCheck02Icon}
                             title="Invoice Payment Terms"
                             subtitle={currentTermsLabel}
                             type="arrow"
-                            onPress={() => setShowTermsModal(true)}
+                            onPress={() => { setShowTermsModal(true); }}
                         />
-                        <View style={styles.separator} />
                         <PreferenceItem
-                            icon={FileText}
+                            icon={FileCheck02Icon}
                             title="Auto-Save"
                             subtitle="Automatically save changes"
                             value={autoSave}
@@ -231,28 +237,28 @@ export function PreferencesScreen() {
                 </View>
 
                 {/* Localization */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Localization</Text>
-                    <View style={styles.card}>
+                <View className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Localization</Text>
+                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
                         <PreferenceItem
-                            icon={Globe}
+                            icon={Globe01Icon}
                             title="Language"
                             subtitle="English (US)"
                             type="arrow"
-                            onPress={() => Alert.alert("Coming Soon", "Language selection will be available soon.")}
+                            onPress={() => { Alert.alert("Coming Soon", "Language selection will be available soon."); }}
                         />
                     </View>
                 </View>
 
                 {/* Notifications */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notifications</Text>
-                    <View style={styles.card}>
+                <View className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Notifications</Text>
+                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
                         <PreferenceItem
-                            icon={Bell}
+                            icon={Bell01Icon}
                             title="Push Notifications"
                             value={true}
-                            onValueChange={() => Alert.alert("Coming Soon", "Notification settings will be available soon.")}
+                            onValueChange={() => { Alert.alert("Coming Soon", "Notification settings will be available soon."); }}
                         />
                     </View>
                 </View>
@@ -260,8 +266,8 @@ export function PreferencesScreen() {
                 {/* Save Button */}
                 <Button
                     onPress={handleSave}
-                    isLoading={isSaving}
-                    style={{ marginTop: spacing.md }}
+                    loading={isSaving}
+                    className="mt-4"
                 >
                     Save Preferences
                 </Button>
@@ -271,135 +277,24 @@ export function PreferencesScreen() {
             {/* Date Format Modal */}
             <SelectModal
                 visible={showDateModal}
-                onClose={() => setShowDateModal(false)}
+                onClose={() => { setShowDateModal(false); }}
                 title="Select Date Format"
                 options={dateFormatOptions}
                 value={dateFormat}
                 onSelect={setDateFormat}
                 colors={colors}
-                styles={styles}
             />
 
             {/* Invoice Terms Modal */}
             <SelectModal
                 visible={showTermsModal}
-                onClose={() => setShowTermsModal(false)}
+                onClose={() => { setShowTermsModal(false); }}
                 title="Select Invoice Terms"
                 options={invoiceTermsOptions}
                 value={invoiceTerms}
                 onSelect={setInvoiceTerms}
                 colors={colors}
-                styles={styles}
             />
         </View>
     );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.backgroundLight,
-    },
-    scrollContent: {
-        padding: spacing.lg,
-        paddingBottom: 40,
-    },
-    section: {
-        marginBottom: spacing.xl,
-    },
-    sectionTitle: {
-        fontSize: fontSize.sm,
-        fontWeight: fontWeight.bold,
-        color: colors.textMuted,
-        marginBottom: spacing.sm,
-        textTransform: "uppercase",
-        letterSpacing: 1,
-    },
-    card: {
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.lg,
-        padding: spacing.sm,
-        ...shadows.sm,
-    },
-    item: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: spacing.md,
-    },
-    itemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        flex: 1,
-    },
-    iconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: borderRadius.md,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    itemTitle: {
-        fontSize: fontSize.md,
-        fontWeight: fontWeight.medium,
-        color: colors.text,
-    },
-    itemSubtitle: {
-        fontSize: fontSize.xs,
-        color: colors.textMuted,
-        marginTop: 2,
-    },
-    separator: {
-        height: 1,
-        backgroundColor: colors.border,
-        marginHorizontal: spacing.md,
-    },
-    // Modal styles
-    modalOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-    },
-    modalBackdrop: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.xl,
-        padding: spacing.lg,
-        width: '85%',
-        maxWidth: 400,
-        ...shadows.lg,
-    },
-    modalTitle: {
-        fontSize: fontSize.lg,
-        fontWeight: fontWeight.bold,
-        color: colors.text,
-        marginBottom: spacing.md,
-        textAlign: 'center',
-    },
-    optionItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    optionText: {
-        fontSize: fontSize.md,
-        color: colors.text,
-    },
-});

@@ -18,6 +18,7 @@ import type { CreditNote, CreditNoteReason } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { FileText, RotateCcw, Percent } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "sonner";
 
 export function CreditNotesPage(): React.ReactNode {
   // Data from PowerSync
@@ -156,9 +157,11 @@ export function CreditNotesPage(): React.ReactNode {
     if (currentSelectedCreditNote) {
       try {
         await deleteCreditNote(currentSelectedCreditNote.id);
+        toast.success("Credit note deleted successfully");
         setSelectedCreditNote(null);
       } catch (err) {
         console.error("Failed to delete credit note:", err);
+        toast.error("Failed to delete credit note");
       }
     }
   };

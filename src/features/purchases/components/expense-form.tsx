@@ -211,6 +211,7 @@ export function ExpenseForm({
                   value={customerId}
                   onChange={setCustomerId}
                   placeholder="Select vendor..."
+                  searchable
                 />
               </div>
 

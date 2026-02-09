@@ -11,10 +11,9 @@ export type {
 } from "./app-shell";
 
 // Sidebar
-export { Sidebar, SidebarSection, SidebarLogo, SidebarUser } from "./sidebar";
+export { Sidebar, SidebarLogo, SidebarUser } from "./sidebar";
 export type {
   SidebarProps,
-  SidebarSectionProps,
   SidebarLogoProps,
   SidebarUserProps,
   NavItem,

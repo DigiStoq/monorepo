@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   FlatList,
-  StyleSheet,
   Text,
   TouchableOpacity,
   RefreshControl,
@@ -10,8 +9,7 @@ import {
 } from "react-native";
 import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, ClipboardList } from "lucide-react-native";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { PlusIcon, SearchIcon, FileTextIcon } from "../../components/ui/UntitledIcons";
 import { useTheme } from "../../contexts/ThemeContext";
 
 interface PurchaseOrder {
@@ -29,7 +27,6 @@ export function PurchaseOrdersScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const { data: purchaseOrders, isLoading } = useQuery<PurchaseOrder>(`
         SELECT * FROM purchase_orders 
@@ -49,7 +46,7 @@ export function PurchaseOrdersScreen() {
     }, 1000);
   }, []);
 
-  const getStatusColor = (status: string = 'draft') => {
+  const getStatusColor = (status = 'draft') => {
     switch (status.toLowerCase()) {
       case "sent":
         return { bg: colors.info + '20', text: colors.info };
@@ -67,35 +64,41 @@ export function PurchaseOrdersScreen() {
     const statusStyle = getStatusColor(item.status);
     return (
       <TouchableOpacity
-        style={styles.card}
+        className="bg-surface rounded-lg p-4 shadow-sm mb-3"
         activeOpacity={0.7}
         onPress={() => {
-          navigation.navigate("PurchaseOrderForm" as any, { id: item.id });
+          (navigation as any).navigate("PurchaseOrderForm", { id: item.id });
         }}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.iconBox}>
-            <ClipboardList size={22} color={colors.primary} />
+        <View className="flex-row items-center gap-3 mb-3">
+          <View className="w-11 h-11 rounded-md bg-surface-hover justify-center items-center">
+            <FileTextIcon size={22} color={colors.primary} />
           </View>
-          <View style={styles.info}>
-            <Text style={styles.poNumber}>{item.po_number || "Draft PO"}</Text>
-            <Text style={styles.supplierName}>{item.supplier_name}</Text>
+          <View className="flex-1">
+            <Text className="text-md font-semibold text-text">{item.po_number || "Draft PO"}</Text>
+            <Text className="text-sm text-text-secondary mt-0.5">{item.supplier_name}</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-            <Text style={[styles.statusText, { color: statusStyle.text }]}>
+          <View
+            className="px-2 py-1 rounded-sm"
+            style={{ backgroundColor: statusStyle.bg }}
+          >
+            <Text
+              className="text-xs font-bold capitalize"
+              style={{ color: statusStyle.text }}
+            >
               {item.status}
             </Text>
           </View>
         </View>
 
-        <View style={styles.cardFooter}>
-          <View style={styles.dateInfo}>
-            <Text style={styles.dateLabel}>Date</Text>
-            <Text style={styles.dateValue}>{item.date}</Text>
+        <View className="flex-row justify-between items-center pt-3 border-t border-border">
+          <View>
+            <Text className="text-xs text-text-muted">Date</Text>
+            <Text className="text-sm text-text mt-0.5">{item.date}</Text>
           </View>
-          <View style={styles.amountInfo}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>${item.total?.toFixed(2) || "0.00"}</Text>
+          <View className="items-end">
+            <Text className="text-xs text-text-muted">Total</Text>
+            <Text className="text-lg font-bold text-text">${item.total?.toFixed(2) || "0.00"}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -103,12 +106,12 @@ export function PurchaseOrdersScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchBar}>
-        <View style={styles.searchInput}>
-          <Search size={18} color={colors.textMuted} />
+    <View className="flex-1 bg-background">
+      <View className="px-5 py-2">
+        <View className="flex-row items-center bg-surface rounded-lg px-3 py-2 gap-2 border border-border">
+          <SearchIcon size={18} color={colors.textMuted} />
           <TextInput
-            style={styles.searchText}
+            className="flex-1 text-md text-text"
             placeholder="Search orders..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
@@ -121,7 +124,7 @@ export function PurchaseOrdersScreen() {
         data={filteredOrders}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -132,10 +135,10 @@ export function PurchaseOrdersScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View style={styles.empty}>
-              <ClipboardList size={48} color={colors.textMuted} style={styles.emptyIcon} />
-              <Text style={styles.emptyText}>No purchase orders found</Text>
-              <Text style={styles.emptySubtext}>
+            <View className="items-center py-20">
+              <FileTextIcon size={48} color={colors.textMuted} />
+              <Text className="text-lg font-semibold text-text mt-4">No purchase orders found</Text>
+              <Text className="text-sm text-text-muted mt-1">
                 Create a new order to send to suppliers
               </Text>
             </View>
@@ -145,96 +148,11 @@ export function PurchaseOrdersScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        className="absolute bottom-5 right-5 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md"
         onPress={() => (navigation as any).navigate("PurchaseOrderForm")}
       >
-        <Plus size={24} color={"#ffffff"} />
+        <PlusIcon size={24} color={"#ffffff"} />
       </TouchableOpacity>
     </View>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  searchBar: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-  searchInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 48,
-  },
-  searchText: {
-    flex: 1,
-    fontSize: fontSize.md,
-    color: colors.text,
-  },
-  list: { padding: spacing.xl, paddingTop: 0, paddingBottom: 100, gap: spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadows.sm,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceHover,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  info: { flex: 1 },
-  poNumber: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
-  supplierName: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-  },
-  statusText: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, textTransform: "capitalize" },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight, // Using borderLight from theme if available or border
-  },
-  dateInfo: {},
-  dateLabel: { fontSize: fontSize.xs, color: colors.textMuted },
-  dateValue: { fontSize: fontSize.sm, color: colors.text, marginTop: 2 },
-  amountInfo: { alignItems: "flex-end" },
-  totalLabel: { fontSize: fontSize.xs, color: colors.textMuted },
-  totalValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text },
-  empty: { alignItems: "center", paddingVertical: 80 },
-  emptyIcon: { marginBottom: spacing.md },
-  emptyText: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
-  emptySubtext: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.xl,
-    right: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.md,
-  },
-});

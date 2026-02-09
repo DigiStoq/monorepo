@@ -107,67 +107,69 @@ export function useSecuritySettingsMutations(): SecuritySettingsMutations {
       const fields: string[] = [];
       const values: (string | number | null)[] = [];
 
-      const existing = await db.getAll<SecuritySettingsRow>(
-        `SELECT user_id FROM security_settings WHERE user_id = ?`,
-        [userId]
-      );
-
-      if (existing.length === 0) {
-        // Init default settings if not exists
-        await db.execute(
-          `INSERT INTO security_settings (
-            user_id, two_factor_enabled, two_factor_method, session_timeout, 
-            require_password_change, password_change_days, allowed_ips, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            data.twoFactorEnabled ? 1 : 0,
-            data.twoFactorMethod ?? null,
-            data.sessionTimeout ?? 30,
-            data.requirePasswordChange ? 1 : 0,
-            data.passwordChangeDays ?? 90,
-            data.allowedIPs ? JSON.stringify(data.allowedIPs) : "[]",
-            now,
-            now,
-          ]
+      await db.writeTransaction(async (tx) => {
+        const existing = await tx.getAll<SecuritySettingsRow>(
+          `SELECT user_id FROM security_settings WHERE user_id = ?`,
+          [userId]
         );
-      } else {
-        if (data.twoFactorEnabled !== undefined) {
-          fields.push("two_factor_enabled = ?");
-          values.push(data.twoFactorEnabled ? 1 : 0);
-        }
-        if (data.twoFactorMethod !== undefined) {
-          fields.push("two_factor_method = ?");
-          values.push(data.twoFactorMethod ?? null);
-        }
-        if (data.sessionTimeout !== undefined) {
-          fields.push("session_timeout = ?");
-          values.push(data.sessionTimeout);
-        }
-        if (data.requirePasswordChange !== undefined) {
-          fields.push("require_password_change = ?");
-          values.push(data.requirePasswordChange ? 1 : 0);
-        }
-        if (data.passwordChangeDays !== undefined) {
-          fields.push("password_change_days = ?");
-          values.push(data.passwordChangeDays);
-        }
-        if (data.allowedIPs !== undefined) {
-          fields.push("allowed_ips = ?");
-          values.push(JSON.stringify(data.allowedIPs));
-        }
 
-        fields.push("updated_at = ?");
-        values.push(now);
-        values.push(userId);
-
-        if (fields.length > 0) {
-          await db.execute(
-            `UPDATE security_settings SET ${fields.join(", ")} WHERE user_id = ?`,
-            values
+        if (existing.length === 0) {
+          // Init default settings if not exists
+          await tx.execute(
+            `INSERT INTO security_settings (
+                user_id, two_factor_enabled, two_factor_method, session_timeout, 
+                require_password_change, password_change_days, allowed_ips, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              userId,
+              data.twoFactorEnabled ? 1 : 0,
+              data.twoFactorMethod ?? null,
+              data.sessionTimeout ?? 30,
+              data.requirePasswordChange ? 1 : 0,
+              data.passwordChangeDays ?? 90,
+              data.allowedIPs ? JSON.stringify(data.allowedIPs) : "[]",
+              now,
+              now,
+            ]
           );
+        } else {
+          if (data.twoFactorEnabled !== undefined) {
+            fields.push("two_factor_enabled = ?");
+            values.push(data.twoFactorEnabled ? 1 : 0);
+          }
+          if (data.twoFactorMethod !== undefined) {
+            fields.push("two_factor_method = ?");
+            values.push(data.twoFactorMethod ?? null);
+          }
+          if (data.sessionTimeout !== undefined) {
+            fields.push("session_timeout = ?");
+            values.push(data.sessionTimeout);
+          }
+          if (data.requirePasswordChange !== undefined) {
+            fields.push("require_password_change = ?");
+            values.push(data.requirePasswordChange ? 1 : 0);
+          }
+          if (data.passwordChangeDays !== undefined) {
+            fields.push("password_change_days = ?");
+            values.push(data.passwordChangeDays);
+          }
+          if (data.allowedIPs !== undefined) {
+            fields.push("allowed_ips = ?");
+            values.push(JSON.stringify(data.allowedIPs));
+          }
+
+          fields.push("updated_at = ?");
+          values.push(now);
+          values.push(userId);
+
+          if (fields.length > 0) {
+            await tx.execute(
+              `UPDATE security_settings SET ${fields.join(", ")} WHERE user_id = ?`,
+              values
+            );
+          }
         }
-      }
+      });
     },
     [db, userId]
   );

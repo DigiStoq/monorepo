@@ -4,6 +4,7 @@ import { Mail, Lock } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { Button, Input } from "@/components/ui";
 import { useAuthStore } from "@/stores";
+import { toast } from "sonner";
 
 export function LoginPage(): ReactNode {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export function LoginPage(): ReactNode {
       await signInWithGoogle();
     } catch (err) {
       console.error("Google sign in error", err);
+      toast.error("Google sign in failed");
     }
   };
 
@@ -53,6 +55,7 @@ export function LoginPage(): ReactNode {
     const { error } = await signIn(email, password);
 
     if (!error) {
+      toast.success("Welcome back!");
       void navigate({ to: "/" });
     }
   };

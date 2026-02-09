@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition -- runtime safety */
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
@@ -124,24 +123,9 @@ export function useItems(filters?: {
 
   const { data, isLoading, error } = useQuery<ItemRow>(query, params);
 
-  const items = useMemo(() => data.map(mapRowToItem), [data]);
+  const items = useMemo((): Item[] => data.map(mapRowToItem), [data]);
 
   return { items, isLoading, error };
-}
-
-export function useItemById(id: string | null): {
-  item: Item | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<ItemRow>(
-    id ? `SELECT * FROM items WHERE id = ?` : `SELECT * FROM items WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const item = data[0] ? mapRowToItem(data[0]) : null;
-
-  return { item, isLoading, error };
 }
 
 // Extended form data type with additional fields used in mutations
@@ -159,291 +143,453 @@ interface ItemMutations {
   adjustStock: (id: string, quantity: number) => Promise<void>;
 }
 
+import { useAuthStore } from "@/stores/auth-store";
+
+// ... existing imports ...
+
 export function useItemMutations(): ItemMutations {
   const db = getPowerSyncDatabase();
-
-  // Helper to add history entry
-  const addItemHistoryEntry = useCallback(
-    async (entry: {
-      itemId: string;
-      action: string;
-      description: string;
-      oldValues?: Record<string, unknown>;
-      newValues?: Record<string, unknown>;
-    }) => {
-      try {
-        const id = crypto.randomUUID();
-        const now = new Date().toISOString();
-
-        // Get user info - use dynamic import to avoid circular dependencies
-        const { useAuthStore } = await import("@/stores/auth-store");
-        const { user } = useAuthStore.getState();
-        const userId = user?.id ?? null;
-        const userName =
-          user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
-
-        await db.execute(
-          `INSERT INTO item_history (
-            id, item_id, action, description,
-            old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            entry.itemId,
-            entry.action,
-            entry.description,
-            entry.oldValues ? JSON.stringify(entry.oldValues) : null,
-            entry.newValues ? JSON.stringify(entry.newValues) : null,
-            userId,
-            userName,
-            now,
-          ]
-        );
-      } catch (error) {
-        console.error("[Item History] Failed to add history entry:", error);
-      }
-    },
-    [db]
-  );
 
   const createItem = useCallback(
     async (data: ItemMutationData): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      await db.execute(
-        `INSERT INTO items (
-          id, name, sku, type, description, category_id, unit,
-          sale_price, purchase_price, tax_rate, stock_quantity, low_stock_alert,
-          batch_number, expiry_date, manufacture_date, barcode, hsn_code,
-          warranty_days, brand, model_number, location,
-          is_active, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          data.name,
-          data.sku ?? null,
-          data.type,
-          data.description ?? null,
-          data.categoryId ?? data.category ?? null,
-          data.unit,
-          data.salePrice,
-          data.purchasePrice ?? 0,
-          data.taxRate ?? 0,
-          data.stockQuantity ?? data.openingStock ?? 0,
-          data.lowStockAlert ?? 0,
-          // Optional additional fields
-          data.batchNumber ?? null,
-          data.expiryDate ?? null,
-          data.manufactureDate ?? null,
-          data.barcode ?? null,
-          data.hsnCode ?? null,
-          data.warrantyDays ?? null,
-          data.brand ?? null,
-          data.modelNumber ?? null,
-          data.location ?? null,
-          1, // is_active
-          now,
-          now,
-        ]
-      );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO items (
+            id, name, sku, type, description, category_id, unit,
+            sale_price, purchase_price, tax_rate, stock_quantity, low_stock_alert,
+            batch_number, expiry_date, manufacture_date, barcode, hsn_code,
+            warranty_days, brand, model_number, location,
+            is_active, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            data.name,
+            data.sku ?? null,
+            data.type,
+            data.description ?? null,
+            data.categoryId ?? data.category ?? null,
+            data.unit,
+            data.salePrice,
+            data.purchasePrice ?? 0,
+            data.taxRate ?? 0,
+            data.stockQuantity ?? data.openingStock ?? 0,
+            data.lowStockAlert ?? 0,
+            // Optional additional fields
+            data.batchNumber ?? null,
+            data.expiryDate ?? null,
+            data.manufactureDate ?? null,
+            data.barcode ?? null,
+            data.hsnCode ?? null,
+            data.warrantyDays ?? null,
+            data.brand ?? null,
+            data.modelNumber ?? null,
+            data.location ?? null,
+            1, // is_active
+            now,
+            now,
+          ]
+        );
 
-      // Log history
-      await addItemHistoryEntry({
-        itemId: id,
-        action: "created",
-        description: `Item "${data.name}" created`,
-        newValues: {
-          name: data.name,
-          sku: data.sku,
-          type: data.type,
-          salePrice: data.salePrice,
-          purchasePrice: data.purchasePrice,
-          stockQuantity: data.stockQuantity ?? data.openingStock ?? 0,
-        },
+        // Log history
+        const historyId = crypto.randomUUID();
+        await tx.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description,
+            old_values, new_values, user_id, user_name, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            "created",
+            `Item "${data.name}" created`,
+            null,
+            JSON.stringify({
+              name: data.name,
+              sku: data.sku,
+              type: data.type,
+              salePrice: data.salePrice,
+              purchasePrice: data.purchasePrice,
+              stockQuantity: data.stockQuantity ?? data.openingStock ?? 0,
+            }),
+            user?.id ?? null,
+            userName,
+            now,
+          ]
+        );
       });
 
       return id;
     },
-    [db, addItemHistoryEntry]
+    [db]
   );
 
   const updateItem = useCallback(
     async (id: string, data: Partial<ItemMutationData>): Promise<void> => {
       const now = new Date().toISOString();
-      const fields: string[] = [];
-      const values: (string | number | null)[] = [];
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      if (data.name !== undefined) {
-        fields.push("name = ?");
-        values.push(data.name);
-      }
-      if (data.sku !== undefined) {
-        fields.push("sku = ?");
-        values.push(data.sku ?? null);
-      }
-      if (data.type !== undefined) {
-        fields.push("type = ?");
-        values.push(data.type);
-      }
-      if (data.description !== undefined) {
-        fields.push("description = ?");
-        values.push(data.description ?? null);
-      }
-      if (data.categoryId !== undefined) {
-        fields.push("category_id = ?");
-        values.push(data.categoryId ?? null);
-      }
-      if (data.unit !== undefined) {
-        fields.push("unit = ?");
-        values.push(data.unit);
-      }
-      if (data.salePrice !== undefined) {
-        fields.push("sale_price = ?");
-        values.push(data.salePrice);
-      }
-      if (data.purchasePrice !== undefined) {
-        fields.push("purchase_price = ?");
-        values.push(data.purchasePrice ?? null);
-      }
-      if (data.taxRate !== undefined) {
-        fields.push("tax_rate = ?");
-        values.push(data.taxRate ?? null);
-      }
-      if (data.lowStockAlert !== undefined) {
-        fields.push("low_stock_alert = ?");
-        values.push(data.lowStockAlert ?? null);
-      }
-      // Optional additional fields
-      if (data.batchNumber !== undefined) {
-        fields.push("batch_number = ?");
-        values.push(data.batchNumber ?? null);
-      }
-      if (data.expiryDate !== undefined) {
-        fields.push("expiry_date = ?");
-        values.push(data.expiryDate ?? null);
-      }
-      if (data.manufactureDate !== undefined) {
-        fields.push("manufacture_date = ?");
-        values.push(data.manufactureDate ?? null);
-      }
-      if (data.barcode !== undefined) {
-        fields.push("barcode = ?");
-        values.push(data.barcode ?? null);
-      }
-      if (data.hsnCode !== undefined) {
-        fields.push("hsn_code = ?");
-        values.push(data.hsnCode ?? null);
-      }
-      if (data.warrantyDays !== undefined) {
-        fields.push("warranty_days = ?");
-        values.push(data.warrantyDays ?? null);
-      }
-      if (data.brand !== undefined) {
-        fields.push("brand = ?");
-        values.push(data.brand ?? null);
-      }
-      if (data.modelNumber !== undefined) {
-        fields.push("model_number = ?");
-        values.push(data.modelNumber ?? null);
-      }
-      if (data.location !== undefined) {
-        fields.push("location = ?");
-        values.push(data.location ?? null);
-      }
-
-      fields.push("updated_at = ?");
-      values.push(now);
-      values.push(id);
-
-      if (fields.length > 1) {
-        await db.execute(
-          `UPDATE items SET ${fields.join(", ")} WHERE id = ?`,
-          values
+      await db.writeTransaction(async (tx) => {
+        // 1. Fetch existing item for history diffing
+        const existingResult = await tx.getAll<ItemRow>(
+          `SELECT * FROM items WHERE id = ?`,
+          [id]
         );
 
-        // Log history for update
-        await addItemHistoryEntry({
-          itemId: id,
-          action: "updated",
-          description: `Item updated`,
-          newValues: data as Record<string, unknown>,
-        });
-      }
+        if (existingResult.length === 0) {
+          // Item not found, just return (or could throw error)
+          return;
+        }
+        const oldItem = existingResult[0];
+
+        const fields: string[] = [];
+        const values: (string | number | null)[] = [];
+
+        // Track changes for history
+        const changes: string[] = [];
+        const oldValuesObj: Partial<ItemMutationData> = {};
+        const newValuesObj: Partial<ItemMutationData> = {};
+
+        // Helper to normalize values for comparison (treat "" as null)
+        const normalize = (
+          val: string | number | boolean | null | undefined
+        ): string | number | null => {
+          if (val === "" || val === undefined || val === null) return null;
+          if (typeof val === "boolean") return val ? 1 : 0;
+          return val;
+        };
+
+        if (data.name !== undefined) {
+          if (data.name !== oldItem.name) {
+            fields.push("name = ?");
+            values.push(data.name);
+            changes.push(`Name: '${oldItem.name}' -> '${data.name}'`);
+            oldValuesObj.name = oldItem.name;
+            newValuesObj.name = data.name;
+          }
+        }
+        if (data.sku !== undefined) {
+          const oldSku = normalize(oldItem.sku);
+          const newSku = normalize(data.sku);
+          if (newSku !== oldSku) {
+            fields.push("sku = ?");
+            values.push(newSku); // Store normalized (cleaner)
+            changes.push(
+              `SKU: ${String(oldSku ?? "none")} -> ${String(newSku ?? "none")}`
+            );
+            oldValuesObj.sku = oldSku as string;
+            newValuesObj.sku = newSku as string;
+          }
+        }
+        if (data.type !== undefined && data.type !== oldItem.type) {
+          fields.push("type = ?");
+          values.push(data.type);
+          changes.push(`Type: ${oldItem.type} -> ${data.type}`);
+          oldValuesObj.type = oldItem.type;
+          newValuesObj.type = data.type;
+        }
+        if (data.description !== undefined) {
+          const oldDesc = normalize(oldItem.description);
+          const newDesc = normalize(data.description);
+          if (newDesc !== oldDesc) {
+            fields.push("description = ?");
+            values.push(newDesc);
+            changes.push(`Description updated`);
+            oldValuesObj.description = oldDesc as string;
+            newValuesObj.description = newDesc as string;
+          }
+        }
+        if (data.categoryId !== undefined) {
+          const oldCat = normalize(oldItem.category_id);
+          const newCat = normalize(data.categoryId);
+          if (newCat !== oldCat) {
+            fields.push("category_id = ?");
+            values.push(newCat);
+            changes.push(`Category updated`);
+            oldValuesObj.categoryId = oldCat as string;
+            newValuesObj.categoryId = newCat as string;
+          }
+        }
+        if (data.unit !== undefined && data.unit !== oldItem.unit) {
+          fields.push("unit = ?");
+          values.push(data.unit);
+          changes.push(`Unit: ${oldItem.unit} -> ${data.unit}`);
+          oldValuesObj.unit = oldItem.unit;
+          newValuesObj.unit = data.unit;
+        }
+        if (
+          data.salePrice !== undefined &&
+          data.salePrice !== oldItem.sale_price
+        ) {
+          fields.push("sale_price = ?");
+          values.push(data.salePrice);
+          changes.push(
+            `Sale Price: ${oldItem.sale_price} -> ${data.salePrice}`
+          );
+          oldValuesObj.salePrice = oldItem.sale_price;
+          newValuesObj.salePrice = data.salePrice;
+        }
+        if (data.purchasePrice !== undefined) {
+          const oldPP = oldItem.purchase_price;
+          const newPP = data.purchasePrice ?? 0;
+          if (newPP !== oldPP) {
+            fields.push("purchase_price = ?");
+            values.push(newPP);
+            changes.push(`Purchase Price: ${oldPP} -> ${newPP}`);
+            oldValuesObj.purchasePrice = oldPP;
+            newValuesObj.purchasePrice = newPP;
+          }
+        }
+        if (
+          data.stockQuantity !== undefined &&
+          data.stockQuantity !== oldItem.stock_quantity
+        ) {
+          fields.push("stock_quantity = ?");
+          values.push(data.stockQuantity);
+          changes.push(
+            `Stock: ${oldItem.stock_quantity} -> ${data.stockQuantity}`
+          );
+          oldValuesObj.stockQuantity = oldItem.stock_quantity;
+          newValuesObj.stockQuantity = data.stockQuantity;
+        }
+        if (
+          data.lowStockAlert !== undefined &&
+          data.lowStockAlert !== oldItem.low_stock_alert
+        ) {
+          fields.push("low_stock_alert = ?");
+          values.push(data.lowStockAlert);
+          changes.push(
+            `Low Stock Alert: ${oldItem.low_stock_alert} -> ${data.lowStockAlert}`
+          );
+          oldValuesObj.lowStockAlert = oldItem.low_stock_alert;
+          newValuesObj.lowStockAlert = data.lowStockAlert;
+        }
+        if (data.taxRate !== undefined) {
+          const oldTax = oldItem.tax_rate;
+          const newTax = data.taxRate ?? null;
+          // Ensure strict equality for numbers, assuming they are actually numbers or null
+          const normalizedOldTax = oldTax ?? 0;
+          const normalizedNewTax = newTax;
+
+          if (normalizedNewTax !== normalizedOldTax) {
+            fields.push("tax_rate = ?");
+            values.push(newTax);
+            changes.push(
+              `Tax Rate: ${normalizedOldTax}% -> ${normalizedNewTax}%`
+            );
+            oldValuesObj.taxRate = oldTax ?? undefined;
+            newValuesObj.taxRate = newTax;
+          }
+        }
+
+        // Optional additional fields checks
+        const checkOptional = (
+          key: keyof ItemMutationData,
+          dbCol: string,
+          label: string
+        ): void => {
+          if (data[key] !== undefined) {
+            const oldVal = normalize(
+              oldItem[dbCol as keyof ItemRow] as
+                | string
+                | number
+                | boolean
+                | null
+                | undefined
+            );
+            const newVal = normalize(
+              data[key] as string | number | boolean | null | undefined
+            );
+
+            if (newVal !== oldVal) {
+              fields.push(`${dbCol} = ?`);
+              values.push(newVal);
+              changes.push(
+                `${label}: ${String(oldVal ?? "none")} -> ${String(newVal ?? "none")}`
+              );
+              (oldValuesObj as Record<string, unknown>)[key as string] = oldVal;
+              (newValuesObj as Record<string, unknown>)[key as string] = newVal;
+            }
+          }
+        };
+
+        checkOptional("batchNumber", "batch_number", "Batch No");
+        checkOptional("expiryDate", "expiry_date", "Expiry");
+        checkOptional("manufactureDate", "manufacture_date", "Mfg Date");
+        checkOptional("barcode", "barcode", "Barcode");
+        checkOptional("hsnCode", "hsn_code", "HSN");
+        checkOptional("warrantyDays", "warranty_days", "Warranty");
+        checkOptional("brand", "brand", "Brand");
+        checkOptional("modelNumber", "model_number", "Model");
+        checkOptional("location", "location", "Location");
+
+        fields.push("updated_at = ?");
+        values.push(now);
+        values.push(id);
+
+        if (fields.length > 1) {
+          // > 1 because updated_at is always added
+          await tx.execute(
+            `UPDATE items SET ${fields.join(", ")} WHERE id = ?`,
+            values
+          );
+
+          // Create description string
+          const description =
+            changes.length > 0
+              ? changes.join(", ")
+              : "Item updated (no changes detected)";
+
+          // Log history for update
+          const historyId = crypto.randomUUID();
+          await tx.execute(
+            `INSERT INTO item_history (
+                id, item_id, action, description,
+                old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              historyId,
+              id,
+              "updated",
+              description,
+              JSON.stringify(oldValuesObj),
+              JSON.stringify(newValuesObj),
+              user?.id ?? null,
+              userName,
+              now,
+            ]
+          );
+        }
+      });
     },
-    [db, addItemHistoryEntry]
+    [db]
   );
 
   const deleteItem = useCallback(
     async (id: string): Promise<void> => {
-      // Log history before delete
-      await addItemHistoryEntry({
-        itemId: id,
-        action: "deleted",
-        description: `Item deleted`,
-      });
+      const now = new Date().toISOString();
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      await db.execute(`DELETE FROM items WHERE id = ?`, [id]);
+      await db.writeTransaction(async (tx) => {
+        // Log history before delete (technically "deleted" action usually preserves the history record even if item is gone, or we might want to keep the item soft deleted? PowerSync usually syncs deletes. History table remains.)
+        const historyId = crypto.randomUUID();
+        await tx.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description,
+            old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            "deleted",
+            `Item deleted`,
+            null,
+            null,
+            user?.id ?? null,
+            userName,
+            now,
+          ]
+        );
+
+        await tx.execute(`DELETE FROM items WHERE id = ?`, [id]);
+      });
     },
-    [db, addItemHistoryEntry]
+    [db]
   );
 
   const toggleItemActive = useCallback(
     async (id: string, isActive: boolean): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(
-        `UPDATE items SET is_active = ?, updated_at = ? WHERE id = ?`,
-        [isActive ? 1 : 0, now, id]
-      );
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      // Log history
-      await addItemHistoryEntry({
-        itemId: id,
-        action: isActive ? "activated" : "deactivated",
-        description: `Item ${isActive ? "activated" : "deactivated"}`,
-        newValues: { isActive },
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `UPDATE items SET is_active = ?, updated_at = ? WHERE id = ?`,
+          [isActive ? 1 : 0, now, id]
+        );
+
+        // Log history
+        const historyId = crypto.randomUUID();
+        await tx.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description,
+            old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            isActive ? "activated" : "deactivated",
+            `Item ${isActive ? "activated" : "deactivated"}`,
+            null,
+            JSON.stringify({ isActive }),
+            user?.id ?? null,
+            userName,
+            now,
+          ]
+        );
       });
     },
-    [db, addItemHistoryEntry]
+    [db]
   );
 
   const adjustStock = useCallback(
     async (id: string, quantity: number): Promise<void> => {
       const now = new Date().toISOString();
+      const { user } = useAuthStore.getState();
+      const userName =
+        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      // Get current stock before update
-      const result = await db.execute(
-        `SELECT stock_quantity, name FROM items WHERE id = ?`,
-        [id]
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      const oldStock =
-        (
-          result.rows?._array?.[0] as
-            | { stock_quantity: number; name: string }
-            | undefined
-        )?.stock_quantity ?? 0;
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      const itemName =
-        (result.rows?._array?.[0] as { name: string } | undefined)?.name ??
-        "Unknown";
-      const newStock = oldStock + quantity;
+      await db.writeTransaction(async (tx) => {
+        // Get current stock before update
+        const result = await tx.execute(
+          `SELECT stock_quantity, name FROM items WHERE id = ?`,
+          [id]
+        );
+        const row = result.rows?.item(0) as
+          | { stock_quantity: number; name: string }
+          | undefined;
+        const oldStock = row?.stock_quantity ?? 0;
+        const itemName = row?.name ?? "Unknown";
+        const newStock = oldStock + quantity;
 
-      await db.execute(
-        `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
-        [quantity, now, id]
-      );
+        await tx.execute(
+          `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+          [quantity, now, id]
+        );
 
-      // Log history
-      await addItemHistoryEntry({
-        itemId: id,
-        action: "stock_adjusted",
-        description: `Stock adjusted for "${itemName}": ${oldStock} → ${newStock} (${quantity > 0 ? "+" : ""}${quantity})`,
-        oldValues: { stockQuantity: oldStock },
-        newValues: { stockQuantity: newStock, adjustment: quantity },
+        // Log history
+        const historyId = crypto.randomUUID();
+        await tx.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description,
+            old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            "stock_adjusted",
+            `Stock adjusted for "${itemName}": ${oldStock} → ${newStock} (${quantity > 0 ? "+" : ""}${quantity})`,
+            JSON.stringify({ stockQuantity: oldStock }),
+            JSON.stringify({ stockQuantity: newStock, adjustment: quantity }),
+            user?.id ?? null,
+            userName,
+            now,
+          ]
+        );
       });
     },
-    [db, addItemHistoryEntry]
+    [db]
   );
 
   return {
@@ -452,37 +598,5 @@ export function useItemMutations(): ItemMutations {
     deleteItem,
     toggleItemActive,
     adjustStock,
-  };
-}
-
-interface ItemStats {
-  totalItems: number;
-  lowStockItems: number;
-  outOfStock: number;
-  totalValue: number;
-}
-
-export function useItemStats(): ItemStats {
-  const { data: totalItems } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1`
-  );
-
-  const { data: lowStockItems } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1 AND stock_quantity <= low_stock_alert`
-  );
-
-  const { data: outOfStock } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM items WHERE is_active = 1 AND stock_quantity <= 0`
-  );
-
-  const { data: totalValue } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(stock_quantity * purchase_price), 0) as sum FROM items WHERE is_active = 1`
-  );
-
-  return {
-    totalItems: totalItems[0]?.count ?? 0,
-    lowStockItems: lowStockItems[0]?.count ?? 0,
-    outOfStock: outOfStock[0]?.count ?? 0,
-    totalValue: totalValue[0]?.sum ?? 0,
   };
 }
