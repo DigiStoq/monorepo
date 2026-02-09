@@ -1,3 +1,8 @@
+# =============================================================================
+# PowerSync Sync Rules for DigiStoq
+# =============================================================================
+
+
 bucket_definitions:
   user_data:
     parameters:
@@ -32,12 +37,11 @@ bucket_definitions:
       - SELECT * FROM loans WHERE user_id = bucket.user_id
       - SELECT * FROM loan_payments WHERE user_id = bucket.user_id
 
-      # --- History (Last 7 Days Only) ---
-      # --- History (Last 7 Days Only) ---
-      - SELECT * FROM item_history WHERE user_id = bucket.user_id AND created_at >= datetime('now', '-7 days')
-      - SELECT * FROM invoice_history WHERE user_id = bucket.user_id AND created_at >= datetime('now', '-7 days')
-      - SELECT * FROM login_history WHERE user_id = bucket.user_id AND timestamp >= datetime('now', '-7 days')
-      - SELECT * FROM backup_history WHERE user_id = bucket.user_id AND timestamp >= datetime('now', '-7 days')
+      # --- History ---
+      - SELECT * FROM item_history WHERE user_id = bucket.user_id
+      - SELECT * FROM invoice_history WHERE user_id = bucket.user_id
+      - SELECT * FROM login_history WHERE user_id = bucket.user_id
+      - SELECT * FROM backup_history WHERE user_id = bucket.user_id
 
       # --- User Settings ---
       - SELECT * FROM company_settings WHERE user_id = bucket.user_id
@@ -48,3 +52,5 @@ bucket_definitions:
       - SELECT * FROM user_preferences WHERE user_id = bucket.user_id
       - SELECT * FROM security_settings WHERE user_id = bucket.user_id
       - SELECT * FROM backup_settings WHERE user_id = bucket.user_id
+
+

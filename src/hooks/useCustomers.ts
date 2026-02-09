@@ -1,4 +1,9 @@
+import type { PowerSyncDatabase } from "@powersync/web";
 import { useQuery } from "@powersync/react";
+import {
+  queryOptions,
+  type UndefinedInitialDataOptions,
+} from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
 import type {
@@ -57,68 +62,80 @@ function mapRowToCustomer(row: CustomerRow): Customer {
   return customer;
 }
 
+const getCustomersQuery = (filters?: {
+  type?: "customer" | "supplier" | "both";
+  isActive?: boolean;
+  search?: string;
+}): { query: string; params: (string | number)[] } => {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filters?.type === "customer")
+    conditions.push("type IN ('customer', 'both')");
+  else if (filters?.type === "supplier")
+    conditions.push("type IN ('supplier', 'both')");
+  else if (filters?.type === "both") conditions.push("type = 'both'");
+
+  if (filters?.isActive !== undefined) {
+    conditions.push("is_active = ?");
+    params.push(filters.isActive ? 1 : 0);
+  }
+
+  if (filters?.search) {
+    conditions.push("(name LIKE ? OR phone LIKE ? OR email LIKE ?)");
+    const searchPattern = `%${filters.search}%`;
+    params.push(searchPattern, searchPattern, searchPattern);
+  }
+
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return {
+    query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
+    params,
+  };
+};
+
+export const customersQueryOptions = (
+  db: PowerSyncDatabase,
+  filters?: {
+    type?: "customer" | "supplier" | "both";
+    isActive?: boolean;
+    search?: string;
+  }
+): UndefinedInitialDataOptions<
+  CustomerRow[],
+  Error,
+  CustomerRow[],
+  (string | (string | number)[])[]
+> => {
+  const { query, params } = getCustomersQuery(filters);
+  return queryOptions({
+    queryKey: [query, params],
+    queryFn: async () => {
+      return await db.getAll<CustomerRow>(query, params);
+    },
+  });
+};
+
 export function useCustomers(filters?: {
   type?: "customer" | "supplier" | "both";
   isActive?: boolean;
   search?: string;
 }): { customers: Customer[]; isLoading: boolean; error: Error | undefined } {
-  // Memoize query and params to ensure stable references for PowerSync reactivity
-  const { query, params } = useMemo(() => {
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
-
-    // Type filter - include "both" type when filtering for customer or supplier
-    if (filters?.type === "customer") {
-      conditions.push("type IN ('customer', 'both')");
-    } else if (filters?.type === "supplier") {
-      conditions.push("type IN ('supplier', 'both')");
-    } else if (filters?.type === "both") {
-      conditions.push("type = 'both'");
-    }
-
-    // Active filter
-    if (filters?.isActive !== undefined) {
-      conditions.push("is_active = ?");
-      params.push(filters.isActive ? 1 : 0);
-    }
-
-    // Search filter
-    if (filters?.search) {
-      conditions.push("(name LIKE ? OR phone LIKE ? OR email LIKE ?)");
-      const searchPattern = `%${filters.search}%`;
-      params.push(searchPattern, searchPattern, searchPattern);
-    }
-
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    return {
-      query: `SELECT * FROM customers ${whereClause} ORDER BY name`,
-      params,
-    };
-  }, [filters?.type, filters?.isActive, filters?.search]);
-
+  const { query, params } = useMemo(
+    () =>
+      getCustomersQuery({
+        type: filters?.type,
+        isActive: filters?.isActive,
+        search: filters?.search,
+      }),
+    [filters?.type, filters?.isActive, filters?.search]
+  );
   const { data, isLoading, error } = useQuery<CustomerRow>(query, params);
 
   const customers = useMemo(() => data.map(mapRowToCustomer), [data]);
 
   return { customers, isLoading, error };
-}
-
-export function useCustomerById(id: string | null): {
-  customer: Customer | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<CustomerRow>(
-    id
-      ? `SELECT * FROM customers WHERE id = ?`
-      : `SELECT * FROM customers WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const customer = data[0] ? mapRowToCustomer(data[0]) : null;
-
-  return { customer, isLoading, error };
 }
 
 interface CustomerMutations {
@@ -277,38 +294,6 @@ export function useCustomerMutations(): CustomerMutations {
     deleteCustomer,
     toggleCustomerActive,
     updateCustomerBalance,
-  };
-}
-
-interface CustomerStats {
-  totalCustomers: number;
-  totalSuppliers: number;
-  totalReceivable: number;
-  totalPayable: number;
-}
-
-export function useCustomerStats(): CustomerStats {
-  const { data: totalCustomers } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM customers WHERE type IN ('customer', 'both') AND is_active = 1`
-  );
-
-  const { data: totalSuppliers } = useQuery<{ count: number }>(
-    `SELECT COUNT(*) as count FROM customers WHERE type IN ('supplier', 'both') AND is_active = 1`
-  );
-
-  const { data: totalReceivable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(current_balance), 0) as sum FROM customers WHERE type IN ('customer', 'both') AND current_balance > 0`
-  );
-
-  const { data: totalPayable } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(ABS(SUM(current_balance)), 0) as sum FROM customers WHERE type IN ('supplier', 'both') AND current_balance < 0`
-  );
-
-  return {
-    totalCustomers: totalCustomers[0]?.count ?? 0,
-    totalSuppliers: totalSuppliers[0]?.count ?? 0,
-    totalReceivable: totalReceivable[0]?.sum ?? 0,
-    totalPayable: totalPayable[0]?.sum ?? 0,
   };
 }
 

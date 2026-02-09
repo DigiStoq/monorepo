@@ -8,6 +8,7 @@ import {
   Badge,
   Table,
   Select,
+  Input,
   type Column,
   type SelectOption,
 } from "@/components/ui";
@@ -29,12 +30,17 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import {
   useInvoiceHistory,
   type InvoiceHistoryAction,
 } from "@/hooks/useInvoiceHistory";
+import { usePaymentsByInvoiceId } from "@/hooks/usePaymentIns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { PaymentHistoryCard } from "@/components/common";
 import type { SaleInvoice, SaleInvoiceItem, InvoiceStatus } from "../types";
 
 // ============================================================================
@@ -47,6 +53,7 @@ export interface InvoiceDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onStatusChange?: (status: InvoiceStatus) => void;
+  onUpdateDetails?: (updates: { invoiceName?: string; date?: string }) => void;
   onRecordPayment?: () => void;
   onDownload?: () => void;
   onPrint?: () => void;
@@ -122,6 +129,7 @@ export function InvoiceDetail({
   onEdit,
   onDelete,
   onStatusChange,
+  onUpdateDetails,
   onRecordPayment,
   onDownload,
   onPrint,
@@ -132,6 +140,17 @@ export function InvoiceDetail({
     invoice?.id ?? null,
     "sale"
   );
+
+  // Fetch payments linked to this invoice
+  const { payments, isLoading: paymentsLoading } = usePaymentsByInvoiceId(
+    invoice?.id ?? null
+  );
+
+  // Inline editing state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const { formatCurrency } = useCurrency();
 
@@ -235,7 +254,9 @@ export function InvoiceDetail({
 
   const status = statusConfig[invoice.status];
   const StatusIcon = status.icon;
-  const showPaymentButton = invoice.status === "unpaid";
+  const showPaymentButton =
+    (invoice.status === "unpaid" || invoice.status === "draft") &&
+    invoice.amountDue > 0;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -248,9 +269,65 @@ export function InvoiceDetail({
                 <FileText className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-text-heading">
-                  {invoice.invoiceNumber}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-text-heading">
+                    {invoice.invoiceNumber}
+                  </h2>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editName}
+                        onChange={(e) => {
+                          setEditName(e.target.value);
+                        }}
+                        className="h-7 w-40 text-sm"
+                        placeholder="Invoice name..."
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          onUpdateDetails?.({ invoiceName: editName });
+                          setIsEditingName(false);
+                        }}
+                      >
+                        <Check className="h-3.5 w-3.5 text-success" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          setIsEditingName(false);
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5 text-error" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      {invoice.invoiceName && (
+                        <span className="text-sm text-text-tertiary">
+                          ({invoice.invoiceName})
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                        onClick={() => {
+                          setEditName(invoice.invoiceName ?? "");
+                          setIsEditingName(true);
+                        }}
+                        title="Edit invoice name"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={status.variant}>
                     <StatusIcon className="h-3 w-3 mr-1" />
@@ -289,26 +366,27 @@ export function InvoiceDetail({
 
         <CardBody>
           {/* Amount Due Alert */}
-          {invoice.amountDue > 0 && invoice.status === "unpaid" && (
-            <div className="p-4 rounded-xl mb-6 bg-warning-light">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-warning-dark">
-                    Amount Due
-                  </p>
-                  <p className="text-2xl font-bold text-warning-dark">
-                    {formatCurrency(invoice.amountDue)}
-                  </p>
+          {invoice.amountDue > 0 &&
+            (invoice.status === "unpaid" || invoice.status === "draft") && (
+              <div className="p-4 rounded-xl mb-6 bg-warning-light">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-warning-dark">
+                      Amount Due
+                    </p>
+                    <p className="text-2xl font-bold text-warning-dark">
+                      {formatCurrency(invoice.amountDue)}
+                    </p>
+                  </div>
+                  {showPaymentButton && (
+                    <Button onClick={onRecordPayment}>
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Record Payment
+                    </Button>
+                  )}
                 </div>
-                {showPaymentButton && (
-                  <Button onClick={onRecordPayment}>
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Record Payment
-                  </Button>
-                )}
               </div>
-            </div>
-          )}
+            )}
 
           {/* Invoice Info Grid */}
           <div className="grid grid-cols-3 gap-6 mb-6">
@@ -328,9 +406,58 @@ export function InvoiceDetail({
               </p>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-400" />
-                <span className="text-text-heading">
-                  {formatDate(invoice.date)}
-                </span>
+                {isEditingDate ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => {
+                        setEditDate(e.target.value);
+                      }}
+                      className="h-7 text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => {
+                        onUpdateDetails?.({ date: editDate });
+                        setIsEditingDate(false);
+                      }}
+                    >
+                      <Check className="h-3.5 w-3.5 text-success" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => {
+                        setIsEditingDate(false);
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5 text-error" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-text-heading">
+                      {formatDate(invoice.date)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                      onClick={() => {
+                        setEditDate(invoice.date);
+                        setIsEditingDate(true);
+                      }}
+                      title="Edit invoice date"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -345,7 +472,7 @@ export function InvoiceDetail({
                       : "text-text-heading"
                   )}
                 >
-                  {formatDate(invoice.dueDate)}
+                  {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                 </span>
               </div>
             </div>
@@ -498,6 +625,13 @@ export function InvoiceDetail({
           </CardBody>
         </Card>
       )}
+
+      {/* Payment History */}
+      <PaymentHistoryCard
+        payments={payments}
+        isLoading={paymentsLoading}
+        type="in"
+      />
 
       {/* Invoice History */}
       <HistorySection

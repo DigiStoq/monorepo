@@ -12,18 +12,6 @@ export type ExportEntityType =
   | "expenses";
 export type ExportFormat = "csv" | "xlsx" | "pdf";
 
-export interface ImportField {
-  source: string; // Column name from file
-  target: string; // Field in our system
-  required: boolean;
-  type: "string" | "number" | "date" | "boolean";
-}
-
-export interface ImportMapping {
-  entityType: ImportEntityType;
-  fields: ImportField[];
-}
-
 export interface ImportPreview {
   totalRows: number;
   validRows: number;
@@ -77,96 +65,9 @@ export interface BulkPriceUpdate {
   roundTo?: number;
 }
 
-export interface BulkCategoryUpdate {
-  categoryId: string;
-  categoryName: string;
-}
-
-export interface BulkStatusUpdate {
-  isActive: boolean;
-}
-
-export interface BulkStockUpdate {
-  type: "set" | "add" | "subtract";
-  value: number;
-}
-
 export interface BulkUpdateResult {
   success: boolean;
   updated: number;
   failed: number;
   errors: { id: string; message: string }[];
-}
-
-// ============================================================================
-// DATA CLEANUP TYPES
-// ============================================================================
-
-export interface DataCleanupOptions {
-  deleteInactiveCustomers: boolean;
-  deleteZeroStockItems: boolean;
-  deleteOldTransactions: boolean;
-  transactionAge?: number; // in months
-  archiveBeforeDelete: boolean;
-}
-
-export interface DataCleanupResult {
-  customersDeleted: number;
-  itemsDeleted: number;
-  transactionsDeleted: number;
-  archiveCreated: boolean;
-  archivePath?: string;
-}
-
-// ============================================================================
-// BACKUP TYPES
-// ============================================================================
-
-export interface BackupOptions {
-  destination: "local" | "cloud";
-  cloudProvider?: "google-drive" | "dropbox" | "onedrive" | undefined;
-  includeAttachments: boolean;
-  compress: boolean;
-}
-
-export interface BackupResult {
-  success: boolean;
-  filename: string;
-  size: number;
-  timestamp: string;
-  destination: string;
-}
-
-export interface BackupRecord {
-  timestamp: string;
-  size: number;
-  destination: string;
-  status: "success" | "failed";
-}
-
-// ============================================================================
-// RESTORE TYPES
-// ============================================================================
-
-export interface RestoreOptions {
-  source: "local" | "cloud";
-  backupId?: string | undefined;
-  file?: File | undefined;
-  overwriteExisting: boolean;
-}
-
-export interface RestoreResult {
-  success: boolean;
-  recordsRestored: number;
-  timestamp: string;
-  errors?: string[];
-}
-
-export interface BackupFile {
-  id: string;
-  filename: string;
-  size: number;
-  createdAt: string;
-  source: "local" | "cloud";
-  provider?: string;
 }

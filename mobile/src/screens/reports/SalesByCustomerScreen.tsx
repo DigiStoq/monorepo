@@ -1,15 +1,14 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Platform } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft, Search } from "lucide-react-native";
-import { useSalesByCustomerReport, DateRange } from "../../hooks/useReports";
+import { ArrowLeftIcon, SearchIcon } from "../../components/ui/UntitledIcons";
+import type { DateRange } from "../../hooks/useReports";
+import { useSalesByCustomerReport } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function SalesByCustomerScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
-    const styles = useMemo(() => createStyles(colors), [colors]);
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -29,24 +28,24 @@ export function SalesByCustomerScreen() {
     const formatCurrency = (amount: number) => "$" + (amount || 0).toFixed(2);
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-                    <ArrowLeft color={colors.text} size={24} />
+        <View className="flex-1 bg-background">
+            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
+                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
+                    <ArrowLeftIcon color={colors.text} size={24} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Sales by Customer</Text>
-                <View style={{ width: 40 }} />
+                <Text className="text-lg font-semibold text-text">Sales by Customer</Text>
+                <View className="w-10" />
             </View>
 
             {/* Filter Section */}
-            <View style={styles.filterSection}>
-                <View style={styles.dateRow}>
-                    <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
+            <View className="p-4 bg-surface border-b border-border">
+                <View className="flex-row justify-end mb-3">
+                    <Text className="text-sm text-text-muted">{dateRange.from} - {dateRange.to}</Text>
                 </View>
-                <View style={styles.searchBox}>
-                    <Search size={18} color={colors.textMuted} />
+                <View className="flex-row items-center bg-surface-hover rounded-lg px-3 h-10">
+                    <SearchIcon size={18} color={colors.textMuted} />
                     <TextInput
-                        style={styles.searchInput}
+                        className="flex-1 ml-2 h-full text-base text-text"
                         placeholder="Search customers..."
                         placeholderTextColor={colors.textMuted}
                         value={search}
@@ -59,60 +58,35 @@ export function SalesByCustomerScreen() {
             <FlatList
                 data={filteredData}
                 keyExtractor={(item) => item.customerId || item.customerName}
-                contentContainerStyle={styles.list}
+                contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
                 renderItem={({ item, index }) => (
-                    <View style={styles.card}>
-                        <View style={styles.row}>
-                            <Text style={styles.rank}>#{index + 1}</Text>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.customerName}>{item.customerName}</Text>
-                                <Text style={styles.countText}>{item.invoiceCount} invoices</Text>
+                    <View className="bg-surface rounded-xl p-4 border border-border shadow-sm">
+                        <View className="flex-row items-center mb-3">
+                            <Text className="text-sm text-text-muted w-8 font-medium">#{index + 1}</Text>
+                            <View className="flex-1">
+                                <Text className="text-base font-semibold text-text">{item.customerName}</Text>
+                                <Text className="text-xs text-text-muted">{item.invoiceCount} invoices</Text>
                             </View>
-                            <Text style={styles.amount}>{formatCurrency(item.totalAmount)}</Text>
+                            <Text className="text-base font-bold text-text">{formatCurrency(item.totalAmount)}</Text>
                         </View>
 
                         {/* Progress Bar */}
-                        <View style={styles.progressBg}>
-                            <View style={[styles.progressFill, { width: `${(item.totalAmount / maxAmount) * 100}%` }]} />
+                        <View className="h-1.5 bg-surface-hover rounded-full overflow-hidden mb-3">
+                            <View className="h-full bg-primary rounded-full" style={{ width: `${(item.totalAmount / maxAmount) * 100}%` }} />
                         </View>
 
-                        <View style={styles.statsRow}>
-                            <Text style={[styles.stat, { color: colors.success }]}>Paid: {formatCurrency(item.paidAmount)}</Text>
-                            <Text style={[styles.stat, { color: colors.danger }]}>Due: {formatCurrency(item.dueAmount)}</Text>
+                        <View className="flex-row justify-between">
+                            <Text className="text-xs font-medium text-success">Paid: {formatCurrency(item.paidAmount)}</Text>
+                            <Text className="text-xs font-medium text-danger">Due: {formatCurrency(item.dueAmount)}</Text>
                         </View>
                     </View>
                 )}
                 ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyText}>{isLoading ? "Loading..." : "No available data"}</Text>
+                    <View className="p-10 items-center">
+                        <Text className="text-text-muted">{isLoading ? "Loading..." : "No available data"}</Text>
                     </View>
                 }
             />
         </View>
     );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
-    iconBtn: { padding: 8 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
-    filterSection: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border },
-    dateRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 12 },
-    dateText: { fontSize: 13, color: colors.textMuted },
-    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, borderRadius: 8, paddingHorizontal: 10, height: 40 },
-    searchInput: { flex: 1, marginLeft: 8, height: '100%', fontSize: 15, color: colors.text },
-    list: { padding: 16, gap: 12, paddingBottom: 40 },
-    card: { backgroundColor: colors.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border },
-    row: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    rank: { fontSize: 14, color: colors.textMuted, width: 30, fontWeight: '500' },
-    customerName: { fontSize: 15, fontWeight: '600', color: colors.text },
-    countText: { fontSize: 12, color: colors.textMuted },
-    amount: { fontSize: 16, fontWeight: '700', color: colors.text },
-    progressBg: { height: 6, backgroundColor: colors.surfaceHover, borderRadius: 3, overflow: 'hidden', marginBottom: 12 },
-    progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
-    statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    stat: { fontSize: 12, fontWeight: '500' },
-    emptyState: { padding: 40, alignItems: 'center' },
-    emptyText: { color: colors.textMuted }
-});

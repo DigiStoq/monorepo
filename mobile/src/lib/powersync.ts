@@ -559,6 +559,14 @@ const backup_history = new Table({
   file_path: column.text,
 });
 
+// Write checkpoints for sync coordination (Anti-Gravity Architecture)
+const write_checkpoints = new Table({
+  user_id: column.text,
+  client_id: column.text,
+  checkpoint: column.integer,
+  updated_at: column.text,
+});
+
 // ============================================================================
 // SCHEMA EXPORT
 // ============================================================================
@@ -603,6 +611,8 @@ export const AppSchema = new Schema({
   login_history,
   backup_settings,
   backup_history,
+  // Sync Coordination
+  write_checkpoints,
 });
 
 // ============================================================================

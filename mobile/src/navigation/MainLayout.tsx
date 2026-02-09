@@ -34,7 +34,7 @@ export function MainLayout() {
   
   // Get the active route name from navigation state
   const getActiveRoute = (state: any): string => {
-    if (!state || !state.routes) return "DashboardTab";
+    if (!state?.routes) return "DashboardTab";
     const route = state.routes[state.index];
     if (route.state) {
       return getActiveRoute(route.state);

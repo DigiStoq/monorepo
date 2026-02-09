@@ -13,6 +13,8 @@ import {
   Download,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { usePaymentOutsByInvoiceId } from "@/hooks/usePaymentOuts";
+import { PaymentHistoryCard } from "@/components/common";
 import type { PurchaseInvoice, PurchaseInvoiceStatus } from "../types";
 
 // ============================================================================
@@ -90,6 +92,10 @@ export function PurchaseInvoiceDetail({
       month: "short",
       year: "numeric",
     });
+
+  const { payments, isLoading: paymentsLoading } = usePaymentOutsByInvoiceId(
+    invoice.id
+  );
 
   const canPay =
     invoice.status !== "paid" &&
@@ -217,6 +223,20 @@ export function PurchaseInvoiceDetail({
                 </p>
               </div>
             </div>
+
+            {invoice.expectedDeliveryDate && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Exp. Delivery</p>
+                  <p className="font-medium text-text-heading">
+                    {formatDate(invoice.expectedDeliveryDate)}
+                  </p>
+                </div>
+              </div>
+            )}
           </CardBody>
         </Card>
 
@@ -304,6 +324,13 @@ export function PurchaseInvoiceDetail({
             </CardBody>
           </Card>
         )}
+
+        {/* Payment History */}
+        <PaymentHistoryCard
+          payments={payments}
+          isLoading={paymentsLoading}
+          type="out"
+        />
 
         {/* Timestamps */}
         <Card>

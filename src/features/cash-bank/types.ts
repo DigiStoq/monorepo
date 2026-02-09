@@ -113,26 +113,6 @@ export interface ChequeFormData {
 }
 
 // ============================================================================
-// FILTERS
-// ============================================================================
-
-export interface BankAccountFilters {
-  search: string;
-  accountType: BankAccountType | "all";
-  showInactive: boolean;
-}
-
-export interface ChequeFilters {
-  search: string;
-  type: ChequeType | "all";
-  status: ChequeStatus | "all";
-  dateRange: {
-    from: string | null;
-    to: string | null;
-  };
-}
-
-// ============================================================================
 // LOAN TYPES
 // ============================================================================
 
