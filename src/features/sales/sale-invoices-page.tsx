@@ -1,5 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
-import { useSearch } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout";
 import { useCurrency } from "@/hooks/useCurrency";
 import {
@@ -24,7 +23,6 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { toast } from "sonner";
 import { InvoiceList, InvoiceDetail, InvoiceForm } from "./components";
 import {
   useSaleInvoices,
@@ -53,11 +51,6 @@ import type {
 } from "./types";
 
 export function SaleInvoicesPage(): React.ReactNode {
-  // Get search params for deep linking
-  // Get search params for deep linking
-  const search = useSearch({ strict: false });
-  const deepLinkInvoiceId = (search as { invoiceId?: string }).invoiceId;
-
   // Filter State - moved before hook usage
   const [filters, setFilters] = useState<SaleFilters>({
     search: "",
@@ -83,13 +76,8 @@ export function SaleInvoicesPage(): React.ReactNode {
   const { customers } = useCustomers({ type: "customer" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
-  const {
-    createInvoice,
-    updateInvoice,
-    updateInvoiceDetails,
-    updateInvoiceStatus,
-    deleteInvoice,
-  } = useSaleInvoiceMutations();
+  const { createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice } =
+    useSaleInvoiceMutations();
   const { createPayment } = usePaymentInMutations();
   const { createTransaction: createCashTransaction } =
     useCashTransactionMutations();
@@ -109,15 +97,8 @@ export function SaleInvoicesPage(): React.ReactNode {
 
   // State
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
-    deepLinkInvoiceId ?? null
+    null
   );
-
-  // Sync state with deep link
-  useEffect(() => {
-    if (deepLinkInvoiceId) {
-      setSelectedInvoiceId(deepLinkInvoiceId);
-    }
-  }, [deepLinkInvoiceId]);
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -206,11 +187,6 @@ export function SaleInvoicesPage(): React.ReactNode {
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [returnReason, setReturnReason] = useState<string>("");
   const [addToStock, setAddToStock] = useState(true);
-  const [returnAction, setReturnAction] = useState<"credit" | "refund">(
-    "credit"
-  );
-  const [returnPaymentMode, setReturnPaymentMode] =
-    useState<PaymentMode>("cash");
 
   // Payment mode options
   const paymentModeOptions: SelectOption[] = [
@@ -269,13 +245,11 @@ export function SaleInvoicesPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await deleteInvoice(invoiceToDelete.id);
-        toast.success("Invoice deleted successfully");
         setIsDeleteModalOpen(false);
         setInvoiceToDelete(null);
         setSelectedInvoiceId(null);
       } catch (err) {
         console.error("Failed to delete invoice:", err);
-        toast.error("Failed to delete invoice");
       } finally {
         setIsSubmitting(false);
       }
@@ -292,8 +266,11 @@ export function SaleInvoicesPage(): React.ReactNode {
       const customer = customers.find((c) => c.id === data.customerId);
       const customerName = customer?.name ?? "Unknown";
 
-      // Due date is optional - use the value from form if provided
-      const dueDate = data.dueDate;
+      // Calculate due date - default to 30 days from invoice date if not provided
+      const invoiceDate = new Date(data.date);
+      const defaultDueDate = new Date(invoiceDate);
+      defaultDueDate.setDate(defaultDueDate.getDate() + 30);
+      const dueDate = data.dueDate ?? defaultDueDate.toISOString().slice(0, 10);
 
       // Transform form items to include itemName, unit, and amount
       const invoiceItems = data.items.map((formItem) => {
@@ -334,29 +311,17 @@ export function SaleInvoicesPage(): React.ReactNode {
           customerId: data.customerId,
           customerName,
           date: data.date,
-
           dueDate,
           status: "draft",
           discountAmount,
           ...(data.notes && { notes: data.notes }),
           ...(data.terms && { terms: data.terms }),
-          initialPaymentStatus: data.initialPaymentStatus,
-          initialAmountPaid: data.initialAmountPaid,
-          initialPaymentMode: data.initialPaymentMode,
-          initialBankAccountId: data.initialBankAccountId,
-          initialChequeNumber: data.initialChequeNumber,
-          initialChequeBankName: data.initialChequeBankName,
-          initialChequeDueDate: data.initialChequeDueDate,
         },
         invoiceItems
       );
-      toast.success("Invoice created successfully");
       setIsCreating(false);
     } catch (err) {
       console.error("Failed to create invoice:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Failed to create invoice"
-      );
     } finally {
       setIsSubmitting(false);
     }
@@ -389,11 +354,6 @@ export function SaleInvoicesPage(): React.ReactNode {
       ) {
         setReturnReason("");
         setAddToStock(true);
-        // Default to refund if paid, otherwise credit
-        setReturnAction(
-          currentSelectedInvoice.status === "paid" ? "refund" : "credit"
-        );
-        setReturnPaymentMode("cash");
         setIsReturnModalOpen(true);
         return;
       }
@@ -404,10 +364,8 @@ export function SaleInvoicesPage(): React.ReactNode {
           newStatus,
           currentSelectedInvoice.status
         );
-        toast.success(`Invoice status updated to ${newStatus}`);
       } catch (err) {
         console.error("Failed to update invoice status:", err);
-        toast.error("Failed to update invoice status");
       }
     }
   };
@@ -448,10 +406,8 @@ export function SaleInvoicesPage(): React.ReactNode {
       setNewBankAccountName("");
       setNewBankName("");
       setNewBankAccountNumber("");
-      toast.success("Bank account created successfully");
     } catch (err) {
       console.error("Failed to create bank account:", err);
-      toast.error("Failed to create bank account");
     }
   };
 
@@ -459,7 +415,7 @@ export function SaleInvoicesPage(): React.ReactNode {
     if (currentSelectedInvoice && returnReason.trim()) {
       setIsSubmitting(true);
       try {
-        // 1. Update invoice status (This reverses customer balance by Total)
+        // Update invoice status with reason
         await updateInvoiceStatus(
           currentSelectedInvoice.id,
           "returned",
@@ -467,57 +423,7 @@ export function SaleInvoicesPage(): React.ReactNode {
           returnReason.trim()
         );
 
-        // 2. Handle Refund if selected
-        if (
-          returnAction === "refund" &&
-          currentSelectedInvoice.amountPaid > 0
-        ) {
-          // Refund = Negative Payment In
-          // Use createPayment logic but negate?
-          // Actually createPayment assumes "Payment In" (+Balance).
-          // We need "Refund" (-Balance). However, "Returned" status ALREADY did -Total to balance.
-          // Let's trace:
-          // PAID Invoice: Total 100. Balance +100.
-          // Payment 100. Balance +100 - 100 = 0.
-          // Return Invoice: Balance 0 - 100 = -100 (We owe them 100).
-          // Refund 100: We pay them 100. Balance -100 + 100 = 0.
-          // So Refund logic should INCREASE Balance.
-          // A standard "Payment In" REDUCES balance (Customer Pays Us).
-          // A "Refund" (We Pay Customer) should INCREASE balance (reduces our debt to them).
-          // So we need a "Payment Out" for customer logic, or negative "Payment In".
-          // If we use `createPayment` with negative amount:
-          // UPDATE customers SET current_balance = current_balance - (-100) = +100.
-          // This matches the requirement!
-
-          await createPayment({
-            receiptNumber: `REF-${Date.now()}`,
-            customerId: currentSelectedInvoice.customerId,
-            customerName: currentSelectedInvoice.customerName,
-            date: new Date().toISOString().slice(0, 10),
-            amount: -currentSelectedInvoice.amountPaid, // NEGATIVE for Refund
-            paymentMode: returnPaymentMode,
-            invoiceId: currentSelectedInvoice.id, // Link to invoice? Yes.
-            invoiceNumber: currentSelectedInvoice.invoiceNumber,
-          });
-
-          // Also record transaction
-          if (returnPaymentMode === "cash") {
-            await createCashTransaction({
-              date: new Date().toISOString().slice(0, 10),
-              type: "out", // Expense
-              amount: currentSelectedInvoice.amountPaid, // Positive Money Leaving
-              description: `Refund for ${currentSelectedInvoice.invoiceNumber}`,
-              category: "Refund",
-              relatedCustomerId: currentSelectedInvoice.customerId,
-              relatedCustomerName: currentSelectedInvoice.customerName,
-              relatedInvoiceId: currentSelectedInvoice.id,
-              relatedInvoiceNumber: currentSelectedInvoice.invoiceNumber,
-            });
-          }
-          // Add bank Logic if needed later
-        }
-
-        // 3. Add items back to stock
+        // Add items back to stock if checkbox is checked
         if (addToStock && currentSelectedInvoice.items.length > 0) {
           for (const item of currentSelectedInvoice.items) {
             await adjustStock(item.itemId, item.quantity);
@@ -527,10 +433,8 @@ export function SaleInvoicesPage(): React.ReactNode {
         setIsReturnModalOpen(false);
         setReturnReason("");
         setAddToStock(true);
-        toast.success("Invoice returned successfully");
       } catch (err) {
         console.error("Failed to return invoice:", err);
-        toast.error("Failed to return invoice");
       } finally {
         setIsSubmitting(false);
       }
@@ -649,7 +553,6 @@ export function SaleInvoicesPage(): React.ReactNode {
         setChequeDueDate("");
       } catch (err) {
         console.error("Failed to record payment:", err);
-        toast.error("Failed to record payment");
       } finally {
         setIsSubmitting(false);
       }
@@ -716,15 +619,12 @@ export function SaleInvoicesPage(): React.ReactNode {
           ...(data.notes && { notes: data.notes }),
           ...(data.terms && { terms: data.terms }),
         },
-        invoiceItems
+        invoiceItems,
+        currentSelectedInvoice
       );
-      toast.success("Invoice updated successfully");
       setIsEditing(false);
     } catch (err) {
       console.error("Failed to update invoice:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Failed to update invoice"
-      );
     } finally {
       setIsSubmitting(false);
     }
@@ -749,7 +649,6 @@ export function SaleInvoicesPage(): React.ReactNode {
           <InvoiceForm
             customers={customers}
             items={items}
-            bankAccounts={bankAccounts}
             onSubmit={(data) => {
               void handleFormSubmit(data);
             }}
@@ -757,12 +656,6 @@ export function SaleInvoicesPage(): React.ReactNode {
               setIsCreating(false);
             }}
             isSubmitting={isSubmitting}
-            onAddBankAccount={async (data) => {
-              return await createBankAccount({
-                ...data,
-                accountType: "savings",
-              });
-            }}
           />
         </div>
       </div>
@@ -799,7 +692,6 @@ export function SaleInvoicesPage(): React.ReactNode {
           <InvoiceForm
             customers={customers}
             items={items}
-            bankAccounts={bankAccounts}
             initialData={editInitialData}
             onSubmit={(data) => {
               void handleEditSubmit(data);
@@ -808,12 +700,6 @@ export function SaleInvoicesPage(): React.ReactNode {
               setIsEditing(false);
             }}
             isSubmitting={isSubmitting}
-            onAddBankAccount={async (data) => {
-              return await createBankAccount({
-                ...data,
-                accountType: "savings",
-              });
-            }}
             isEditing
           />
         </div>
@@ -970,14 +856,6 @@ export function SaleInvoicesPage(): React.ReactNode {
             }}
             onStatusChange={(status) => {
               void handleStatusChange(status);
-            }}
-            onUpdateDetails={(updates) => {
-              if (currentSelectedInvoice) {
-                void updateInvoiceDetails(currentSelectedInvoice.id, updates, {
-                  invoiceName: currentSelectedInvoice.invoiceName,
-                  date: currentSelectedInvoice.date,
-                });
-              }
             }}
             onRecordPayment={handleRecordPayment}
             onDownload={handleDownloadPDF}
@@ -1333,79 +1211,6 @@ export function SaleInvoicesPage(): React.ReactNode {
                 </div>
               </label>
             </div>
-
-            {/* Return Action Options */}
-            {currentSelectedInvoice?.amountPaid ? (
-              <div className="space-y-3 pt-2">
-                <label className="block text-sm font-medium text-text-secondary">
-                  Return Action
-                </label>
-                <div className="space-y-3">
-                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 transition-all">
-                    <input
-                      type="radio"
-                      name="returnAction"
-                      value="credit"
-                      checked={returnAction === "credit"}
-                      onChange={() => {
-                        setReturnAction("credit");
-                      }}
-                      className="mt-0.5 h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-text-heading">
-                        Keep as Store Credit
-                      </p>
-                      <p className="text-xs text-text-tertiary mt-0.5">
-                        Amount (
-                        {formatCurrency(currentSelectedInvoice.amountPaid)})
-                        will be credited to customer&apos;s balance which can be
-                        used for future invoices.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 transition-all">
-                    <input
-                      type="radio"
-                      name="returnAction"
-                      value="refund"
-                      checked={returnAction === "refund"}
-                      onChange={() => {
-                        setReturnAction("refund");
-                      }}
-                      className="mt-0.5 h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-text-heading">
-                        Refund Payment
-                      </p>
-                      <p className="text-xs text-text-tertiary mt-0.5">
-                        Record a refund transaction for{" "}
-                        {formatCurrency(currentSelectedInvoice.amountPaid)}.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                {returnAction === "refund" && (
-                  <div className="ml-7 mt-2">
-                    <Select
-                      label="Refund Mode"
-                      options={[
-                        { value: "cash", label: "Cash" },
-                        // { value: "bank", label: "Bank Transfer" }, // Add bank later if needed for refunds
-                      ]}
-                      value={returnPaymentMode}
-                      onChange={(val) => {
-                        setReturnPaymentMode(val as PaymentMode);
-                      }}
-                      size="sm"
-                    />
-                  </div>
-                )}
-              </div>
-            ) : null}
           </ModalBody>
           <ModalFooter>
             <Button

@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
@@ -97,11 +96,9 @@ export function BankAccountsPage(): React.ReactNode {
         openingBalance: data.openingBalance,
         notes: data.notes,
       });
-      toast.success("Bank account created successfully");
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to create account:", err);
-      toast.error("Failed to create bank account");
     }
   };
 
@@ -117,13 +114,11 @@ export function BankAccountsPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await deleteAccount(accountToDelete.id);
-        toast.success("Bank account deleted successfully");
         setSelectedAccount(null);
         setIsDeleteModalOpen(false);
         setAccountToDelete(null);
       } catch (err) {
         console.error("Failed to delete account:", err);
-        toast.error("Failed to delete bank account");
       } finally {
         setIsSubmitting(false);
       }
@@ -153,11 +148,9 @@ export function BankAccountsPage(): React.ReactNode {
         referenceNumber: data.referenceNumber,
         relatedCustomerId: data.relatedCustomerId,
       });
-      toast.success("Transaction recorded successfully");
       setIsTransactionFormOpen(false);
     } catch (err) {
       console.error("Failed to create transaction:", err);
-      toast.error("Failed to record transaction");
     }
   };
 

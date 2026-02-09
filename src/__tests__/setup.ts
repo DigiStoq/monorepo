@@ -49,27 +49,7 @@ vi.mock("@powersync/react", () => ({
 }));
 
 vi.mock("@powersync/web", () => ({
-  PowerSyncDatabase: vi.fn(() => ({
-    execute: vi.fn(),
-    getAll: vi.fn(() => []),
-    writeTransaction: vi.fn(async (callback) => {
-      const tx = {
-        execute: vi.fn(),
-        getAll: vi.fn(() => []),
-      };
-      return await callback(tx);
-    }),
-    readTransaction: vi.fn(async (callback) => {
-      const tx = {
-        execute: vi.fn(),
-        getAll: vi.fn(() => []),
-      };
-      return await callback(tx);
-    }),
-    connect: vi.fn(),
-    close: vi.fn(),
-    connected: true,
-  })),
+  PowerSyncDatabase: vi.fn(),
   Schema: vi.fn(),
   Table: vi.fn(),
   column: {

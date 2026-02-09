@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
+  StyleSheet,
   ScrollView,
   Alert,
   Platform,
   KeyboardAvoidingView,
   Text,
   ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { usePowerSync } from "@powersync/react-native";
+import { generateUUID } from "../lib/utils";
 import {
   Button,
   Input,
@@ -17,21 +21,19 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { SaveIcon, XCloseIcon, TrashIcon } from "../components/ui/UntitledIcons";
+import { Save, X, Trash2 } from "lucide-react-native";
+import { wp, hp } from "../lib/responsive";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
-import { CustomHeader } from "../components/CustomHeader";
-import { TouchableOpacity } from "react-native";
-import { useBankAccountMutations, useBankAccountById } from "../hooks/useBankAccounts";
 
 export function BankAccountFormScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const db = usePowerSync();
   const params = route.params as { id?: string } | undefined;
   const id = params?.id;
   const { colors } = useTheme();
-
-  const { createAccount, updateAccount, deleteAccount } = useBankAccountMutations();
-  const { account, isLoading: loadingData } = useBankAccountById(id || null);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,23 +42,44 @@ export function BankAccountFormScreen() {
     account_number: "",
     account_type: "savings", // default
     opening_balance: "",
+    current_balance: "",
     notes: "",
   });
 
   const isEditing = !!id;
 
   useEffect(() => {
-    if (account) {
-      setFormData({
-        name: account.name,
-        bank_name: account.bankName,
-        account_number: account.accountNumber,
-        account_type: account.accountType,
-        opening_balance: String(account.openingBalance || 0),
-        notes: account.notes || "",
-      });
+    if (id) {
+      loadData();
     }
-  }, [account]);
+  }, [id]);
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      const result = await db.getAll(
+        "SELECT * FROM bank_accounts WHERE id = ?",
+        [id]
+      );
+      if (result.length > 0) {
+        const data = result[0] as any;
+        setFormData({
+          name: data.name || "",
+          bank_name: data.bank_name || "",
+          account_number: data.account_number || "",
+          account_type: data.account_type || "savings",
+          opening_balance: data.opening_balance?.toString() || "",
+          current_balance: data.current_balance?.toString() || "",
+          notes: data.notes || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading bank account:", error);
+      Alert.alert("Error", "Failed to load bank account details");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSave() {
     if (!formData.name || !formData.bank_name) {
@@ -66,26 +89,46 @@ export function BankAccountFormScreen() {
 
     try {
       setLoading(true);
+      const now = new Date().toISOString();
       const balance = parseFloat(formData.opening_balance) || 0;
 
-      if (isEditing && id) {
-        await updateAccount(id, {
-          name: formData.name,
-          bankName: formData.bank_name,
-          accountNumber: formData.account_number,
-          accountType: formData.account_type,
-          openingBalance: balance,
-          notes: formData.notes
-        });
+      if (isEditing) {
+        await db.execute(
+          `UPDATE bank_accounts 
+           SET name = ?, bank_name = ?, account_number = ?, account_type = ?, 
+               opening_balance = ?, current_balance = ?, notes = ?, updated_at = ?
+           WHERE id = ?`,
+          [
+            formData.name,
+            formData.bank_name,
+            formData.account_number,
+            formData.account_type,
+            balance,
+            balance,
+            formData.notes,
+            now,
+            id,
+          ]
+        );
       } else {
-        await createAccount({
-          name: formData.name,
-          bankName: formData.bank_name,
-          accountNumber: formData.account_number,
-          accountType: formData.account_type,
-          openingBalance: balance,
-          notes: formData.notes
-        });
+        await db.execute(
+          `INSERT INTO bank_accounts 
+           (id, name, bank_name, account_number, account_type, opening_balance, current_balance, is_active, notes, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            generateUUID(),
+            formData.name,
+            formData.bank_name,
+            formData.account_number,
+            formData.account_type,
+            balance,
+            balance,
+            1, // is_active
+            formData.notes,
+            now,
+            now,
+          ]
+        );
       }
       navigation.goBack();
     } catch (error) {
@@ -97,7 +140,6 @@ export function BankAccountFormScreen() {
   }
 
   async function handleDelete() {
-    if (!id) return;
     Alert.alert(
       "Delete Account",
       "Are you sure you want to delete this bank account?",
@@ -108,7 +150,7 @@ export function BankAccountFormScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteAccount(id);
+              await db.execute("DELETE FROM bank_accounts WHERE id = ?", [id]);
               navigation.goBack();
             } catch (error) {
               console.error("Error deleting account:", error);
@@ -127,57 +169,56 @@ export function BankAccountFormScreen() {
     { label: "Other", value: "other" },
   ];
 
-  if (loadingData) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-background">
-      <CustomHeader
-        title={isEditing ? "Edit Bank Account" : "New Bank Account"}
-        showBack
-        rightAction={
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={loading}
-            className="p-1.5"
-          >
-            {loading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
-          </TouchableOpacity>
-        }
-      />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+      <View style={styles.header}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={() => navigation.goBack()}
+        >
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{isEditing ? "Edit Bank Account" : "New Bank Account"}</Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
+        </Button>
+      </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <CardHeader title="Account Details" />
           <CardBody>
             <Input
               label="Account Name"
               value={formData.name}
-              onChangeText={(t) => { setFormData({ ...formData, name: t }); }}
+              onChangeText={(t) => setFormData({ ...formData, name: t })}
               placeholder="e.g. Main Business Account"
             />
             <Input
               label="Bank Name"
               value={formData.bank_name}
-              onChangeText={(t) => { setFormData({ ...formData, bank_name: t }); }}
+              onChangeText={(t) => setFormData({ ...formData, bank_name: t })}
               placeholder="e.g. Chase, Wells Fargo"
             />
             <Input
               label="Account Number"
               value={formData.account_number}
-              onChangeText={(t) => { setFormData({ ...formData, account_number: t }); }}
+              onChangeText={(t) => setFormData({ ...formData, account_number: t })}
               placeholder="Account Number"
               keyboardType="numeric"
             />
             <Input
               label="Opening Balance"
               value={formData.opening_balance}
-              onChangeText={(t) => { setFormData({ ...formData, opening_balance: t }); }}
+              onChangeText={(t) => setFormData({ ...formData, opening_balance: t })}
               placeholder="0.00"
               keyboardType="numeric"
             />
@@ -185,12 +226,12 @@ export function BankAccountFormScreen() {
               label="Account Type"
               options={accountTypeOptions}
               value={formData.account_type}
-              onChange={(val) => { setFormData({ ...formData, account_type: val }); }}
+              onChange={(val) => setFormData({ ...formData, account_type: val })}
             />
             <Input
               label="Notes"
               value={formData.notes}
-              onChangeText={(t) => { setFormData({ ...formData, notes: t }); }}
+              onChangeText={(t) => setFormData({ ...formData, notes: t })}
               placeholder="Additional notes..."
               multiline
               numberOfLines={4}
@@ -200,19 +241,47 @@ export function BankAccountFormScreen() {
 
         {isEditing && (
           <Button
-            variant="ghost"
-            className="mt-6 border border-danger"
+            variant="outline"
+            style={{ marginTop: 24, borderColor: colors.danger }}
             onPress={handleDelete}
+            leftIcon={<Trash2 size={18} color={colors.danger} />}
           >
-            <View className="flex-row items-center justify-center gap-2">
-              <TrashIcon size={18} color={colors.danger} />
-              <Text className="font-semibold text-danger" style={{ color: colors.danger }}>Delete Bank Account</Text>
-            </View>
+            <Text style={{ color: colors.danger }}>Delete Bank Account</Text>
           </Button>
         )}
 
-        <View className="h-10" />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  content: {
+    padding: wp(4),
+  },
+});

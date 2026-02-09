@@ -66,10 +66,10 @@ export {
 export { buildHeader } from "./components/header";
 export { buildItemsTable } from "./components/items-table";
 export { buildAmounts, buildAmountsWithBorder } from "./components/amounts";
-// export {
-//   buildAmountInWords,
-//   buildAmountInWordsSimple,
-// } from "./components/amount-in-words";
+export {
+  buildAmountInWords,
+  buildAmountInWordsSimple,
+} from "./components/amount-in-words";
 export {
   buildTerms,
   buildSignature,

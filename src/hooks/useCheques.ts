@@ -105,6 +105,23 @@ export function useCheques(filters?: {
   return { cheques, isLoading, error };
 }
 
+export function useChequeById(id: string | null): {
+  cheque: Cheque | null;
+  isLoading: boolean;
+  error: Error | undefined;
+} {
+  const { data, isLoading, error } = useQuery<ChequeRow>(
+    id
+      ? `SELECT * FROM cheques WHERE id = ?`
+      : `SELECT * FROM cheques WHERE 1 = 0`,
+    id ? [id] : []
+  );
+
+  const cheque = data[0] ? mapRowToCheque(data[0]) : null;
+
+  return { cheque, isLoading, error };
+}
+
 interface ChequeMutations {
   createCheque: (data: {
     chequeNumber: string;
@@ -203,5 +220,38 @@ export function useChequeMutations(): ChequeMutations {
     createCheque,
     updateChequeStatus,
     deleteCheque,
+  };
+}
+
+interface ChequeStats {
+  pendingReceivedAmount: number;
+  pendingReceivedCount: number;
+  pendingIssuedAmount: number;
+  pendingIssuedCount: number;
+  dueThisWeek: number;
+}
+
+export function useChequeStats(): ChequeStats {
+  const { data: pendingReceived } = useQuery<{ sum: number; count: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum, COUNT(*) as count FROM cheques
+     WHERE type = 'received' AND status = 'pending'`
+  );
+
+  const { data: pendingIssued } = useQuery<{ sum: number; count: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum, COUNT(*) as count FROM cheques
+     WHERE type = 'issued' AND status = 'pending'`
+  );
+
+  const { data: dueThisWeek } = useQuery<{ count: number }>(
+    `SELECT COUNT(*) as count FROM cheques
+     WHERE status = 'pending' AND due_date <= date('now', '+7 days')`
+  );
+
+  return {
+    pendingReceivedAmount: pendingReceived[0]?.sum ?? 0,
+    pendingReceivedCount: pendingReceived[0]?.count ?? 0,
+    pendingIssuedAmount: pendingIssued[0]?.sum ?? 0,
+    pendingIssuedCount: pendingIssued[0]?.count ?? 0,
+    dueThisWeek: dueThisWeek[0]?.count ?? 0,
   };
 }

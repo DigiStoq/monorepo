@@ -7,7 +7,6 @@ import {
   getStoredTokens,
   loadSession,
 } from "@/lib/token-storage";
-import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -336,9 +335,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
           } catch (windowError: unknown) {
             console.error("WebviewWindow creation failed:", windowError);
-            toast.error(
-              "Could not open sign-in window. Trying system browser..."
-            );
+            alert("Could not open sign-in window. Trying system browser...");
 
             // Fallback: Open in Default System Browser
             // Note: This requires the redirect URL to be a deep link (e.g. com.digistoq.desktop://login) which we haven't set up yet.
@@ -547,7 +544,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (error) {
       console.error("Session refresh failed:", error);
       // Session expired, sign out
-      toast.error("Session expired. Please sign in again.");
       await get().signOut();
       return;
     }

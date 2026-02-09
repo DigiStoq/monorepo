@@ -6,43 +6,18 @@ import type {
 } from "@powersync/web";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-/** Maximum number of records to batch in a single request */
-const MERGE_BATCH_LIMIT = 100;
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface BatchedOperation {
-  table: string;
-  op: UpdateType;
-  records: { id: string; data: Record<string, unknown> }[];
-}
-
-// ============================================================================
-// SUPABASE CONNECTOR
-// ============================================================================
-
 export class SupabaseConnector implements PowerSyncBackendConnector {
+  constructor(
+    private client: SupabaseClient,
+    private powersyncUrl: string
+  ) {}
+
   // Cache the session to avoid hitting Supabase Auth rate limits
   private currentSession: { access_token: string; expires_at?: number } | null =
     null;
 
   // Buffer time in seconds to refresh token before it strictly expires
   private readonly TOKEN_EXPIRY_BUFFER = 60; // 1 minute
-
-  constructor(
-    private client: SupabaseClient,
-    private powersyncUrl: string
-  ) {}
-
-  // ============================================================================
-  // CREDENTIALS (unchanged logic, cleaned up)
-  // ============================================================================
 
   async fetchCredentials(): Promise<{
     endpoint: string;
@@ -88,10 +63,6 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     return credentials;
   }
 
-  // ============================================================================
-  // UPLOAD DATA - BATCHED IMPLEMENTATION
-  // ============================================================================
-
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
 
@@ -106,150 +77,53 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     const userId = session?.user.id;
 
     try {
-      // Batch operations for efficiency
-      const batches = this.batchOperations(transaction.crud, userId);
-      // eslint-disable-next-line no-console
-      console.log("[SupabaseConnector] Executing", batches.length, "batches");
-
-      // Execute each batch
-      for (const batch of batches) {
-        await this.executeBatch(batch);
+      for (const operation of transaction.crud) {
+        await this.applyOperation(operation, userId);
       }
-
-      // Complete transaction (Custom Write Checkpoints require Team plan $599+)
       await transaction.complete();
     } catch (error) {
-      console.error("[SupabaseConnector] Upload error:", error);
-      throw error;
+      console.error(error);
     }
   }
 
-  // ============================================================================
-  // BATCHING LOGIC
-  // ============================================================================
-
-  private batchOperations(
-    operations: CrudEntry[],
+  private async applyOperation(
+    operation: CrudEntry,
     userId?: string
-  ): BatchedOperation[] {
-    const batches: BatchedOperation[] = [];
-    let currentBatch: BatchedOperation | null = null;
+  ): Promise<void> {
+    const { op, table, opData, id } = operation;
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `[SupabaseConnector] Processing ${operations.length} CRUD operations:`
-    );
-    for (const op of operations) {
-      // eslint-disable-next-line no-console
-      console.log(
-        `[SupabaseConnector] - ${op.op} on ${op.table} (id: ${op.id})`
-      );
-    }
-
-    for (const op of operations) {
-      const transformedData =
-        this.transformData(op.table, op.opData, userId) ?? {};
-
-      // PATCH operations are always individual (partial updates)
-      if (op.op === UpdateType.PATCH) {
-        if (currentBatch) {
-          batches.push(currentBatch);
-          currentBatch = null;
-        }
-        batches.push({
-          table: op.table,
-          op: op.op,
-          records: [{ id: op.id, data: transformedData }],
-        });
-        continue;
-      }
-
-      // Check if we can add to current batch
-      const canBatch =
-        currentBatch &&
-        currentBatch.table === op.table &&
-        currentBatch.op === op.op &&
-        currentBatch.records.length < MERGE_BATCH_LIMIT;
-
-      if (currentBatch && canBatch) {
-        currentBatch.records.push({ id: op.id, data: transformedData });
-      } else {
-        // Start new batch
-        if (currentBatch) batches.push(currentBatch);
-        currentBatch = {
-          table: op.table,
-          op: op.op,
-          records: [{ id: op.id, data: transformedData }],
-        };
-      }
-    }
-
-    // Push final batch
-    if (currentBatch) batches.push(currentBatch);
-
-    return batches;
-  }
-
-  // ============================================================================
-  // BATCH EXECUTION
-  // ============================================================================
-
-  private async executeBatch(batch: BatchedOperation): Promise<void> {
-    const { table, op, records } = batch;
+    // Transform data to handle null values for required fields and inject user_id
+    const transformedData = this.transformData(table, opData, userId);
 
     switch (op) {
       case UpdateType.PUT: {
-        const payload = records.map((r) => ({ id: r.id, ...r.data }));
-        // Options to reduce egress bandwidth
-        const options: {
-          onConflict?: string;
-          returning?: "minimal";
-          count?: "exact";
-        } = {
-          returning: "minimal",
-          count: "exact", // Returns only count, not rows - reduces egress
-        };
-
-        // Handle special conflict resolution for user_preferences
-        if (table === "user_preferences") {
-          options.onConflict = "user_id";
-        }
-
         const { error } = await this.client
           .from(table)
-          .upsert(payload, options);
+          .upsert({ id, ...transformedData });
 
         if (error) {
-          console.error(`[SupabaseConnector] Error upserting ${table}:`, error);
+          console.error(`Error upserting ${table}:`, error);
           throw error;
         }
         break;
       }
-
-      case UpdateType.DELETE: {
-        const ids = records.map((r) => r.id);
-        const { error } = await this.client
-          .from(table)
-          .delete({ count: "exact" })
-          .in("id", ids);
-
-        if (error) {
-          console.error(`[SupabaseConnector] Error deleting ${table}:`, error);
-          throw error;
-        }
-        break;
-      }
-
       case UpdateType.PATCH: {
-        // PATCH is always single record - partial update
-        const { id, data } = records[0];
         const { error } = await this.client
           .from(table)
-          .update(data, { count: "exact" })
+          .update(transformedData)
           .eq("id", id);
 
         if (error) {
-          console.error(`[SupabaseConnector] Error updating ${table}:`, error);
+          console.error(`Error updating ${table}:`, error);
+          throw error;
+        }
+        break;
+      }
+      case UpdateType.DELETE: {
+        const { error } = await this.client.from(table).delete().eq("id", id);
+
+        if (error) {
+          console.error(`Error deleting ${table}:`, error);
           throw error;
         }
         break;
@@ -257,10 +131,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     }
   }
 
-  // ============================================================================
-  // DATA TRANSFORMATION
-  // ============================================================================
-
+  // Transform data to provide default values for required fields that might be null/undefined/empty
   private transformData(
     table: string,
     data: Record<string, unknown> | undefined,
@@ -274,7 +145,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       transformed.user_id = userId;
     }
 
-    // Sanitize empty strings to null to comply with Postgres check constraints
+    // Sanitize empty strings to null to comply with Postgres check constraints (e.g. status enums)
     Object.keys(transformed).forEach((key) => {
       if (transformed[key] === "") {
         transformed[key] = null;

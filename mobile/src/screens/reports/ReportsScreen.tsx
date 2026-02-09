@@ -1,29 +1,30 @@
-import { useState, useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
-  TrendingUpIcon,
-  ShoppingCartIcon,
-  UsersIcon,
-  BoxIcon,
-  DollarSignIcon,
-  ChevronRightIcon,
-  SearchIcon,
-} from "../../components/ui/UntitledIcons";
+  TrendingUp,
+  ShoppingCart,
+  Users,
+  Package,
+  DollarSign,
+  ChevronRight,
+  Search,
+} from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
-import { CustomHeader } from "../../components/CustomHeader";
 
 export function ReportsScreen() {
   const navigation = useNavigation<any>();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const reportCategories = useMemo(() => [
     {
       id: "sales",
       title: "Sales Reports",
-      icon: TrendingUpIcon,
+      icon: TrendingUp,
       color: colors.success,
       bgColor: colors.success + '20', // Opacity 20%
       reports: [
@@ -36,7 +37,7 @@ export function ReportsScreen() {
     {
       id: "purchases",
       title: "Purchase Reports",
-      icon: ShoppingCartIcon,
+      icon: ShoppingCart,
       color: colors.warning,
       bgColor: colors.warning + '20',
       reports: [
@@ -49,7 +50,7 @@ export function ReportsScreen() {
     {
       id: "customers",
       title: "Customer Reports",
-      icon: UsersIcon,
+      icon: Users,
       color: colors.info,
       bgColor: colors.info + '20',
       reports: [
@@ -62,7 +63,7 @@ export function ReportsScreen() {
     {
       id: "inventory",
       title: "Inventory Reports",
-      icon: BoxIcon,
+      icon: Package,
       color: colors.danger,
       bgColor: colors.danger + '20',
       reports: [
@@ -75,7 +76,7 @@ export function ReportsScreen() {
     {
       id: "financial",
       title: "Financial Reports",
-      icon: DollarSignIcon,
+      icon: DollarSign,
       color: colors.secondary,
       bgColor: colors.secondary + '20',
       reports: [
@@ -97,15 +98,13 @@ export function ReportsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
-      <CustomHeader title="Reports" showBack />
-
+    <View style={styles.container}>
       {/* Search Bar */}
-      <View className="px-4 pt-1 pb-3">
-        <View className="flex-row items-center bg-surface rounded-lg px-3 py-2 gap-2 border border-border">
-          <SearchIcon size={18} color={colors.textMuted} />
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
           <TextInput
-            className="flex-1 text-base text-text"
+            style={styles.searchText}
             placeholder="Search reports..."
             placeholderTextColor={colors.textMuted}
             value={search}
@@ -115,8 +114,8 @@ export function ReportsScreen() {
       </View>
 
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 8 }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         {reportCategories.map((category) => {
@@ -124,37 +123,39 @@ export function ReportsScreen() {
           const isExpanded = expandedCategory === category.id;
 
           return (
-            <View key={category.id} className="mb-2">
+            <View key={category.id} style={styles.categorySection}>
               <TouchableOpacity
-                className="bg-surface rounded-lg p-4 flex-row items-center shadow-sm"
-                onPress={() => { handleCategoryPress(category.id); }}
+                style={styles.categoryCard}
+                onPress={() => handleCategoryPress(category.id)}
                 activeOpacity={0.7}
               >
-                <View
-                  className="w-11 h-11 rounded-md justify-center items-center mr-3"
-                  style={{ backgroundColor: category.bgColor }}
-                >
+                <View style={[styles.categoryIcon, { backgroundColor: category.bgColor }]}>
                   <Icon size={22} color={category.color} strokeWidth={2} />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-text">{category.title}</Text>
-                  <Text className="text-sm text-text-muted">{category.reports.length} reports</Text>
+                <View style={styles.categoryContent}>
+                  <Text style={styles.categoryTitle}>{category.title}</Text>
+                  <Text style={styles.categoryCount}>{category.reports.length} reports</Text>
                 </View>
-                <View style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}>
-                  <ChevronRightIcon size={20} color={colors.textMuted} />
-                </View>
+                <ChevronRight
+                  size={20}
+                  color={colors.textMuted}
+                  style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
+                />
               </TouchableOpacity>
 
               {isExpanded && (
-                <View className="mt-2 bg-surface rounded-lg px-4 shadow-sm">
+                <View style={styles.reportsList}>
                   {category.reports.map((report, index) => (
                     <TouchableOpacity
                       key={report.id}
-                      className={`flex-row items-center justify-between py-3 ${index === category.reports.length - 1 ? '' : 'border-b border-border'}`}
-                      onPress={() => { handleReportPress(report.route); }}
+                      style={[
+                        styles.reportItem,
+                        index === category.reports.length - 1 && { borderBottomWidth: 0 }
+                      ]}
+                      onPress={() => handleReportPress(report.route)}
                     >
-                      <Text className="text-base text-text-secondary">{report.title}</Text>
-                      <ChevronRightIcon size={16} color={colors.textMuted} />
+                      <Text style={styles.reportTitle}>{report.title}</Text>
+                      <ChevronRight size={16} color={colors.textMuted} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -166,3 +167,88 @@ export function ReportsScreen() {
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  searchBar: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  searchInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.sm,
+  },
+  categorySection: {
+    marginBottom: spacing.xs,
+  },
+  categoryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  categoryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  categoryContent: {
+    flex: 1,
+  },
+  categoryTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  categoryCount: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  reportsList: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    ...shadows.sm,
+  },
+  reportItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  reportTitle: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+  },
+});

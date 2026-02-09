@@ -1,7 +1,6 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import { useAuthStore } from "@/stores/auth-store";
 import type {
   CreditNote,
   CreditNoteItem,
@@ -26,6 +25,19 @@ interface CreditNoteRow {
   updated_at: string;
 }
 
+interface CreditNoteItemRow {
+  id: string;
+  credit_note_id: string;
+  item_id: string | null;
+  item_name: string;
+  description: string | null;
+  quantity: number;
+  unit: string | null;
+  unit_price: number;
+  tax_percent: number;
+  amount: number;
+}
+
 function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
   return {
     id: row.id,
@@ -43,6 +55,21 @@ function mapRowToCreditNote(row: CreditNoteRow): CreditNote {
     notes: row.notes ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapRowToCreditNoteItem(row: CreditNoteItemRow): CreditNoteItem {
+  return {
+    id: row.id,
+    creditNoteId: row.credit_note_id,
+    itemId: row.item_id ?? undefined,
+    itemName: row.item_name,
+    description: row.description ?? undefined,
+    quantity: row.quantity,
+    unit: row.unit ?? undefined,
+    unitPrice: row.unit_price,
+    taxPercent: row.tax_percent,
+    amount: row.amount,
   };
 }
 
@@ -94,6 +121,36 @@ export function useCreditNotes(filters?: {
   return { creditNotes, isLoading, error };
 }
 
+export function useCreditNoteById(id: string | null): {
+  creditNote: CreditNote | null;
+  items: CreditNoteItem[];
+  isLoading: boolean;
+} {
+  const { data: noteData, isLoading: noteLoading } = useQuery<CreditNoteRow>(
+    id
+      ? `SELECT * FROM credit_notes WHERE id = ?`
+      : `SELECT * FROM credit_notes WHERE 1 = 0`,
+    id ? [id] : []
+  );
+
+  const { data: itemsData, isLoading: itemsLoading } =
+    useQuery<CreditNoteItemRow>(
+      id
+        ? `SELECT * FROM credit_note_items WHERE credit_note_id = ?`
+        : `SELECT * FROM credit_note_items WHERE 1 = 0`,
+      id ? [id] : []
+    );
+
+  const creditNote = noteData[0] ? mapRowToCreditNote(noteData[0]) : null;
+  const items = itemsData.map(mapRowToCreditNoteItem);
+
+  return {
+    creditNote,
+    items,
+    isLoading: noteLoading || itemsLoading,
+  };
+}
+
 interface CreditNoteMutations {
   createCreditNote: (
     data: {
@@ -108,21 +165,12 @@ interface CreditNoteMutations {
     },
     items: Omit<CreditNoteItem, "id" | "creditNoteId">[]
   ) => Promise<string>;
-  updateCreditNote: (
-    id: string,
-    data: {
-      creditNoteNumber: string;
-      customerId: string;
-      customerName: string;
-      date: string;
-      invoiceId?: string;
-      invoiceNumber?: string;
-      reason: string;
-      notes?: string;
-    },
-    items: Omit<CreditNoteItem, "id" | "creditNoteId">[]
-  ) => Promise<void>;
   deleteCreditNote: (id: string) => Promise<void>;
+}
+
+interface CreditNoteQueryRow {
+  customer_id: string;
+  total: number;
 }
 
 export function useCreditNoteMutations(): CreditNoteMutations {
@@ -144,9 +192,6 @@ export function useCreditNoteMutations(): CreditNoteMutations {
     ): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
       const subtotal = items.reduce(
         (sum: number, item) => sum + item.amount,
@@ -159,273 +204,91 @@ export function useCreditNoteMutations(): CreditNoteMutations {
       );
       const total = subtotal + taxAmount;
 
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(
-          `INSERT INTO credit_notes (
-            id, credit_note_number, customer_id, customer_name, date,
-            invoice_id, invoice_number, reason, subtotal, tax_amount, total, notes,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.creditNoteNumber,
-            data.customerId,
-            data.customerName,
-            data.date,
-            data.invoiceId ?? null,
-            data.invoiceNumber ?? null,
-            data.reason,
-            subtotal,
-            taxAmount,
-            total,
-            data.notes ?? null,
-            now,
-            now,
-          ]
-        );
+      await db.execute(
+        `INSERT INTO credit_notes (
+          id, credit_note_number, customer_id, customer_name, date,
+          invoice_id, invoice_number, reason, subtotal, tax_amount, total, notes,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.creditNoteNumber,
+          data.customerId,
+          data.customerName,
+          data.date,
+          data.invoiceId ?? null,
+          data.invoiceNumber ?? null,
+          data.reason,
+          subtotal,
+          taxAmount,
+          total,
+          data.notes ?? null,
+          now,
+          now,
+        ]
+      );
 
-        for (const item of items) {
-          const itemId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO credit_note_items (
-              id, credit_note_id, item_id, item_name, description, quantity, unit,
-              unit_price, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              itemId,
-              id,
-              item.itemId ?? null,
-              item.itemName,
-              item.description ?? null,
-              item.quantity,
-              item.unit ?? null,
-              item.unitPrice,
-              item.taxPercent ?? 0,
-              item.amount,
-            ]
-          );
-        }
-
-        // Update customer balance (reduce receivable)
-        await tx.execute(
-          `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
-          [total, now, data.customerId]
-        );
-
-        // Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
+      for (const item of items) {
+        const itemId = crypto.randomUUID();
+        await db.execute(
+          `INSERT INTO credit_note_items (
+            id, credit_note_id, item_id, item_name, description, quantity, unit,
+            unit_price, tax_percent, amount
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            historyId,
+            itemId,
             id,
-            "credit_note",
-            "created",
-            `Created credit note ${data.creditNoteNumber}`,
-            null,
-            JSON.stringify({
-              creditNoteNumber: data.creditNoteNumber,
-              customerName: data.customerName,
-              total,
-            }),
-            user?.id ?? null,
-            userName,
-            now,
+            item.itemId ?? null,
+            item.itemName,
+            item.description ?? null,
+            item.quantity,
+            item.unit ?? null,
+            item.unitPrice,
+            item.taxPercent ?? 0,
+            item.amount,
           ]
         );
-      });
+      }
+
+      // Update customer balance (reduce receivable)
+      await db.execute(
+        `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
+        [total, now, data.customerId]
+      );
 
       return id;
     },
     [db]
   );
 
-  const updateCreditNote = useCallback(
-    async (
-      id: string,
-      data: {
-        creditNoteNumber: string;
-        customerId: string;
-        customerName: string;
-        date: string;
-        invoiceId?: string;
-        invoiceNumber?: string;
-        reason: string;
-        notes?: string;
-      },
-      items: Omit<CreditNoteItem, "id" | "creditNoteId">[]
-    ): Promise<void> => {
-      const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
-
-      const subtotal = items.reduce(
-        (sum: number, item) => sum + item.amount,
-        0
-      );
-      const taxAmount = items.reduce(
-        (sum: number, item) =>
-          sum + (item.amount * (item.taxPercent ?? 0)) / 100,
-        0
-      );
-      const total = subtotal + taxAmount;
-
-      await db.writeTransaction(async (tx) => {
-        // 1. Get Old Data
-        const oldResult = await tx.execute(
-          `SELECT customer_id, total FROM credit_notes WHERE id = ?`,
-          [id]
-        );
-        const oldNote = oldResult.rows?.item(0);
-        if (!oldNote) throw new Error("Credit note not found");
-
-        // 2. Reverse OLD Balance (Increase receivable - undo decrease)
-        await tx.execute(
-          `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
-          [oldNote.total, now, oldNote.customer_id]
-        );
-
-        // 3. Update Header
-        await tx.execute(
-          `UPDATE credit_notes SET
-            credit_note_number = ?, customer_id = ?, customer_name = ?, date = ?,
-            invoice_id = ?, invoice_number = ?, reason = ?, subtotal = ?, tax_amount = ?, total = ?, notes = ?,
-            updated_at = ?
-            WHERE id = ?`,
-          [
-            data.creditNoteNumber,
-            data.customerId,
-            data.customerName,
-            data.date,
-            data.invoiceId ?? null,
-            data.invoiceNumber ?? null,
-            data.reason,
-            subtotal,
-            taxAmount,
-            total,
-            data.notes ?? null,
-            now,
-            id,
-          ]
-        );
-
-        // 4. Delete Old Items
-        await tx.execute(
-          `DELETE FROM credit_note_items WHERE credit_note_id = ?`,
-          [id]
-        );
-
-        // 5. Insert New Items
-        for (const item of items) {
-          const itemId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO credit_note_items (
-              id, credit_note_id, item_id, item_name, description, quantity, unit,
-              unit_price, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              itemId,
-              id,
-              item.itemId ?? null,
-              item.itemName,
-              item.description ?? null,
-              item.quantity,
-              item.unit ?? null,
-              item.unitPrice,
-              item.taxPercent ?? 0,
-              item.amount,
-            ]
-          );
-        }
-
-        // 6. Apply NEW Balance (Reduce receivable)
-        await tx.execute(
-          `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
-          [total, now, data.customerId]
-        );
-
-        // 7. Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "credit_note",
-            "updated",
-            `Updated credit note ${data.creditNoteNumber}`,
-            JSON.stringify({ total: oldNote.total }),
-            JSON.stringify({ total }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
-    },
-    [db]
-  );
-
   const deleteCreditNote = useCallback(
     async (id: string): Promise<void> => {
-      const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
+      const result = await db.execute(
+        `SELECT customer_id, total FROM credit_notes WHERE id = ?`,
+        [id]
+      );
+      const rows = (result.rows?._array ?? []) as CreditNoteQueryRow[];
 
-      await db.writeTransaction(async (tx) => {
-        const result = await tx.execute(
-          `SELECT customer_id, total, credit_note_number FROM credit_notes WHERE id = ?`,
-          [id]
+      if (rows.length > 0) {
+        const note = rows[0];
+        const now = new Date().toISOString();
+        await db.execute(
+          `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+          [note.total, now, note.customer_id]
         );
-        const note = result.rows?.item(0);
+      }
 
-        if (note) {
-          // Reverse Balance (Increase receivable)
-          await tx.execute(
-            `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
-            [note.total, now, note.customer_id]
-          );
-        }
-
-        await tx.execute(
-          `DELETE FROM credit_note_items WHERE credit_note_id = ?`,
-          [id]
-        );
-        await tx.execute(`DELETE FROM credit_notes WHERE id = ?`, [id]);
-
-        // Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "credit_note",
-            "deleted",
-            `Deleted credit note ${note?.credit_note_number ?? "Unknown"}`,
-            JSON.stringify(note),
-            null,
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
+      await db.execute(
+        `DELETE FROM credit_note_items WHERE credit_note_id = ?`,
+        [id]
+      );
+      await db.execute(`DELETE FROM credit_notes WHERE id = ?`, [id]);
     },
     [db]
   );
 
   return {
     createCreditNote,
-    updateCreditNote,
     deleteCreditNote,
   };
 }

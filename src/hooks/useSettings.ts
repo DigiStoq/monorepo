@@ -177,203 +177,201 @@ export function useCompanySettingsMutations(): CompanySettingsMutations {
     async (data: Partial<FlatCompanySettings>): Promise<void> => {
       const now = new Date().toISOString();
 
-      await db.writeTransaction(async (tx) => {
-        // Check if settings exist
-        const existing = await tx.getAll<CompanySettingsRow>(
-          `SELECT id FROM company_settings LIMIT 1`
+      // Check if settings exist
+      const existing = await db.getAll<CompanySettingsRow>(
+        `SELECT id FROM company_settings LIMIT 1`
+      );
+
+      if (existing.length === 0) {
+        // Insert new settings
+        const id = crypto.randomUUID();
+        const fields: string[] = ["id", "created_at", "updated_at"];
+        const placeholders: string[] = ["?", "?", "?"];
+        const values: (string | number | null)[] = [id, now, now];
+
+        if (data.name !== undefined) {
+          fields.push("name");
+          placeholders.push("?");
+          values.push(data.name);
+        }
+        if (data.legalName !== undefined) {
+          fields.push("legal_name");
+          placeholders.push("?");
+          values.push(data.legalName ?? null);
+        }
+        if (data.logoUrl !== undefined) {
+          fields.push("logo_url");
+          placeholders.push("?");
+          values.push(data.logoUrl ?? null);
+        }
+        if (data.addressStreet !== undefined) {
+          fields.push("address_street");
+          placeholders.push("?");
+          values.push(data.addressStreet ?? null);
+        }
+        if (data.addressCity !== undefined) {
+          fields.push("address_city");
+          placeholders.push("?");
+          values.push(data.addressCity ?? null);
+        }
+        if (data.addressState !== undefined) {
+          fields.push("address_state");
+          placeholders.push("?");
+          values.push(data.addressState ?? null);
+        }
+        if (data.addressPostalCode !== undefined) {
+          fields.push("address_postal_code");
+          placeholders.push("?");
+          values.push(data.addressPostalCode ?? null);
+        }
+        if (data.addressCountry !== undefined) {
+          fields.push("address_country");
+          placeholders.push("?");
+          values.push(data.addressCountry ?? null);
+        }
+        if (data.contactPhone !== undefined) {
+          fields.push("contact_phone");
+          placeholders.push("?");
+          values.push(data.contactPhone ?? null);
+        }
+        if (data.contactEmail !== undefined) {
+          fields.push("contact_email");
+          placeholders.push("?");
+          values.push(data.contactEmail ?? null);
+        }
+        if (data.contactWebsite !== undefined) {
+          fields.push("contact_website");
+          placeholders.push("?");
+          values.push(data.contactWebsite ?? null);
+        }
+        if (data.taxId !== undefined) {
+          fields.push("tax_id");
+          placeholders.push("?");
+          values.push(data.taxId ?? null);
+        }
+        if (data.ein !== undefined) {
+          fields.push("ein");
+          placeholders.push("?");
+          values.push(data.ein ?? null);
+        }
+        if (data.financialYearStartMonth !== undefined) {
+          fields.push("financial_year_start_month");
+          placeholders.push("?");
+          values.push(data.financialYearStartMonth);
+        }
+        if (data.financialYearStartDay !== undefined) {
+          fields.push("financial_year_start_day");
+          placeholders.push("?");
+          values.push(data.financialYearStartDay);
+        }
+        if (data.currency !== undefined) {
+          fields.push("currency");
+          placeholders.push("?");
+          values.push(data.currency);
+        }
+        if (data.locale !== undefined) {
+          fields.push("locale");
+          placeholders.push("?");
+          values.push(data.locale);
+        }
+        if (data.timezone !== undefined) {
+          fields.push("timezone");
+          placeholders.push("?");
+          values.push(data.timezone);
+        }
+
+        await db.execute(
+          `INSERT INTO company_settings (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+          values
         );
+      } else {
+        // Update existing settings
+        const fields: string[] = [];
+        const values: (string | number | null)[] = [];
 
-        if (existing.length === 0) {
-          // Insert new settings
-          const id = crypto.randomUUID();
-          const fields: string[] = ["id", "created_at", "updated_at"];
-          const placeholders: string[] = ["?", "?", "?"];
-          const values: (string | number | null)[] = [id, now, now];
+        if (data.name !== undefined) {
+          fields.push("name = ?");
+          values.push(data.name);
+        }
+        if (data.legalName !== undefined) {
+          fields.push("legal_name = ?");
+          values.push(data.legalName ?? null);
+        }
+        if (data.logoUrl !== undefined) {
+          fields.push("logo_url = ?");
+          values.push(data.logoUrl ?? null);
+        }
+        if (data.addressStreet !== undefined) {
+          fields.push("address_street = ?");
+          values.push(data.addressStreet ?? null);
+        }
+        if (data.addressCity !== undefined) {
+          fields.push("address_city = ?");
+          values.push(data.addressCity ?? null);
+        }
+        if (data.addressState !== undefined) {
+          fields.push("address_state = ?");
+          values.push(data.addressState ?? null);
+        }
+        if (data.addressPostalCode !== undefined) {
+          fields.push("address_postal_code = ?");
+          values.push(data.addressPostalCode ?? null);
+        }
+        if (data.addressCountry !== undefined) {
+          fields.push("address_country = ?");
+          values.push(data.addressCountry ?? null);
+        }
+        if (data.contactPhone !== undefined) {
+          fields.push("contact_phone = ?");
+          values.push(data.contactPhone ?? null);
+        }
+        if (data.contactEmail !== undefined) {
+          fields.push("contact_email = ?");
+          values.push(data.contactEmail ?? null);
+        }
+        if (data.contactWebsite !== undefined) {
+          fields.push("contact_website = ?");
+          values.push(data.contactWebsite ?? null);
+        }
+        if (data.taxId !== undefined) {
+          fields.push("tax_id = ?");
+          values.push(data.taxId ?? null);
+        }
+        if (data.ein !== undefined) {
+          fields.push("ein = ?");
+          values.push(data.ein ?? null);
+        }
+        if (data.financialYearStartMonth !== undefined) {
+          fields.push("financial_year_start_month = ?");
+          values.push(data.financialYearStartMonth);
+        }
+        if (data.financialYearStartDay !== undefined) {
+          fields.push("financial_year_start_day = ?");
+          values.push(data.financialYearStartDay);
+        }
+        if (data.currency !== undefined) {
+          fields.push("currency = ?");
+          values.push(data.currency);
+        }
+        if (data.locale !== undefined) {
+          fields.push("locale = ?");
+          values.push(data.locale);
+        }
+        if (data.timezone !== undefined) {
+          fields.push("timezone = ?");
+          values.push(data.timezone);
+        }
 
-          if (data.name !== undefined) {
-            fields.push("name");
-            placeholders.push("?");
-            values.push(data.name);
-          }
-          if (data.legalName !== undefined) {
-            fields.push("legal_name");
-            placeholders.push("?");
-            values.push(data.legalName ?? null);
-          }
-          if (data.logoUrl !== undefined) {
-            fields.push("logo_url");
-            placeholders.push("?");
-            values.push(data.logoUrl ?? null);
-          }
-          if (data.addressStreet !== undefined) {
-            fields.push("address_street");
-            placeholders.push("?");
-            values.push(data.addressStreet ?? null);
-          }
-          if (data.addressCity !== undefined) {
-            fields.push("address_city");
-            placeholders.push("?");
-            values.push(data.addressCity ?? null);
-          }
-          if (data.addressState !== undefined) {
-            fields.push("address_state");
-            placeholders.push("?");
-            values.push(data.addressState ?? null);
-          }
-          if (data.addressPostalCode !== undefined) {
-            fields.push("address_postal_code");
-            placeholders.push("?");
-            values.push(data.addressPostalCode ?? null);
-          }
-          if (data.addressCountry !== undefined) {
-            fields.push("address_country");
-            placeholders.push("?");
-            values.push(data.addressCountry ?? null);
-          }
-          if (data.contactPhone !== undefined) {
-            fields.push("contact_phone");
-            placeholders.push("?");
-            values.push(data.contactPhone ?? null);
-          }
-          if (data.contactEmail !== undefined) {
-            fields.push("contact_email");
-            placeholders.push("?");
-            values.push(data.contactEmail ?? null);
-          }
-          if (data.contactWebsite !== undefined) {
-            fields.push("contact_website");
-            placeholders.push("?");
-            values.push(data.contactWebsite ?? null);
-          }
-          if (data.taxId !== undefined) {
-            fields.push("tax_id");
-            placeholders.push("?");
-            values.push(data.taxId ?? null);
-          }
-          if (data.ein !== undefined) {
-            fields.push("ein");
-            placeholders.push("?");
-            values.push(data.ein ?? null);
-          }
-          if (data.financialYearStartMonth !== undefined) {
-            fields.push("financial_year_start_month");
-            placeholders.push("?");
-            values.push(data.financialYearStartMonth);
-          }
-          if (data.financialYearStartDay !== undefined) {
-            fields.push("financial_year_start_day");
-            placeholders.push("?");
-            values.push(data.financialYearStartDay);
-          }
-          if (data.currency !== undefined) {
-            fields.push("currency");
-            placeholders.push("?");
-            values.push(data.currency);
-          }
-          if (data.locale !== undefined) {
-            fields.push("locale");
-            placeholders.push("?");
-            values.push(data.locale);
-          }
-          if (data.timezone !== undefined) {
-            fields.push("timezone");
-            placeholders.push("?");
-            values.push(data.timezone);
-          }
+        fields.push("updated_at = ?");
+        values.push(now);
 
-          await tx.execute(
-            `INSERT INTO company_settings (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+        if (fields.length > 1) {
+          await db.execute(
+            `UPDATE company_settings SET ${fields.join(", ")}`,
             values
           );
-        } else {
-          // Update existing settings
-          const fields: string[] = [];
-          const values: (string | number | null)[] = [];
-
-          if (data.name !== undefined) {
-            fields.push("name = ?");
-            values.push(data.name);
-          }
-          if (data.legalName !== undefined) {
-            fields.push("legal_name = ?");
-            values.push(data.legalName ?? null);
-          }
-          if (data.logoUrl !== undefined) {
-            fields.push("logo_url = ?");
-            values.push(data.logoUrl ?? null);
-          }
-          if (data.addressStreet !== undefined) {
-            fields.push("address_street = ?");
-            values.push(data.addressStreet ?? null);
-          }
-          if (data.addressCity !== undefined) {
-            fields.push("address_city = ?");
-            values.push(data.addressCity ?? null);
-          }
-          if (data.addressState !== undefined) {
-            fields.push("address_state = ?");
-            values.push(data.addressState ?? null);
-          }
-          if (data.addressPostalCode !== undefined) {
-            fields.push("address_postal_code = ?");
-            values.push(data.addressPostalCode ?? null);
-          }
-          if (data.addressCountry !== undefined) {
-            fields.push("address_country = ?");
-            values.push(data.addressCountry ?? null);
-          }
-          if (data.contactPhone !== undefined) {
-            fields.push("contact_phone = ?");
-            values.push(data.contactPhone ?? null);
-          }
-          if (data.contactEmail !== undefined) {
-            fields.push("contact_email = ?");
-            values.push(data.contactEmail ?? null);
-          }
-          if (data.contactWebsite !== undefined) {
-            fields.push("contact_website = ?");
-            values.push(data.contactWebsite ?? null);
-          }
-          if (data.taxId !== undefined) {
-            fields.push("tax_id = ?");
-            values.push(data.taxId ?? null);
-          }
-          if (data.ein !== undefined) {
-            fields.push("ein = ?");
-            values.push(data.ein ?? null);
-          }
-          if (data.financialYearStartMonth !== undefined) {
-            fields.push("financial_year_start_month = ?");
-            values.push(data.financialYearStartMonth);
-          }
-          if (data.financialYearStartDay !== undefined) {
-            fields.push("financial_year_start_day = ?");
-            values.push(data.financialYearStartDay);
-          }
-          if (data.currency !== undefined) {
-            fields.push("currency = ?");
-            values.push(data.currency);
-          }
-          if (data.locale !== undefined) {
-            fields.push("locale = ?");
-            values.push(data.locale);
-          }
-          if (data.timezone !== undefined) {
-            fields.push("timezone = ?");
-            values.push(data.timezone);
-          }
-
-          fields.push("updated_at = ?");
-          values.push(now);
-
-          if (fields.length > 1) {
-            await tx.execute(
-              `UPDATE company_settings SET ${fields.join(", ")}`,
-              values
-            );
-          }
         }
-      });
+      }
     },
     [db]
   );
@@ -413,221 +411,219 @@ export function useInvoiceSettingsMutations(): InvoiceSettingsMutations {
     async (data: Partial<InvoiceSettings>): Promise<void> => {
       const now = new Date().toISOString();
 
-      await db.writeTransaction(async (tx) => {
-        // Check if settings exist
-        const existing = await tx.getAll<InvoiceSettingsRow>(
-          `SELECT id FROM invoice_settings LIMIT 1`
-        );
+      // Check if settings exist
+      const existing = await db.getAll<InvoiceSettingsRow>(
+        `SELECT id FROM invoice_settings LIMIT 1`
+      );
 
-        if (existing.length === 0) {
-          // Insert new settings
-          const id = crypto.randomUUID();
-          const insertFields: string[] = ["id", "created_at", "updated_at"];
-          const placeholders: string[] = ["?", "?", "?"];
-          const insertValues: (string | number | null)[] = [id, now, now];
+      if (existing.length === 0) {
+        // Insert new settings
+        const id = crypto.randomUUID();
+        const insertFields: string[] = ["id", "created_at", "updated_at"];
+        const placeholders: string[] = ["?", "?", "?"];
+        const insertValues: (string | number | null)[] = [id, now, now];
 
-          if (data.prefix !== undefined) {
-            insertFields.push("prefix");
-            placeholders.push("?");
-            insertValues.push(data.prefix);
-          }
-          if (data.nextNumber !== undefined) {
-            insertFields.push("next_number");
-            placeholders.push("?");
-            insertValues.push(data.nextNumber);
-          }
-          if (data.padding !== undefined) {
-            insertFields.push("padding");
-            placeholders.push("?");
-            insertValues.push(data.padding);
-          }
-          if (data.termsAndConditions !== undefined) {
-            insertFields.push("terms_and_conditions");
-            placeholders.push("?");
-            insertValues.push(data.termsAndConditions ?? null);
-          }
-          if (data.notes !== undefined) {
-            insertFields.push("notes");
-            placeholders.push("?");
-            insertValues.push(data.notes ?? null);
-          }
-          if (data.showPaymentQr !== undefined) {
-            insertFields.push("show_payment_qr");
-            placeholders.push("?");
-            insertValues.push(data.showPaymentQr ? 1 : 0);
-          }
-          if (data.showBankDetails !== undefined) {
-            insertFields.push("show_bank_details");
-            placeholders.push("?");
-            insertValues.push(data.showBankDetails ? 1 : 0);
-          }
-          if (data.dueDateDays !== undefined) {
-            insertFields.push("due_date_days");
-            placeholders.push("?");
-            insertValues.push(data.dueDateDays);
-          }
-          if (data.lateFeesEnabled !== undefined) {
-            insertFields.push("late_fees_enabled");
-            placeholders.push("?");
-            insertValues.push(data.lateFeesEnabled ? 1 : 0);
-          }
-          if (data.lateFeesPercentage !== undefined) {
-            insertFields.push("late_fees_percentage");
-            placeholders.push("?");
-            insertValues.push(data.lateFeesPercentage);
-          }
-          if (data.bankAccountName !== undefined) {
-            insertFields.push("bank_account_name");
-            placeholders.push("?");
-            insertValues.push(data.bankAccountName ?? null);
-          }
-          if (data.bankAccountNumber !== undefined) {
-            insertFields.push("bank_account_number");
-            placeholders.push("?");
-            insertValues.push(data.bankAccountNumber ?? null);
-          }
-          if (data.bankName !== undefined) {
-            insertFields.push("bank_name");
-            placeholders.push("?");
-            insertValues.push(data.bankName ?? null);
-          }
-          if (data.bankRoutingNumber !== undefined) {
-            insertFields.push("bank_routing_number");
-            placeholders.push("?");
-            insertValues.push(data.bankRoutingNumber ?? null);
-          }
-          if (data.bankBranchName !== undefined) {
-            insertFields.push("bank_branch_name");
-            placeholders.push("?");
-            insertValues.push(data.bankBranchName ?? null);
-          }
-          if (data.bankSwiftCode !== undefined) {
-            insertFields.push("bank_swift_code");
-            placeholders.push("?");
-            insertValues.push(data.bankSwiftCode ?? null);
-          }
-          if (data.pdfTemplate !== undefined) {
-            insertFields.push("pdf_template");
-            placeholders.push("?");
-            insertValues.push(data.pdfTemplate);
-          }
-          if (data.taxEnabled !== undefined) {
-            insertFields.push("tax_enabled");
-            placeholders.push("?");
-            insertValues.push(data.taxEnabled ? 1 : 0);
-          }
-          if (data.taxInclusive !== undefined) {
-            insertFields.push("tax_inclusive");
-            placeholders.push("?");
-            insertValues.push(data.taxInclusive ? 1 : 0);
-          }
-          if (data.roundTax !== undefined) {
-            insertFields.push("round_tax");
-            placeholders.push("?");
-            insertValues.push(data.roundTax ? 1 : 0);
-          }
-
-          await tx.execute(
-            `INSERT INTO invoice_settings (${insertFields.join(", ")}) VALUES (${placeholders.join(", ")})`,
-            insertValues
-          );
-        } else {
-          // Update existing settings
-          const fields: string[] = [];
-          const values: (string | number | null)[] = [];
-
-          if (data.prefix !== undefined) {
-            fields.push("prefix = ?");
-            values.push(data.prefix);
-          }
-          if (data.nextNumber !== undefined) {
-            fields.push("next_number = ?");
-            values.push(data.nextNumber);
-          }
-          if (data.padding !== undefined) {
-            fields.push("padding = ?");
-            values.push(data.padding);
-          }
-          if (data.termsAndConditions !== undefined) {
-            fields.push("terms_and_conditions = ?");
-            values.push(data.termsAndConditions ?? null);
-          }
-          if (data.notes !== undefined) {
-            fields.push("notes = ?");
-            values.push(data.notes ?? null);
-          }
-          if (data.showPaymentQr !== undefined) {
-            fields.push("show_payment_qr = ?");
-            values.push(data.showPaymentQr ? 1 : 0);
-          }
-          if (data.showBankDetails !== undefined) {
-            fields.push("show_bank_details = ?");
-            values.push(data.showBankDetails ? 1 : 0);
-          }
-          if (data.dueDateDays !== undefined) {
-            fields.push("due_date_days = ?");
-            values.push(data.dueDateDays);
-          }
-          if (data.lateFeesEnabled !== undefined) {
-            fields.push("late_fees_enabled = ?");
-            values.push(data.lateFeesEnabled ? 1 : 0);
-          }
-          if (data.lateFeesPercentage !== undefined) {
-            fields.push("late_fees_percentage = ?");
-            values.push(data.lateFeesPercentage);
-          }
-          if (data.bankAccountName !== undefined) {
-            fields.push("bank_account_name = ?");
-            values.push(data.bankAccountName ?? null);
-          }
-          if (data.bankAccountNumber !== undefined) {
-            fields.push("bank_account_number = ?");
-            values.push(data.bankAccountNumber ?? null);
-          }
-          if (data.bankName !== undefined) {
-            fields.push("bank_name = ?");
-            values.push(data.bankName ?? null);
-          }
-          if (data.bankRoutingNumber !== undefined) {
-            fields.push("bank_routing_number = ?");
-            values.push(data.bankRoutingNumber ?? null);
-          }
-          if (data.bankBranchName !== undefined) {
-            fields.push("bank_branch_name = ?");
-            values.push(data.bankBranchName ?? null);
-          }
-          if (data.bankSwiftCode !== undefined) {
-            fields.push("bank_swift_code = ?");
-            values.push(data.bankSwiftCode ?? null);
-          }
-          if (data.pdfTemplate !== undefined) {
-            fields.push("pdf_template = ?");
-            values.push(data.pdfTemplate);
-          }
-          if (data.taxEnabled !== undefined) {
-            fields.push("tax_enabled = ?");
-            values.push(data.taxEnabled ? 1 : 0);
-          }
-          if (data.taxInclusive !== undefined) {
-            fields.push("tax_inclusive = ?");
-            values.push(data.taxInclusive ? 1 : 0);
-          }
-          if (data.roundTax !== undefined) {
-            fields.push("round_tax = ?");
-            values.push(data.roundTax ? 1 : 0);
-          }
-
-          fields.push("updated_at = ?");
-          values.push(now);
-
-          if (fields.length > 1) {
-            await tx.execute(
-              `UPDATE invoice_settings SET ${fields.join(", ")}`,
-              values
-            );
-          }
+        if (data.prefix !== undefined) {
+          insertFields.push("prefix");
+          placeholders.push("?");
+          insertValues.push(data.prefix);
         }
-      });
+        if (data.nextNumber !== undefined) {
+          insertFields.push("next_number");
+          placeholders.push("?");
+          insertValues.push(data.nextNumber);
+        }
+        if (data.padding !== undefined) {
+          insertFields.push("padding");
+          placeholders.push("?");
+          insertValues.push(data.padding);
+        }
+        if (data.termsAndConditions !== undefined) {
+          insertFields.push("terms_and_conditions");
+          placeholders.push("?");
+          insertValues.push(data.termsAndConditions ?? null);
+        }
+        if (data.notes !== undefined) {
+          insertFields.push("notes");
+          placeholders.push("?");
+          insertValues.push(data.notes ?? null);
+        }
+        if (data.showPaymentQr !== undefined) {
+          insertFields.push("show_payment_qr");
+          placeholders.push("?");
+          insertValues.push(data.showPaymentQr ? 1 : 0);
+        }
+        if (data.showBankDetails !== undefined) {
+          insertFields.push("show_bank_details");
+          placeholders.push("?");
+          insertValues.push(data.showBankDetails ? 1 : 0);
+        }
+        if (data.dueDateDays !== undefined) {
+          insertFields.push("due_date_days");
+          placeholders.push("?");
+          insertValues.push(data.dueDateDays);
+        }
+        if (data.lateFeesEnabled !== undefined) {
+          insertFields.push("late_fees_enabled");
+          placeholders.push("?");
+          insertValues.push(data.lateFeesEnabled ? 1 : 0);
+        }
+        if (data.lateFeesPercentage !== undefined) {
+          insertFields.push("late_fees_percentage");
+          placeholders.push("?");
+          insertValues.push(data.lateFeesPercentage);
+        }
+        if (data.bankAccountName !== undefined) {
+          insertFields.push("bank_account_name");
+          placeholders.push("?");
+          insertValues.push(data.bankAccountName ?? null);
+        }
+        if (data.bankAccountNumber !== undefined) {
+          insertFields.push("bank_account_number");
+          placeholders.push("?");
+          insertValues.push(data.bankAccountNumber ?? null);
+        }
+        if (data.bankName !== undefined) {
+          insertFields.push("bank_name");
+          placeholders.push("?");
+          insertValues.push(data.bankName ?? null);
+        }
+        if (data.bankRoutingNumber !== undefined) {
+          insertFields.push("bank_routing_number");
+          placeholders.push("?");
+          insertValues.push(data.bankRoutingNumber ?? null);
+        }
+        if (data.bankBranchName !== undefined) {
+          insertFields.push("bank_branch_name");
+          placeholders.push("?");
+          insertValues.push(data.bankBranchName ?? null);
+        }
+        if (data.bankSwiftCode !== undefined) {
+          insertFields.push("bank_swift_code");
+          placeholders.push("?");
+          insertValues.push(data.bankSwiftCode ?? null);
+        }
+        if (data.pdfTemplate !== undefined) {
+          insertFields.push("pdf_template");
+          placeholders.push("?");
+          insertValues.push(data.pdfTemplate);
+        }
+        if (data.taxEnabled !== undefined) {
+          insertFields.push("tax_enabled");
+          placeholders.push("?");
+          insertValues.push(data.taxEnabled ? 1 : 0);
+        }
+        if (data.taxInclusive !== undefined) {
+          insertFields.push("tax_inclusive");
+          placeholders.push("?");
+          insertValues.push(data.taxInclusive ? 1 : 0);
+        }
+        if (data.roundTax !== undefined) {
+          insertFields.push("round_tax");
+          placeholders.push("?");
+          insertValues.push(data.roundTax ? 1 : 0);
+        }
+
+        await db.execute(
+          `INSERT INTO invoice_settings (${insertFields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+          insertValues
+        );
+      } else {
+        // Update existing settings
+        const fields: string[] = [];
+        const values: (string | number | null)[] = [];
+
+        if (data.prefix !== undefined) {
+          fields.push("prefix = ?");
+          values.push(data.prefix);
+        }
+        if (data.nextNumber !== undefined) {
+          fields.push("next_number = ?");
+          values.push(data.nextNumber);
+        }
+        if (data.padding !== undefined) {
+          fields.push("padding = ?");
+          values.push(data.padding);
+        }
+        if (data.termsAndConditions !== undefined) {
+          fields.push("terms_and_conditions = ?");
+          values.push(data.termsAndConditions ?? null);
+        }
+        if (data.notes !== undefined) {
+          fields.push("notes = ?");
+          values.push(data.notes ?? null);
+        }
+        if (data.showPaymentQr !== undefined) {
+          fields.push("show_payment_qr = ?");
+          values.push(data.showPaymentQr ? 1 : 0);
+        }
+        if (data.showBankDetails !== undefined) {
+          fields.push("show_bank_details = ?");
+          values.push(data.showBankDetails ? 1 : 0);
+        }
+        if (data.dueDateDays !== undefined) {
+          fields.push("due_date_days = ?");
+          values.push(data.dueDateDays);
+        }
+        if (data.lateFeesEnabled !== undefined) {
+          fields.push("late_fees_enabled = ?");
+          values.push(data.lateFeesEnabled ? 1 : 0);
+        }
+        if (data.lateFeesPercentage !== undefined) {
+          fields.push("late_fees_percentage = ?");
+          values.push(data.lateFeesPercentage);
+        }
+        if (data.bankAccountName !== undefined) {
+          fields.push("bank_account_name = ?");
+          values.push(data.bankAccountName ?? null);
+        }
+        if (data.bankAccountNumber !== undefined) {
+          fields.push("bank_account_number = ?");
+          values.push(data.bankAccountNumber ?? null);
+        }
+        if (data.bankName !== undefined) {
+          fields.push("bank_name = ?");
+          values.push(data.bankName ?? null);
+        }
+        if (data.bankRoutingNumber !== undefined) {
+          fields.push("bank_routing_number = ?");
+          values.push(data.bankRoutingNumber ?? null);
+        }
+        if (data.bankBranchName !== undefined) {
+          fields.push("bank_branch_name = ?");
+          values.push(data.bankBranchName ?? null);
+        }
+        if (data.bankSwiftCode !== undefined) {
+          fields.push("bank_swift_code = ?");
+          values.push(data.bankSwiftCode ?? null);
+        }
+        if (data.pdfTemplate !== undefined) {
+          fields.push("pdf_template = ?");
+          values.push(data.pdfTemplate);
+        }
+        if (data.taxEnabled !== undefined) {
+          fields.push("tax_enabled = ?");
+          values.push(data.taxEnabled ? 1 : 0);
+        }
+        if (data.taxInclusive !== undefined) {
+          fields.push("tax_inclusive = ?");
+          values.push(data.taxInclusive ? 1 : 0);
+        }
+        if (data.roundTax !== undefined) {
+          fields.push("round_tax = ?");
+          values.push(data.roundTax ? 1 : 0);
+        }
+
+        fields.push("updated_at = ?");
+        values.push(now);
+
+        if (fields.length > 1) {
+          await db.execute(
+            `UPDATE invoice_settings SET ${fields.join(", ")}`,
+            values
+          );
+        }
+      }
     },
     [db]
   );
@@ -698,27 +694,25 @@ export function useTaxRateMutations(): TaxRateMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      await db.writeTransaction(async (tx) => {
-        // If this is default, unset other defaults
-        if (data.isDefault) {
-          await tx.execute(`UPDATE tax_rates SET is_default = 0`);
-        }
+      // If this is default, unset other defaults
+      if (data.isDefault) {
+        await db.execute(`UPDATE tax_rates SET is_default = 0`);
+      }
 
-        await tx.execute(
-          `INSERT INTO tax_rates (id, name, rate, type, description, is_default, is_active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.name,
-            data.rate,
-            data.type ?? "percentage",
-            data.description ?? null,
-            data.isDefault ? 1 : 0,
-            1,
-            now,
-          ]
-        );
-      });
+      await db.execute(
+        `INSERT INTO tax_rates (id, name, rate, type, description, is_default, is_active, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.name,
+          data.rate,
+          data.type ?? "percentage",
+          data.description ?? null,
+          data.isDefault ? 1 : 0,
+          1,
+          now,
+        ]
+      );
 
       return id;
     },
@@ -737,57 +731,53 @@ export function useTaxRateMutations(): TaxRateMutations {
         isActive: boolean;
       }>
     ): Promise<void> => {
-      await db.writeTransaction(async (tx) => {
-        const fields: string[] = [];
-        const values: (string | number | null)[] = [];
+      const fields: string[] = [];
+      const values: (string | number | null)[] = [];
 
-        if (data.isDefault) {
-          await tx.execute(`UPDATE tax_rates SET is_default = 0`);
-        }
+      if (data.isDefault) {
+        await db.execute(`UPDATE tax_rates SET is_default = 0`);
+      }
 
-        if (data.name !== undefined) {
-          fields.push("name = ?");
-          values.push(data.name);
-        }
-        if (data.rate !== undefined) {
-          fields.push("rate = ?");
-          values.push(data.rate);
-        }
-        if (data.type !== undefined) {
-          fields.push("type = ?");
-          values.push(data.type);
-        }
-        if (data.description !== undefined) {
-          fields.push("description = ?");
-          values.push(data.description);
-        }
-        if (data.isDefault !== undefined) {
-          fields.push("is_default = ?");
-          values.push(data.isDefault ? 1 : 0);
-        }
-        if (data.isActive !== undefined) {
-          fields.push("is_active = ?");
-          values.push(data.isActive ? 1 : 0);
-        }
+      if (data.name !== undefined) {
+        fields.push("name = ?");
+        values.push(data.name);
+      }
+      if (data.rate !== undefined) {
+        fields.push("rate = ?");
+        values.push(data.rate);
+      }
+      if (data.type !== undefined) {
+        fields.push("type = ?");
+        values.push(data.type);
+      }
+      if (data.description !== undefined) {
+        fields.push("description = ?");
+        values.push(data.description);
+      }
+      if (data.isDefault !== undefined) {
+        fields.push("is_default = ?");
+        values.push(data.isDefault ? 1 : 0);
+      }
+      if (data.isActive !== undefined) {
+        fields.push("is_active = ?");
+        values.push(data.isActive ? 1 : 0);
+      }
 
-        values.push(id);
+      values.push(id);
 
-        if (fields.length > 0) {
-          await tx.execute(
-            `UPDATE tax_rates SET ${fields.join(", ")} WHERE id = ?`,
-            values
-          );
-        }
-      });
+      if (fields.length > 0) {
+        await db.execute(
+          `UPDATE tax_rates SET ${fields.join(", ")} WHERE id = ?`,
+          values
+        );
+      }
     },
     [db]
   );
 
   const deleteTaxRate = useCallback(
     async (id: string): Promise<void> => {
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(`DELETE FROM tax_rates WHERE id = ?`, [id]);
-      });
+      await db.execute(`DELETE FROM tax_rates WHERE id = ?`, [id]);
     },
     [db]
   );

@@ -8,14 +8,12 @@ import {
   ItemDetail,
   ItemFormModal,
   StockAdjustmentModal,
-  StockHistoryModal,
 } from "./components";
 import { useItems, useItemMutations } from "@/hooks/useItems";
 import { useCategories } from "@/hooks/useCategories";
 import type { Item, ItemFormData, ItemFilters, ItemType } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { Box, Layers, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 
 export function ItemsPage(): React.ReactNode {
   // Data from PowerSync
@@ -31,7 +29,6 @@ export function ItemsPage(): React.ReactNode {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
   const [isAdjustStockModalOpen, setIsAdjustStockModalOpen] = useState(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter State
@@ -190,13 +187,11 @@ export function ItemsPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await deleteItem(itemToDelete.id);
-        toast.success("Item deleted successfully");
         setIsDeleteModalOpen(false);
         setItemToDelete(null);
         setSelectedItem(null);
       } catch (err) {
         console.error("Failed to delete item:", err);
-        toast.error("Failed to delete item");
       } finally {
         setIsSubmitting(false);
       }
@@ -208,16 +203,13 @@ export function ItemsPage(): React.ReactNode {
     try {
       if (editingItem) {
         await updateItem(editingItem.id, data);
-        toast.success("Item updated successfully");
       } else {
         await createItem(data);
-        toast.success("Item created successfully");
       }
       setIsFormModalOpen(false);
       setEditingItem(null);
     } catch (err) {
       console.error("Failed to save item:", err);
-      toast.error("Failed to save item");
     } finally {
       setIsSubmitting(false);
     }
@@ -234,11 +226,9 @@ export function ItemsPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await adjustStock(currentSelectedItem.id, quantity);
-        toast.success("Stock adjusted successfully");
         setIsAdjustStockModalOpen(false);
       } catch (err) {
         console.error("Failed to adjust stock:", err);
-        toast.error("Failed to adjust stock");
       } finally {
         setIsSubmitting(false);
       }
@@ -410,9 +400,6 @@ export function ItemsPage(): React.ReactNode {
               handleDeleteItem();
             }}
             onAdjustStock={handleOpenAdjustStock}
-            onViewHistory={() => {
-              setIsHistoryModalOpen(true);
-            }}
           />
         </div>
       </div>
@@ -430,12 +417,6 @@ export function ItemsPage(): React.ReactNode {
           void handleFormSubmit(data);
         }}
         isLoading={isSubmitting}
-        checkSkuUnique={(sku, excludeId) => {
-          return !items.some(
-            (i) =>
-              i.sku.toLowerCase() === sku.toLowerCase() && i.id !== excludeId
-          );
-        }}
       />
 
       {/* Delete Confirmation Modal */}
@@ -469,18 +450,6 @@ export function ItemsPage(): React.ReactNode {
         item={currentSelectedItem}
         isLoading={isSubmitting}
       />
-
-      {/* Stock History Modal */}
-      {currentSelectedItem && (
-        <StockHistoryModal
-          isOpen={isHistoryModalOpen}
-          onClose={() => {
-            setIsHistoryModalOpen(false);
-          }}
-          itemId={currentSelectedItem.id}
-          itemName={currentSelectedItem.name}
-        />
-      )}
     </div>
   );
 }

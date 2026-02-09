@@ -1,53 +1,81 @@
-import type React from "react";
-import type { TextInputProps, ViewStyle } from "react-native";
-import { View, Text, TextInput } from "react-native";
-import { cn } from "../../lib/utils";
-import { colors } from "../../lib/theme";
+import React, { useMemo } from "react";
+import type { TextInputProps, StyleProp, ViewStyle } from "react-native";
+import { TextInput, Text, View, StyleSheet } from "react-native";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  containerClassName?: string;
-  containerStyle?: ViewStyle;
-  icon?: React.ReactNode;
+  helperText?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  fullWidth?: boolean;
 }
 
 export function Input({
   label,
   error,
-  className,
-  containerClassName,
+  helperText,
   containerStyle,
-  icon,
+  fullWidth,
+  style,
   ...props
 }: InputProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
-    <View className={cn("gap-1.5", containerClassName)} style={containerStyle}>
-      {label && (
-        <Text className="text-sm font-medium text-text-secondary ml-1">
-          {label}
-        </Text>
+    <View
+      style={[styles.container, fullWidth && styles.fullWidth, containerStyle]}
+    >
+      {label && <Text style={styles.label}>{label}</Text>}
+      <TextInput
+        style={[styles.input, error ? styles.inputError : null, style]}
+        placeholderTextColor={colors.textMuted}
+        {...props}
+      />
+      {helperText && !error && (
+        <Text style={styles.helperText}>{helperText}</Text>
       )}
-
-      <View className={cn(
-        "flex-row items-center border border-border rounded-xl bg-surface px-3 py-3",
-        error ? "border-danger" : "focus:border-primary",
-        props.editable === false ? "bg-surface-hover opacity-60" : ""
-      )}>
-        {icon && <View className="mr-2">{icon}</View>}
-
-        <TextInput
-          className={cn("flex-1 text-base text-text", className)}
-          placeholderTextColor={colors.textMuted} // Native prop needed for placeholder color
-          {...props}
-        />
-      </View>
-
-      {error && (
-        <Text className="text-xs text-danger ml-1">
-          {error}
-        </Text>
-      )}
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    marginBottom: spacing.xs,
+  },
+  fullWidth: {
+    width: "100%",
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.textSecondary,
+    marginBottom: 6,
+  },
+  input: {
+    height: 48,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.text,
+  },
+  inputError: {
+    borderColor: colors.danger,
+  },
+  errorText: {
+    fontSize: fontSize.xs,
+    color: colors.danger,
+    marginTop: 4,
+  },
+  helperText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+});

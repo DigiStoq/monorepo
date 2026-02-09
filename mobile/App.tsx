@@ -1,4 +1,3 @@
-import "./global.css";
 import "react-native-get-random-values";
 import { useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet, Text, Platform } from "react-native";
@@ -13,9 +12,6 @@ import { initializePowerSync } from "./src/lib/powersync";
 import type { PowerSyncDatabase } from "@powersync/react-native";
 
 type AuthScreen = "splash" | "welcome" | "login" | "signup";
-
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./src/lib/queryClient";
 
 function AppContent(): JSX.Element | null {
   const { isLoading, isAuthenticated } = useAuth();
@@ -61,14 +57,14 @@ function AppContent(): JSX.Element | null {
   if (!isAuthenticated) {
     // Show auth flow screens
     if (authScreen === "splash") {
-      return <SplashScreen onFinish={() => { setAuthScreen("welcome"); }} />;
+      return <SplashScreen onFinish={() => setAuthScreen("welcome")} />;
     }
 
     if (authScreen === "welcome") {
       return (
         <WelcomeScreen
-          onSignIn={() => { setAuthScreen("login"); }}
-          onSignUp={() => { setAuthScreen("signup"); }}
+          onSignIn={() => setAuthScreen("login")}
+          onSignUp={() => setAuthScreen("signup")}
         />
       );
     }
@@ -96,11 +92,9 @@ function AppContent(): JSX.Element | null {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <PowerSyncContext.Provider value={db}>
-        <AppNavigator />
-      </PowerSyncContext.Provider>
-    </QueryClientProvider>
+    <PowerSyncContext.Provider value={db}>
+      <AppNavigator />
+    </PowerSyncContext.Provider>
   );
 }
 
@@ -127,10 +121,10 @@ function AppWrapper() {
     <View style={{ flex: 1, backgroundColor: colors.backgroundLight }}>
       <StatusBar
         style={isDark ? "light" : "dark"}
-        backgroundColor="transparent"
-        translucent={true}
+        backgroundColor={colors.backgroundLight}
+        translucent={false}
       />
-      <View style={{ height: insets.top, backgroundColor: colors.surface }} />
+      <View style={{ height: insets.top, backgroundColor: colors.backgroundLight }} />
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <AppContent />
       </View>

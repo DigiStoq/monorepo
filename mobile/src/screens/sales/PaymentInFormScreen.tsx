@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
+  StyleSheet,
   ScrollView,
   Alert,
   Platform,
@@ -19,11 +20,11 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { SaveIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
+import { Save, X } from "lucide-react-native";
+import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
-import { CustomHeader } from "../../components/CustomHeader";
-import { TouchableOpacity } from "react-native";
 
 interface CustomerData {
   id: string;
@@ -33,6 +34,7 @@ interface CustomerData {
 export function PaymentInFormScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -154,24 +156,34 @@ export function PaymentInFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background"
+      style={styles.container}
     >
+      <View style={styles.header}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={() => {
+            navigation.goBack();
+          }}
+        >
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>
+            {isEditing ? "Edit Payment" : "Record Payment"}
+          </Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
+        </Button>
+      </View>
 
-      <CustomHeader
-        title={isEditing ? "Edit Payment" : "Record Payment"}
-        showBack
-        rightAction={
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={isLoading}
-            className="p-2"
-          >
-            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
-          </TouchableOpacity>
-        }
-      />
-
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <CardHeader title="Payment Details" />
           <CardBody>
@@ -189,13 +201,13 @@ export function PaymentInFormScreen() {
               keyboardType="numeric"
               placeholder="0.00"
             />
-            <View className="flex-row gap-2">
+            <View style={styles.row}>
               <Input
                 label="Date"
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
               <Select
                 label="Mode"
@@ -226,7 +238,7 @@ export function PaymentInFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          className="mt-6"
+          style={styles.submitButton}
         >
           Save Payment
         </Button>
@@ -234,3 +246,41 @@ export function PaymentInFormScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  content: {
+    padding: wp(4),
+    paddingBottom: hp(5),
+  },
+  row: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  submitButton: {
+    marginTop: spacing.xl,
+  },
+});

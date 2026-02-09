@@ -330,6 +330,39 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
 Sidebar.displayName = "Sidebar";
 
 // ============================================================================
+// SIDEBAR SECTION COMPONENT
+// ============================================================================
+
+export interface SidebarSectionProps {
+  /** Section title */
+  title?: string;
+  /** Section items */
+  children: ReactNode;
+  /** Collapsed state */
+  isCollapsed?: boolean;
+  /** Additional class name */
+  className?: string;
+}
+
+export function SidebarSection({
+  title,
+  children,
+  isCollapsed,
+  className,
+}: SidebarSectionProps): React.ReactNode {
+  return (
+    <div className={cn("mb-6", className)}>
+      {title && !isCollapsed && (
+        <h3 className="px-6 mb-3 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-[0.1em]">
+          {title}
+        </h3>
+      )}
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+// ============================================================================
 // SIDEBAR LOGO COMPONENT
 // ============================================================================
 

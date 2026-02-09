@@ -135,49 +135,47 @@ export function useBankTransactionMutations(): BankTransactionMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      await db.writeTransaction(async (tx) => {
-        // Get current balance
-        const result = await tx.execute(
-          `SELECT current_balance FROM bank_accounts WHERE id = ?`,
-          [data.accountId]
-        );
-        const rows = (result.rows?._array ?? []) as BalanceQueryRow[];
-        const currentBalance = rows[0]?.current_balance ?? 0;
+      // Get current balance
+      const result = await db.execute(
+        `SELECT current_balance FROM bank_accounts WHERE id = ?`,
+        [data.accountId]
+      );
+      const rows = (result.rows?._array ?? []) as BalanceQueryRow[];
+      const currentBalance = rows[0]?.current_balance ?? 0;
 
-        // Calculate new balance
-        const balanceChange =
-          data.type === "deposit" ? data.amount : -data.amount;
-        const newBalance = currentBalance + balanceChange;
+      // Calculate new balance
+      const balanceChange =
+        data.type === "deposit" ? data.amount : -data.amount;
+      const newBalance = currentBalance + balanceChange;
 
-        await tx.execute(
-          `INSERT INTO bank_transactions (
-            id, account_id, date, type, amount, description, reference_number,
-            related_customer_id, related_customer_name, related_invoice_id,
-            related_invoice_number, balance, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.accountId,
-            data.date,
-            data.type,
-            data.amount,
-            data.description,
-            data.referenceNumber ?? null,
-            data.relatedCustomerId ?? null,
-            data.relatedCustomerName ?? null,
-            data.relatedInvoiceId ?? null,
-            data.relatedInvoiceNumber ?? null,
-            newBalance,
-            now,
-          ]
-        );
+      await db.execute(
+        `INSERT INTO bank_transactions (
+          id, account_id, date, type, amount, description, reference_number,
+          related_customer_id, related_customer_name, related_invoice_id,
+          related_invoice_number, balance, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.accountId,
+          data.date,
+          data.type,
+          data.amount,
+          data.description,
+          data.referenceNumber ?? null,
+          data.relatedCustomerId ?? null,
+          data.relatedCustomerName ?? null,
+          data.relatedInvoiceId ?? null,
+          data.relatedInvoiceNumber ?? null,
+          newBalance,
+          now,
+        ]
+      );
 
-        // Update account balance
-        await tx.execute(
-          `UPDATE bank_accounts SET current_balance = ?, updated_at = ? WHERE id = ?`,
-          [newBalance, now, data.accountId]
-        );
-      });
+      // Update account balance
+      await db.execute(
+        `UPDATE bank_accounts SET current_balance = ?, updated_at = ? WHERE id = ?`,
+        [newBalance, now, data.accountId]
+      );
 
       return id;
     },
@@ -186,28 +184,25 @@ export function useBankTransactionMutations(): BankTransactionMutations {
 
   const deleteTransaction = useCallback(
     async (id: string): Promise<void> => {
-      await db.writeTransaction(async (tx) => {
-        // Get transaction details
-        const result = await tx.execute(
-          `SELECT account_id, type, amount FROM bank_transactions WHERE id = ?`,
-          [id]
+      // Get transaction details
+      const result = await db.execute(
+        `SELECT account_id, type, amount FROM bank_transactions WHERE id = ?`,
+        [id]
+      );
+      const rows = (result.rows?._array ?? []) as TransactionQueryRow[];
+
+      if (rows.length > 0) {
+        const tx = rows[0];
+        const now = new Date().toISOString();
+        // Reverse the balance change
+        const reverseAmount = tx.type === "deposit" ? -tx.amount : tx.amount;
+        await db.execute(
+          `UPDATE bank_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+          [reverseAmount, now, tx.account_id]
         );
-        const rows = (result.rows?._array ?? []) as TransactionQueryRow[];
+      }
 
-        if (rows.length > 0) {
-          const txData = rows[0];
-          const now = new Date().toISOString();
-          // Reverse the balance change
-          const reverseAmount =
-            txData.type === "deposit" ? -txData.amount : txData.amount;
-          await tx.execute(
-            `UPDATE bank_accounts SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
-            [reverseAmount, now, txData.account_id]
-          );
-        }
-
-        await tx.execute(`DELETE FROM bank_transactions WHERE id = ?`, [id]);
-      });
+      await db.execute(`DELETE FROM bank_transactions WHERE id = ?`, [id]);
     },
     [db]
   );

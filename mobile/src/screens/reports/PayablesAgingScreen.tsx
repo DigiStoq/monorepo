@@ -1,13 +1,15 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, CheckCircleIcon } from "../../components/ui/UntitledIcons";
+import { ArrowLeft, CheckCircle } from "lucide-react-native";
 import { usePayablesAgingReport } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function PayablesAgingScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const { report, isLoading } = usePayablesAgingReport();
 
     const formatCurrency = (amount: number) => {
@@ -17,42 +19,42 @@ export function PayablesAgingScreen() {
     const bucketsOrder = ['Current', '1-30 Days', '31-60 Days', '61-90 Days', '90+ Days'];
 
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Payables Aging</Text>
-                <View className="w-10" />
+                <Text style={styles.headerTitle}>Payables Aging</Text>
+                <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            <ScrollView contentContainerStyle={styles.content}>
                 {isLoading ? (
-                    <Text className="text-center mt-10 text-text-muted">Loading data...</Text>
+                    <Text style={styles.loadingText}>Loading data...</Text>
                 ) : !report || report.totalDue === 0 ? (
-                    <View className="items-center p-10">
-                        <CheckCircleIcon size={48} color={colors.success} />
-                        <Text className="text-lg font-semibold text-text-secondary mt-4">No pending bills.</Text>
-                        <Text className="text-sm text-text-muted mt-1">You are all settled up with suppliers.</Text>
+                    <View style={styles.emptyState}>
+                        <CheckCircle size={48} color={colors.success} />
+                        <Text style={styles.emptyText}>No pending bills.</Text>
+                        <Text style={styles.subText}>You are all settled up with suppliers.</Text>
                     </View>
                 ) : (
                     <>
                         {/* High Level Summary */}
-                        <View className="bg-surface p-5 rounded-xl items-center mb-4 border border-border">
-                            <Text className="text-sm text-text-muted mb-1">Total Payable</Text>
-                            <Text className="text-3xl font-bold text-danger">{formatCurrency(report.totalDue)}</Text>
+                        <View style={styles.summaryCard}>
+                            <Text style={styles.summaryLabel}>Total Payable</Text>
+                            <Text style={styles.summaryValue}>{formatCurrency(report.totalDue)}</Text>
                         </View>
 
                         {/* Buckets */}
-                        <View className="flex-row flex-wrap gap-2 mb-6">
+                        <View style={styles.bucketsContainer}>
                             {bucketsOrder.map(range => {
                                 const bucket = report.buckets.find(b => b.range === range);
                                 const amount = bucket ? bucket.amount : 0;
                                 const isHigh = amount > 0 && range !== 'Current';
                                 return (
-                                    <View key={range} className="w-[48%] bg-surface p-3 rounded-lg border border-border">
-                                        <Text className="text-xs text-text-muted mb-1">{range}</Text>
-                                        <Text className={`text-base font-semibold ${isHigh ? 'text-danger' : 'text-text'}`}>
+                                    <View key={range} style={styles.bucketCard}>
+                                        <Text style={styles.bucketLabel}>{range}</Text>
+                                        <Text style={[styles.bucketValue, isHigh && { color: colors.danger }]}>
                                             {formatCurrency(amount)}
                                         </Text>
                                     </View>
@@ -61,21 +63,21 @@ export function PayablesAgingScreen() {
                         </View>
 
                         {/* Supplier Breakdown */}
-                        <Text className="text-base font-semibold text-text mb-3">Supplier Breakdown</Text>
+                        <Text style={styles.sectionTitle}>Supplier Breakdown</Text>
                         {report.customers.map(customer => (
-                            <View key={customer.id} className="bg-surface p-4 rounded-xl border border-border mb-3 shadow-sm">
-                                <View className="flex-row justify-between mb-3">
-                                    <Text className="text-base font-semibold text-text">{customer.name}</Text>
-                                    <Text className="text-base font-bold text-text">{formatCurrency(customer.totalDue)}</Text>
+                            <View key={customer.id} style={styles.customerCard}>
+                                <View style={styles.customerHeader}>
+                                    <Text style={styles.customerName}>{customer.name}</Text>
+                                    <Text style={styles.customerTotal}>{formatCurrency(customer.totalDue)}</Text>
                                 </View>
-                                <View className="flex-row flex-wrap gap-3">
+                                <View style={styles.customerBuckets}>
                                     {bucketsOrder.map(range => {
                                         const bucket = customer.buckets.find(b => b.range === range);
                                         if (!bucket || bucket.amount === 0) return null;
                                         return (
-                                            <View key={range} className="bg-surface-hover px-2 py-1 rounded">
-                                                <Text className="text-[10px] text-text-muted">{range}</Text>
-                                                <Text className="text-xs font-semibold text-text">
+                                            <View key={range} style={styles.miniBucket}>
+                                                <Text style={styles.miniLabel}>{range}</Text>
+                                                <Text style={[styles.miniValue]}>
                                                     {formatCurrency(bucket.amount)}
                                                 </Text>
                                             </View>
@@ -90,3 +92,31 @@ export function PayablesAgingScreen() {
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
+    iconBtn: { padding: 8 },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
+    content: { padding: 16, paddingBottom: 40 },
+    loadingText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    summaryCard: { backgroundColor: colors.surface, padding: 20, borderRadius: 12, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border },
+    summaryLabel: { fontSize: 14, color: colors.textMuted, marginBottom: 4 },
+    summaryValue: { fontSize: 32, fontWeight: '700', color: colors.danger },
+    bucketsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
+    bucketCard: { width: '48%', backgroundColor: colors.surface, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
+    bucketLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+    bucketValue: { fontSize: 16, fontWeight: '600', color: colors.text },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+    customerCard: { backgroundColor: colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
+    customerHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+    customerName: { fontSize: 16, fontWeight: '600', color: colors.text },
+    customerTotal: { fontSize: 16, fontWeight: '700', color: colors.text },
+    customerBuckets: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    miniBucket: { backgroundColor: colors.surfaceHover, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+    miniLabel: { fontSize: 10, color: colors.textMuted },
+    miniValue: { fontSize: 12, fontWeight: '600', color: colors.text },
+    emptyState: { alignItems: 'center', padding: 40 },
+    emptyText: { fontSize: 18, fontWeight: '600', color: colors.textSecondary, marginTop: 16 },
+    subText: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
+});

@@ -12,8 +12,6 @@ import {
   useUserProfile,
   useUserProfileMutations,
 } from "@/hooks/useUserSettings";
-import { useAuthStore } from "@/stores";
-import { toast } from "sonner";
 import { Spinner } from "@/components/common";
 
 function Toggle({
@@ -47,16 +45,10 @@ function Toggle({
 export function UserProfilePage(): React.ReactNode {
   const { profile: data, isLoading } = useUserProfile();
   const { updateUserProfile } = useUserProfileMutations();
-  const { updatePassword } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
 
   // Sync data to local state
   useEffect(() => {
@@ -70,43 +62,8 @@ export function UserProfilePage(): React.ReactNode {
     setIsSaving(true);
     try {
       await updateUserProfile(profile);
-      toast.success("Profile updated successfully");
     } catch (err) {
       console.error("Failed to save profile:", err);
-      toast.error("Failed to save profile");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handlePasswordUpdate = async (): Promise<void> => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error("New passwords do not match");
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const { error } = await updatePassword(passwordForm.newPassword);
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Password updated successfully");
-        setShowPasswordForm(false);
-        setPasswordForm({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-      }
-    } catch (err) {
-      console.error("Failed to update password:", err);
-      toast.error("Failed to update password");
     } finally {
       setIsSaving(false);
     }
@@ -321,13 +278,6 @@ export function UserProfilePage(): React.ReactNode {
                   type="password"
                   className="w-64"
                   placeholder="Enter current password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      currentPassword: e.target.value,
-                    }));
-                  }}
                 />
               </SettingsRow>
               <SettingsRow label="New Password">
@@ -335,13 +285,6 @@ export function UserProfilePage(): React.ReactNode {
                   type="password"
                   className="w-64"
                   placeholder="Enter new password"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      newPassword: e.target.value,
-                    }));
-                  }}
                 />
               </SettingsRow>
               <SettingsRow label="Confirm Password">
@@ -349,13 +292,6 @@ export function UserProfilePage(): React.ReactNode {
                   type="password"
                   className="w-64"
                   placeholder="Confirm new password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      confirmPassword: e.target.value,
-                    }));
-                  }}
                 />
               </SettingsRow>
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
@@ -367,14 +303,7 @@ export function UserProfilePage(): React.ReactNode {
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={() => {
-                    void handlePasswordUpdate();
-                  }}
-                  disabled={isSaving}
-                >
-                  Update Password
-                </Button>
+                <Button>Update Password</Button>
               </div>
             </div>
           ) : (

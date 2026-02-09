@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -71,6 +71,9 @@ export function EstimateForm({
     undefined
   );
 
+  // Line items state
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+
   // Customer options - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
@@ -78,51 +81,6 @@ export function EstimateForm({
       ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
-
-  // Initialize line items from initialData if editing
-  const getInitialLineItems = useCallback((): LineItem[] => {
-    if (!initialData?.items || initialData.items.length === 0) return [];
-
-    return initialData.items.map((formItem, index) => {
-      const selectedItem = items.find((i) => i.id === formItem.itemId);
-      const subtotal = formItem.quantity * formItem.unitPrice;
-      const discountPct = formItem.discountPercent ?? 0;
-      const taxPct = formItem.taxPercent ?? 0;
-      const discountAmount = subtotal * (discountPct / 100);
-      const taxableAmount = subtotal - discountAmount;
-      const taxAmount = taxableAmount * (taxPct / 100);
-      const amount = taxableAmount + taxAmount;
-
-      return {
-        id: `line-${Date.now()}-${index}`,
-        itemId: formItem.itemId,
-        itemName: selectedItem?.name ?? "Unknown",
-        batchNumber: formItem.batchNumber ?? "",
-        quantity: formItem.quantity,
-        unit: selectedItem?.unit ?? "pcs",
-        unitPrice: formItem.unitPrice,
-        mrp: formItem.mrp ?? 0,
-        discountPercent: discountPct,
-        taxPercent: taxPct,
-        amount,
-      };
-    });
-  }, [initialData, items]);
-
-  useEffect(() => {
-    if (initialData) {
-      setCustomerId(initialData.customerId ?? "");
-      setDate(initialData.date ?? defaultDate);
-      setValidUntil(initialData.validUntil ?? defaultValidUntil);
-      setNotes(initialData.notes ?? "");
-      setTerms(initialData.terms ?? "");
-      setDiscountPercent(initialData.discountPercent ?? 0);
-      setLineItems(getInitialLineItems());
-    }
-  }, [initialData, defaultDate, defaultValidUntil, getInitialLineItems]);
-
-  // Line items state
-  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems());
 
   // Modal Handlers
   const handleAddItemClick = (): void => {
@@ -246,7 +204,6 @@ export function EstimateForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select customer"
-                    searchable
                   />
                 </div>
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 import { isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -128,7 +127,7 @@ export function ImportWizard({
   // Helper to standardise data setting
   const setParsedData = (data: Record<string, unknown>[]): void => {
     if (data.length === 0) {
-      toast.error("No records found in file");
+      alert("No records found in file");
       return;
     }
 
@@ -154,7 +153,7 @@ export function ImportWizard({
       setParsedData(jsonData);
     } catch (error) {
       console.error("Error parsing Excel file:", error);
-      toast.error("Failed to parse Excel file");
+      alert("Failed to parse Excel file");
     }
   };
 

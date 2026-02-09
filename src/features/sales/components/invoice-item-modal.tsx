@@ -97,7 +97,7 @@ export function InvoiceItemModal({
     const selected = items.find((i) => i.id === newItemId);
     if (selected) {
       setUnitPrice(selected.salePrice);
-      setMrp(selected.mrp ?? selected.salePrice);
+      setMrp(selected.salePrice); // Default MRP to sale price if not stored
       setTaxPercent(selected.taxRate ?? defaultTaxRate);
       setBatchNumber(selected.batchNumber ?? "");
     }
@@ -176,7 +176,6 @@ export function InvoiceItemModal({
             onChange={handleItemChange}
             placeholder="Search for an item..."
             className="w-full"
-            searchable
           />
         </div>
 

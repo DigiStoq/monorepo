@@ -114,105 +114,102 @@ export function useUserPreferencesMutations(): {
   const updateUserPreferences = useCallback(
     async (newPrefs: Partial<AppPreferences>) => {
       const now = new Date().toISOString();
+      const existing = await db.getAll<UserPreferencesRow>(
+        `SELECT user_id FROM user_preferences LIMIT 1`
+      );
 
-      await db.writeTransaction(async (tx) => {
-        const existing = await tx.getAll<UserPreferencesRow>(
-          `SELECT user_id FROM user_preferences LIMIT 1`
+      const isInsert = existing.length === 0;
+      const userId = existing[0]?.user_id || "default-user"; // Fallback ID
+
+      // Helper to get current DB values if we are doing a partial update on the JS object side,
+      // but here we are receiving the partial AppPreferences object.
+      // Ideally, we should merge with current state, but the caller usually passes the full new state or changed fields.
+      // We will construct the update/insert query dynamically.
+
+      // However, for complex nested objects like printSettings, we need to be careful.
+      // The strategy:
+      // 1. Fetch current row to merge JSON fields if they are partially updated?
+      //    Or assume the caller passes the complete nested object if they want to update it.
+      //    The `updateField` in UI passes specific fields.
+      //    If the UI passes `printSettings`, it passes the WHOLE object usually.
+
+      // Simpler approach: Dynamic SQL generation.
+
+      const fields: string[] = [];
+      const values: (string | number | null)[] = [];
+
+      if (newPrefs.theme !== undefined) {
+        fields.push("theme");
+        values.push(newPrefs.theme);
+      }
+      if (newPrefs.dateFormat !== undefined) {
+        fields.push("date_format");
+        values.push(newPrefs.dateFormat);
+      }
+      if (newPrefs.numberFormat !== undefined) {
+        if (newPrefs.numberFormat.decimalSeparator !== undefined) {
+          fields.push("decimal_separator");
+          values.push(newPrefs.numberFormat.decimalSeparator);
+        }
+        if (newPrefs.numberFormat.thousandsSeparator !== undefined) {
+          fields.push("thousands_separator");
+          values.push(newPrefs.numberFormat.thousandsSeparator);
+        }
+        if (newPrefs.numberFormat.decimalPlaces !== undefined) {
+          fields.push("decimal_places");
+          values.push(newPrefs.numberFormat.decimalPlaces);
+        }
+      }
+      if (newPrefs.compactMode !== undefined) {
+        fields.push("compact_mode");
+        values.push(newPrefs.compactMode ? 1 : 0);
+      }
+      if (newPrefs.autoSave !== undefined) {
+        fields.push("auto_save");
+        values.push(newPrefs.autoSave ? 1 : 0);
+      }
+      if (newPrefs.showDashboardWidgets !== undefined) {
+        fields.push("dashboard_widgets");
+        values.push(JSON.stringify(newPrefs.showDashboardWidgets));
+      }
+      if (newPrefs.printSettings !== undefined) {
+        // We probably shouldn't merge here without reading first,
+        // but typically the UI overrides the whole settings object.
+        // Let's assume the mutation receives the full printSettings object if it's being updated.
+        fields.push("print_settings");
+        values.push(JSON.stringify(newPrefs.printSettings));
+      }
+
+      if (fields.length === 0) return; // Nothing to update
+
+      if (isInsert) {
+        // Prepare INSERT - PowerSync requires an 'id' column
+        const id = crypto.randomUUID();
+        const insertFields = [
+          "id",
+          "user_id",
+          "created_at",
+          "updated_at",
+          ...fields,
+        ];
+        const placeholders = ["?", "?", "?", "?", ...fields.map(() => "?")];
+        const insertValues = [id, userId, now, now, ...values];
+
+        // Insert new preferences row
+        await db.execute(
+          `INSERT INTO user_preferences (${insertFields.join(", ")}) VALUES (${placeholders.join(", ")})`,
+          insertValues
         );
+      } else {
+        // Prepare UPDATE
+        const setClause = fields.map((f) => `${f} = ?`).join(", ");
+        const updateValues = [...values, now, userId]; // userId for WHERE clause
 
-        const isInsert = existing.length === 0;
-        const userId = existing[0]?.user_id || "default-user"; // Fallback ID
-
-        // Helper to get current DB values if we are doing a partial update on the JS object side,
-        // but here we are receiving the partial AppPreferences object.
-        // Ideally, we should merge with current state, but the caller usually passes the full new state or changed fields.
-        // We will construct the update/insert query dynamically.
-
-        // However, for complex nested objects like printSettings, we need to be careful.
-        // The strategy:
-        // 1. Fetch current row to merge JSON fields if they are partially updated?
-        //    Or assume the caller passes the complete nested object if they want to update it.
-        //    The `updateField` in UI passes specific fields.
-        //    If the UI passes `printSettings`, it passes the WHOLE object usually.
-
-        // Simpler approach: Dynamic SQL generation.
-
-        const fields: string[] = [];
-        const values: (string | number | null)[] = [];
-
-        if (newPrefs.theme !== undefined) {
-          fields.push("theme");
-          values.push(newPrefs.theme);
-        }
-        if (newPrefs.dateFormat !== undefined) {
-          fields.push("date_format");
-          values.push(newPrefs.dateFormat);
-        }
-        if (newPrefs.numberFormat !== undefined) {
-          if (newPrefs.numberFormat.decimalSeparator !== undefined) {
-            fields.push("decimal_separator");
-            values.push(newPrefs.numberFormat.decimalSeparator);
-          }
-          if (newPrefs.numberFormat.thousandsSeparator !== undefined) {
-            fields.push("thousands_separator");
-            values.push(newPrefs.numberFormat.thousandsSeparator);
-          }
-          if (newPrefs.numberFormat.decimalPlaces !== undefined) {
-            fields.push("decimal_places");
-            values.push(newPrefs.numberFormat.decimalPlaces);
-          }
-        }
-        if (newPrefs.compactMode !== undefined) {
-          fields.push("compact_mode");
-          values.push(newPrefs.compactMode ? 1 : 0);
-        }
-        if (newPrefs.autoSave !== undefined) {
-          fields.push("auto_save");
-          values.push(newPrefs.autoSave ? 1 : 0);
-        }
-        if (newPrefs.showDashboardWidgets !== undefined) {
-          fields.push("dashboard_widgets");
-          values.push(JSON.stringify(newPrefs.showDashboardWidgets));
-        }
-        if (newPrefs.printSettings !== undefined) {
-          // We probably shouldn't merge here without reading first,
-          // but typically the UI overrides the whole settings object.
-          // Let's assume the mutation receives the full printSettings object if it's being updated.
-          fields.push("print_settings");
-          values.push(JSON.stringify(newPrefs.printSettings));
-        }
-
-        if (fields.length === 0) return; // Nothing to update
-
-        if (isInsert) {
-          // Prepare INSERT - PowerSync requires an 'id' column
-          const id = crypto.randomUUID();
-          const insertFields = [
-            "id",
-            "user_id",
-            "created_at",
-            "updated_at",
-            ...fields,
-          ];
-          const placeholders = ["?", "?", "?", "?", ...fields.map(() => "?")];
-          const insertValues = [id, userId, now, now, ...values];
-
-          // Insert new preferences row
-          await tx.execute(
-            `INSERT INTO user_preferences (${insertFields.join(", ")}) VALUES (${placeholders.join(", ")})`,
-            insertValues
-          );
-        } else {
-          // Prepare UPDATE
-          const setClause = fields.map((f) => `${f} = ?`).join(", ");
-          const updateValues = [...values, now, userId]; // userId for WHERE clause
-
-          await tx.execute(
-            `UPDATE user_preferences SET ${setClause}, updated_at = ? WHERE user_id = ?`,
-            updateValues
-          );
-        }
-      });
+        await db.execute(
+          `UPDATE user_preferences SET ${setClause}, updated_at = ? WHERE user_id = ?`,
+          updateValues
+        );
+      }
     },
     [db]
   );

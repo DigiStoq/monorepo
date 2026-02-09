@@ -97,18 +97,6 @@ export const darkColors = {
   accentDark: "#5eead4",
 } as const;
 
-// Enterprise/Professional Palette (Subtle Backgrounds + Deep Foreground)
-export const profColors = {
-  receivable: { bg: "#f0fdf4", icon: "#15803d", border: "#dcfce7" }, // emerald-50/700/100
-  payable:    { bg: "#fef2f2", icon: "#be123c", border: "#fee2e2" }, // rose-50/700/100
-  sales:      { bg: "#eef2ff", icon: "#4338ca", border: "#e0e7ff" }, // indigo-50/700/100
-  items:      { bg: "#f8fafc", icon: "#334155", border: "#e2e8f0" }, // slate-50/700/200
-  warning:    { bg: "#fffbeb", icon: "#b45309", border: "#fef3c7" }, // amber-50/700/100
-  danger:     { bg: "#fff1f2", icon: "#e11d48", border: "#ffe4e6" }, // rose-50/600/100
-  neutral:    { bg: "#f1f5f9", icon: "#475569", border: "#e2e8f0" }, // slate-100/600/200
-  primary:    { bg: "#f0fdfa", icon: "#0f766e", border: "#ccfbf1" }, // teal-50/700/100
-};
-
 export const colors = lightColors; // Backward compatibility
 export type ThemeColors = typeof lightColors;
 

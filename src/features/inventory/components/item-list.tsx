@@ -1,5 +1,3 @@
-import { useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/cn";
 import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
@@ -117,73 +115,6 @@ function ItemCard({ item, onClick }: ItemCardProps): React.ReactNode {
 }
 
 // ============================================================================
-// VIRTUALIZED LIST COMPONENT
-// ============================================================================
-
-const ITEM_HEIGHT = 88; // Estimated height of each ItemCard (p-4 = 16px*2, content ~56px)
-const GAP = 8; // space-y-2
-
-interface VirtualizedItemListProps {
-  items: Item[];
-  onItemClick?: (item: Item) => void;
-}
-
-function VirtualizedItemList({
-  items,
-  onItemClick,
-}: VirtualizedItemListProps): React.ReactNode {
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ITEM_HEIGHT + GAP,
-    overscan: 5, // Render 5 extra items above/below viewport for smooth scrolling
-  });
-
-  const virtualItems = virtualizer.getVirtualItems();
-
-  return (
-    <div
-      ref={parentRef}
-      className="h-full overflow-auto"
-      style={{ contain: "strict" }}
-    >
-      <p className="text-sm text-slate-500 mb-2 px-1 sticky top-0 bg-inherit z-10">
-        {items.length} {items.length === 1 ? "item" : "items"}
-      </p>
-
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        {virtualItems.map((virtualRow) => {
-          const item = items[virtualRow.index];
-          return (
-            <div
-              key={item.id}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: `${virtualRow.size - GAP}px`,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <ItemCard item={item} onClick={() => onItemClick?.(item)} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -209,7 +140,7 @@ export function ItemList({
   const displayItems = items ?? [];
 
   return (
-    <div className={cn("h-full flex flex-col", className)}>
+    <div className={className}>
       {/* Item List */}
       {displayItems.length === 0 ? (
         <EmptyState
@@ -232,7 +163,19 @@ export function ItemList({
           }
         />
       ) : (
-        <VirtualizedItemList items={displayItems} onItemClick={onItemClick} />
+        <div className="space-y-2">
+          <p className="text-sm text-slate-500 mb-2 px-1">
+            {displayItems.length} {displayItems.length === 1 ? "item" : "items"}
+          </p>
+
+          {displayItems.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onClick={() => onItemClick?.(item)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

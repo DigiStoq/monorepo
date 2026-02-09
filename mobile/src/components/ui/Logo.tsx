@@ -1,6 +1,5 @@
 import React from "react";
-import type { SvgProps } from "react-native-svg";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Path, SvgProps } from "react-native-svg";
 import { useTheme } from "../../contexts/ThemeContext";
 
 interface LogoProps extends SvgProps {
@@ -8,7 +7,7 @@ interface LogoProps extends SvgProps {
     color?: string;
 }
 
-export function Logo({ size, color, ...props }: LogoProps) {
+export function Logo({ size = 24, color, ...props }: LogoProps) {
     const { colors } = useTheme();
     const strokeColor = color || colors.primary;
 

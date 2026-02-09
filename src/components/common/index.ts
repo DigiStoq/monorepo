@@ -26,7 +26,3 @@ export type {
 export { PageTransition } from "./page-transition";
 export { AnimatedList } from "./animated-list";
 export { AnimatedNumber } from "./animated-number";
-export {
-  PaymentHistoryCard,
-  type PaymentHistoryCardProps,
-} from "./payment-history-card";

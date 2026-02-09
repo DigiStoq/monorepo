@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     View,
+    StyleSheet,
     ScrollView,
     Alert,
     KeyboardAvoidingView,
@@ -10,7 +11,9 @@ import {
     ActivityIndicator
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { XCloseIcon, SaveIcon, TrashIcon } from "../components/ui/UntitledIcons";
+import { usePowerSync } from "@powersync/react-native";
+import { generateUUID } from "../lib/utils";
+import { X, Save, Trash2 } from "lucide-react-native";
 import {
     Button,
     Input,
@@ -18,20 +21,19 @@ import {
     CardHeader,
     CardBody
 } from "../components/ui";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
+import { wp, hp } from "../lib/responsive";
 import { useTheme } from "../contexts/ThemeContext";
-import { CustomHeader } from "../components/CustomHeader";
-import { useCashTransactionMutations, useCashTransactionById } from "../hooks/useCashTransactions";
 
 export function CashTransactionFormScreen() {
     const navigation = useNavigation();
     const route = useRoute();
+    const db = usePowerSync();
     const params = route.params as { id?: string } | undefined;
     const id = params?.id;
     const isEditing = !!id;
     const { colors } = useTheme();
-
-    const { createTransaction, updateTransaction, deleteTransaction } = useCashTransactionMutations();
-    const { transaction, isLoading: loadingData } = useCashTransactionById(id || null);
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     const [type, setType] = useState<'in' | 'out'>('out');
     const [amount, setAmount] = useState("");
@@ -41,14 +43,22 @@ export function CashTransactionFormScreen() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (transaction) {
-            setType(transaction.type === 'in' ? 'in' : 'out'); // Handle 'adjustment' if needed, mostly in/out
-            setAmount(String(transaction.amount));
-            setDate(transaction.date);
-            setDescription(transaction.description || "");
-            setCategory(transaction.category || "");
+        if (id) {
+            loadTransaction();
         }
-    }, [transaction]);
+    }, [id]);
+
+    async function loadTransaction() {
+        const res = await db.getAll("SELECT * FROM cash_transactions WHERE id = ?", [id]);
+        if (res.length > 0) {
+            const tx = res[0] as any;
+            setType(tx.type);
+            setAmount(String(tx.amount));
+            setDate(tx.date);
+            setDescription(tx.description || "");
+            setCategory(tx.category || "");
+        }
+    }
 
     async function handleSave() {
         if (!amount || isNaN(parseFloat(amount))) {
@@ -63,23 +73,22 @@ export function CashTransactionFormScreen() {
         try {
             setLoading(true);
             const amt = parseFloat(amount);
+            const now = new Date().toISOString();
 
-            if (isEditing && id) {
-                await updateTransaction(id, {
-                    type,
-                    amount: amt,
-                    date,
-                    description,
-                    category
-                });
+            if (isEditing) {
+                await db.execute(
+                    `UPDATE cash_transactions SET
+                     type=?, amount=?, date=?, description=?, category=?, updated_at=?
+                     WHERE id=?`,
+                    [type, amt, date, description, category, now, id]
+                );
             } else {
-                await createTransaction({
-                    type,
-                    amount: amt,
-                    date,
-                    description,
-                    category
-                });
+                await db.execute(
+                    `INSERT INTO cash_transactions 
+                    (id, user_id, type, amount, date, description, category, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [generateUUID(), 'user', type, amt, date, description, category, now, now]
+                );
             }
             navigation.goBack();
         } catch (e) {
@@ -91,63 +100,44 @@ export function CashTransactionFormScreen() {
     }
 
     async function handleDelete() {
-        if (!id) return;
         Alert.alert("Delete", "Are you sure?", [
             { text: "Cancel", style: "cancel" },
             {
                 text: "Delete", style: "destructive", onPress: async () => {
-                    await deleteTransaction(id);
+                    await db.execute("DELETE FROM cash_transactions WHERE id = ?", [id]);
                     navigation.goBack();
                 }
             }
         ]);
     }
 
-    if (loadingData) {
-        return (
-            <View className="flex-1 justify-center items-center bg-background">
-                <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-        );
-    }
-
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-background">
-            <CustomHeader
-                title={isEditing ? "Edit Transaction" : "New Cash Transaction"}
-                showBack
-                rightAction={
-                    <TouchableOpacity
-                        onPress={handleSave}
-                        disabled={loading}
-                        className="p-1.5"
-                    >
-                        {loading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon color={colors.primary} size={24} />}
-                    </TouchableOpacity>
-                }
-            />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+            <View style={styles.header}>
+                <Button variant="ghost" size="icon" onPress={() => navigation.goBack()}>
+                    <X color={colors.text} size={24} />
+                </Button>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>{isEditing ? "Edit Transaction" : "New Cash Transaction"}</Text>
+                </View>
+                <Button variant="ghost" size="icon" onPress={handleSave} disabled={loading}>
+                    {loading ? <ActivityIndicator color={colors.primary} /> : <Save color={colors.primary} size={24} />}
+                </Button>
+            </View>
 
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
-                <View className="flex-row bg-border rounded-lg p-1 mb-6">
+            <ScrollView contentContainerStyle={styles.content}>
+                <View style={styles.switchContainer}>
                     <TouchableOpacity
-                        className={`flex-1 py-3 items-center rounded-md ${type === 'in' ? 'bg-success' : 'bg-transparent'}`}
-                        style={{ backgroundColor: type === 'in' ? colors.success : undefined }}
-                        onPress={() => { setType('in'); }}
+                        style={[styles.switchOption, type === 'in' && styles.switchActiveIn]}
+                        onPress={() => setType('in')}
                     >
-                        <Text className={`font-medium ${type === 'in' ? 'text-white font-bold' : 'text-text-secondary'}`}
-                            style={{ color: type === 'in' ? '#ffffff' : colors.textSecondary }}>
-                            Cash In (+)
-                        </Text>
+                        <Text style={[styles.switchText, type === 'in' && styles.switchTextActive]}>Cash In (+)</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        className={`flex-1 py-3 items-center rounded-md ${type === 'out' ? 'bg-danger' : 'bg-transparent'}`}
-                        style={{ backgroundColor: type === 'out' ? colors.danger : undefined }}
-                        onPress={() => { setType('out'); }}
+                        style={[styles.switchOption, type === 'out' && styles.switchActiveOut]}
+                        onPress={() => setType('out')}
                     >
-                        <Text className={`font-medium ${type === 'out' ? 'text-white font-bold' : 'text-text-secondary'}`}
-                            style={{ color: type === 'out' ? '#ffffff' : colors.textSecondary }}>
-                            Cash Out (-)
-                        </Text>
+                        <Text style={[styles.switchText, type === 'out' && styles.switchTextActive]}>Cash Out (-)</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -160,7 +150,7 @@ export function CashTransactionFormScreen() {
                             onChangeText={setAmount}
                             keyboardType="numeric"
                             placeholder="0.00"
-                            style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center' }}
+                            style={styles.inputBig}
                             autoFocus={!isEditing}
                         />
                         <Input
@@ -186,17 +176,40 @@ export function CashTransactionFormScreen() {
 
                 {isEditing && (
                     <Button
-                        variant="ghost"
-                        className="mt-6 border border-danger"
+                        variant="outline"
+                        style={{ marginTop: 24, borderColor: colors.danger }}
                         onPress={handleDelete}
+                        leftIcon={<Trash2 size={18} color={colors.danger} />}
                     >
-                        <View className="flex-row items-center justify-center gap-2">
-                            <TrashIcon size={18} color={colors.danger} />
-                            <Text className="font-semibold text-danger" style={{ color: colors.danger }}>Delete Transaction</Text>
-                        </View>
+                        <Text style={{ color: colors.danger }}>Delete Transaction</Text>
                     </Button>
                 )}
             </ScrollView>
         </KeyboardAvoidingView>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(1.5),
+        backgroundColor: colors.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+        marginTop: Platform.OS === "android" ? 24 : 0,
+    },
+    titleContainer: { flex: 1, alignItems: "center" },
+    title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
+    content: { padding: wp(4) },
+    switchContainer: { flexDirection: "row", backgroundColor: colors.border, borderRadius: borderRadius.md, padding: 4, marginBottom: 24 },
+    switchOption: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: borderRadius.sm },
+    switchActiveIn: { backgroundColor: colors.success },
+    switchActiveOut: { backgroundColor: colors.danger },
+    switchText: { fontWeight: fontWeight.medium, color: colors.textSecondary },
+    switchTextActive: { color: "#fff", fontWeight: fontWeight.bold },
+    inputBig: { fontSize: 24, fontWeight: "bold", textAlign: "center", color: colors.text },
+});

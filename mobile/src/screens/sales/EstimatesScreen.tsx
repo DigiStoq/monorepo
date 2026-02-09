@@ -9,13 +9,22 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useEstimates } from "../../hooks/useEstimates";
-import { SearchIcon, PlusIcon, FilterIcon, FileIcon, ChevronRightIcon, CalculatorIcon } from "../../components/ui/Icons";
+import { useQuery } from "@powersync/react-native";
+import { Search, Plus, Filter, FileText, ChevronRight, Calculator } from "lucide-react-native";
 import { wp, hp } from "../../lib/responsive";
 import { useTheme } from "../../contexts/ThemeContext";
-import type { ThemeColors } from "../../lib/theme";
+import { ThemeColors } from "../../lib/theme";
 
-function EstimateCard({ estimate, styles, colors }: { estimate: any, styles: any, colors: ThemeColors }) {
+interface Estimate {
+  id: string;
+  estimate_number: string;
+  customer_name: string;
+  date: string;
+  total: number;
+  status: string; // 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted'
+}
+
+function EstimateCard({ estimate, styles, colors }: { estimate: Estimate, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -49,16 +58,16 @@ function EstimateCard({ estimate, styles, colors }: { estimate: any, styles: any
     >
       <View style={styles.cardMain}>
         <View style={styles.estimateIconBox}>
-          <CalculatorIcon size={20} color={colors.primary} />
+          <Calculator size={20} color={colors.primary} />
         </View>
         <View style={styles.estimateMainInfo}>
           <View style={styles.estimateHeaderRow}>
-            <Text style={styles.estimateNumber}>#{estimate.estimateNumber}</Text>
+            <Text style={styles.estimateNumber}>#{estimate.estimate_number}</Text>
             <Text style={styles.totalValue}>
               ${estimate.total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
           </View>
-          <Text style={styles.customerName}>{estimate.customerName || "Unknown Customer"}</Text>
+          <Text style={styles.customerName}>{estimate.customer_name || "Unknown Customer"}</Text>
           <View style={styles.estimateFooterRow}>
             <Text style={styles.dateValue}>{formatDate(estimate.date)}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
@@ -68,9 +77,9 @@ function EstimateCard({ estimate, styles, colors }: { estimate: any, styles: any
             </View>
           </View>
         </View>
-        <ChevronRightIcon size={18} color={colors.textMuted} style={{ marginLeft: 8 }} />
+        <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 8 }} />
       </View>
-    </TouchableOpacity >
+    </TouchableOpacity>
   );
 }
 
@@ -81,7 +90,12 @@ export function EstimatesScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { estimates, isLoading } = useEstimates({ search });
+  const { data: estimates, isLoading } = useQuery<Estimate>(
+    `SELECT * FROM estimates 
+         WHERE ($1 IS NULL OR customer_name LIKE $1 OR estimate_number LIKE $1) 
+         ORDER BY date DESC`,
+    [search ? `%${search}%` : null]
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -94,7 +108,7 @@ export function EstimatesScreen() {
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
-          <SearchIcon size={18} color={colors.textMuted} style={styles.searchIcon} />
+          <Search size={18} color={colors.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search estimates..."
@@ -104,7 +118,7 @@ export function EstimatesScreen() {
           />
         </View>
         <TouchableOpacity style={styles.filterButton}>
-          <FilterIcon size={20} color={colors.textSecondary} />
+          <Filter size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -124,7 +138,7 @@ export function EstimatesScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIconContainer}>
-              <CalculatorIcon size={48} color={colors.textMuted} />
+              <Calculator size={48} color={colors.textMuted} />
             </View>
             <Text style={styles.emptyText}>No estimates yet</Text>
             <Text style={styles.emptySubtext}>
@@ -144,7 +158,7 @@ export function EstimatesScreen() {
         style={styles.fab}
         onPress={() => (navigation as any).navigate("EstimateForm")}
       >
-        <PlusIcon size={24} color="#fff" strokeWidth={3} />
+        <Plus size={24} color="#fff" strokeWidth={3} />
       </TouchableOpacity>
     </View>
   );
@@ -202,7 +216,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

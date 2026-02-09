@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Switch, Alert } from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Switch, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, SaveIcon, FileCheck02Icon, CreditCard01Icon, PaletteIcon, Hash01Icon } from "../../components/ui/UntitledIcons";
-import type { InvoiceSettings } from "../../hooks/useSettings";
-import { useInvoiceSettings } from "../../hooks/useSettings";
+import { ArrowLeft, Save, FileText, CreditCard, Palette, Hash } from "lucide-react-native";
+import { useInvoiceSettings, InvoiceSettings } from "../../hooks/useSettings";
 import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function InvoiceSettingsScreen() {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation();
     const { settings, isLoading, updateInvoiceSettings } = useInvoiceSettings();
     const [formState, setFormState] = useState<InvoiceSettings | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     useEffect(() => {
         if (settings) {
@@ -37,235 +38,169 @@ export function InvoiceSettingsScreen() {
     const updateBankDetails = (field: string, value: string) => {
         setFormState(prev => prev ? ({
             ...prev,
-            bankDetails: { ...prev.bankDetails, [field]: value }
+            bankDetails: { ...prev.bankDetails!, [field]: value }
         }) : null);
     };
 
-    if (isLoading || !formState) return (
-        <View className="flex-1 justify-center items-center bg-background">
-            <Text className="text-text-secondary">Loading...</Text>
-        </View>
-    );
+    if (isLoading || !formState) return <View style={styles.loadingContainer}><Text style={styles.loadingText}>Loading...</Text></View>;
 
     // Helpers
     const formatInvoiceNumber = () => `${formState.prefix}-${String(formState.nextNumber).padStart(formState.padding, '0')}`;
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-            <View className="flex-1 bg-background">
-                <View className={`flex-row items-center justify-between p-4 bg-surface border-b border-border ${Platform.OS === 'android' ? 'mt-6' : ''}`}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} className="p-2">
-                        <ArrowLeftIcon color={colors.text} size={24} />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                        <ArrowLeft color={colors.text} size={24} />
                     </TouchableOpacity>
-                    <Text className="text-lg font-semibold text-text">Invoice Settings</Text>
-                    <TouchableOpacity onPress={handleSave} disabled={isSaving} className="p-2">
-                        <SaveIcon color={isSaving ? colors.textMuted : colors.primary} size={24} />
+                    <Text style={styles.headerTitle}>Invoice Settings</Text>
+                    <TouchableOpacity onPress={handleSave} disabled={isSaving} style={styles.saveBtn}>
+                        <Save color={isSaving ? colors.textMuted : colors.primary} size={24} />
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView contentContainerStyle={{ padding: 16 }}>
+                <ScrollView contentContainerStyle={styles.content}>
 
                     {/* Numbering */}
-                    <View className="mb-6">
-                        <View className="flex-row items-center mb-2 gap-2">
-                            <Hash01Icon size={18} color={colors.textSecondary} />
-                            <Text className="text-sm font-semibold text-text-secondary uppercase">Numbering</Text>
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Hash size={18} color={colors.textSecondary} />
+                            <Text style={styles.sectionTitle}>Numbering</Text>
                         </View>
-                        <View className="bg-surface rounded-xl p-4 border border-border">
-                            <View className="flex-row">
-                                <View className="flex-1 mr-2 mb-4">
-                                    <Text className="text-sm font-medium text-text-secondary mb-1.5">Prefix</Text>
+                        <View style={styles.card}>
+                            <View style={styles.row}>
+                                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                    <Text style={styles.label}>Prefix</Text>
                                     <TextInput
-                                        className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                        style={styles.input}
                                         value={formState.prefix}
-                                        onChangeText={(t) => { setFormState({ ...formState, prefix: t }); }}
+                                        onChangeText={(t) => setFormState({ ...formState, prefix: t })}
                                         placeholderTextColor={colors.textMuted}
-                                        style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                     />
                                 </View>
-                                <View className="flex-1 ml-2 mb-4">
-                                    <Text className="text-sm font-medium text-text-secondary mb-1.5">Next Number</Text>
+                                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                    <Text style={styles.label}>Next Number</Text>
                                     <TextInput
-                                        className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                        style={styles.input}
                                         value={String(formState.nextNumber)}
-                                        onChangeText={(t) => { setFormState({ ...formState, nextNumber: parseInt(t) || 0 }); }}
+                                        onChangeText={(t) => setFormState({ ...formState, nextNumber: parseInt(t) || 0 })}
                                         keyboardType="number-pad"
                                         placeholderTextColor={colors.textMuted}
-                                        style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                     />
                                 </View>
                             </View>
-                            <View className="mb-4">
-                                <Text className="text-sm font-medium text-text-secondary mb-1.5">Padding (Digits)</Text>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Padding (Digits)</Text>
                                 <TextInput
-                                    className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                    style={styles.input}
                                     value={String(formState.padding)}
-                                    onChangeText={(t) => { setFormState({ ...formState, padding: parseInt(t) || 0 }); }}
+                                    onChangeText={(t) => setFormState({ ...formState, padding: parseInt(t) || 0 })}
                                     keyboardType="number-pad"
                                     maxLength={1}
                                     placeholderTextColor={colors.textMuted}
-                                    style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                 />
                             </View>
-                            <View className="flex-row items-center bg-surface-hover p-3 rounded-lg border border-border" style={{ backgroundColor: colors.surface + '10' }}>
-                                <Text className="text-sm text-text-secondary mr-2">Preview:</Text>
-                                <Text className="text-md font-bold text-primary font-mono" style={{ color: colors.primary }}>{formatInvoiceNumber()}</Text>
+                            <View style={styles.previewBox}>
+                                <Text style={styles.previewLabel}>Preview:</Text>
+                                <Text style={styles.previewText}>{formatInvoiceNumber()}</Text>
                             </View>
-                        </View>
-                    </View>
-
-                    {/* Tax Configuration (NEW) */}
-                    <View className="mb-6">
-                        <View className="flex-row items-center mb-2 gap-2">
-                            <Hash01Icon size={18} color={colors.textSecondary} />
-                            <Text className="text-sm font-semibold text-text-secondary uppercase">Tax Configuration</Text>
-                        </View>
-                        <View className="bg-surface rounded-xl p-4 border border-border">
-                            <View className="flex-row justify-between items-center">
-                                <Text className="text-md font-medium text-text">Enable Tax Calculation</Text>
-                                <Switch
-                                    value={formState.taxEnabled}
-                                    onValueChange={(v) => { setFormState({ ...formState, taxEnabled: v }); }}
-                                    trackColor={{ false: colors.border, true: colors.primary + '50' }}
-                                    thumbColor={formState.taxEnabled ? colors.primary : "#f4f3f4"}
-                                />
-                            </View>
-
-                            {formState.taxEnabled && (
-                                <>
-                                    <View className="flex-row justify-between items-center mt-4">
-                                        <Text className="text-md font-medium text-text">Prices Include Tax</Text>
-                                        <Switch
-                                            value={formState.taxInclusive}
-                                            onValueChange={(v) => { setFormState({ ...formState, taxInclusive: v }); }}
-                                            trackColor={{ false: colors.border, true: colors.primary + '50' }}
-                                            thumbColor={formState.taxInclusive ? colors.primary : "#f4f3f4"}
-                                        />
-                                    </View>
-                                    <View className="flex-row justify-between items-center mt-4">
-                                        <Text className="text-md font-medium text-text">Round Tax at Subtotal</Text>
-                                        <Switch
-                                            value={formState.roundTax}
-                                            onValueChange={(v) => { setFormState({ ...formState, roundTax: v }); }}
-                                            trackColor={{ false: colors.border, true: colors.primary + '50' }}
-                                            thumbColor={formState.roundTax ? colors.primary : "#f4f3f4"}
-                                        />
-                                    </View>
-
-                                    <TouchableOpacity
-                                        className="flex-row items-center justify-between mt-4 py-2 border-t border-border"
-                                        onPress={() => navigation.navigate("TaxSettings")}
-                                    >
-                                        <Text className="text-md font-medium text-primary" style={{ color: colors.primary }}>Manage Tax Rates</Text>
-                                        <View style={{ transform: [{ rotate: '180deg' }] }}>
-                                            <ArrowLeftIcon size={16} color={colors.primary} />
-                                        </View>
-                                    </TouchableOpacity>
-                                </>
-                            )}
                         </View>
                     </View>
 
                     {/* Terms & Notes */}
-                    <View className="mb-6">
-                        <View className="flex-row items-center mb-2 gap-2">
-                            <FileCheck02Icon size={18} color={colors.textSecondary} />
-                            <Text className="text-sm font-semibold text-text-secondary uppercase">Terms & Content</Text>
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <FileText size={18} color={colors.textSecondary} />
+                            <Text style={styles.sectionTitle}>Terms & Content</Text>
                         </View>
-                        <View className="bg-surface rounded-xl p-4 border border-border">
-                            <View className="mb-4">
-                                <Text className="text-sm font-medium text-text-secondary mb-1.5">Default Terms & Conditions</Text>
+                        <View style={styles.card}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Default Terms & Conditions</Text>
                                 <TextInput
-                                    className="border border-border rounded-lg p-3 text-md text-text bg-surface h-20"
+                                    style={[styles.input, { height: 80 }]}
                                     value={formState.termsAndConditions}
-                                    onChangeText={(t) => { setFormState({ ...formState, termsAndConditions: t }); }}
+                                    onChangeText={(t) => setFormState({ ...formState, termsAndConditions: t })}
                                     multiline
                                     placeholderTextColor={colors.textMuted}
-                                    style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                 />
                             </View>
-                            <View>
-                                <Text className="text-sm font-medium text-text-secondary mb-1.5">Footer Notes</Text>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Footer Notes</Text>
                                 <TextInput
-                                    className="border border-border rounded-lg p-3 text-md text-text bg-surface h-16"
+                                    style={[styles.input, { height: 60 }]}
                                     value={formState.notes}
-                                    onChangeText={(t) => { setFormState({ ...formState, notes: t }); }}
+                                    onChangeText={(t) => setFormState({ ...formState, notes: t })}
                                     multiline
                                     placeholderTextColor={colors.textMuted}
-                                    style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                 />
                             </View>
                         </View>
                     </View>
 
                     {/* Bank Details */}
-                    <View className="mb-6">
-                        <View className="flex-row items-center mb-2 gap-2">
-                            <CreditCard01Icon size={18} color={colors.textSecondary} />
-                            <Text className="text-sm font-semibold text-text-secondary uppercase">Payment Details</Text>
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <CreditCard size={18} color={colors.textSecondary} />
+                            <Text style={styles.sectionTitle}>Payment Details</Text>
                         </View>
-                        <View className="bg-surface rounded-xl p-4 border border-border">
-                            <View className="flex-row justify-between items-center">
-                                <Text className="text-md font-medium text-text">Show Bank Details on Invoice</Text>
+                        <View style={styles.card}>
+                            <View style={styles.switchRow}>
+                                <Text style={styles.switchLabel}>Show Bank Details on Invoice</Text>
                                 <Switch
                                     value={formState.showBankDetails}
-                                    onValueChange={(v) => { setFormState({ ...formState, showBankDetails: v }); }}
+                                    onValueChange={(v) => setFormState({ ...formState, showBankDetails: v })}
                                     trackColor={{ false: colors.border, true: colors.primary + '50' }}
                                     thumbColor={formState.showBankDetails ? colors.primary : "#f4f3f4"}
                                 />
                             </View>
 
                             {formState.showBankDetails && (
-                                <View className="mt-4">
-                                    <View className="mb-4">
-                                        <Text className="text-sm font-medium text-text-secondary mb-1.5">Bank Name</Text>
+                                <View style={{ marginTop: 16 }}>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Bank Name</Text>
                                         <TextInput
-                                            className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                            style={styles.input}
                                             value={formState.bankDetails?.bankName}
-                                            onChangeText={(t) => { updateBankDetails('bankName', t); }}
+                                            onChangeText={(t) => updateBankDetails('bankName', t)}
                                             placeholderTextColor={colors.textMuted}
-                                            style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                         />
                                     </View>
-                                    <View className="mb-4">
-                                        <Text className="text-sm font-medium text-text-secondary mb-1.5">Account Name</Text>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Account Name</Text>
                                         <TextInput
-                                            className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                            style={styles.input}
                                             value={formState.bankDetails?.accountName}
-                                            onChangeText={(t) => { updateBankDetails('accountName', t); }}
+                                            onChangeText={(t) => updateBankDetails('accountName', t)}
                                             placeholderTextColor={colors.textMuted}
-                                            style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                         />
                                     </View>
-                                    <View className="mb-4">
-                                        <Text className="text-sm font-medium text-text-secondary mb-1.5">Account Number</Text>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Account Number</Text>
                                         <TextInput
-                                            className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                            style={styles.input}
                                             value={formState.bankDetails?.accountNumber}
-                                            onChangeText={(t) => { updateBankDetails('accountNumber', t); }}
+                                            onChangeText={(t) => updateBankDetails('accountNumber', t)}
                                             placeholderTextColor={colors.textMuted}
-                                            style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                         />
                                     </View>
-                                    <View className="flex-row">
-                                        <View className="flex-1 mr-2">
-                                            <Text className="text-sm font-medium text-text-secondary mb-1.5">Routing / IFSC</Text>
+                                    <View style={styles.row}>
+                                        <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                            <Text style={styles.label}>Routing / IFSC</Text>
                                             <TextInput
-                                                className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                                style={styles.input}
                                                 value={formState.bankDetails?.routingNumber}
-                                                onChangeText={(t) => { updateBankDetails('routingNumber', t); }}
+                                                onChangeText={(t) => updateBankDetails('routingNumber', t)}
                                                 placeholderTextColor={colors.textMuted}
-                                                style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                             />
                                         </View>
-                                        <View className="flex-1 ml-2">
-                                            <Text className="text-sm font-medium text-text-secondary mb-1.5">Swift Code</Text>
+                                        <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                            <Text style={styles.label}>Swift Code</Text>
                                             <TextInput
-                                                className="border border-border rounded-lg p-3 text-md text-text bg-surface"
+                                                style={styles.input}
                                                 value={formState.bankDetails?.swiftCode}
-                                                onChangeText={(t) => { updateBankDetails('swiftCode', t); }}
+                                                onChangeText={(t) => updateBankDetails('swiftCode', t)}
                                                 placeholderTextColor={colors.textMuted}
-                                                style={{ color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }}
                                             />
                                         </View>
                                     </View>
@@ -275,37 +210,64 @@ export function InvoiceSettingsScreen() {
                     </View>
 
                     {/* PDF Template */}
-                    <View className="mb-6">
-                        <View className="flex-row items-center mb-2 gap-2">
-                            <PaletteIcon size={18} color={colors.textSecondary} />
-                            <Text className="text-sm font-semibold text-text-secondary uppercase">PDF Template</Text>
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Palette size={18} color={colors.textSecondary} />
+                            <Text style={styles.sectionTitle}>PDF Template</Text>
                         </View>
-                        <View className="bg-surface rounded-xl p-4 border border-border">
+                        <View style={styles.card}>
                             {["classic", "modern", "minimal"].map((t) => (
                                 <TouchableOpacity
                                     key={t}
-                                    className={`flex-row items-center justify-between p-3.5 rounded-lg mb-2 border ${formState.pdfTemplate === t ? 'border-primary bg-primary-10' : 'border-border bg-surface'}`}
-                                    style={{
-                                        borderColor: formState.pdfTemplate === t ? colors.primary : colors.border,
-                                        backgroundColor: formState.pdfTemplate === t ? colors.primary + '10' : colors.surface
-                                    }}
-                                    onPress={() => { setFormState({ ...formState, pdfTemplate: t as any }); }}
+                                    style={[styles.templateOption, formState.pdfTemplate === t && styles.templateSelected]}
+                                    onPress={() => setFormState({ ...formState, pdfTemplate: t as any })}
                                 >
-                                    <Text
-                                        className={`text-md ${formState.pdfTemplate === t ? 'font-semibold text-primary' : 'text-text'}`}
-                                        style={{ color: formState.pdfTemplate === t ? colors.primary : colors.text }}
-                                    >
+                                    <Text style={[styles.templateText, formState.pdfTemplate === t && styles.templateTextSelected]}>
                                         {t.charAt(0).toUpperCase() + t.slice(1)}
                                     </Text>
-                                    {formState.pdfTemplate === t && <View className="w-2.5 h-2.5 rounded-full bg-primary" style={{ backgroundColor: colors.primary }} />}
+                                    {formState.pdfTemplate === t && <View style={styles.checkIcon} />}
                                 </TouchableOpacity>
                             ))}
                         </View>
                     </View>
 
-                    <View className="h-10" />
+                    <View style={{ height: 40 }} />
                 </ScrollView>
             </View>
         </KeyboardAvoidingView>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
+    iconBtn: { padding: 8 },
+    saveBtn: { padding: 8 },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
+    content: { padding: 16 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+    loadingText: { color: colors.textSecondary },
+
+    section: { marginBottom: 24 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
+    sectionTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase' },
+
+    card: { backgroundColor: colors.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border },
+    inputGroup: { marginBottom: 16 },
+    label: { fontSize: 13, color: colors.textSecondary, marginBottom: 6, fontWeight: '500' },
+    input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.surface },
+    row: { flexDirection: 'row' },
+
+    previewBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceHover, padding: 12, borderRadius: 8, marginTop: 8 },
+    previewLabel: { fontSize: 13, color: colors.textSecondary, marginRight: 8 },
+    previewText: { fontSize: 16, fontWeight: '700', color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+
+    switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    switchLabel: { fontSize: 15, color: colors.text, fontWeight: '500' },
+
+    templateOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+    templateSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '10' },
+    templateText: { fontSize: 15, color: colors.text },
+    templateTextSelected: { color: colors.primary, fontWeight: '600' },
+    checkIcon: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+});

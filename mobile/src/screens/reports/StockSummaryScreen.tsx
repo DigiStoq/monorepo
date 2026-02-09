@@ -1,16 +1,17 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, FlatList, TextInput } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { SearchIcon, PackageIcon } from "../../components/ui/UntitledIcons";
-import type { StockSummaryItem } from "../../hooks/useReports";
-import { useStockSummaryReport } from "../../hooks/useReports";
+import { Search, Package } from "lucide-react-native";
+import { useStockSummaryReport, StockSummaryItem } from "../../hooks/useReports";
 import { CustomHeader } from "../../components/CustomHeader";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export function StockSummaryScreen() {
     const navigation = useNavigation();
     const [search, setSearch] = useState("");
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     const { summary, isLoading } = useStockSummaryReport();
 
@@ -21,44 +22,53 @@ export function StockSummaryScreen() {
 
     const formatCurrency = (amount: number) => "$" + (amount || 0).toFixed(2);
 
-    const getStatusInfo = (status: StockSummaryItem['status']) => {
+    const getStatusColor = (status: StockSummaryItem['status']) => {
         switch (status) {
-            case 'out-of-stock': return { color: colors.danger, label: 'Out of Stock' };
-            case 'low-stock': return { color: colors.warning, label: 'Low Stock' };
-            case 'in-stock': return { color: colors.success, label: 'In Stock' };
-            default: return { color: colors.textMuted, label: '' };
+            case 'out-of-stock': return colors.danger;
+            case 'low-stock': return colors.warning;
+            case 'in-stock': return colors.success;
+            default: return colors.textMuted;
+        }
+    };
+
+    const getStatusLabel = (status: StockSummaryItem['status']) => {
+        switch (status) {
+            case 'out-of-stock': return 'Out of Stock';
+            case 'low-stock': return 'Low Stock';
+            case 'in-stock': return 'In Stock';
+            default: return '';
         }
     };
 
     return (
-        <View className="flex-1 bg-background">
+        <View style={styles.container}>
             <CustomHeader title="Stock Summary" showBack />
 
-            <View className="flex-1">
+            <View style={styles.mainContent}>
                 {/* Overview Cards */}
-                <View className="flex-row p-4 gap-4">
-                    {isLoading ? <Text className="text-text-muted">Loading...</Text> : (
+                <View style={styles.overviewContainer}>
+                    {isLoading ? <Text style={styles.loadingText}>Loading...</Text> : (
                         <>
-                            <View className="flex-1 bg-surface p-4 rounded-lg border border-border shadow-sm">
-                                <Text className="text-xs text-text-secondary mb-1">Total Value</Text>
-                                <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(summary?.totalValue || 0)}</Text>
-                                <Text className="text-[10px] text-text-muted">{summary?.totalItems || 0} Items</Text>
+                            <View style={styles.overviewCard}>
+                                <Text style={styles.overviewLabel}>Total Value</Text>
+                                <Text style={styles.overviewValue}>{formatCurrency(summary?.totalValue || 0)}</Text>
+                                <Text style={styles.overviewSub}>{summary?.totalItems || 0} Items</Text>
                             </View>
-                            <View className="flex-1 bg-surface p-4 rounded-lg border border-border shadow-sm">
-                                <Text className="text-xs text-text-secondary mb-1">Low Stock</Text>
-                                <Text className="text-xl font-bold text-warning mb-0.5">{summary?.lowStockCount || 0}</Text>
-                                <Text className="text-[10px] text-text-muted">Items needing reorder</Text>
+                            <View style={styles.overviewCard}>
+                                <Text style={styles.overviewLabel}>Low Stock</Text>
+                                <Text style={[styles.overviewValue, { color: colors.warning }]}>{summary?.lowStockCount || 0}</Text>
+                                <Text style={styles.overviewSub}>Items needing reorder</Text>
                             </View>
                         </>
                     )}
                 </View>
 
                 {/* Search */}
-                <View className="px-4 mb-4">
-                    <View className="flex-row items-center bg-surface border border-border rounded-lg px-3 h-11">
-                        <SearchIcon size={18} color={colors.textMuted} />
+                <View style={styles.searchSection}>
+                    <View style={styles.searchBox}>
+                        <Search size={18} color={colors.textMuted} />
                         <TextInput
-                            className="flex-1 ml-2 text-base text-text"
+                            style={styles.searchInput}
                             placeholder="Search item name or SKU..."
                             placeholderTextColor={colors.textMuted}
                             value={search}
@@ -71,44 +81,41 @@ export function StockSummaryScreen() {
                 <FlatList
                     data={filteredItems}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40, paddingTop: 0 }}
-                    renderItem={({ item }) => {
-                        const status = getStatusInfo(item.status);
-                        return (
-                            <View className="bg-surface rounded-lg p-4 border border-border shadow-sm">
-                                <View className="flex-row justify-between items-start mb-4">
-                                    <View className="flex-1 mr-2">
-                                        <Text className="text-base font-semibold text-text">{item.name}</Text>
-                                        <Text className="text-xs text-text-muted mt-0.5">SKU: {item.sku}</Text>
-                                    </View>
-                                    <View className="px-2 py-1 rounded-sm" style={{ backgroundColor: status.color + '20' }}>
-                                        <Text className="text-[10px] font-bold" style={{ color: status.color }}>
-                                            {status.label}
-                                        </Text>
-                                    </View>
+                    contentContainerStyle={styles.list}
+                    renderItem={({ item }) => (
+                        <View style={styles.card}>
+                            <View style={styles.cardHeader}>
+                                <View style={styles.titleInfo}>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <Text style={styles.sku}>SKU: {item.sku}</Text>
                                 </View>
-
-                                <View className="flex-row justify-between bg-surface-hover p-2 rounded-md">
-                                    <View>
-                                        <Text className="text-[10px] text-text-secondary mb-0.5">Stock Qty</Text>
-                                        <Text className="text-sm font-semibold text-text">{item.stockQuantity}</Text>
-                                    </View>
-                                    <View>
-                                        <Text className="text-[10px] text-text-secondary mb-0.5">Buy Price</Text>
-                                        <Text className="text-sm font-semibold text-text">{formatCurrency(item.purchasePrice)}</Text>
-                                    </View>
-                                    <View>
-                                        <Text className="text-[10px] text-text-secondary mb-0.5">Stock Value</Text>
-                                        <Text className="text-sm font-semibold text-text">{formatCurrency(item.stockValue)}</Text>
-                                    </View>
+                                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+                                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+                                        {getStatusLabel(item.status)}
+                                    </Text>
                                 </View>
                             </View>
-                        )
-                    }}
+
+                            <View style={styles.detailsRow}>
+                                <View>
+                                    <Text style={styles.detailLabel}>Stock Qty</Text>
+                                    <Text style={styles.detailValue}>{item.stockQuantity}</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.detailLabel}>Buy Price</Text>
+                                    <Text style={styles.detailValue}>{formatCurrency(item.purchasePrice)}</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.detailLabel}>Stock Value</Text>
+                                    <Text style={styles.detailValue}>{formatCurrency(item.stockValue)}</Text>
+                                </View>
+                            </View>
+                        </View>
+                    )}
                     ListEmptyComponent={
-                        <View className="p-10 items-center justify-center gap-4">
-                            <PackageIcon size={48} color={colors.border} />
-                            <Text className="text-text-muted">{isLoading ? "Loading..." : "No items found"}</Text>
+                        <View style={styles.emptyState}>
+                            <Package size={48} color={colors.border} />
+                            <Text style={styles.emptyText}>{isLoading ? "Loading..." : "No items found"}</Text>
                         </View>
                     }
                 />
@@ -116,3 +123,30 @@ export function StockSummaryScreen() {
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    mainContent: { flex: 1 },
+    overviewContainer: { flexDirection: 'row', padding: spacing.lg, gap: spacing.md },
+    overviewCard: { flex: 1, backgroundColor: colors.surface, padding: spacing.md, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.border },
+    overviewLabel: { fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 4 },
+    overviewValue: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text, marginBottom: 2 },
+    overviewSub: { fontSize: 10, color: colors.textMuted },
+    loadingText: { color: colors.textMuted },
+    searchSection: { paddingHorizontal: spacing.lg, marginBottom: spacing.md },
+    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.lg, paddingHorizontal: spacing.md, height: 44 },
+    searchInput: { flex: 1, marginLeft: spacing.sm, height: '100%', fontSize: fontSize.md, color: colors.text },
+    list: { padding: spacing.lg, gap: spacing.md, paddingBottom: 40, paddingTop: 0 },
+    card: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadows.sm },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.md },
+    titleInfo: { flex: 1, marginRight: spacing.sm },
+    itemName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    sku: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+    statusBadge: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: borderRadius.sm },
+    statusText: { fontSize: 10, fontWeight: fontWeight.bold },
+    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.surfaceHover, padding: spacing.sm, borderRadius: borderRadius.md },
+    detailLabel: { fontSize: 10, color: colors.textSecondary, marginBottom: 2 },
+    detailValue: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+    emptyState: { padding: 40, alignItems: 'center', gap: spacing.md },
+    emptyText: { color: colors.textMuted }
+});

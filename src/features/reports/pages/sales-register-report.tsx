@@ -8,12 +8,11 @@ import {
   Badge,
 } from "@/components/ui";
 import { Search, FileText, Calendar } from "lucide-react";
-import { ReportLayout, ExportModal } from "../components";
+import { ReportLayout } from "../components/report-layout";
 import { DateRangeFilter } from "../components/date-range-filter";
-import type { DateRange, SalesRegisterEntry } from "../types";
+import type { DateRange } from "../types";
 import { useSalesRegisterReport } from "@/hooks/useReports";
 import { useCurrency } from "@/hooks/useCurrency";
-import type { ExportColumn } from "../utils/export";
 
 // ============================================================================
 // HELPERS
@@ -28,7 +27,7 @@ const statusOptions: SelectOption[] = [
 
 const statusConfig: Record<
   string,
-  { label: string; variant: "success" | "warning" | "error" } | undefined
+  { label: string; variant: "success" | "warning" | "error" }
 > = {
   paid: { label: "Paid", variant: "success" },
   partial: { label: "Partial", variant: "warning" },
@@ -48,21 +47,9 @@ export function SalesRegisterReport(): React.ReactNode {
   });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Fetch data from PowerSync
   const { entries, isLoading } = useSalesRegisterReport(dateRange);
-
-  const { formatCurrency } = useCurrency();
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(date);
-  };
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -91,53 +78,16 @@ export function SalesRegisterReport(): React.ReactNode {
     );
   }, [filteredData]);
 
-  const exportColumns: ExportColumn<SalesRegisterEntry>[] = useMemo(
-    () => [
-      { key: "invoiceNumber", label: "Invoice" },
-      { key: "date", label: "Date", format: (val) => formatDate(String(val)) },
-      { key: "customerName", label: "Customer" },
-      { key: "itemCount", label: "Items" },
-      {
-        key: "subtotal",
-        label: "Subtotal",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "tax",
-        label: "Tax",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "discount",
-        label: "Discount",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "total",
-        label: "Total",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "paid",
-        label: "Paid",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "due",
-        label: "Due",
-        format: (val) => formatCurrency(Number(val)),
-      },
-      {
-        key: "status",
-        label: "Status",
-        format: (val) => {
-          const config = statusConfig[String(val).toLowerCase()];
-          return config ? config.label : String(val);
-        },
-      },
-    ],
-    [formatCurrency]
-  );
+  const { formatCurrency } = useCurrency();
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date);
+  };
 
   // Loading state
   if (isLoading) {
@@ -160,243 +110,230 @@ export function SalesRegisterReport(): React.ReactNode {
   }
 
   return (
-    <>
-      <ReportLayout
-        title="Sales Register"
-        subtitle="Detailed list of all sales invoices"
-        backPath="/reports"
-        onExport={() => {
-          setIsExportOpen(true);
-        }}
-        onPrint={() => {
-          setIsExportOpen(true);
-        }} // Open export modal for print too
-        filters={
-          <div className="flex flex-wrap items-center gap-4">
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                type="text"
-                placeholder="Search invoices..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                }}
-                leftIcon={<Search className="h-4 w-4" />}
-              />
-            </div>
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              className="w-40"
+    <ReportLayout
+      title="Sales Register"
+      subtitle="Detailed list of all sales invoices"
+      backPath="/reports"
+      onExport={() => {
+        /* TODO: Implement export */
+      }}
+      onPrint={() => {
+        window.print();
+      }}
+      filters={
+        <div className="flex flex-wrap items-center gap-4">
+          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          <div className="flex-1 min-w-[200px]">
+            <Input
+              type="text"
+              placeholder="Search invoices..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
+              leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
-        }
-      >
-        <div className="space-y-4">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <Card>
-              <CardBody className="py-3">
-                <p className="text-xs text-slate-500 mb-1">Total Sales</p>
-                <p
-                  className="text-lg sm:text-xl font-bold text-text-heading"
-                  title={formatCurrency(totals.total)}
-                >
-                  {formatCurrency(totals.total)}
-                </p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="py-3">
-                <p className="text-xs text-slate-500 mb-1">Amount Received</p>
-                <p
-                  className="text-lg sm:text-xl font-bold text-success"
-                  title={formatCurrency(totals.paid)}
-                >
-                  {formatCurrency(totals.paid)}
-                </p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="py-3">
-                <p className="text-xs text-slate-500 mb-1">Amount Due</p>
-                <p
-                  className="text-lg sm:text-xl font-bold text-error"
-                  title={formatCurrency(totals.due)}
-                >
-                  {formatCurrency(totals.due)}
-                </p>
-              </CardBody>
-            </Card>
-            <Card>
-              <CardBody className="py-3">
-                <p className="text-xs text-slate-500 mb-1">Invoices</p>
-                <p className="text-lg sm:text-xl font-bold text-text-heading">
-                  {filteredData.length}
-                </p>
-              </CardBody>
-            </Card>
-          </div>
-
-          {/* Register Table */}
+          <Select
+            options={statusOptions}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="w-40"
+          />
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <Card>
-            <CardBody className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-muted/50">
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Invoice
-                      </th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Date
-                      </th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Customer
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Items
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Subtotal
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Tax
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Discount
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Total
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Paid
-                      </th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Due
-                      </th>
-                      <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredData.length === 0 ? (
-                      <tr>
-                        <td colSpan={11} className="px-4 py-12 text-center">
-                          <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                          <p className="text-slate-500">No invoices found</p>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredData.map((entry) => {
-                        const config = statusConfig[entry.status] ?? {
-                          label: entry.status,
-                          variant: "warning" as const,
-                        };
-                        return (
-                          <tr key={entry.id} className="hover:bg-muted/50">
-                            <td className="px-4 py-3">
-                              <span className="font-medium text-text-heading">
-                                {entry.invoiceNumber}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="flex items-center gap-1 text-sm text-slate-600">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(entry.date)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-text-heading">
-                              {entry.customerName}
-                            </td>
-                            <td className="px-4 py-3 text-right text-slate-600">
-                              {entry.itemCount}
-                            </td>
-                            <td className="px-4 py-3 text-right text-text-heading">
-                              {formatCurrency(entry.subtotal)}
-                            </td>
-                            <td className="px-4 py-3 text-right text-slate-600">
-                              {formatCurrency(entry.tax)}
-                            </td>
-                            <td className="px-4 py-3 text-right text-slate-600">
-                              <div>{formatCurrency(entry.discount)}</div>
-                              {entry.discount > 0 && entry.subtotal > 0 && (
-                                <div className="text-xs text-slate-400">
-                                  {(
-                                    (entry.discount / entry.subtotal) *
-                                    100
-                                  ).toFixed(0)}
-                                  %
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-right font-medium text-text-heading">
-                              {formatCurrency(entry.total)}
-                            </td>
-                            <td className="px-4 py-3 text-right text-success">
-                              {formatCurrency(entry.paid)}
-                            </td>
-                            <td className="px-4 py-3 text-right text-error">
-                              {formatCurrency(entry.due)}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <Badge variant={config.variant}>
-                                {config.label}
-                              </Badge>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                  {filteredData.length > 0 && (
-                    <tfoot>
-                      <tr className="bg-muted/50 font-medium">
-                        <td colSpan={4} className="px-4 py-3 text-text-heading">
-                          Total
-                        </td>
-                        <td className="px-4 py-3 text-right text-text-heading">
-                          {formatCurrency(totals.subtotal)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-600">
-                          {formatCurrency(totals.tax)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-600">
-                          {formatCurrency(totals.discount)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-text-heading">
-                          {formatCurrency(totals.total)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-success">
-                          {formatCurrency(totals.paid)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-error">
-                          {formatCurrency(totals.due)}
-                        </td>
-                        <td className="px-4 py-3"></td>
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
-              </div>
+            <CardBody className="py-3">
+              <p className="text-xs text-slate-500 mb-1">Total Sales</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-text-heading"
+                title={formatCurrency(totals.total)}
+              >
+                {formatCurrency(totals.total)}
+              </p>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody className="py-3">
+              <p className="text-xs text-slate-500 mb-1">Amount Received</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-success"
+                title={formatCurrency(totals.paid)}
+              >
+                {formatCurrency(totals.paid)}
+              </p>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody className="py-3">
+              <p className="text-xs text-slate-500 mb-1">Amount Due</p>
+              <p
+                className="text-lg sm:text-xl font-bold text-error"
+                title={formatCurrency(totals.due)}
+              >
+                {formatCurrency(totals.due)}
+              </p>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody className="py-3">
+              <p className="text-xs text-slate-500 mb-1">Invoices</p>
+              <p className="text-lg sm:text-xl font-bold text-text-heading">
+                {filteredData.length}
+              </p>
             </CardBody>
           </Card>
         </div>
-      </ReportLayout>
 
-      <ExportModal
-        isOpen={isExportOpen}
-        onClose={() => {
-          setIsExportOpen(false);
-        }}
-        data={filteredData}
-        columns={exportColumns}
-        title="Export Sales Register"
-        filename={`sales-register-${dateRange.from}-${dateRange.to}`}
-      />
-    </>
+        {/* Register Table */}
+        <Card>
+          <CardBody className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-muted/50">
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Invoice
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Date
+                    </th>
+                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Customer
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Items
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Subtotal
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Tax
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Discount
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Total
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Paid
+                    </th>
+                    <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Due
+                    </th>
+                    <th className="text-center text-xs font-medium text-slate-500 uppercase tracking-wider px-4 py-3">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="px-4 py-12 text-center">
+                        <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500">No invoices found</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((entry) => {
+                      const config = statusConfig[entry.status] ?? {
+                        label: entry.status,
+                        variant: "warning" as const,
+                      };
+                      return (
+                        <tr key={entry.id} className="hover:bg-muted/50">
+                          <td className="px-4 py-3">
+                            <span className="font-medium text-text-heading">
+                              {entry.invoiceNumber}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="flex items-center gap-1 text-sm text-slate-600">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(entry.date)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-text-heading">
+                            {entry.customerName}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {entry.itemCount}
+                          </td>
+                          <td className="px-4 py-3 text-right text-text-heading">
+                            {formatCurrency(entry.subtotal)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatCurrency(entry.tax)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            <div>{formatCurrency(entry.discount)}</div>
+                            {entry.discount > 0 && entry.subtotal > 0 && (
+                              <div className="text-xs text-slate-400">
+                                {(
+                                  (entry.discount / entry.subtotal) *
+                                  100
+                                ).toFixed(0)}
+                                %
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-text-heading">
+                            {formatCurrency(entry.total)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-success">
+                            {formatCurrency(entry.paid)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-error">
+                            {formatCurrency(entry.due)}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge variant={config.variant}>
+                              {config.label}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+                {filteredData.length > 0 && (
+                  <tfoot>
+                    <tr className="bg-muted/50 font-medium">
+                      <td colSpan={4} className="px-4 py-3 text-text-heading">
+                        Total
+                      </td>
+                      <td className="px-4 py-3 text-right text-text-heading">
+                        {formatCurrency(totals.subtotal)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        {formatCurrency(totals.tax)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        {formatCurrency(totals.discount)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-text-heading">
+                        {formatCurrency(totals.total)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-success">
+                        {formatCurrency(totals.paid)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-error">
+                        {formatCurrency(totals.due)}
+                      </td>
+                      <td className="px-4 py-3"></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    </ReportLayout>
   );
 }

@@ -20,6 +20,12 @@ interface PaymentOutRow {
   updated_at: string;
 }
 
+interface PaymentQueryRow {
+  customer_id: string;
+  invoice_id: string | null;
+  amount: number;
+}
+
 function mapRowToPaymentOut(row: PaymentOutRow): PaymentOut {
   return {
     id: row.id,
@@ -96,28 +102,22 @@ export function usePaymentOuts(filters?: {
   return { payments, isLoading, error };
 }
 
-/**
- * Fetch all payments linked to a specific purchase invoice.
- * Used to display payment history on the purchase invoice detail page.
- */
-export function usePaymentOutsByInvoiceId(invoiceId: string | null): {
-  payments: PaymentOut[];
+export function usePaymentOutById(id: string | null): {
+  payment: PaymentOut | null;
   isLoading: boolean;
   error: Error | undefined;
 } {
   const { data, isLoading, error } = useQuery<PaymentOutRow>(
-    invoiceId
-      ? `SELECT * FROM payment_outs WHERE invoice_id = ? ORDER BY date DESC, created_at DESC`
+    id
+      ? `SELECT * FROM payment_outs WHERE id = ?`
       : `SELECT * FROM payment_outs WHERE 1 = 0`,
-    invoiceId ? [invoiceId] : []
+    id ? [id] : []
   );
 
-  const payments = useMemo(() => data.map(mapRowToPaymentOut), [data]);
+  const payment = data[0] ? mapRowToPaymentOut(data[0]) : null;
 
-  return { payments, isLoading, error };
+  return { payment, isLoading, error };
 }
-
-import { useAuthStore } from "@/stores/auth-store";
 
 interface PaymentOutMutations {
   createPayment: (data: {
@@ -153,83 +153,50 @@ export function usePaymentOutMutations(): PaymentOutMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(
-          `INSERT INTO payment_outs (
-            id, payment_number, customer_id, customer_name, date, amount,
-            payment_mode, reference_number, invoice_id, invoice_number, notes,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.paymentNumber,
-            data.supplierId,
-            data.supplierName,
-            data.date,
-            data.amount,
-            data.paymentMode,
-            data.referenceNumber ?? null,
-            data.invoiceId ?? null,
-            data.invoiceNumber ?? null,
-            data.notes ?? null,
-            now,
-            now,
-          ]
-        );
+      await db.execute(
+        `INSERT INTO payment_outs (
+          id, payment_number, customer_id, customer_name, date, amount,
+          payment_mode, reference_number, invoice_id, invoice_number, notes,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.paymentNumber,
+          data.supplierId,
+          data.supplierName,
+          data.date,
+          data.amount,
+          data.paymentMode,
+          data.referenceNumber ?? null,
+          data.invoiceId ?? null,
+          data.invoiceNumber ?? null,
+          data.notes ?? null,
+          now,
+          now,
+        ]
+      );
 
-        // Update invoice if linked
-        if (data.invoiceId) {
-          await tx.execute(
-            `UPDATE purchase_invoices
-             SET amount_paid = amount_paid + ?,
-                 amount_due = amount_due - ?,
-                 status = CASE
-                   WHEN amount_due <= ? THEN 'paid'
-                   WHEN status = 'draft' THEN 'ordered'
-                   ELSE status
-                 END,
-                 updated_at = ?
-             WHERE id = ?`,
-            [data.amount, data.amount, data.amount, now, data.invoiceId]
-          );
-        }
-
-        // Update supplier balance (reduce payable)
-        await tx.execute(
-          `UPDATE customers
-           SET current_balance = current_balance + ?, updated_at = ?
+      // Update invoice if linked
+      if (data.invoiceId) {
+        await db.execute(
+          `UPDATE purchase_invoices
+           SET amount_paid = amount_paid + ?,
+               amount_due = amount_due - ?,
+               status = CASE WHEN amount_due <= ? THEN 'paid' ELSE status END,
+               updated_at = ?
            WHERE id = ?`,
-          [data.amount, now, data.supplierId]
+          [data.amount, data.amount, data.amount, now, data.invoiceId]
         );
+      }
 
-        // Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "payment_out",
-            "created",
-            `Made payment ${data.paymentNumber}`,
-            null,
-            JSON.stringify({
-              amount: data.amount,
-              supplier: data.supplierName,
-              invoice: data.invoiceNumber,
-            }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
+      // Update supplier balance (reduce payable)
+      await db.execute(
+        `UPDATE customers
+         SET current_balance = current_balance + ?, updated_at = ?
+         WHERE id = ?`,
+        [data.amount, now, data.supplierId]
+      );
 
       return id;
     },
@@ -238,69 +205,45 @@ export function usePaymentOutMutations(): PaymentOutMutations {
 
   const deletePayment = useCallback(
     async (id: string): Promise<void> => {
-      const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
+      const result = await db.execute(
+        `SELECT customer_id, invoice_id, amount FROM payment_outs WHERE id = ?`,
+        [id]
+      );
+      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
 
-      await db.writeTransaction(async (tx) => {
-        const result = await tx.execute(
-          `SELECT customer_id, invoice_id, amount, payment_number FROM payment_outs WHERE id = ?`,
-          [id]
+      if (rows.length > 0) {
+        const payment = rows[0];
+        const now = new Date().toISOString();
+
+        // Reverse supplier balance
+        await db.execute(
+          `UPDATE customers
+           SET current_balance = current_balance - ?, updated_at = ?
+           WHERE id = ?`,
+          [payment.amount, now, payment.customer_id]
         );
-        const payment = result.rows?.item(0);
 
-        if (payment) {
-          // Reverse supplier balance
-          await tx.execute(
-            `UPDATE customers
-            SET current_balance = current_balance - ?, updated_at = ?
-            WHERE id = ?`,
-            [payment.amount, now, payment.customer_id]
-          );
-
-          // Reverse invoice payment if linked
-          if (payment.invoice_id) {
-            await tx.execute(
-              `UPDATE purchase_invoices
-                SET amount_paid = amount_paid - ?,
-                    amount_due = amount_due + ?,
-                    status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE status END,
-                    updated_at = ?
-                WHERE id = ?`,
-              [
-                payment.amount,
-                payment.amount,
-                payment.amount,
-                now,
-                payment.invoice_id,
-              ]
-            );
-          }
-
-          // Log History
-          const historyId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO invoice_history (
-                id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        // Reverse invoice payment if linked
+        if (payment.invoice_id) {
+          await db.execute(
+            `UPDATE purchase_invoices
+             SET amount_paid = amount_paid - ?,
+                 amount_due = amount_due + ?,
+                 status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE status END,
+                 updated_at = ?
+             WHERE id = ?`,
             [
-              historyId,
-              id,
-              "payment_out",
-              "deleted",
-              `Deleted payment ${payment.payment_number}`,
-              JSON.stringify(payment),
-              null,
-              user?.id ?? null,
-              userName,
+              payment.amount,
+              payment.amount,
+              payment.amount,
               now,
+              payment.invoice_id,
             ]
           );
         }
+      }
 
-        await tx.execute(`DELETE FROM payment_outs WHERE id = ?`, [id]);
-      });
+      await db.execute(`DELETE FROM payment_outs WHERE id = ?`, [id]);
     },
     [db]
   );
@@ -308,5 +251,33 @@ export function usePaymentOutMutations(): PaymentOutMutations {
   return {
     createPayment,
     deletePayment,
+  };
+}
+
+interface PaymentOutStats {
+  totalPaid: number;
+  thisMonthPaid: number;
+  todayPaid: number;
+}
+
+export function usePaymentOutStats(): PaymentOutStats {
+  const { data: totalPaid } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs`
+  );
+
+  const { data: thisMonthPaid } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs
+     WHERE date >= date('now', 'start of month')`
+  );
+
+  const { data: todayPaid } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM payment_outs
+     WHERE date = date('now')`
+  );
+
+  return {
+    totalPaid: totalPaid[0]?.sum ?? 0,
+    thisMonthPaid: thisMonthPaid[0]?.sum ?? 0,
+    todayPaid: todayPaid[0]?.sum ?? 0,
   };
 }

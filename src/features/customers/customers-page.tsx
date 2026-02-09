@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import { Button, ConfirmDeleteDialog } from "@/components/ui";
 import { Spinner } from "@/components/common";
@@ -16,7 +15,6 @@ import type {
   CustomerFormData,
   CustomerFilters,
   CustomerType,
-  CustomerTransaction,
 } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
@@ -172,13 +170,11 @@ export function CustomersPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await deleteCustomer(customerToDelete.id);
-        toast.success("Customer deleted successfully");
         setIsDeleteModalOpen(false);
         setCustomerToDelete(null);
         setSelectedCustomer(null);
       } catch (err) {
         console.error("Failed to delete customer:", err);
-        toast.error("Failed to delete customer");
       } finally {
         setIsSubmitting(false);
       }
@@ -190,16 +186,13 @@ export function CustomersPage(): React.ReactNode {
     try {
       if (editingCustomer) {
         await updateCustomer(editingCustomer.id, data);
-        toast.success("Customer updated successfully");
       } else {
         await createCustomer(data);
-        toast.success("Customer created successfully");
       }
       setIsFormModalOpen(false);
       setEditingCustomer(null);
     } catch (err) {
       console.error("Failed to save customer:", err);
-      toast.error("Failed to save customer");
     } finally {
       setIsSubmitting(false);
     }
@@ -211,20 +204,6 @@ export function CustomersPage(): React.ReactNode {
       void navigate({ to: "/sale/payment-in" });
     } else {
       void navigate({ to: "/purchase/payment-out" });
-    }
-  };
-
-  const handleTransactionClick = (transaction: CustomerTransaction): void => {
-    if (transaction.type === "sale") {
-      void navigate({
-        to: "/sale/invoices",
-        search: { invoiceId: transaction.id },
-      });
-    } else if (transaction.type === "credit-note") {
-      void navigate({
-        to: "/sale/credit-notes",
-        search: { id: transaction.id },
-      });
     }
   };
 
@@ -362,7 +341,6 @@ export function CustomersPage(): React.ReactNode {
             onEdit={handleEditCustomer}
             onDelete={handleDeleteCustomer}
             onAddTransaction={handleAddTransaction}
-            onTransactionClick={handleTransactionClick}
           />
         </div>
       </div>
