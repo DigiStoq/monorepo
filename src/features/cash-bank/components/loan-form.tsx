@@ -182,8 +182,6 @@ export function LoanForm({
             handleChange("customerId", value);
           }}
           error={errors.customerId}
-          searchable
-          searchPlaceholder="Search customers..."
         />
       )}
 

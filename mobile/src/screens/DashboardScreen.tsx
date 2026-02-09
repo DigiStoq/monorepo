@@ -2,52 +2,82 @@ import React from "react";
 import {
   View,
   Text,
+  StyleSheet,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Dimensions,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { CustomHeader } from "../components/CustomHeader";
+import { useQuery } from "@powersync/react-native";
 import { SyncStatus } from "../components/SyncStatus";
+
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import {
-  TrendingUpIcon,
-  TrendingDownIcon,
-  BoxIcon,
-  AlertTriangleIcon,
-  XCircleIcon,
-  DollarSignIcon,
-  ShoppingCartIcon,
-  FileTextIcon,
-  ArrowUpRightIcon,
-  ArrowDownRightIcon
-} from "../components/ui/UntitledIcons";
-import type {
-  DashboardTransaction
-} from "../hooks/useDashboard";
-import {
-  useDashboardMetrics,
-  useStockMetrics,
-  useSalesChartData,
-  useRecentTransactions
-} from "../hooks/useDashboard";
+  Package,
+  Bell,
+  MessageCircle,
+  TrendingUp,
+  Box,
+  AlertTriangle,
+  XCircle,
+  ArrowUpRight,
+} from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+
+const { width } = Dimensions.get("window");
 
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  // Hooks
-  const { metrics } = useDashboardMetrics();
-  const { metrics: stockMetrics } = useStockMetrics();
-  const { chartData } = useSalesChartData(7);
-  const { transactions } = useRecentTransactions(5);
+  // Fetch stats - matching the original queries
+  const { data: customerCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM customers");
+  const { data: itemCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items");
+  // Out of stock logic? Assuming quantity = 0
+  const { data: outOfStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE stock_quantity <= 0");
+  const { data: lowStockCount } = useQuery<{ count: number }>("SELECT COUNT(*) as count FROM items WHERE stock_quantity > 0 AND stock_quantity < 10"); // Arbitrary low stock threshold
+  const { data: totalSales } = useQuery<{ sum: number }>("SELECT COALESCE(SUM(total), 0) as sum FROM sale_invoices WHERE status != 'cancelled'");
+
+  // Sales Trend Data (Last 5 days)
+  const { data: recentSales } = useQuery<{ date: string; total: number }>(`
+    SELECT date(created_at) as date, SUM(total) as total 
+    FROM sale_invoices 
+    WHERE status != 'cancelled' 
+    GROUP BY date(created_at) 
+    ORDER BY date(created_at) DESC 
+    LIMIT 5
+  `);
+
+  // Transform query data for chart
+  const chartData = React.useMemo(() => {
+    const data = [...(recentSales || [])].reverse();
+    // If empty, return a placeholder or empty
+    if (data.length === 0) return [0, 0, 0, 0, 0];
+    return data.map(d => d.total);
+  }, [recentSales]);
+
+  // Generate labels (Mon, Tue etc) based on the dates
+  const chartLabels = React.useMemo(() => {
+    const data = [...(recentSales || [])].reverse();
+    if (data.length === 0) return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    return data.map(d => {
+      const date = new Date(d.date);
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+  }, [recentSales]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => { setRefreshing(false); }, 1000);
+    // Refresh logic here if needed, or just re-run queries
+    // Since useQuery subscribes, often just a simulated wait is enough or re-fetching remote if supported
+    // For now, simple timeout or no-op
+    setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
   const formatCurrency = (value: number) => {
@@ -58,42 +88,11 @@ export function DashboardScreen() {
     }).format(value);
   };
 
-  // Professional Palette Constants
-  const profColors = {
-    receivable: { bg: "#f0fdf4", icon: "#15803d", border: "#dcfce7" }, // emerald-50/700/100
-    payable: { bg: "#fef2f2", icon: "#be123c", border: "#fee2e2" }, // rose-50/700/100
-    sales: { bg: "#eef2ff", icon: "#4338ca", border: "#e0e7ff" }, // indigo-50/700/100
-    items: { bg: "#f8fafc", icon: "#334155", border: "#e2e8f0" }, // slate-50/700/200
-    warning: { bg: "#fffbeb", icon: "#b45309", border: "#fef3c7" }, // amber-50/700/100
-    danger: { bg: "#fff1f2", icon: "#e11d48", border: "#ffe4e6" }, // rose-50/600/100
-  };
-
-  const getTransactionIcon = (type: DashboardTransaction['type']) => {
-    switch (type) {
-      case 'sale': return <ShoppingCartIcon size={20} color={profColors.sales.icon} strokeWidth={2} />;
-      case 'purchase': return <FileTextIcon size={20} color={profColors.payable.icon} strokeWidth={2} />;
-      case 'payment-in': return <TrendingUpIcon size={20} color={profColors.receivable.icon} strokeWidth={2} />;
-      case 'payment-out': return <TrendingDownIcon size={20} color={profColors.payable.icon} strokeWidth={2} />;
-      default: return <DollarSignIcon size={20} color={colors.text} />;
-    }
-  };
-
-  const getTransactionColor = (type: DashboardTransaction['type']) => {
-    switch (type) {
-      case 'sale': return profColors.sales;
-      case 'purchase': return profColors.payable;
-      case 'payment-in': return profColors.receivable;
-      case 'payment-out': return profColors.payable;
-      default: return profColors.items;
-    }
-  };
-
   return (
-    <View className="flex-1 bg-background">
-      <CustomHeader title="Dashboard" />
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16 }}
+        style={styles.container}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -105,260 +104,392 @@ export function DashboardScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Content */}
-        <View className="flex-row justify-between items-start mb-4 mt-1">
-          <View>
-            <Text className="text-xs text-text-muted font-bold tracking-widest">GOOD MORNING!</Text>
-            <Text className="text-2xl font-bold text-text">{user?.email?.split('@')[0] || "User"}</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {/* ... user avatar ... */}
+            <View>
+              <Text style={styles.greeting}>GOOD MORNING! ^-^</Text>
+              <Text style={styles.username}>{user?.email?.split('@')[0] || "User"}</Text>
+              <SyncStatus />
+            </View>
           </View>
-          <SyncStatus />
+          {/* ... right side ... */}
+          <TouchableOpacity style={styles.chatButton}>
+            <Text style={styles.chatButtonText}>Chat</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Bell size={24} color={colors.text} />
+            <View style={styles.badge} />
+          </TouchableOpacity>
         </View>
 
-        {/* Financial Summary */}
-        <Text className="text-lg font-bold text-text mb-3">Financial Overview</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 12, paddingRight: 16 }}
-        >
-          {/* Receivable */}
-          <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
-            <View className="flex-row justify-between items-start mb-3">
-              <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: profColors.receivable.bg,
-                  borderWidth: 1,
-                  borderColor: profColors.receivable.border,
-                }}
-              >
-                <TrendingUpIcon size={20} color={profColors.receivable.icon} strokeWidth={2} />
+        {/* Stats Grid */}
+        <View style={styles.grid}>
+          {/* Main Card - Total Stock Value */}
+          <View style={[styles.card, styles.primaryCard]}>
+            <View style={styles.cardHeader}>
+              <View style={styles.iconContainerPrimary}>
+                <TrendingUp size={20} color={colors.textOnPrimary} />
               </View>
-              <View
-                className="flex-row items-center px-1.5 py-0.5 rounded-lg gap-0.5"
-                style={{ backgroundColor: metrics.receivableChange >= 0 ? profColors.receivable.bg : profColors.payable.bg }}
-              >
-                {metrics.receivableChange >= 0 ?
-                  <ArrowUpRightIcon size={12} color={profColors.receivable.icon} /> :
-                  <ArrowDownRightIcon size={12} color={profColors.payable.icon} />
-                }
-                <Text
-                  className="text-[10px] font-bold"
-                  style={{ color: metrics.receivableChange >= 0 ? profColors.receivable.icon : profColors.payable.icon }}
-                >
-                  {Math.abs(metrics.receivableChange).toFixed(1)}%
-                </Text>
+              <View style={styles.pillPrimary}>
+                <Text style={styles.pillTextPrimary}>Weekly</Text>
               </View>
             </View>
-            <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(metrics.totalReceivable)}</Text>
-            <Text className="text-xs text-text-muted">To Receive</Text>
-          </View>
-
-          {/* Payable */}
-          <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
-            <View className="flex-row justify-between items-start mb-3">
-              <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: profColors.payable.bg,
-                  borderWidth: 1,
-                  borderColor: profColors.payable.border,
-                }}
-              >
-                <TrendingDownIcon size={20} color={profColors.payable.icon} strokeWidth={2} />
-              </View>
-              <View
-                className="flex-row items-center px-1.5 py-0.5 rounded-lg gap-0.5"
-                style={{ backgroundColor: metrics.payableChange >= 0 ? profColors.payable.bg : profColors.receivable.bg }}
-              >
-                <ArrowUpRightIcon size={12} color={profColors.payable.icon} />
-                <Text
-                  className="text-[10px] font-bold"
-                  style={{ color: profColors.payable.icon }}
-                >
-                  {Math.abs(metrics.payableChange).toFixed(1)}%
-                </Text>
-              </View>
+            <View style={styles.cardContent}>
+              <Text style={styles.primaryValue}>{formatCurrency(totalSales?.[0]?.sum || 0)}</Text>
+              <Text style={styles.primaryLabel}>Total Sales Value</Text>
             </View>
-            <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(metrics.totalPayable)}</Text>
-            <Text className="text-xs text-text-muted">To Pay</Text>
-          </View>
-
-          {/* Sales Today */}
-          <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
-            <View className="flex-row justify-between items-start mb-3">
-              <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: colors.info + '12',
-                  borderWidth: 1,
-                  borderColor: colors.info + '25',
-                }}
-              >
-                <ShoppingCartIcon size={18} color={colors.info} strokeWidth={2.5} />
-              </View>
+            <View style={styles.cardFooter}>
+              <ArrowUpRight size={16} color={colors.textOnPrimary} />
             </View>
-            <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(metrics.todaySales)}</Text>
-            <Text className="text-xs text-text-muted">Sales Today</Text>
-          </View>
-        </ScrollView>
-
-        {/* Stock Overview */}
-        <Text className="text-lg font-bold text-text mb-3 mt-5">Inventory Status</Text>
-        <View className="flex-row gap-3">
-          {/* Total Items */}
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
-            <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'all' })}>
-              <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.primary + '12',
-                  borderWidth: 1,
-                  borderColor: colors.primary + '25',
-                }}
-              >
-                <BoxIcon size={22} color={colors.primary} strokeWidth={2} />
-              </View>
-              <Text className="text-lg font-bold text-text">{stockMetrics.itemCount}</Text>
-              <Text className="text-xs text-text-muted text-center mt-0.5">Total Items</Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Low Stock */}
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
-            <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'low' })}>
-              <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.warning + '12',
-                  borderWidth: 1,
-                  borderColor: colors.warning + '25',
-                }}
-              >
-                <AlertTriangleIcon size={22} color={colors.warning} strokeWidth={2} />
+          {/* Total Stock */}
+          <View style={styles.card}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'all' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.success + '20' }]}>
+                  <Box size={20} color={colors.success} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
               </View>
-              <Text className="text-lg font-bold text-text">{stockMetrics.lowStockCount}</Text>
-              <Text className="text-xs text-text-muted text-center mt-0.5">Low Stock</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{itemCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Total Stock</Text>
+              </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
             </TouchableOpacity>
           </View>
 
           {/* Out of Stock */}
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
-            <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'out' })}>
-              <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.danger + '12',
-                  borderWidth: 1,
-                  borderColor: colors.danger + '25',
-                }}
-              >
-                <XCircleIcon size={22} color={colors.danger} strokeWidth={2} />
+          <View style={styles.card}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'out' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.danger + '20' }]}>
+                  <XCircle size={20} color={colors.danger} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
               </View>
-              <Text className="text-lg font-bold text-text">{stockMetrics.outOfStockCount}</Text>
-              <Text className="text-xs text-text-muted text-center mt-0.5">Out of Stock</Text>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{outOfStockCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Out of Stock</Text>
+              </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Low Stock */}
+          <View style={styles.card}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => (navigation as any).navigate("ItemsTab", { filter: 'low' })}
+              style={{ flex: 1, justifyContent: 'space-between' }}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.warning + '20' }]}>
+                  <AlertTriangle size={20} color={colors.warning} />
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>Weekly</Text>
+                </View>
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={styles.value}>{lowStockCount?.[0]?.count || 0}</Text>
+                <Text style={styles.label}>Low Stock</Text>
+              </View>
+              <View style={styles.cardFooter}>
+                <ArrowUpRight size={16} color={colors.text} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Chart */}
-        <View className="bg-surface rounded-xl p-4 shadow-sm mt-6">
-          <View className="flex-row justify-between items-start mb-4">
+        {/* Sales Trend Chart */}
+        <View style={styles.chartCard}>
+          <View style={styles.chartHeader}>
             <View>
-              <Text className="text-base font-bold text-text">Revenue vs Purchases</Text>
-              <Text className="text-xs text-text-muted">Last 7 Days</Text>
+              <Text style={styles.chartTitle}>Sales Trend</Text>
+              <Text style={styles.chartSubtitle}>
+                Last 5 Days Revenue
+              </Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>Last 5 days</Text>
             </View>
           </View>
 
-          <View className="flex-row justify-between items-end h-[150px]">
-            {chartData.map((data, index) => {
-              const maxVal = Math.max(...chartData.map(d => Math.max(d.sales, d.purchases)), 100);
-              const salesHeight = (data.sales / maxVal) * 100;
-              const purchaseHeight = (data.purchases / maxVal) * 100;
-
+          <View style={styles.chartContainer}>
+            {chartData.map((value, index) => {
+              // Calculate height percentage relative to max value
+              const max = Math.max(...chartData, 1); // Avoid div by 0
+              const heightPercent = (value / max) * 100;
               return (
-                <View key={index} className="items-center gap-2 flex-1">
-                  <View className="w-5 h-[120px] justify-end items-center">
-                    <View className="flex-row items-end h-full gap-0.5">
-                      <View
-                        className="rounded-[3px] w-1.5 opacity-60"
-                        style={{ height: `${purchaseHeight}%`, backgroundColor: colors.danger }}
-                      />
-                      <View
-                        className="rounded-[3px] w-1.5"
-                        style={{ height: `${salesHeight}%`, backgroundColor: colors.success }}
-                      />
-                    </View>
+                <View key={index} style={styles.barColumn}>
+                  <Text style={styles.barLabel}>{value > 0 ? (value > 999 ? (value / 1000).toFixed(1) + 'k' : value) : ''}</Text>
+                  <View style={styles.barBackground}>
+                    <View style={[
+                      styles.barFill,
+                      {
+                        height: `${heightPercent}%`,
+                        backgroundColor: index === chartData.length - 1 ? colors.primary : colors.primaryLight
+                      }
+                    ]}
+                    />
                   </View>
-                  <Text className="text-[10px] text-text-muted">{data.date}</Text>
+                  <Text style={styles.dayLabel}>{chartLabels[index]}</Text>
                 </View>
               );
             })}
           </View>
-          <View className="flex-row justify-center gap-4 mt-3">
-            <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.success }} />
-              <Text className="text-xs text-text-secondary">Sales</Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <View className="w-2 h-2 rounded-full opacity-60" style={{ backgroundColor: colors.danger }} />
-              <Text className="text-xs text-text-secondary">Purchases</Text>
-            </View>
-          </View>
         </View>
 
-        {/* Recent Transactions */}
-        <View className="flex-row justify-between items-center mt-6 mb-3">
-          <Text className="text-lg font-bold text-text">Recent Activity</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("SalesTab")}>
-            <Text className="text-sm text-primary font-medium">See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View className="bg-surface rounded-xl shadow-sm p-1">
-          {transactions.map((tx) => {
-            const txColors = getTransactionColor(tx.type); // Now returns { bg, icon, border }
-            return (
-              <TouchableOpacity key={tx.id} className="flex-row items-center p-3 border-b border-border-light last:border-b-0">
-                <View
-                  className="w-10 h-10 rounded-xl justify-center items-center"
-                  style={{
-                    backgroundColor: (txColors as any).bg,
-                    borderWidth: 1,
-                    borderColor: (txColors as any).border,
-                  }}
-                >
-                  {getTransactionIcon(tx.type)}
-                </View>
-                <View className="flex-1 ml-3">
-                  <Text className="text-sm font-semibold text-text">{tx.name || 'Unknown'}</Text>
-                  <Text className="text-xs text-text-muted mt-0.5">
-                    {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} • {tx.invoiceNumber || '-'}
-                  </Text>
-                </View>
-                <View className="items-end">
-                  <Text
-                    className="text-sm font-bold"
-                    style={{
-                      color: tx.type === 'sale' || tx.type === 'payment-in' ? profColors.receivable.icon : colors.text
-                    }}
-                  >
-                    {tx.type === 'sale' || tx.type === 'payment-in' ? '+' : '-'} {formatCurrency(tx.amount)}
-                  </Text>
-                  <Text className="text-[10px] text-text-muted mt-0.5">{tx.date}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-          {transactions.length === 0 && (
-            <View className="p-4 items-center">
-              <Text className="text-text-muted text-sm">No recent activity</Text>
-            </View>
-          )}
-        </View>
-
-        <View className="h-[100px]" />
+        <View style={{ height: 100 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView >
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    marginTop: spacing.sm,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceActive,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  avatarText: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.textSecondary,
+  },
+  greeting: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: 2,
+  },
+  username: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  chatButton: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    ...shadows.sm,
+  },
+  chatButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  badge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.danger,
+    borderWidth: 1.5,
+    borderColor: colors.surface,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  card: {
+    width: (width - (spacing.lg * 2) - spacing.md) / 2,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    ...shadows.sm,
+    height: 160,
+    justifyContent: 'space-between'
+  },
+  primaryCard: {
+    backgroundColor: colors.primary,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconContainerPrimary: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pill: {
+    backgroundColor: colors.background,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pillPrimary: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pillText: {
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  pillTextPrimary: {
+    fontSize: 10,
+    color: colors.textOnPrimary,
+  },
+  cardContent: {
+    marginTop: spacing.sm,
+  },
+  primaryValue: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.textOnPrimary,
+  },
+  primaryLabel: {
+    fontSize: fontSize.xs,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  value: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+  },
+  label: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  cardFooter: {
+    alignItems: 'flex-end',
+  },
+  chartCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    ...shadows.sm,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.xl,
+  },
+  chartTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 200,
+  },
+  barColumn: {
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  barBackground: {
+    width: 40,
+    height: 150,
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  barFill: {
+    width: '100%',
+    borderRadius: 8,
+  },
+  barStack: {
+    width: '100%',
+    borderRadius: 8,
+    position: 'absolute',
+    zIndex: 1,
+  },
+  barLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginBottom: -4,
+  },
+  dayLabel: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+});

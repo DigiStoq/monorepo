@@ -129,48 +129,46 @@ export function useCashTransactionMutations(): CashTransactionMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      await db.writeTransaction(async (tx) => {
-        // Get current balance
-        const result = await tx.execute(
-          `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
-        );
-        const rows = (result.rows?._array ?? []) as { balance: number }[];
-        const currentBalance: number = rows[0]?.balance ?? 0;
+      // Get current balance
+      const result = await db.execute(
+        `SELECT balance FROM cash_transactions ORDER BY created_at DESC LIMIT 1`
+      );
+      const rows = (result.rows?._array ?? []) as { balance: number }[];
+      const currentBalance: number = rows[0]?.balance ?? 0;
 
-        // Calculate new balance
-        let balanceChange: number;
-        if (data.type === "in") {
-          balanceChange = data.amount;
-        } else if (data.type === "out") {
-          balanceChange = -data.amount;
-        } else {
-          // adjustment - amount is the absolute value to set
-          balanceChange = data.amount - currentBalance;
-        }
-        const newBalance = currentBalance + balanceChange;
+      // Calculate new balance
+      let balanceChange: number;
+      if (data.type === "in") {
+        balanceChange = data.amount;
+      } else if (data.type === "out") {
+        balanceChange = -data.amount;
+      } else {
+        // adjustment - amount is the absolute value to set
+        balanceChange = data.amount - currentBalance;
+      }
+      const newBalance = currentBalance + balanceChange;
 
-        await tx.execute(
-          `INSERT INTO cash_transactions (
-            id, date, type, amount, description, category,
-            related_customer_id, related_customer_name,
-            related_invoice_id, related_invoice_number, balance, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.date,
-            data.type,
-            data.amount,
-            data.description,
-            data.category ?? null,
-            data.relatedCustomerId ?? null,
-            data.relatedCustomerName ?? null,
-            data.relatedInvoiceId ?? null,
-            data.relatedInvoiceNumber ?? null,
-            newBalance,
-            now,
-          ]
-        );
-      });
+      await db.execute(
+        `INSERT INTO cash_transactions (
+          id, date, type, amount, description, category,
+          related_customer_id, related_customer_name,
+          related_invoice_id, related_invoice_number, balance, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.date,
+          data.type,
+          data.amount,
+          data.description,
+          data.category ?? null,
+          data.relatedCustomerId ?? null,
+          data.relatedCustomerName ?? null,
+          data.relatedInvoiceId ?? null,
+          data.relatedInvoiceNumber ?? null,
+          newBalance,
+          now,
+        ]
+      );
 
       return id;
     },
@@ -188,5 +186,41 @@ export function useCashTransactionMutations(): CashTransactionMutations {
   return {
     createTransaction,
     deleteTransaction,
+  };
+}
+
+interface CashStats {
+  todayIn: number;
+  todayOut: number;
+  thisMonthIn: number;
+  thisMonthOut: number;
+}
+
+export function useCashStats(): CashStats {
+  const { data: todayIn } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
+     WHERE date = date('now') AND type = 'in'`
+  );
+
+  const { data: todayOut } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
+     WHERE date = date('now') AND type = 'out'`
+  );
+
+  const { data: thisMonthIn } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
+     WHERE date >= date('now', 'start of month') AND type = 'in'`
+  );
+
+  const { data: thisMonthOut } = useQuery<{ sum: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as sum FROM cash_transactions
+     WHERE date >= date('now', 'start of month') AND type = 'out'`
+  );
+
+  return {
+    todayIn: todayIn[0]?.sum ?? 0,
+    todayOut: todayOut[0]?.sum ?? 0,
+    thisMonthIn: thisMonthIn[0]?.sum ?? 0,
+    thisMonthOut: thisMonthOut[0]?.sum ?? 0,
   };
 }

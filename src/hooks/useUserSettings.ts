@@ -121,84 +121,82 @@ export function useUserProfileMutations(): UserProfileMutations {
       const fields: string[] = [];
       const values: (string | number | null)[] = [];
 
-      await db.writeTransaction(async (tx) => {
-        // Check if profile exists
-        const existing = await tx.getAll<UserProfileRow>(
-          `SELECT user_id FROM user_profiles WHERE user_id = ?`,
-          [userId]
+      // Check if profile exists
+      const existing = await db.getAll<UserProfileRow>(
+        `SELECT user_id FROM user_profiles WHERE user_id = ?`,
+        [userId]
+      );
+
+      if (existing.length === 0) {
+        // Create profile if not exists
+        await db.execute(
+          `INSERT INTO user_profiles (
+            user_id, first_name, last_name, phone, avatar_url, role, language, 
+            notification_email, notification_push, notification_sms, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            data.firstName ?? "",
+            data.lastName ?? "",
+            data.phone ?? null,
+            data.avatar ?? null,
+            data.role ?? "staff",
+            data.language ?? "en",
+            data.notifications?.email ? 1 : 0,
+            data.notifications?.push ? 1 : 0,
+            data.notifications?.sms ? 1 : 0,
+            now,
+            now,
+          ]
         );
-
-        if (existing.length === 0) {
-          // Create profile if not exists
-          await tx.execute(
-            `INSERT INTO user_profiles (
-                user_id, first_name, last_name, phone, avatar_url, role, language, 
-                notification_email, notification_push, notification_sms, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              userId,
-              data.firstName ?? "",
-              data.lastName ?? "",
-              data.phone ?? null,
-              data.avatar ?? null,
-              data.role ?? "staff",
-              data.language ?? "en",
-              data.notifications?.email ? 1 : 0,
-              data.notifications?.push ? 1 : 0,
-              data.notifications?.sms ? 1 : 0,
-              now,
-              now,
-            ]
-          );
-        } else {
-          // Update
-          if (data.firstName !== undefined) {
-            fields.push("first_name = ?");
-            values.push(data.firstName);
-          }
-          if (data.lastName !== undefined) {
-            fields.push("last_name = ?");
-            values.push(data.lastName);
-          }
-          if (data.phone !== undefined) {
-            fields.push("phone = ?");
-            values.push(data.phone ?? null);
-          }
-          if (data.avatar !== undefined) {
-            fields.push("avatar_url = ?");
-            values.push(data.avatar ?? null);
-          }
-          if (data.role !== undefined) {
-            fields.push("role = ?");
-            values.push(data.role);
-          }
-          if (data.language !== undefined) {
-            fields.push("language = ?");
-            values.push(data.language);
-          }
-          if (data.notifications) {
-            fields.push("notification_email = ?");
-            values.push(data.notifications.email ? 1 : 0);
-
-            fields.push("notification_push = ?");
-            values.push(data.notifications.push ? 1 : 0);
-
-            fields.push("notification_sms = ?");
-            values.push(data.notifications.sms ? 1 : 0);
-          }
-
-          fields.push("updated_at = ?");
-          values.push(now);
-          values.push(userId);
-
-          if (fields.length > 0) {
-            await tx.execute(
-              `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`,
-              values
-            );
-          }
+      } else {
+        // Update
+        if (data.firstName !== undefined) {
+          fields.push("first_name = ?");
+          values.push(data.firstName);
         }
-      });
+        if (data.lastName !== undefined) {
+          fields.push("last_name = ?");
+          values.push(data.lastName);
+        }
+        if (data.phone !== undefined) {
+          fields.push("phone = ?");
+          values.push(data.phone ?? null);
+        }
+        if (data.avatar !== undefined) {
+          fields.push("avatar_url = ?");
+          values.push(data.avatar ?? null);
+        }
+        if (data.role !== undefined) {
+          fields.push("role = ?");
+          values.push(data.role);
+        }
+        if (data.language !== undefined) {
+          fields.push("language = ?");
+          values.push(data.language);
+        }
+        if (data.notifications) {
+          fields.push("notification_email = ?");
+          values.push(data.notifications.email ? 1 : 0);
+
+          fields.push("notification_push = ?");
+          values.push(data.notifications.push ? 1 : 0);
+
+          fields.push("notification_sms = ?");
+          values.push(data.notifications.sms ? 1 : 0);
+        }
+
+        fields.push("updated_at = ?");
+        values.push(now);
+        values.push(userId);
+
+        if (fields.length > 0) {
+          await db.execute(
+            `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`,
+            values
+          );
+        }
+      }
     },
     [db, userId]
   );
@@ -229,12 +227,15 @@ export function useUserProfileMutations(): UserProfileMutations {
       values.push(userId);
 
       if (fields.length > 0) {
-        await db.writeTransaction(async (tx) => {
-          await tx.execute(
-            `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`,
-            values
-          );
-        });
+        // Should ensure profile exists first?
+        // Assuming profile is created on signup or first login.
+        // For safety we can upsert or check, but let's assume existence or just update.
+        // Actually, safer to ensure existence logic handled in updateUserProfile.
+        // Let's reuse logic or just execute update.
+        await db.execute(
+          `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`,
+          values
+        );
       }
     },
     [db, userId]

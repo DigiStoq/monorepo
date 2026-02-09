@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
@@ -65,11 +64,9 @@ export function ChequesPage(): React.ReactNode {
         relatedInvoiceId: data.relatedInvoiceId,
         notes: data.notes,
       });
-      toast.success("Cheque created successfully");
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to create cheque:", err);
-      toast.error("Failed to create cheque");
     }
   };
 
@@ -77,11 +74,9 @@ export function ChequesPage(): React.ReactNode {
     if (currentSelectedCheque) {
       try {
         await deleteCheque(currentSelectedCheque.id);
-        toast.success("Cheque deleted successfully");
         setSelectedCheque(null);
       } catch (err) {
         console.error("Failed to delete cheque:", err);
-        toast.error("Failed to delete cheque");
       }
     }
   };
@@ -90,10 +85,8 @@ export function ChequesPage(): React.ReactNode {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cleared");
-        toast.success("Cheque marked as cleared");
       } catch (err) {
         console.error("Failed to mark cheque as cleared:", err);
-        toast.error("Failed to mark cheque as cleared");
       }
     }
   };
@@ -102,10 +95,8 @@ export function ChequesPage(): React.ReactNode {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "bounced");
-        toast.success("Cheque marked as bounced");
       } catch (err) {
         console.error("Failed to mark cheque as bounced:", err);
-        toast.error("Failed to mark cheque as bounced");
       }
     }
   };
@@ -114,10 +105,8 @@ export function ChequesPage(): React.ReactNode {
     if (currentSelectedCheque) {
       try {
         await updateChequeStatus(currentSelectedCheque.id, "cancelled");
-        toast.success("Cheque cancelled successfully");
       } catch (err) {
         console.error("Failed to cancel cheque:", err);
-        toast.error("Failed to cancel cheque");
       }
     }
   };

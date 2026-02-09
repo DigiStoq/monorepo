@@ -170,7 +170,6 @@ export function PurchaseItemModal({
             onChange={handleItemChange}
             placeholder="Search for an item..."
             className="w-full"
-            searchable
           />
         </div>
 

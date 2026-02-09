@@ -17,8 +17,7 @@ export {
   CreditNoteDetail,
   type CreditNoteDetailProps,
 } from "./credit-note-detail";
-// ts-prune-ignore-next (exported for future credit note feature)
-// export { CreditNoteForm, type CreditNoteFormProps } from "./credit-note-form";
+export { CreditNoteForm, type CreditNoteFormProps } from "./credit-note-form";
 
 // Estimate components
 export { EstimateList, type EstimateListProps } from "./estimate-list";

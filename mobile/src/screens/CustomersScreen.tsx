@@ -1,72 +1,65 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, FlatList, TouchableOpacity, TextInput, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  RefreshControl,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCustomers } from "../hooks/useCustomers";
-import { SearchIcon, UsersIcon, ChevronRightIcon } from "../components/ui/UntitledIcons";
+import { useQuery } from "@powersync/react-native";
+import { Search, Users, ChevronRight } from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
+import { CustomerRecord } from "../lib/powersync";
 import { CustomHeader } from "../components/CustomHeader";
 import { useTheme } from "../contexts/ThemeContext";
-import type { ThemeColors} from "../lib/theme";
-import { profColors } from "../lib/theme";
 
-function CustomerCard({ customer, colors }: { customer: any, colors: ThemeColors }) {
+function CustomerCard({ customer, styles, colors }: { customer: CustomerRecord, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
-  const typeColors: Record<string, { bg: string; text: string; border: string }> = {
-    customer: { bg: profColors.receivable.bg, text: profColors.receivable.icon, border: profColors.receivable.border },
-    supplier: { bg: profColors.payable.bg, text: profColors.payable.icon, border: profColors.payable.border },
-    both: { bg: profColors.sales.bg, text: profColors.sales.icon, border: profColors.sales.border },
+  const typeColors: Record<string, { bg: string; text: string }> = {
+    customer: { bg: colors.success + '20', text: colors.success }, // using opacity for bg
+    supplier: { bg: colors.warning + '20', text: colors.warning },
+    both: { bg: colors.info + '20', text: colors.info },
   };
 
   const typeStyle = typeColors[customer.type] || typeColors.customer;
 
-  // Avatar Color logic based on name
-  const getAvatarColor = (name: string) => {
-    const charCode = name.charCodeAt(0) || 0;
-    const variants = [profColors.primary, profColors.sales, profColors.receivable, profColors.neutral];
-    return variants[charCode % variants.length];
-  };
-
-  const avatarStyle = getAvatarColor(customer.name || "?");
-
   return (
     <TouchableOpacity
-      className="flex-row items-center bg-surface rounded-lg p-3 gap-3 shadow-sm"
+      style={styles.card}
       activeOpacity={0.7}
       onPress={() => {
-        navigation.navigate("CustomerDetail" as never, { id: customer.id } as never);
+        navigation.navigate("CustomerForm", { id: customer.id } as any);
       }}
     >
-      <View
-        className="w-12 h-12 rounded-full justify-center items-center border"
-        style={{ backgroundColor: avatarStyle.bg, borderColor: avatarStyle.border }}
-      >
-        <Text className="text-lg font-bold" style={{ color: avatarStyle.icon }}>
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>
           {customer.name.charAt(0).toUpperCase()}
         </Text>
       </View>
-      <View className="flex-1">
-        <View className="flex-row items-center justify-between mb-0.5">
-          <Text className="text-md font-semibold text-text flex-1" numberOfLines={1}>{customer.name}</Text>
-          <View
-            className="px-2 py-0.5 rounded-sm ml-2 border"
-            style={{ backgroundColor: typeStyle.bg, borderColor: typeStyle.border }}
-          >
-            <Text className="text-xs font-semibold capitalize" style={{ color: typeStyle.text }}>
+      <View style={styles.customerInfo}>
+        <View style={styles.customerHeaderRow}>
+          <Text style={styles.customerName} numberOfLines={1}>{customer.name}</Text>
+          <View style={[styles.typeBadge, { backgroundColor: typeStyle.bg }]}>
+            <Text style={[styles.typeText, { color: typeStyle.text }]}>
               {customer.type}
             </Text>
           </View>
         </View>
         {customer.phone && (
-          <Text className="text-sm text-text-secondary mb-0.5">{customer.phone}</Text>
+          <Text style={styles.customerPhone}>{customer.phone}</Text>
         )}
-        <View className="flex-row items-center justify-between">
-          <Text className="text-xs text-text-muted">{customer.email || "No email"}</Text>
-          <Text className={`text-sm font-bold ${customer.currentBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ color: customer.currentBalance >= 0 ? colors.success : colors.danger }}>
-            ${Math.abs(customer.currentBalance || 0).toFixed(2)}
+        <View style={styles.customerFooterRow}>
+          <Text style={styles.emailText}>{customer.email || "No email"}</Text>
+          <Text style={[styles.balanceText, { color: customer.current_balance >= 0 ? colors.success : colors.danger }]}>
+            ${Math.abs(customer.current_balance || 0).toFixed(2)}
           </Text>
         </View>
       </View>
-      <ChevronRightIcon size={18} color={colors.textMuted} />
+      <ChevronRight size={18} color={colors.textMuted} />
     </TouchableOpacity>
   );
 }
@@ -77,8 +70,14 @@ export function CustomersScreen() {
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { customers, isLoading } = useCustomers({ search });
+  const { data: customers, isLoading } = useQuery<CustomerRecord>(
+    `SELECT * FROM customers 
+     WHERE ($1 IS NULL OR name LIKE $1) 
+     ORDER BY name ASC`,
+    [search ? `%${search}%` : null]
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -88,15 +87,15 @@ export function CustomersScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
-      <CustomHeader title="Customers" />
+    <View style={styles.container}>
+      <CustomHeader title="Customers" showBack />
 
       {/* Search Bar */}
-      <View className="px-5 py-3">
-        <View className="flex-row items-center bg-surface rounded-lg px-3 py-2 gap-2 border border-border">
-          <SearchIcon size={18} color={colors.textMuted} />
+      <View style={styles.searchBar}>
+        <View style={styles.searchInput}>
+          <Search size={18} color={colors.textMuted} />
           <TextInput
-            className="flex-1 text-md text-text"
+            style={styles.searchText}
             placeholder="Search customers..."
             placeholderTextColor={colors.textMuted}
             value={search}
@@ -107,9 +106,9 @@ export function CustomersScreen() {
 
       <FlatList
         data={customers}
-        renderItem={({ item }) => <CustomerCard customer={item} colors={colors} />}
+        renderItem={({ item }) => <CustomerCard customer={item} styles={styles} colors={colors} />}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100, gap: 8 }}
+        contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -121,15 +120,15 @@ export function CustomersScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-16 gap-2">
-              <UsersIcon size={48} color={colors.textMuted} />
-              <Text className="text-lg font-semibold text-text mt-4">No customers yet</Text>
-              <Text className="text-sm text-text-muted">Add your first customer or supplier</Text>
+            <View style={styles.empty}>
+              <Users size={48} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>No customers yet</Text>
+              <Text style={styles.emptyText}>Add your first customer or supplier</Text>
               <TouchableOpacity
-                className="bg-primary px-6 py-3 rounded-full mt-4"
+                style={styles.addBtn}
                 onPress={() => (navigation as any).navigate("CustomerForm")}
               >
-                <Text className="text-md font-semibold text-white">+ Add Customer</Text>
+                <Text style={styles.addBtnText}>+ Add Customer</Text>
               </TouchableOpacity>
             </View>
           ) : null
@@ -138,12 +137,150 @@ export function CustomersScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        className="absolute right-5 bg-primary px-5 py-3 rounded-full shadow-md"
-        style={{ bottom: insets.bottom + 80 }}
+        style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
         onPress={() => (navigation as any).navigate("CustomerForm")}
       >
-        <Text className="text-md font-semibold text-white">+ Add</Text>
+        <Text style={styles.fabText}>+ Add</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  searchBar: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  searchInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
+  },
+  list: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.sm,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.md,
+    ...shadows.sm,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: "#ffffff",
+  },
+  customerInfo: {
+    flex: 1,
+  },
+  customerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  customerName: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    flex: 1,
+  },
+  typeBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    marginLeft: spacing.sm,
+  },
+  typeText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    textTransform: 'capitalize',
+  },
+  customerPhone: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  customerFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  emailText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  balanceText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+  },
+  empty: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginTop: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+  addBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    marginTop: spacing.md,
+  },
+  addBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: "#ffffff",
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.xl,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    ...shadows.md,
+  },
+  fabText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: "#ffffff",
+  },
+});

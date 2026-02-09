@@ -25,7 +25,6 @@ import {
   useSecuritySettings,
   useSecuritySettingsMutations,
 } from "@/hooks/useSecuritySettings";
-import { toast } from "sonner";
 import { Spinner } from "@/components/common";
 
 function Toggle({
@@ -80,10 +79,8 @@ export function SecuritySettingsPage(): React.ReactNode {
     setIsSaving(true);
     try {
       await updateSecuritySettings(settings);
-      toast.success("Security settings updated successfully");
     } catch (err) {
       console.error("Error saving security settings:", err);
-      toast.error("Failed to save security settings");
     } finally {
       setIsSaving(false);
     }

@@ -166,21 +166,6 @@ interface EstimateMutations {
     },
     items: Omit<EstimateItem, "id" | "estimateId">[]
   ) => Promise<string>;
-  updateEstimate: (
-    id: string,
-    data: {
-      estimateNumber: string;
-      customerId: string;
-      customerName: string;
-      date: string;
-      validUntil: string;
-      status?: string;
-      discountAmount?: number;
-      notes?: string;
-      terms?: string;
-    },
-    items: Omit<EstimateItem, "id" | "estimateId">[]
-  ) => Promise<void>;
   updateEstimateStatus: (id: string, status: string) => Promise<void>;
   convertEstimateToInvoice: (
     estimate: Estimate,
@@ -210,9 +195,6 @@ export function useEstimateMutations(): EstimateMutations {
     ): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
       const subtotal = items.reduce(
         (sum: number, item) => sum + item.amount,
@@ -225,194 +207,55 @@ export function useEstimateMutations(): EstimateMutations {
       );
       const total = subtotal + taxAmount - (data.discountAmount ?? 0);
 
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(
-          `INSERT INTO estimates (
-            id, estimate_number, customer_id, customer_name, date, valid_until, status,
-            subtotal, tax_amount, discount_amount, total, notes, terms,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      await db.execute(
+        `INSERT INTO estimates (
+          id, estimate_number, customer_id, customer_name, date, valid_until, status,
+          subtotal, tax_amount, discount_amount, total, notes, terms,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.estimateNumber,
+          data.customerId,
+          data.customerName,
+          data.date,
+          data.validUntil,
+          data.status ?? "draft",
+          subtotal,
+          taxAmount,
+          data.discountAmount ?? 0,
+          total,
+          data.notes ?? null,
+          data.terms ?? null,
+          now,
+          now,
+        ]
+      );
+
+      for (const item of items) {
+        const itemId = crypto.randomUUID();
+        await db.execute(
+          `INSERT INTO estimate_items (
+            id, estimate_id, item_id, item_name, description, quantity, unit,
+            unit_price, discount_percent, tax_percent, amount
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
+            itemId,
             id,
-            data.estimateNumber,
-            data.customerId,
-            data.customerName,
-            data.date,
-            data.validUntil,
-            data.status ?? "draft",
-            subtotal,
-            taxAmount,
-            data.discountAmount ?? 0,
-            total,
-            data.notes ?? null,
-            data.terms ?? null,
-            now,
-            now,
+            item.itemId ?? null,
+            item.itemName,
+            item.description ?? null,
+            item.quantity,
+            item.unit ?? null,
+            item.unitPrice,
+            item.discountPercent ?? 0,
+            item.taxPercent ?? 0,
+            item.amount,
           ]
         );
-
-        for (const item of items) {
-          const itemId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO estimate_items (
-              id, estimate_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              itemId,
-              id,
-              item.itemId ?? null,
-              item.itemName,
-              item.description ?? null,
-              item.quantity,
-              item.unit ?? null,
-              item.unitPrice,
-              item.discountPercent ?? 0,
-              item.taxPercent ?? 0,
-              item.amount,
-            ]
-          );
-        }
-
-        // Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "estimate",
-            "created",
-            `Created estimate ${data.estimateNumber}`,
-            null,
-            JSON.stringify({
-              estimateNumber: data.estimateNumber,
-              customerName: data.customerName,
-              total,
-            }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
+      }
 
       return id;
-    },
-    [db]
-  );
-
-  const updateEstimate = useCallback(
-    async (
-      id: string,
-      data: {
-        estimateNumber: string;
-        customerId: string;
-        customerName: string;
-        date: string;
-        validUntil: string;
-        status?: string;
-        discountAmount?: number;
-        notes?: string;
-        terms?: string;
-      },
-      items: Omit<EstimateItem, "id" | "estimateId">[]
-    ): Promise<void> => {
-      const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
-
-      const subtotal = items.reduce(
-        (sum: number, item) => sum + item.amount,
-        0
-      );
-      const taxAmount = items.reduce(
-        (sum: number, item) =>
-          sum + (item.amount * (item.taxPercent ?? 0)) / 100,
-        0
-      );
-      const total = subtotal + taxAmount - (data.discountAmount ?? 0);
-
-      await db.writeTransaction(async (tx) => {
-        // Fetch old values for history if needed, or just update
-        // No stock updates for estimates, so straight update
-
-        await tx.execute(
-          `UPDATE estimates SET
-            estimate_number = ?, customer_id = ?, customer_name = ?, date = ?, valid_until = ?, status = ?,
-            subtotal = ?, tax_amount = ?, discount_amount = ?, total = ?, notes = ?, terms = ?,
-            updated_at = ?
-          WHERE id = ?`,
-          [
-            data.estimateNumber,
-            data.customerId,
-            data.customerName,
-            data.date,
-            data.validUntil,
-            data.status ?? "draft",
-            subtotal,
-            taxAmount,
-            data.discountAmount ?? 0,
-            total,
-            data.notes ?? null,
-            data.terms ?? null,
-            now,
-            id,
-          ]
-        );
-
-        // Delete old items
-        await tx.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [
-          id,
-        ]);
-
-        // Insert new items
-        for (const item of items) {
-          const itemId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO estimate_items (
-              id, estimate_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              itemId,
-              id,
-              item.itemId ?? null,
-              item.itemName,
-              item.description ?? null,
-              item.quantity,
-              item.unit ?? null,
-              item.unitPrice,
-              item.discountPercent ?? 0,
-              item.taxPercent ?? 0,
-              item.amount,
-            ]
-          );
-        }
-
-        // Log History
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "estimate",
-            "updated",
-            `Updated estimate ${data.estimateNumber}`,
-            null,
-            JSON.stringify({ total }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
     },
     [db]
   );
@@ -420,35 +263,49 @@ export function useEstimateMutations(): EstimateMutations {
   const updateEstimateStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
       const now = new Date().toISOString();
+      await db.execute(
+        `UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`,
+        [status, now, id]
+      );
+    },
+    [db]
+  );
+
+  // Helper to add history entry for the invoice
+  const addInvoiceHistoryEntry = useCallback(
+    async (entry: {
+      invoiceId: string;
+      action: string;
+      description: string;
+      oldValues?: Record<string, unknown>;
+      newValues?: Record<string, unknown>;
+    }) => {
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+
       const { user } = useAuthStore.getState();
+      const userId = user?.id ?? null;
       const userName =
         user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(
-          `UPDATE estimates SET status = ?, updated_at = ? WHERE id = ?`,
-          [status, now, id]
-        );
-
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "estimate",
-            "status_changed",
-            `Status changed to ${status}`,
-            null,
-            JSON.stringify({ status }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
+      await db.execute(
+        `INSERT INTO invoice_history (
+          id, invoice_id, invoice_type, action, description,
+          old_values, new_values, user_id, user_name, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          entry.invoiceId,
+          "sale",
+          entry.action,
+          entry.description,
+          entry.oldValues ? JSON.stringify(entry.oldValues) : null,
+          entry.newValues ? JSON.stringify(entry.newValues) : null,
+          userId,
+          userName,
+          now,
+        ]
+      );
     },
     [db]
   );
@@ -461,189 +318,119 @@ export function useEstimateMutations(): EstimateMutations {
     ): Promise<string> => {
       const invoiceId = crypto.randomUUID();
       const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
 
-      return await db.writeTransaction(async (tx) => {
-        // Generate invoice number from sequence
-        const seqResult = await tx.execute(
-          `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
-          ["sale_invoice"]
-        );
+      // Generate invoice number from sequence
+      const seqResult = await db.execute(
+        `SELECT prefix, next_number, padding FROM sequence_counters WHERE id = ?`,
+        ["sale_invoice"]
+      );
+      const seqRows = (seqResult.rows?._array ?? []) as {
+        prefix: string;
+        next_number: number;
+        padding: number;
+      }[];
+      const seq = seqRows[0];
 
-        let seq = { prefix: "INV", next_number: 1, padding: 5 }; // Default fallback
-        if (seqResult.rows?.length && seqResult.rows.length > 0) {
-          seq = seqResult.rows.item(0);
-        } else {
-          // If mostly using array access:
-          // const rows = seqResult.rows?._array;
-          // if (rows && rows.length > 0) seq = rows[0];
-          // But transaction results use item() usually.
-        }
+      if (seqRows.length === 0) {
+        throw new Error("Invoice sequence counter not found");
+      }
 
-        // Just to be safe with types, assuming basic seq structure if not found or error
-        // But throwing is safer if sequence is critical.
-        // The original code threw error.
+      const invoiceNumber = `${seq.prefix}-${String(seq.next_number).padStart(seq.padding, "0")}`;
 
-        const invoiceNumber = `${seq.prefix}-${String(seq.next_number).padStart(seq.padding, "0")}`;
+      // Increment the sequence counter
+      await db.execute(
+        `UPDATE sequence_counters SET next_number = next_number + 1, updated_at = ? WHERE id = ?`,
+        [now, "sale_invoice"]
+      );
 
-        // Increment the sequence counter
-        await tx.execute(
-          `UPDATE sequence_counters SET next_number = next_number + 1, updated_at = ? WHERE id = ?`,
-          [now, "sale_invoice"]
-        );
+      // Create the sale invoice
+      await db.execute(
+        `INSERT INTO sale_invoices (
+          id, invoice_number, customer_id, customer_name, date, due_date, status,
+          subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
+          notes, terms, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          invoiceId,
+          invoiceNumber,
+          estimate.customerId,
+          estimate.customerName,
+          now.split("T")[0], // Today's date for the invoice
+          dueDate,
+          "unpaid",
+          estimate.subtotal,
+          estimate.taxAmount,
+          estimate.discountAmount,
+          estimate.total,
+          0, // amount_paid
+          estimate.total, // amount_due
+          estimate.notes ?? null,
+          estimate.terms ?? null,
+          now,
+          now,
+        ]
+      );
 
-        // Create the sale invoice
-        await tx.execute(
-          `INSERT INTO sale_invoices (
-            id, invoice_number, customer_id, customer_name, date, due_date, status,
-            subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-            notes, terms, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      // Copy estimate items to invoice items
+      for (const item of items) {
+        const itemId = crypto.randomUUID();
+        await db.execute(
+          `INSERT INTO sale_invoice_items (
+            id, invoice_id, item_id, item_name, description, quantity, unit,
+            unit_price, discount_percent, tax_percent, amount
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
+            itemId,
             invoiceId,
-            invoiceNumber,
-            estimate.customerId,
-            estimate.customerName,
-            now.split("T")[0], // Today's date for the invoice
-            dueDate,
-            "unpaid",
-            estimate.subtotal,
-            estimate.taxAmount,
-            estimate.discountAmount,
-            estimate.total,
-            0, // amount_paid
-            estimate.total, // amount_due
-            estimate.notes ?? null,
-            estimate.terms ?? null,
-            now,
-            now,
+            item.itemId ?? null,
+            item.itemName,
+            item.description ?? null,
+            item.quantity,
+            item.unit ?? "pcs",
+            item.unitPrice,
+            item.discountPercent ?? 0,
+            item.taxPercent ?? 0,
+            item.amount,
           ]
         );
+      }
 
-        // Copy estimate items to invoice items
-        for (const item of items) {
-          const itemId = crypto.randomUUID();
-          await tx.execute(
-            `INSERT INTO sale_invoice_items (
-              id, invoice_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              itemId,
-              invoiceId,
-              item.itemId ?? null,
-              item.itemName,
-              item.description ?? null,
-              item.quantity,
-              item.unit ?? "pcs",
-              item.unitPrice,
-              item.discountPercent ?? 0,
-              item.taxPercent ?? 0,
-              item.amount,
-            ]
-          );
-        }
+      // Update estimate status to converted
+      await db.execute(
+        `UPDATE estimates SET status = 'converted', converted_to_invoice_id = ?, updated_at = ? WHERE id = ?`,
+        [invoiceId, now, estimate.id]
+      );
 
-        // Update estimate status to converted
-        await tx.execute(
-          `UPDATE estimates SET status = 'converted', converted_to_invoice_id = ?, updated_at = ? WHERE id = ?`,
-          [invoiceId, now, estimate.id]
-        );
-
-        // Add history entry for the new INVOICE
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description,
-            old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            invoiceId,
-            "sale",
-            "created",
-            `Invoice ${invoiceNumber} created from Estimate ${estimate.estimateNumber}`,
-            null,
-            JSON.stringify({
-              total: estimate.total,
-              status: "unpaid",
-              itemCount: items.length,
-              convertedFromEstimate: estimate.estimateNumber,
-            }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-
-        // Also log history for ESTIMATE?
-        const estHistoryId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            estHistoryId,
-            estimate.id,
-            "estimate",
-            "converted",
-            `Converted to Invoice ${invoiceNumber}`,
-            null,
-            JSON.stringify({ convertedTo: invoiceNumber }),
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-
-        return invoiceId;
+      // Add history entry for the new invoice
+      await addInvoiceHistoryEntry({
+        invoiceId,
+        action: "created",
+        description: `Invoice ${invoiceNumber} created from Estimate ${estimate.estimateNumber}`,
+        newValues: {
+          total: estimate.total,
+          status: "unpaid",
+          itemCount: items.length,
+          convertedFromEstimate: estimate.estimateNumber,
+        },
       });
+
+      return invoiceId;
     },
-    [db]
+    [db, addInvoiceHistoryEntry]
   );
 
   const deleteEstimate = useCallback(
     async (id: string): Promise<void> => {
-      const now = new Date().toISOString();
-      const { user } = useAuthStore.getState();
-      const userName =
-        user?.user_metadata.full_name ?? user?.email ?? "Unknown User";
-
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [
-          id,
-        ]);
-        await tx.execute(`DELETE FROM estimates WHERE id = ?`, [id]);
-
-        // Log delete history (best effort)
-        const historyId = crypto.randomUUID();
-        await tx.execute(
-          `INSERT INTO invoice_history (
-            id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            "estimate",
-            "deleted",
-            `Deleted estimate`,
-            null,
-            null,
-            user?.id ?? null,
-            userName,
-            now,
-          ]
-        );
-      });
+      await db.execute(`DELETE FROM estimate_items WHERE estimate_id = ?`, [
+        id,
+      ]);
+      await db.execute(`DELETE FROM estimates WHERE id = ?`, [id]);
     },
     [db]
   );
 
   return {
     createEstimate,
-    updateEstimate,
     updateEstimateStatus,
     convertEstimateToInvoice,
     deleteEstimate,

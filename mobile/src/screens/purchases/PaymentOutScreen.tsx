@@ -2,19 +2,30 @@ import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
+  StyleSheet,
   FlatList,
   TouchableOpacity,
   TextInput,
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { usePaymentOuts } from "../../hooks/usePaymentOuts";
-import { ArrowUpRightIcon, PlusIcon, SearchIcon } from "../../components/ui/UntitledIcons";
+import { useQuery } from "@powersync/react-native";
+import { ArrowUpRight } from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
-function PaymentOutCard({ payment }: { payment: any }) {
+interface PaymentOut {
+  id: string;
+  payment_number: string;
+  customer_name: string; // Supplier Name
+  date: string;
+  amount: number;
+  payment_mode: string;
+  reference_number: string;
+}
+
+function PaymentOutCard({ payment, styles, colors }: { payment: PaymentOut, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
-  const { colors } = useTheme();
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -28,32 +39,30 @@ function PaymentOutCard({ payment }: { payment: any }) {
 
   return (
     <TouchableOpacity
-      className="bg-surface rounded-lg p-4 shadow-sm"
+      style={styles.card}
       activeOpacity={0.7}
       onPress={() =>
         (navigation as any).navigate("PaymentOutForm", { id: payment.id })
       }
     >
-      <View className="flex-row items-center mb-2">
-        <View className="w-10 h-10 rounded-full bg-danger-10 items-center justify-center mr-3">
-          <ArrowUpRightIcon size={22} color={colors.danger} />
+      <View style={styles.cardHeader}>
+        <View style={styles.iconBox}>
+          <ArrowUpRight size={22} color={colors.danger} />
         </View>
-        <View className="flex-1">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-md font-semibold text-text">
-              {payment.customerName || "Unknown Supplier"}
+        <View style={styles.info}>
+          <View style={styles.row}>
+            <Text style={styles.customerName}>
+              {payment.customer_name || "Unknown Supplier"}
             </Text>
-            <Text className="text-md font-bold text-danger">${payment.amount?.toFixed(2)}</Text>
+            <Text style={styles.amount}>${payment.amount?.toFixed(2)}</Text>
           </View>
-          <Text className="text-xs text-text-muted mt-1">{formatDate(payment.date)}</Text>
+          <Text style={styles.date}>{formatDate(payment.date)}</Text>
         </View>
       </View>
-      <View className="flex-row justify-between items-center mt-1 pt-2 border-t border-border">
-        <View className="bg-surface-hover px-2 py-0.5 rounded-sm">
-          <Text className="text-xs font-medium text-text-secondary uppercase">{payment.paymentMode}</Text>
-        </View>
-        {payment.referenceNumber ? (
-          <Text className="text-xs text-text-muted">Ref: {payment.referenceNumber}</Text>
+      <View style={styles.cardFooter}>
+        <Text style={styles.mode}>{payment.payment_mode?.toUpperCase()}</Text>
+        {payment.reference_number ? (
+          <Text style={styles.ref}>Ref: {payment.reference_number}</Text>
         ) : null}
       </View>
     </TouchableOpacity>
@@ -65,8 +74,14 @@ export function PaymentOutScreen() {
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { payments, isLoading } = usePaymentOuts({ search });
+  const { data: payments, isLoading } = useQuery<PaymentOut>(
+    `SELECT * FROM payment_outs 
+         WHERE ($1 IS NULL OR customer_name LIKE $1 OR payment_number LIKE $1) 
+         ORDER BY date DESC`,
+    [search ? `%${search}%` : null]
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -76,31 +91,28 @@ export function PaymentOutScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-background">
-      <View className="flex-row items-center p-4 py-2 gap-2">
-        <View className="flex-1 flex-row items-center bg-surface rounded-lg px-3 py-2 border border-border">
-          <SearchIcon size={20} color={colors.textMuted} />
-          <TextInput
-            className="flex-1 ml-2 text-base text-text"
-            placeholder="Search payments..."
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search payments..."
+          placeholderTextColor={colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+        />
         <TouchableOpacity
-          className="w-12 h-12 bg-primary rounded-lg items-center justify-center shadow-sm"
+          style={styles.addButton}
           onPress={() => (navigation as any).navigate("PaymentOutForm")}
         >
-          <PlusIcon size={24} color="#ffffff" />
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
 
       <FlatList
         data={payments || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PaymentOutCard payment={item} />}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, gap: 12 }}
+        renderItem={({ item }) => <PaymentOutCard payment={item} styles={styles} colors={colors} />}
+        contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -111,12 +123,12 @@ export function PaymentOutScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center justify-center mt-20">
-              <View className="mb-4">
-                <ArrowUpRightIcon size={48} color={colors.textMuted} />
+            <View style={styles.empty}>
+              <View style={styles.emptyIconContainer}>
+                <ArrowUpRight size={48} color={colors.textMuted} />
               </View>
-              <Text className="text-lg font-semibold text-text mb-1">No payments found</Text>
-              <Text className="text-sm text-text-muted">
+              <Text style={styles.emptyText}>No payments found</Text>
+              <Text style={styles.emptySubtext}>
                 Record your first payment to a supplier
               </Text>
             </View>
@@ -126,3 +138,125 @@ export function PaymentOutScreen() {
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: "row",
+    padding: spacing.xl,
+    gap: spacing.sm,
+    alignItems: "center",
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    color: colors.text,
+    fontSize: fontSize.md,
+  },
+  addButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.lg,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: fontWeight.semibold,
+  },
+  list: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
+    gap: spacing.md,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.danger + '20', // transparent danger
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  info: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  customerName: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  date: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  amount: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: colors.danger,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: spacing.xs,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  mode: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.textSecondary,
+    backgroundColor: colors.surfaceHover,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
+  },
+  ref: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  empty: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 80,
+  },
+  emptyIconContainer: {
+    marginBottom: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+});

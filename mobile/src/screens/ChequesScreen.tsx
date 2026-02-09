@@ -1,50 +1,63 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useState, useCallback, useMemo } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowUpRightIcon, ArrowDownLeftIcon, PlusIcon } from "../components/ui/UntitledIcons";
+import { useQuery } from "@powersync/react-native";
+import { Plus, ArrowUpRight, ArrowDownLeft, Trash2 } from "lucide-react-native";
+import { ChequeRecord } from "../lib/powersync";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomHeader } from "../components/CustomHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
-import { useCheques } from "../hooks/useCheques";
 
 export function ChequesScreen() {
     const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'received' | 'issued'>('all');
+    const insets = useSafeAreaInsets();
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
-    const { cheques } = useCheques({
-        type: filterType === 'all' ? undefined : filterType
-    });
+    // Cheques Query
+    const query = filterType === 'all'
+        ? `SELECT * FROM cheques ORDER BY date DESC, created_at DESC`
+        : `SELECT * FROM cheques WHERE type = '${filterType}' ORDER BY date DESC, created_at DESC`;
+
+    const { data: cheques } = useQuery<ChequeRecord>(query);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        setTimeout(() => { setRefreshing(false); }, 1000);
+        setTimeout(() => setRefreshing(false), 1000);
     }, []);
 
+    // Helper to get status color
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'cleared': return colors.success;
             case 'bounced': return colors.danger;
             case 'cancelled': return colors.textMuted;
-            default: return colors.warning;
+            default: return colors.warning; // or warning color if available, else standard text
         }
     };
 
     return (
-        <View className="flex-1 bg-background relative">
+        <View style={styles.container}>
             <CustomHeader title="Cheques" showBack />
 
-            <View className="px-5 py-4">
-                <View className="flex-row gap-2">
+            <View style={styles.subHeader}>
+                <View style={styles.filterContainer}>
                     {['all', 'received', 'issued'].map((type) => (
                         <TouchableOpacity
                             key={type}
-                            className={`px-4 py-2 rounded-full ${filterType === type ? 'bg-primary' : 'bg-surface-hover'}`}
-                            style={{ backgroundColor: filterType === type ? colors.primary : colors.surfaceHover }}
-                            onPress={() => { setFilterType(type as any); }}
+                            style={[
+                                styles.filterPill,
+                                filterType === type && styles.filterPillActive
+                            ]}
+                            onPress={() => setFilterType(type as any)}
                         >
-                            <Text className={`text-sm font-medium ${filterType === type ? 'text-white' : 'text-text-secondary'}`}
-                                style={{ color: filterType === type ? '#ffffff' : colors.textSecondary }}>
+                            <Text style={[
+                                styles.filterText,
+                                filterType === type && styles.filterTextActive
+                            ]}>
                                 {type.charAt(0).toUpperCase() + type.slice(1)}
                             </Text>
                         </TouchableOpacity>
@@ -52,57 +65,108 @@ export function ChequesScreen() {
                 </View>
             </View>
 
+            {/* List */}
             <FlatList
                 data={cheques || []}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
                 }
-                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100, gap: 12 }}
+                contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
                     <TouchableOpacity
-                        className="bg-surface rounded-lg p-4 shadow-sm"
-                        onPress={() => (navigation as any).navigate("ChequeForm", { id: item.id })}
+                        style={styles.card}
+                        onPress={() => navigation.navigate("ChequeForm" as any, { id: item.id })}
                         activeOpacity={0.7}
                     >
-                        <View className="flex-row items-center gap-4 mb-4">
-                            <View className="w-10 h-10 rounded-full items-center justify-center"
-                                style={{ backgroundColor: item.type === 'received' ? colors.success + '20' : colors.danger + '20' }}>
+                        <View style={styles.cardHeader}>
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'received' ? colors.success + '20' : colors.danger + '20' }]}>
                                 {item.type === 'received'
-                                    ? <ArrowDownLeftIcon color={colors.success} size={20} />
-                                    : <ArrowUpRightIcon color={colors.danger} size={20} />
+                                    ? <ArrowDownLeft color={colors.success} size={20} />
+                                    : <ArrowUpRight color={colors.danger} size={20} />
                                 }
                             </View>
-                            <View className="flex-1">
-                                <Text className="text-md font-semibold text-text">{item.customerName || 'Unknown Party'}</Text>
-                                <Text className="text-sm text-text-muted mt-0.5">{item.bankName} • {item.chequeNumber}</Text>
+                            <View style={styles.headerInfo}>
+                                <Text style={styles.customerName}>{item.customer_name || 'Unknown Party'}</Text>
+                                <Text style={styles.bankName}>{item.bank_name} • {item.cheque_number}</Text>
                             </View>
-                            <View className="px-2 py-0.5 rounded-sm" style={{ backgroundColor: getStatusColor(item.status || 'pending') + '20' }}>
-                                <Text className="text-xs font-semibold capitalize" style={{ color: getStatusColor(item.status || 'pending') }}>
+                            <View style={[styles.badge, { backgroundColor: getStatusColor(item.status || 'pending') + '20' }]}>
+                                <Text style={[styles.badgeText, { color: getStatusColor(item.status || 'pending') }]}>
                                     {item.status || 'Pending'}
                                 </Text>
                             </View>
                         </View>
-                        <View className="flex-row justify-between items-center pt-4 border-t border-border">
-                            <Text className="text-sm text-text-muted">Due: {item.dueDate || item.date}</Text>
-                            <Text className="text-md font-bold text-text">${(item.amount || 0).toFixed(2)}</Text>
+                        <View style={styles.cardFooter}>
+                            <Text style={styles.date}>Due: {item.due_date || item.date}</Text>
+                            <Text style={styles.amount}>${(item.amount || 0).toFixed(2)}</Text>
                         </View>
                     </TouchableOpacity>
                 )}
                 ListEmptyComponent={
-                    <View className="items-center py-10">
-                        <Text className="text-text-muted text-md">No cheques found</Text>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>No cheques found</Text>
                     </View>
                 }
             />
 
+            {/* FAB */}
             <TouchableOpacity
-                className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg"
-                style={{ backgroundColor: colors.primary }}
+                style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
                 onPress={() => (navigation as any).navigate("ChequeForm")}
             >
-                <PlusIcon size={24} color="#ffffff" />
+                <Text style={styles.fabText}>+ Add</Text>
             </TouchableOpacity>
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    subHeader: {
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+    },
+    filterContainer: { flexDirection: 'row', gap: spacing.sm },
+    filterPill: {
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.surfaceHover,
+    },
+    filterPillActive: { backgroundColor: colors.primary },
+    filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
+    filterTextActive: { color: "#ffffff" },
+    listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
+    card: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
+    },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+    iconBox: { width: 40, height: 40, borderRadius: borderRadius.full, alignItems: 'center', justifyContent: 'center' },
+    headerInfo: { flex: 1 },
+    customerName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    bankName: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
+    badge: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.sm },
+    badgeText: { fontSize: fontSize.xs, fontWeight: fontWeight.semibold, textTransform: 'capitalize' },
+    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.md, borderTopWidth: 1, borderColor: colors.border },
+    date: { fontSize: fontSize.sm, color: colors.textMuted },
+    amount: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
+    emptyState: { alignItems: 'center', padding: 40 },
+    emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+    fab: {
+        position: 'absolute',
+        right: spacing.xl,
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.full,
+        ...shadows.md,
+    },
+    fabText: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.semibold,
+        color: "#ffffff",
+    },
+});

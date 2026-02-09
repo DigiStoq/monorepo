@@ -1,20 +1,22 @@
-import { useState } from "react";
-import { View, ScrollView, Text, Alert, Modal, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Text, Alert, Modal, TouchableOpacity } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Lock01Icon, ShieldTickIcon, XCloseIcon, EyeIcon, EyeOffIcon } from "../../components/ui/UntitledIcons";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { Lock, Shield, X, Eye, EyeOff } from "lucide-react-native";
 import { supabase } from "../../lib/supabase";
 
 export function SecuritySettingsScreen() {
     const { colors } = useTheme();
+    const styles = React.useMemo(() => createStyles(colors), [colors]);
 
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
+    const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -47,7 +49,7 @@ export function SecuritySettingsScreen() {
 
             Alert.alert("Success", "Password updated successfully!");
             setIsPasswordModalOpen(false);
-
+            setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
         } catch (error: any) {
@@ -59,59 +61,55 @@ export function SecuritySettingsScreen() {
     };
 
     return (
-        <View className="flex-1 bg-background-light">
+        <View style={styles.container}>
             <CustomHeader title="Security" showBack />
 
-            <ScrollView contentContainerStyle={{ padding: 24 }}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
 
-                <View className="mb-6">
-                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Authentication</Text>
-                    <View className="bg-surface rounded-lg p-6 shadow-sm">
-                        <View className="flex-row items-center mb-4">
-                            <View className="mr-3">
-                                <Lock01Icon size={20} color={colors.text} />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-md font-bold text-text">Password</Text>
-                                <Text className="text-sm text-text-muted mt-1">Update your account password</Text>
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Authentication</Text>
+                    <View style={styles.card}>
+                        <View style={styles.row}>
+                            <Lock size={20} color={colors.text} style={{ marginRight: spacing.md }} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.title}>Password</Text>
+                                <Text style={styles.subtitle}>Update your account password</Text>
                             </View>
                         </View>
                         <Button
-                            variant="primary"
-                            onPress={() => { setIsPasswordModalOpen(true); }}
-                            className="mt-2"
+                            variant="default"
+                            onPress={() => setIsPasswordModalOpen(true)}
+                            style={{ marginTop: spacing.md }}
                         >
                             Change Password
                         </Button>
                     </View>
                 </View>
 
-                <View className="mb-6">
-                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Two-Factor Authentication</Text>
-                    <View className="bg-surface rounded-lg p-6 shadow-sm">
-                        <View className="flex-row items-center mb-4">
-                            <View className="mr-3">
-                                <ShieldTickIcon size={20} color={colors.text} />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-md font-bold text-text">2FA</Text>
-                                <Text className="text-sm text-text-muted mt-1">Add an extra layer of security to your account.</Text>
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Two-Factor Authentication</Text>
+                    <View style={styles.card}>
+                        <View style={styles.row}>
+                            <Shield size={20} color={colors.text} style={{ marginRight: spacing.md }} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.title}>2FA</Text>
+                                <Text style={styles.subtitle}>Add an extra layer of security to your account.</Text>
                             </View>
                         </View>
                         <Button
-                            variant="outline"
-                            onPress={() => { Alert.alert("Coming Soon", "2FA setup requires additional configuration and will be available soon."); }}
-                            className="mt-2"
+                            variant="secondary"
+                            onPress={() => Alert.alert("Coming Soon", "2FA setup requires additional configuration and will be available soon.")}
+                            style={{ marginTop: spacing.md }}
                         >
                             Enable 2FA
                         </Button>
                     </View>
                 </View>
 
-                <View className="mb-6">
-                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Session</Text>
-                    <View className="bg-surface rounded-lg p-6 shadow-sm">
-                        <Text className="text-sm text-text-muted leading-5">
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Session</Text>
+                    <View style={styles.card}>
+                        <Text style={styles.infoText}>
                             Your session is securely managed. You can sign out from the Menu screen.
                         </Text>
                     </View>
@@ -121,16 +119,16 @@ export function SecuritySettingsScreen() {
 
             {/* Password Change Modal */}
             <Modal visible={isPasswordModalOpen} transparent animationType="slide">
-                <View className="flex-1 bg-black/50 justify-center p-6">
-                    <View className="bg-surface rounded-xl p-6 shadow-xl">
-                        <View className="flex-row justify-between items-center mb-6">
-                            <Text className="text-lg font-bold text-text">Change Password</Text>
-                            <TouchableOpacity onPress={() => { setIsPasswordModalOpen(false); }}>
-                                <XCloseIcon size={24} color={colors.text} />
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Change Password</Text>
+                            <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)}>
+                                <X size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
-                        <View className="relative mb-4">
+                        <View style={styles.inputContainer}>
                             <Input
                                 label="New Password"
                                 value={newPassword}
@@ -139,17 +137,17 @@ export function SecuritySettingsScreen() {
                                 placeholder="Enter new password"
                             />
                             <TouchableOpacity
-                                className="absolute right-3 top-9"
-                                onPress={() => { setShowNewPassword(!showNewPassword); }}
+                                style={styles.eyeButton}
+                                onPress={() => setShowNewPassword(!showNewPassword)}
                             >
                                 {showNewPassword ?
-                                    <EyeOffIcon size={20} color={colors.textMuted} /> :
-                                    <EyeIcon size={20} color={colors.textMuted} />
+                                    <EyeOff size={20} color={colors.textMuted} /> :
+                                    <Eye size={20} color={colors.textMuted} />
                                 }
                             </TouchableOpacity>
                         </View>
 
-                        <View className="mb-4">
+                        <View style={styles.inputContainer}>
                             <Input
                                 label="Confirm New Password"
                                 value={confirmPassword}
@@ -159,22 +157,22 @@ export function SecuritySettingsScreen() {
                             />
                         </View>
 
-                        <Text className="text-xs text-text-muted mt-2 mb-6">
+                        <Text style={styles.helpText}>
                             Password must be at least 6 characters long.
                         </Text>
 
                         <Button
                             onPress={handleChangePassword}
-                            loading={isLoading}
-                            className="mt-4"
+                            isLoading={isLoading}
+                            style={{ marginTop: spacing.lg }}
                         >
                             Update Password
                         </Button>
 
                         <Button
-                            variant="ghost"
-                            onPress={() => { setIsPasswordModalOpen(false); }}
-                            className="mt-2"
+                            variant="secondary"
+                            onPress={() => setIsPasswordModalOpen(false)}
+                            style={{ marginTop: spacing.sm }}
                         >
                             Cancel
                         </Button>
@@ -184,3 +182,86 @@ export function SecuritySettingsScreen() {
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.backgroundLight,
+    },
+    scrollContent: {
+        padding: spacing.lg,
+    },
+    section: {
+        marginBottom: spacing.xl,
+    },
+    sectionTitle: {
+        fontSize: fontSize.sm,
+        fontWeight: fontWeight.bold,
+        color: colors.textMuted,
+        marginBottom: spacing.sm,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+    },
+    card: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.lg,
+        ...shadows.sm,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.bold,
+        color: colors.text,
+    },
+    subtitle: {
+        fontSize: fontSize.sm,
+        color: colors.textMuted,
+        marginTop: 2,
+    },
+    infoText: {
+        fontSize: fontSize.sm,
+        color: colors.textMuted,
+        lineHeight: 20,
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: spacing.lg,
+    },
+    modalContent: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.lg,
+    },
+    modalTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: fontWeight.bold,
+        color: colors.text,
+    },
+    inputContainer: {
+        position: 'relative',
+        marginBottom: spacing.md,
+    },
+    eyeButton: {
+        position: 'absolute',
+        right: 12,
+        top: 38,
+    },
+    helpText: {
+        fontSize: fontSize.xs,
+        color: colors.textMuted,
+        marginTop: spacing.xs,
+    },
+});

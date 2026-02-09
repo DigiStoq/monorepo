@@ -34,7 +34,6 @@ export function ReportLayout({
   onPrint,
   isLoading,
   actions,
-  filters,
   children,
   className,
 }: ReportLayoutProps): React.ReactNode {
@@ -104,13 +103,6 @@ export function ReportLayout({
             {actions}
           </div>
         </div>
-
-        {/* Filters */}
-        {filters && (
-          <div className="mt-6 pt-6 border-t border-border-primary">
-            {filters}
-          </div>
-        )}
       </div>
 
       {/* Content */}

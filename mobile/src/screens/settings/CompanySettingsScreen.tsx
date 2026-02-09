@@ -1,26 +1,26 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
+    StyleSheet,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
     Alert,
-    Text,
-    ActivityIndicator
+    Text
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import type { CompanySettings } from "../../hooks/useSettings";
-import { useCompanySettings } from "../../hooks/useSettings";
+import { useCompanySettings, CompanySettings } from "../../hooks/useSettings";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
 
-function Section({ title, children }: any) {
+function Section({ title, children, styles }: any) {
     return (
-        <View className="mb-6">
-            <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">{title}</Text>
-            <View className="bg-surface rounded-lg p-4 shadow-sm gap-4">
+        <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            <View style={styles.card}>
                 {children}
             </View>
         </View>
@@ -30,6 +30,7 @@ function Section({ title, children }: any) {
 export function CompanySettingsScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation();
+    const styles = React.useMemo(() => createStyles(colors), [colors]);
     const { settings: dbSettings, isLoading, updateCompanySettings } = useCompanySettings();
 
     const [formState, setFormState] = useState<CompanySettings | null>(null);
@@ -39,7 +40,7 @@ export function CompanySettingsScreen() {
         if (dbSettings && !formState) {
             setFormState(dbSettings);
         }
-    }, [dbSettings, formState]);
+    }, [dbSettings]);
 
     const handleSave = async () => {
         if (!formState) return;
@@ -59,152 +60,174 @@ export function CompanySettingsScreen() {
     const updateField = (section: keyof CompanySettings, field: string | null, value: string) => {
         setFormState(prev => {
             if (!prev) return null;
-            // Handle top-level string fields differently from nested objects
             if (field === null) {
-                // Determine if the section is one of the string fields
-                if (typeof prev[section] === 'string') {
-                    return { ...prev, [section]: value };
+                // Top level field like name
+                return { ...prev, [section]: value };
+            }
+            // Nested field like address.city
+            return {
+                ...prev,
+                [section]: {
+                    ...(prev[section] as any),
+                    [field]: value
                 }
-                // If it's an object but we're trying to set it directly (shouldn't happen with current logic but for safety)
-                return prev;
-            }
-
-            // Handle nested fields
-            // We need to assert that prev[section] is an object here
-            const sectionValue = prev[section];
-            if (typeof sectionValue === 'object' && sectionValue !== null) {
-                return {
-                    ...prev,
-                    [section]: {
-                        ...sectionValue,
-                        [field]: value
-                    }
-                };
-            }
-            return prev;
+            };
         });
     };
 
     if (isLoading || !formState) {
         return (
-            <View className="flex-1 justify-center items-center bg-background">
-                <ActivityIndicator size="large" color={colors.primary} />
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: colors.textMuted }}>Loading...</Text>
             </View>
         );
     }
 
     return (
-        <View className="flex-1 bg-background-light">
+        <View style={styles.container}>
             <CustomHeader title="Company Settings" showBack />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                className="flex-1"
+                style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={{ padding: 16 }}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
 
-                    <Section title="Business Profile">
+                    <Section title="Business Profile" styles={styles}>
                         <Input
                             label="Business Name"
                             value={formState.name}
-                            onChangeText={(v) => { updateField("name", null, v); }}
+                            onChangeText={(v) => updateField("name", null, v)}
                             placeholder="My Company"
                         />
                         <Input
                             label="Legal Name"
                             value={formState.legalName}
-                            onChangeText={(v) => { updateField("legalName", null, v); }}
+                            onChangeText={(v) => updateField("legalName", null, v)}
                             placeholder="Registered Legal Name"
                         />
                     </Section>
 
-                    <Section title="Address">
+                    <Section title="Address" styles={styles}>
                         <Input
                             label="Street Address"
                             value={formState.address.street}
-                            onChangeText={(v) => { updateField("address", "street", v); }}
+                            onChangeText={(v) => updateField("address", "street", v)}
                         />
-                        <View className="flex-row gap-4">
-                            <View className="flex-1">
+                        <View style={styles.row}>
+                            <View style={{ flex: 1 }}>
                                 <Input
                                     label="City"
                                     value={formState.address.city}
-                                    onChangeText={(v) => { updateField("address", "city", v); }}
+                                    onChangeText={(v) => updateField("address", "city", v)}
                                 />
                             </View>
-                            <View className="flex-1">
+                            <View style={{ width: spacing.md }} />
+                            <View style={{ flex: 1 }}>
                                 <Input
                                     label="State"
                                     value={formState.address.state}
-                                    onChangeText={(v) => { updateField("address", "state", v); }}
+                                    onChangeText={(v) => updateField("address", "state", v)}
                                 />
                             </View>
                         </View>
-                        <View className="flex-row gap-4">
-                            <View className="flex-1">
+                        <View style={styles.row}>
+                            <View style={{ flex: 1 }}>
                                 <Input
                                     label="Postal Code"
                                     value={formState.address.postalCode}
-                                    onChangeText={(v) => { updateField("address", "postalCode", v); }}
+                                    onChangeText={(v) => updateField("address", "postalCode", v)}
                                 />
                             </View>
-                            <View className="flex-1">
+                            <View style={{ width: spacing.md }} />
+                            <View style={{ flex: 1 }}>
                                 <Input
                                     label="Country"
                                     value={formState.address.country}
-                                    onChangeText={(v) => { updateField("address", "country", v); }}
+                                    onChangeText={(v) => updateField("address", "country", v)}
                                 />
                             </View>
                         </View>
                     </Section>
 
-                    <Section title="Contact">
+                    <Section title="Contact" styles={styles}>
                         <Input
                             label="Phone"
                             value={formState.contact.phone}
-                            onChangeText={(v) => { updateField("contact", "phone", v); }}
+                            onChangeText={(v) => updateField("contact", "phone", v)}
                             keyboardType="phone-pad"
                         />
                         <Input
                             label="Email"
                             value={formState.contact.email}
-                            onChangeText={(v) => { updateField("contact", "email", v); }}
+                            onChangeText={(v) => updateField("contact", "email", v)}
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />
                         <Input
                             label="Website"
                             value={formState.contact.website}
-                            onChangeText={(v) => { updateField("contact", "website", v); }}
+                            onChangeText={(v) => updateField("contact", "website", v)}
                             autoCapitalize="none"
                         />
                     </Section>
 
-                    <Section title="Registration">
+                    <Section title="Registration" styles={styles}>
                         <Input
                             label="Tax ID"
                             value={formState.registration.taxId}
-                            onChangeText={(v) => { updateField("registration", "taxId", v); }}
+                            onChangeText={(v) => updateField("registration", "taxId", v)}
                         />
                         <Input
                             label="EIN"
                             value={formState.registration.ein}
-                            onChangeText={(v) => { updateField("registration", "ein", v); }}
+                            onChangeText={(v) => updateField("registration", "ein", v)}
                         />
                     </Section>
 
                     <Button
                         onPress={handleSave}
-                        variant="primary"
+                        variant="default"
                         disabled={isSaving}
-                        loading={isSaving}
-                        className="mt-4"
+                        isLoading={isSaving}
+                        style={{ marginTop: spacing.lg }}
                     >
                         {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
 
-                    <View className="h-10" />
+                    <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.backgroundLight,
+    },
+    scrollContent: {
+        padding: spacing.lg,
+    },
+    section: {
+        marginBottom: spacing.xl,
+    },
+    sectionTitle: {
+        fontSize: fontSize.sm,
+        fontWeight: fontWeight.bold,
+        color: colors.textMuted,
+        marginBottom: spacing.sm,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+    },
+    card: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
+        gap: spacing.md,
+    },
+    row: {
+        flexDirection: 'row',
+    }
+});

@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
+  StyleSheet,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
-  TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
-import { CustomHeader } from "../components/CustomHeader";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import {
@@ -20,7 +18,9 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { SaveIcon, XCloseIcon } from "../components/ui/UntitledIcons";
+import { Save, X } from "lucide-react-native";
+import { wp, hp } from "../lib/responsive";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 export function CustomerFormScreen() {
@@ -29,6 +29,7 @@ export function CustomerFormScreen() {
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -169,23 +170,34 @@ export function CustomerFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background"
+      style={styles.container}
     >
-      <CustomHeader
-        title={isEditing ? "Edit Contact" : "New Contact"}
-        showBack
-        rightAction={
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={isLoading}
-            className="p-1.5"
-          >
-            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
-          </TouchableOpacity>
-        }
-      />
+      <View style={styles.header}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={() => {
+            navigation.goBack();
+          }}
+        >
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>
+            {isEditing ? "Edit Contact" : "New Contact"}
+          </Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={handleSubmit}
+          isLoading={isLoading}
+        >
+          <Save size={24} color={colors.primary} />
+        </Button>
+      </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <CardHeader title="Basic Details" />
           <CardBody>
@@ -234,12 +246,12 @@ export function CustomerFormScreen() {
               onChangeText={setAddress}
               multiline
             />
-            <View className="flex-row gap-2">
+            <View style={styles.row}>
               <Input
                 label="City"
                 value={city}
                 onChangeText={setCity}
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
               <Input
                 label="State"
@@ -267,15 +279,16 @@ export function CustomerFormScreen() {
                 onChangeText={setOpeningBalance}
                 keyboardType="numeric"
                 placeholder="0.00"
+                helperText="Positive = To Receive, Negative = To Pay"
               />
             )}
-            <View className="flex-row gap-2">
+            <View style={styles.row}>
               <Input
                 label="Credit Limit"
                 value={creditLimit}
                 onChangeText={setCreditLimit}
                 keyboardType="numeric"
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
               <Input
                 label="Credit Days"
@@ -300,7 +313,7 @@ export function CustomerFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          className="mt-6"
+          style={styles.submitButton}
         >
           Save Contact
         </Button>
@@ -308,3 +321,40 @@ export function CustomerFormScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  content: {
+    padding: wp(4),
+    paddingBottom: hp(5),
+  },
+  row: {
+    flexDirection: "row",
+  },
+  submitButton: {
+    marginTop: spacing.xl,
+  },
+});

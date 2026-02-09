@@ -9,12 +9,20 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@powersync/react-native";
 import { wp, hp } from "../../lib/responsive";
 import { useTheme } from "../../contexts/ThemeContext";
-import type { ThemeColors } from "../../lib/theme";
-import { usePaymentIns } from "../../hooks/usePaymentIns";
-import type { PaymentIn } from "../../hooks/usePaymentIns";
-import { WalletIcon, SearchIcon, PlusIcon } from "../../components/ui/Icons";
+import { ThemeColors } from "../../lib/theme";
+
+interface PaymentIn {
+  id: string;
+  receipt_number: string;
+  customer_name: string;
+  date: string;
+  amount: number;
+  payment_mode: string;
+  reference_number: string;
+}
 
 function PaymentCard({ payment, styles, colors }: { payment: PaymentIn, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
@@ -40,16 +48,16 @@ function PaymentCard({ payment, styles, colors }: { payment: PaymentIn, styles: 
       <View style={styles.cardHeader}>
         <View style={styles.info}>
           <Text style={styles.customerName}>
-            {payment.customerName || "Unknown Customer"}
+            {payment.customer_name || "Unknown Customer"}
           </Text>
           <Text style={styles.date}>{formatDate(payment.date)}</Text>
         </View>
         <Text style={styles.amount}>${payment.amount?.toFixed(2)}</Text>
       </View>
       <View style={styles.cardFooter}>
-        <Text style={styles.mode}>{payment.paymentMode?.toUpperCase()}</Text>
-        {payment.referenceNumber ? (
-          <Text style={styles.ref}>Ref: {payment.referenceNumber}</Text>
+        <Text style={styles.mode}>{payment.payment_mode?.toUpperCase()}</Text>
+        {payment.reference_number ? (
+          <Text style={styles.ref}>Ref: {payment.reference_number}</Text>
         ) : null}
       </View>
     </TouchableOpacity>
@@ -63,7 +71,12 @@ export function PaymentInScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { payments, isLoading } = usePaymentIns({ search });
+  const { data: payments, isLoading } = useQuery<PaymentIn>(
+    `SELECT * FROM payment_ins 
+         WHERE ($1 IS NULL OR customer_name LIKE $1 OR receipt_number LIKE $1) 
+         ORDER BY date DESC`,
+    [search ? `%${search}%` : null]
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -75,21 +88,18 @@ export function PaymentInScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.searchInputWrapper}>
-          <SearchIcon size={18} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search payments..."
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search payments..."
+          placeholderTextColor={colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+        />
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => (navigation as any).navigate("PaymentInForm")}
         >
-          <PlusIcon size={24} color="#ffffff" />
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
 
@@ -107,9 +117,7 @@ export function PaymentInScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <View style={{ marginBottom: 16 }}>
-              <WalletIcon size={48} color={colors.textMuted} />
-            </View>
+            <Text style={styles.emptyIcon}>💵</Text>
             <Text style={styles.emptyText}>No payments found</Text>
             <Text style={styles.emptySubtext}>
               Record your first payment received
@@ -132,23 +140,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: wp(3),
     alignItems: "center",
   },
-  searchInputWrapper: {
+  searchInput: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 44,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
     color: colors.text,
-    height: '100%',
   },
   addButton: {
     width: 44,
@@ -158,7 +158,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
+  addButtonText: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "600",
+  },
   list: {
     padding: wp(4),
     paddingTop: 0,
@@ -171,7 +175,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: "#000000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -228,7 +232,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     marginTop: hp(10),
   },
-  // emptyIcon removed
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
   emptyText: {
     fontSize: 18,
     fontWeight: "600",

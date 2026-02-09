@@ -155,7 +155,6 @@ export function PaymentOutForm({
                   value={customerId}
                   onChange={setCustomerId}
                   placeholder="Select supplier"
-                  searchable
                 />
                 {selectedCustomer && (
                   <p className="mt-1 text-sm text-slate-500">
@@ -228,7 +227,6 @@ export function PaymentOutForm({
                   value={invoiceId}
                   onChange={handleInvoiceChange}
                   placeholder="Select invoice..."
-                  searchable
                 />
               </div>
 

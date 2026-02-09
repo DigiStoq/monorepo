@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
+  StyleSheet,
   ScrollView,
   Alert,
   Platform,
@@ -21,19 +22,11 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { usePDFGenerator } from "../../hooks/usePDFGenerator";
-import type { PDFInvoiceData } from "../../lib/pdf/htmlTemplates";
+import { Plus, Trash2, Save, X, FileCheck2 } from "lucide-react-native";
+import { wp, hp } from "../../lib/responsive";
 import { generateUUID } from "../../lib/utils";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
-import {
-  PlusIcon,
-  TrashIcon,
-  SaveIcon,
-  XCloseIcon,
-  FileCheck02Icon,
-  FileTextIcon
-} from "../../components/ui/UntitledIcons";
-import { CustomHeader } from "../../components/CustomHeader";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -66,6 +59,7 @@ interface LineItem {
 export function EstimateFormScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -104,44 +98,6 @@ export function EstimateFormScreen() {
     amount: 0,
   });
 
-  const { generateEstimatePDF, isGenerating: isGeneratingPDF } = usePDFGenerator();
-
-  const handleGeneratePDF = async () => {
-    if (!customerId || lineItems.length === 0) {
-      Alert.alert("Error", "Estimate is incomplete");
-      return;
-    }
-
-    const customer = customers.find(c => c.id === customerId);
-
-    const pdfData: PDFInvoiceData = {
-      documentTitle: "ESTIMATE",
-      documentNumber: estimateNumber || "DRAFT",
-      date: date,
-      dueDate: validUntil,
-      companyName: "DigiStoq",
-      companyAddress: "123 Business St, Tech City",
-      companyEmail: "support@digistoq.com",
-      customerName: customer?.name || "Unknown",
-      customerAddress: "",
-      customerPhone: customer?.phone,
-      items: lineItems.map(item => ({
-        description: item.itemName,
-        quantity: item.quantity,
-        rate: item.unitPrice,
-        amount: item.amount
-      })),
-      subtotal: totals.subtotal,
-      taxTotal: totals.tax,
-      total: totals.total,
-      currencySymbol: "$",
-      notes: notes,
-      terms: terms
-    };
-
-    await generateEstimatePDF(pdfData);
-  };
-
   const statusOptions = [
     { label: "Draft", value: "draft" },
     { label: "Sent", value: "sent" },
@@ -149,16 +105,6 @@ export function EstimateFormScreen() {
     { label: "Declined", value: "declined" },
     { label: "Converted", value: "converted" },
   ];
-
-  const customerOptions = useMemo(
-    () => customers.map((c) => ({ label: c.name, value: c.id })),
-    [customers]
-  );
-
-  const itemOptions = useMemo(
-    () => items.map((i) => ({ label: i.name, value: i.id })),
-    [items]
-  );
 
   const totals = useMemo(() => {
     let subtotal = 0;
@@ -344,7 +290,7 @@ export function EstimateFormScreen() {
           newInvoiceId,
           customerId,
           customer?.name || '',
-          `INV-${Math.floor(Math.random() * 100000)}`,
+          'INV-' + Math.floor(Math.random() * 100000),
           new Date().toISOString().split('T')[0], // Today
           // Default due date = valid until or today + 7 days
           validUntil || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -386,7 +332,7 @@ export function EstimateFormScreen() {
             setTimeout(() => (navigation as any).navigate('SaleInvoiceForm', { id: newInvoiceId }), 100);
           }
         },
-        { text: "OK", onPress: () => { navigation.goBack(); } }
+        { text: "OK", onPress: () => navigation.goBack() }
       ]);
 
     } catch (e) {
@@ -400,44 +346,41 @@ export function EstimateFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background"
+      style={styles.container}
     >
+      <View style={styles.header}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={() => {
+            navigation.goBack();
+          }}
+        >
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>
+            {isEditing ? "Edit Estimate" : "New Estimate"}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {isEditing && status !== 'converted' && (
+            <Button variant="ghost" size="icon" onPress={handleConvertToInvoice} disabled={isLoading}>
+              <FileCheck2 size={24} color={colors.success} />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
+          </Button>
+        </View>
+      </View>
 
-      <CustomHeader
-        title={isEditing ? "Edit Estimate" : "New Estimate"}
-        showBack
-        rightAction={
-          <View className="flex-row gap-2">
-            {isEditing && (
-              <TouchableOpacity
-                onPress={handleGeneratePDF}
-                disabled={isGeneratingPDF}
-                className="p-2"
-              >
-                {isGeneratingPDF ? <ActivityIndicator size="small" color={colors.text} /> : <FileTextIcon size={24} color={colors.text} />}
-              </TouchableOpacity>
-            )}
-            {isEditing && status !== 'converted' && (
-              <TouchableOpacity
-                onPress={handleConvertToInvoice}
-                disabled={isLoading}
-                className="p-2"
-              >
-                <FileCheck02Icon size={24} color={colors.success} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={isLoading}
-              className="p-2"
-            >
-              {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
-            </TouchableOpacity>
-          </View>
-        }
-      />
-
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <CardHeader title="Estimate Details" />
           <CardBody>
@@ -446,7 +389,6 @@ export function EstimateFormScreen() {
               options={customerOptions}
               value={customerId}
               onChange={setCustomerId}
-              placeholder="Select Customer"
             />
             <Input
               label="Estimate #"
@@ -454,12 +396,12 @@ export function EstimateFormScreen() {
               onChangeText={setEstimateNumber}
               placeholder="EST-001"
             />
-            <View className="flex-row gap-2">
+            <View style={styles.row}>
               <Input
                 label="Date"
                 value={date}
                 onChangeText={setDate}
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
               <Input
                 label="Valid Until"
@@ -473,20 +415,19 @@ export function EstimateFormScreen() {
               options={statusOptions}
               value={status}
               onChange={setStatus}
-              placeholder="Draft"
             />
           </CardBody>
         </Card>
 
-        <View className="flex-row justify-between items-center mb-3 mt-2">
-          <Text className="text-md font-semibold text-text">Items</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Items</Text>
           <Button
             size="sm"
             variant="outline"
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<PlusIcon size={16} color={colors.text} />}
+            leftIcon={<Plus size={16} color={colors.text} />}
           >
             Add Item
           </Button>
@@ -499,17 +440,17 @@ export function EstimateFormScreen() {
               openItemModal(item);
             }}
           >
-            <Card style={{ marginBottom: 8 }}>
+            <Card style={styles.itemCard}>
               <CardBody>
-                <View className="flex-row justify-between mb-1">
-                  <Text className="text-sm font-semibold text-text">
+                <View style={styles.itemHeader}>
+                  <Text style={styles.itemNumber}>
                     #{index + 1} - {item.itemName}
                   </Text>
-                  <Text className="text-sm font-semibold text-text">
+                  <Text style={styles.itemSummary}>
                     ${item.amount.toFixed(2)}
                   </Text>
                 </View>
-                <Text className="text-xs text-text-muted">
+                <Text style={styles.itemMeta}>
                   {item.quantity} {item.unit} x ${item.unitPrice}
                 </Text>
               </CardBody>
@@ -525,7 +466,6 @@ export function EstimateFormScreen() {
               onChangeText={setNotes}
               multiline
               numberOfLines={2}
-              placeholder="Notes..."
             />
             <Input
               label="Terms"
@@ -533,16 +473,13 @@ export function EstimateFormScreen() {
               onChangeText={setTerms}
               multiline
               numberOfLines={2}
-              placeholder="Terms..."
             />
-            <View className="flex-row justify-between pt-2 border-t border-border mt-2">
-              <Text className="text-lg font-bold text-text">Total</Text>
-              <Text className="text-lg font-bold text-primary">${totals.total.toFixed(2)}</Text>
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>${totals.total.toFixed(2)}</Text>
             </View>
           </CardBody>
         </Card>
-
-        <View className="h-20" />
       </ScrollView>
 
       <Modal
@@ -553,10 +490,10 @@ export function EstimateFormScreen() {
           setModalVisible(false);
         }}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-background rounded-t-xl h-[80%] w-full">
-            <View className="flex-row justify-between items-center p-4 border-b border-border bg-surface rounded-t-xl">
-              <Text className="text-lg font-bold text-text">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
                 {editingItemId ? "Edit Item" : "Add Item"}
               </Text>
               <TouchableOpacity
@@ -564,18 +501,17 @@ export function EstimateFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <XCloseIcon size={24} color={colors.textSecondary} />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <ScrollView contentContainerStyle={styles.modalBody}>
               <Select
                 label="Item"
                 options={itemOptions}
                 value={tempItem.itemId}
                 onChange={handleItemSelect}
-                placeholder="Choose Item"
               />
-              <View className="flex-row gap-2">
+              <View style={styles.row}>
                 <Input
                   label="Quantity"
                   value={String(tempItem.quantity)}
@@ -586,7 +522,7 @@ export function EstimateFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={{ flex: 1, marginRight: 8 }}
                 />
                 <Input
                   label="Rate"
@@ -601,10 +537,9 @@ export function EstimateFormScreen() {
                   containerStyle={{ flex: 1 }}
                 />
               </View>
-              <Button fullWidth onPress={saveItem} className="mt-4">
+              <Button fullWidth onPress={saveItem} style={{ marginTop: 16 }}>
                 Save Item
               </Button>
-              <View className="h-10" />
             </ScrollView>
           </View>
         </View>
@@ -612,3 +547,78 @@ export function EstimateFormScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
+  },
+  titleContainer: { flex: 1, alignItems: "center" },
+  title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
+  content: { padding: wp(4), paddingBottom: hp(5) },
+  row: { flexDirection: "row", marginBottom: 8 },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+  itemCard: {
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+  },
+  itemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  itemNumber: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+  itemSummary: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
+  itemMeta: { fontSize: 13, color: colors.textSecondary },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  totalRow: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  totalLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text },
+  totalValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.primary },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "90%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
+  modalBody: { padding: 16, paddingBottom: 40 },
+});

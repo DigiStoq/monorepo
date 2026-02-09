@@ -42,6 +42,3 @@ export * from "./useSequence";
 
 // Dashboard
 export * from "./useDashboard";
-
-// TanStack Query Integration
-// export * from "./usePowerSyncTanstack";

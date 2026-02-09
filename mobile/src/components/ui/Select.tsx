@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,9 @@ import {
   Modal,
   FlatList,
   StyleSheet,
-  TextInput,
 } from "react-native";
-import { ChevronDownIcon, XIcon, CheckIcon, SearchIcon } from "./Icons";
-import type { ThemeColors } from "../../lib/theme";
-import { spacing, borderRadius, fontSize, fontWeight } from "../../lib/theme";
+import { ChevronDown, X, Check } from "lucide-react-native";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export interface SelectOption {
@@ -26,7 +24,6 @@ interface SelectProps {
   label?: string;
   disabled?: boolean;
   containerStyle?: any;
-  searchable?: boolean;
 }
 
 export function Select({
@@ -37,26 +34,16 @@ export function Select({
   label,
   disabled,
   containerStyle,
-  searchable,
 }: SelectProps) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-
-  const filteredOptions = useMemo(() => {
-    if (!searchQuery) return options;
-    return options.filter((opt) =>
-      opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [options, searchQuery]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
   const handleSelect = (val: string) => {
     onChange(val);
     setModalVisible(false);
-    setSearchQuery("");
   };
 
   return (
@@ -72,7 +59,7 @@ export function Select({
         <Text style={[styles.valueText, !selectedOption && styles.placeholder]}>
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
-        <ChevronDownIcon size={20} color={colors.textMuted} />
+        <ChevronDown size={20} color={colors.textMuted} />
       </TouchableOpacity>
 
       <Modal
@@ -81,7 +68,6 @@ export function Select({
         transparent={true}
         onRequestClose={() => {
           setModalVisible(false);
-          setSearchQuery("");
         }}
       >
         <View style={styles.modalOverlay}>
@@ -91,29 +77,13 @@ export function Select({
               <TouchableOpacity
                 onPress={() => {
                   setModalVisible(false);
-                  setSearchQuery("");
                 }}
               >
-                <XIcon size={24} color={colors.textSecondary} />
+                <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-
-            {searchable && (
-              <View style={styles.searchContainer}>
-                <SearchIcon size={20} color={colors.textMuted} style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search..."
-                  placeholderTextColor={colors.textMuted}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCorrect={false}
-                />
-              </View>
-            )}
-
             <FlatList
-              data={filteredOptions}
+              data={options}
               keyExtractor={(item) => item.value}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -133,7 +103,7 @@ export function Select({
                   >
                     {item.label}
                   </Text>
-                  {item.value === value && <CheckIcon size={20} color={colors.primary} />}
+                  {item.value === value && <Check size={20} color={colors.primary} />}
                 </TouchableOpacity>
               )}
               style={styles.list}
@@ -223,23 +193,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   optionTextSelected: {
     color: colors.primary,
     fontWeight: fontWeight.medium,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surfaceHover,
-    margin: spacing.md,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.sm,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    height: "100%",
-    fontSize: fontSize.md,
-    color: colors.text,
   },
 });

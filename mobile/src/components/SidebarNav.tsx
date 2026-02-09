@@ -53,7 +53,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
             <TouchableOpacity
               key={item.route}
               style={[styles.navItem, isActive && styles.navItemActive]}
-              onPress={() => { handlePress(item.route); }}
+              onPress={() => handlePress(item.route)}
               activeOpacity={0.7}
             >
               <Icon

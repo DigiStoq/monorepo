@@ -163,8 +163,6 @@ export function ChequeForm({
                 options={customerOptions}
                 value={customerId}
                 onChange={setCustomerId}
-                searchable
-                searchPlaceholder="Search..."
               />
 
               <Input

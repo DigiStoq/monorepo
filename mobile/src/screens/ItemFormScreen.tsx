@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
+  StyleSheet,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
-  TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
-import { CustomHeader } from "../components/CustomHeader";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import {
@@ -20,8 +18,10 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { SaveIcon, XCloseIcon } from "../components/ui/UntitledIcons";
+import { Save, X } from "lucide-react-native";
+import { wp, hp } from "../lib/responsive";
 import { generateUUID } from "../lib/utils";
+import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 export function ItemFormScreen() {
@@ -30,6 +30,7 @@ export function ItemFormScreen() {
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
   const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -38,7 +39,6 @@ export function ItemFormScreen() {
   const [type, setType] = useState("product"); // 'product' | 'service'
   const [categoryId, setCategoryId] = useState("");
   const [unit, setUnit] = useState("pcs");
-  const [mrp, setMrp] = useState("");
 
   const [salePrice, setSalePrice] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
@@ -89,7 +89,6 @@ export function ItemFormScreen() {
             setType(data.type || "product");
             setCategoryId(data.category_id || "");
             setUnit(data.unit || "pcs");
-            setMrp(String(data.mrp || 0));
             setSalePrice(String(data.sale_price || 0));
             setPurchasePrice(String(data.purchase_price || 0));
             setTaxRate(String(data.tax_rate || 0));
@@ -120,7 +119,6 @@ export function ItemFormScreen() {
     try {
       const itemId = id || generateUUID();
       const now = new Date().toISOString();
-      const itemMrp = parseFloat(mrp) || 0;
       const sPrice = parseFloat(salePrice) || 0;
       const pPrice = parseFloat(purchasePrice) || 0;
       const tRate = parseFloat(taxRate) || 0;
@@ -132,7 +130,7 @@ export function ItemFormScreen() {
           `
                     UPDATE items 
                     SET name = ?, sku = ?, type = ?, category_id = ?, unit = ?,
-                        mrp = ?, sale_price = ?, purchase_price = ?, tax_rate = ?, 
+                        sale_price = ?, purchase_price = ?, tax_rate = ?, 
                         stock_quantity = ?, low_stock_alert = ?, description = ?,
                         batch_number = ?, expiry_date = ?, barcode = ?, hsn_code = ?,
                         location = ?, brand = ?, model_number = ?,
@@ -167,13 +165,13 @@ export function ItemFormScreen() {
           `
                     INSERT INTO items (
                         id, name, sku, type, category_id, unit,
-                        mrp, sale_price, purchase_price, tax_rate,
+                        sale_price, purchase_price, tax_rate,
                         stock_quantity, low_stock_alert, description,
                         batch_number, expiry_date, barcode, hsn_code,
                         location, brand, model_number,
                         created_at, updated_at, is_active
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                 `,
           [
             itemId,
@@ -182,7 +180,6 @@ export function ItemFormScreen() {
             type,
             categoryId,
             unit,
-            itemMrp,
             sPrice,
             pPrice,
             tRate,
@@ -231,23 +228,34 @@ export function ItemFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background"
+      style={styles.container}
     >
-      <CustomHeader
-        title={isEditing ? "Edit Item" : "New Item"}
-        showBack
-        rightAction={
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={isLoading}
-            className="p-1.5"
-          >
-            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
-          </TouchableOpacity>
-        }
-      />
+      <View style={styles.header}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={() => {
+            navigation.goBack();
+          }}
+        >
+          <X size={24} color={colors.text} />
+        </Button>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>
+            {isEditing ? "Edit Item" : "New Item"}
+          </Text>
+        </View>
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={handleSubmit}
+          isLoading={isLoading}
+        >
+          <Save size={24} color={colors.primary} />
+        </Button>
+      </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <CardHeader title="Basic Details" />
           <CardBody>
@@ -257,13 +265,13 @@ export function ItemFormScreen() {
               onChangeText={setName}
               placeholder="Product Name / Service Name"
             />
-            <View className="flex-row items-start gap-2">
+            <View style={styles.row}>
               <Select
                 label="Type"
                 options={typeOptions}
                 value={type}
                 onChange={setType}
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
               <Input
                 label="SKU"
@@ -299,25 +307,15 @@ export function ItemFormScreen() {
         <Card>
           <CardHeader title="Pricing" />
           <CardBody>
-            <View className="flex-row items-start gap-2">
-              <Input
-                label="MRP"
-                value={mrp}
-                onChangeText={setMrp}
-                keyboardType="numeric"
-                placeholder="0.00"
-                containerStyle={{ flex: 1 }}
-              />
+            <View style={styles.row}>
               <Input
                 label="Sale Price"
                 value={salePrice}
                 onChangeText={setSalePrice}
                 keyboardType="numeric"
                 placeholder="0.00"
-                containerStyle={{ flex: 1 }}
+                containerStyle={{ flex: 1, marginRight: 8 }}
               />
-            </View>
-            <View className="flex-row items-start gap-2 mt-3">
               <Input
                 label="Cost Price"
                 value={purchasePrice}
@@ -326,15 +324,14 @@ export function ItemFormScreen() {
                 placeholder="0.00"
                 containerStyle={{ flex: 1 }}
               />
-              <Input
-                label="Tax Rate (%)"
-                value={taxRate}
-                onChangeText={setTaxRate}
-                keyboardType="numeric"
-                placeholder="0"
-                containerStyle={{ flex: 1 }}
-              />
             </View>
+            <Input
+              label="Tax Rate (%)"
+              value={taxRate}
+              onChangeText={setTaxRate}
+              keyboardType="numeric"
+              placeholder="0"
+            />
           </CardBody>
         </Card>
 
@@ -342,14 +339,14 @@ export function ItemFormScreen() {
           <Card>
             <CardHeader title="Inventory" />
             <CardBody>
-              <View className="flex-row items-start gap-2">
+              <View style={styles.row}>
                 <Input
                   label={isEditing ? "Current Stock" : "Opening Stock"}
                   value={stockQuantity}
                   onChangeText={setStockQuantity}
                   keyboardType="numeric"
                   placeholder="0"
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={{ flex: 1, marginRight: 8 }}
                 />
                 <Input
                   label="Low Stock Alert"
@@ -364,7 +361,7 @@ export function ItemFormScreen() {
           </Card>
         )}
 
-        <View className="mt-4">
+        <View style={{ marginTop: 16 }}>
           <Button
             variant="outline"
             onPress={() => {
@@ -378,16 +375,16 @@ export function ItemFormScreen() {
         </View>
 
         {showAdditional && (
-          <View className="mt-4 gap-4">
+          <View style={{ marginTop: 16, gap: 16 }}>
             <Card>
               <CardHeader title="Tracking & Location" />
               <CardBody>
-                <View className="flex-row items-start gap-2">
+                <View style={styles.row}>
                   <Input
                     label="Batch Number"
                     value={batchNumber}
                     onChangeText={setBatchNumber}
-                    containerStyle={{ flex: 1 }}
+                    containerStyle={{ flex: 1, marginRight: 8 }}
                   />
                   <Input
                     label="Expiry Date"
@@ -397,12 +394,12 @@ export function ItemFormScreen() {
                     containerStyle={{ flex: 1 }}
                   />
                 </View>
-                <View className="flex-row items-start gap-2">
+                <View style={styles.row}>
                   <Input
                     label="Barcode"
                     value={barcode}
                     onChangeText={setBarcode}
-                    containerStyle={{ flex: 1 }}
+                    containerStyle={{ flex: 1, marginRight: 8 }}
                   />
                   <Input
                     label="HSN Code"
@@ -423,12 +420,12 @@ export function ItemFormScreen() {
             <Card>
               <CardHeader title="Brand & Model" />
               <CardBody>
-                <View className="flex-row items-start gap-2">
+                <View style={styles.row}>
                   <Input
                     label="Brand"
                     value={brand}
                     onChangeText={setBrand}
-                    containerStyle={{ flex: 1 }}
+                    containerStyle={{ flex: 1, marginRight: 8 }}
                   />
                   <Input
                     label="Model No"
@@ -446,7 +443,7 @@ export function ItemFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          className="mt-6"
+          style={styles.submitButton}
         >
           Save Item
         </Button>
@@ -454,3 +451,41 @@ export function ItemFormScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginTop: Platform.OS === "android" ? 24 : 0,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+  },
+  content: {
+    padding: wp(4),
+    paddingBottom: hp(5),
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  submitButton: {
+    marginTop: spacing.xl,
+  },
+});

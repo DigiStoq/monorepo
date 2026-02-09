@@ -24,7 +24,6 @@ import {
   useUserPreferences,
   useUserPreferencesMutations,
 } from "@/hooks/useUserPreferences";
-import { toast } from "sonner";
 
 // Default empty state to prevent null access before load
 const defaultPreferences: AppPreferences = {
@@ -128,11 +127,9 @@ export function PreferencesPage(): React.ReactNode {
     setIsSaving(true);
     try {
       await updateUserPreferences(preferences);
-      toast.success("Preferences updated successfully");
       setHasChanges(false); // Reset after save
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      toast.error("Failed to save preferences");
     } finally {
       setIsSaving(false);
     }

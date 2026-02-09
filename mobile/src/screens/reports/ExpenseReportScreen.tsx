@@ -1,14 +1,15 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, CalendarIcon } from "../../components/ui/UntitledIcons";
-import type { DateRange } from "../../hooks/useReports";
-import { useExpenseReport } from "../../hooks/useReports";
+import { ArrowLeft, Calendar, FileText } from "lucide-react-native";
+import { useExpenseReport, DateRange } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function ExpenseReportScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     // Default to current month
     const now = new Date();
@@ -24,51 +25,72 @@ export function ExpenseReportScreen() {
     };
 
     const renderItem = ({ item }: { item: any }) => (
-        <View className="bg-surface p-4 rounded-xl border border-border shadow-sm">
-            <View className="flex-row justify-between items-center mb-1">
-                <Text className="text-base font-semibold text-text capitalize">{item.category || "Uncategorized"}</Text>
-                <Text className="text-base font-semibold text-text">{formatCurrency(item.amount)}</Text>
+        <View style={styles.card}>
+            <View style={styles.cardRow}>
+                <Text style={styles.category}>{item.category || "Uncategorized"}</Text>
+                <Text style={styles.amount}>{formatCurrency(item.amount)}</Text>
             </View>
-            <Text className="text-xs text-text-secondary">{item.count} transactions</Text>
+            <Text style={styles.count}>{item.count} transactions</Text>
         </View>
     );
 
     const total = data ? data.reduce((sum, item) => sum + item.amount, 0) : 0;
 
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Expense Report</Text>
-                <TouchableOpacity className="p-2">
-                    <CalendarIcon color={colors.textSecondary} size={24} />
+                <Text style={styles.headerTitle}>Expense Report</Text>
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Calendar color={colors.textSecondary} size={24} />
                 </TouchableOpacity>
             </View>
 
-            <View className="flex-1">
-                <View className="items-center py-3 bg-surface-hover">
-                    <Text className="text-sm text-text-secondary font-medium">{dateRange.from} - {dateRange.to}</Text>
+            <View style={styles.content}>
+                <View style={styles.dateDisplay}>
+                    <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
                 </View>
 
-                <View className="p-4 bg-surface items-center border-b border-border">
-                    <Text className="text-sm text-text-secondary mb-1">Total Expenses</Text>
-                    <Text className="text-2xl font-bold text-danger">{formatCurrency(total)}</Text>
+                <View style={styles.summaryBox}>
+                    <Text style={styles.summaryLabel}>Total Expenses</Text>
+                    <Text style={styles.summaryValue}>{formatCurrency(total)}</Text>
                 </View>
 
                 {isLoading ? (
-                    <Text className="text-center mt-10 text-text-muted">Loading...</Text>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 ) : (
                     <FlatList
                         data={data}
                         keyExtractor={item => item.category}
                         renderItem={renderItem}
-                        contentContainerStyle={{ padding: 16, gap: 12 }}
-                        ListEmptyComponent={<Text className="text-center mt-10 text-text-muted">No expenses found.</Text>}
+                        contentContainerStyle={styles.list}
+                        ListEmptyComponent={<Text style={styles.emptyText}>No expenses found.</Text>}
                     />
                 )}
             </View>
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
+    iconBtn: { padding: 8 },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
+    content: { flex: 1 },
+    dateDisplay: { alignItems: 'center', padding: 12, backgroundColor: colors.surfaceHover },
+    dateText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+    summaryBox: { padding: 16, backgroundColor: colors.surface, alignItems: 'center', borderBottomWidth: 1, borderColor: colors.border },
+    summaryLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
+    summaryValue: { fontSize: 24, fontWeight: '700', color: colors.danger },
+    list: { padding: 16, gap: 12 },
+    loadingText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    emptyText: { textAlign: 'center', marginTop: 40, color: colors.textMuted },
+    card: { backgroundColor: colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
+    cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    category: { fontSize: 16, fontWeight: '600', color: colors.text, textTransform: 'capitalize' },
+    amount: { fontSize: 16, fontWeight: '600', color: colors.text },
+    count: { fontSize: 12, color: colors.textSecondary },
+});

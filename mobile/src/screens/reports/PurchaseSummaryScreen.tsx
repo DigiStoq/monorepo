@@ -1,23 +1,19 @@
-import type React from "react";
-import { useState, useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import {
-    ArrowLeftIcon,
-    CalendarIcon,
-    DollarSignIcon,
-    FileTextIcon,
-    TrendingUpIcon,
-    TrendingDownIcon,
-    UsersIcon,
-} from "../../components/ui/UntitledIcons";
-import type { DateRange } from "../../hooks/useReports";
-import { usePurchaseSummaryReport } from "../../hooks/useReports";
+import { ArrowLeft, Calendar, DollarSign, FileText, TrendingUp, TrendingDown, Users } from "lucide-react-native";
+import { usePurchaseSummaryReport, DateRange } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../lib/theme";
 
 export function PurchaseSummaryScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
+    function Card({ children, style }: { children: React.ReactNode; style?: any }) {
+        return <View style={[styles.card, style]}>{children}</View>;
+    }
 
     // Default to current month
     const now = new Date();
@@ -44,115 +40,101 @@ export function PurchaseSummaryScreen() {
     const maxMonthAmount = summary?.purchasesByMonth.reduce((max, m) => Math.max(max, m.amount), 0) || 1;
     const maxSupplierAmount = summary?.topSuppliers.reduce((max, c) => Math.max(max, c.amount), 0) || 1;
 
-    function Card({
-        children,
-        className,
-    }: {
-        children: React.ReactNode;
-        className?: string;
-    }) {
-        return (
-            <View className={`bg-surface rounded-xl border border-border p-4 shadow-sm ${className}`}>
-                {children}
-            </View>
-        );
-    }
-
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+                    <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Purchase Summary</Text>
-                <TouchableOpacity className="p-2">
-                    <CalendarIcon color={colors.textSecondary} size={24} />
+                <Text style={styles.headerTitle}>Purchase Summary</Text>
+                <TouchableOpacity style={styles.iconBtn}>
+                    <Calendar color={colors.textSecondary} size={24} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 12 }}>
+            <ScrollView contentContainerStyle={styles.content}>
                 {/* Date Display */}
-                <View className="items-center mb-2">
-                    <Text className="text-sm text-text-secondary font-medium">{dateRange.from} - {dateRange.to}</Text>
+                <View style={styles.dateDisplay}>
+                    <Text style={styles.dateText}>{dateRange.from} - {dateRange.to}</Text>
                 </View>
 
                 {isLoading ? (
-                    <Text className="text-center mt-10 text-text-muted">Loading data...</Text>
+                    <Text style={styles.loadingText}>Loading data...</Text>
                 ) : !summary ? (
-                    <Text className="text-center mt-10 text-text-muted">No data found.</Text>
+                    <Text style={styles.loadingText}>No data found.</Text>
                 ) : (
                     <>
                         {/* Summary Grid */}
-                        <View className="flex-row gap-3">
+                        <View style={styles.grid}>
                             {/* Total Purchases */}
-                            <Card className="flex-1">
-                                <View className="flex-row justify-between items-center mb-2">
-                                    <Text className="text-xs text-text-secondary font-medium">Total Purchases</Text>
-                                    <View className="p-1.5 rounded-lg bg-warning/20">
-                                        <DollarSignIcon size={16} color={colors.warning} />
+                            <Card style={styles.summaryCard}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.cardLabel}>Total Purchases</Text>
+                                    <View style={[styles.iconBox, { backgroundColor: colors.warning + '20' }]}>
+                                        <DollarSign size={16} color={colors.warning} />
                                     </View>
                                 </View>
-                                <Text className="text-lg font-bold text-text mb-1">{formatCurrency(summary.totalPurchases)}</Text>
-                                <Text className="text-[11px] text-text-muted">{summary.totalInvoices} invoices</Text>
+                                <Text style={styles.bigValue}>{formatCurrency(summary.totalPurchases)}</Text>
+                                <Text style={styles.subText}>{summary.totalInvoices} invoices</Text>
                             </Card>
 
                             {/* Total Due */}
-                            <Card className="flex-1">
-                                <View className="flex-row justify-between items-center mb-2">
-                                    <Text className="text-xs text-text-secondary font-medium">Amount Due</Text>
-                                    <View className="p-1.5 rounded-lg bg-danger/20">
-                                        <TrendingDownIcon size={16} color={colors.danger} />
+                            <Card style={styles.summaryCard}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.cardLabel}>Amount Due</Text>
+                                    <View style={[styles.iconBox, { backgroundColor: colors.danger + '20' }]}>
+                                        <TrendingDown size={16} color={colors.danger} />
                                     </View>
                                 </View>
-                                <Text className="text-lg font-bold text-danger mb-1">{formatCurrency(summary.totalDue)}</Text>
-                                <Text className="text-[11px] text-text-muted">{outstandingPercent}% outstanding</Text>
+                                <Text style={[styles.bigValue, { color: colors.danger }]}>{formatCurrency(summary.totalDue)}</Text>
+                                <Text style={styles.subText}>{outstandingPercent}% outstanding</Text>
                             </Card>
                         </View>
 
-                        <View className="flex-row gap-3">
+                        <View style={styles.grid}>
                             {/* Total Paid */}
-                            <Card className="flex-1">
-                                <View className="flex-row justify-between items-center mb-2">
-                                    <Text className="text-xs text-text-secondary font-medium">Paid</Text>
-                                    <View className="p-1.5 rounded-lg bg-success/20">
-                                        <TrendingUpIcon size={16} color={colors.success} />
+                            <Card style={styles.summaryCard}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.cardLabel}>Paid</Text>
+                                    <View style={[styles.iconBox, { backgroundColor: colors.success + '20' }]}>
+                                        <TrendingUp size={16} color={colors.success} />
                                     </View>
                                 </View>
-                                <Text className="text-lg font-bold text-success mb-1">{formatCurrency(summary.totalPaid)}</Text>
-                                <Text className="text-[11px] text-text-muted">{paidPercent}% paid</Text>
+                                <Text style={[styles.bigValue, { color: colors.success }]}>{formatCurrency(summary.totalPaid)}</Text>
+                                <Text style={styles.subText}>{paidPercent}% paid</Text>
                             </Card>
                         </View>
 
                         {/* Monthly Trend */}
-                        <Card className="mb-2">
-                            <Text className="text-base font-semibold text-text mb-3">Purchase Trend</Text>
-                            <View className="flex-row h-[120px] items-end gap-2 pt-2">
-                                {summary.purchasesByMonth.length === 0 ? <Text className="text-center text-text-muted p-5 w-full">No trend data</Text> :
+                        <Card style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Purchase Trend</Text>
+                            <View style={styles.chartContainer}>
+                                {summary.purchasesByMonth.length === 0 ? <Text style={styles.noData}>No trend data</Text> :
                                     summary.purchasesByMonth.map((m, i) => (
-                                        <View key={i} className="flex-1 items-center gap-1">
-                                            <View className="w-3 bg-warning rounded" style={{ height: `${Math.max(4, (m.amount / maxMonthAmount) * 100)}%` }} />
-                                            <Text className="text-[10px] text-text-muted">{m.month}</Text>
+                                        <View key={i} style={styles.barGroup}>
+                                            <View style={[styles.bar, { height: Math.max(4, (m.amount / maxMonthAmount) * 100) }]} />
+                                            <Text style={styles.barLabel}>{m.month}</Text>
                                         </View>
                                     ))}
                             </View>
                         </Card>
 
                         {/* Top Suppliers */}
-                        <Card className="mb-2">
-                            <View className="flex-row justify-between items-center mb-3">
-                                <Text className="text-base font-semibold text-text">Top Suppliers</Text>
-                                <UsersIcon size={16} color={colors.textMuted} />
+                        <Card style={styles.sectionCard}>
+                            <View style={styles.cardHeader}>
+                                <Text style={styles.sectionTitle}>Top Suppliers</Text>
+                                <Users size={16} color={colors.textMuted} />
                             </View>
-                            <View className="gap-3">
-                                {summary.topSuppliers.length === 0 ? <Text className="text-center text-text-muted p-5">No suppliers found</Text> :
+                            <View style={styles.list}>
+                                {summary.topSuppliers.length === 0 ? <Text style={styles.noData}>No suppliers found</Text> :
                                     summary.topSuppliers.map((c, i) => (
-                                        <View key={c.supplierId} className="gap-1.5">
-                                            <View className="flex-row justify-between">
-                                                <Text className="text-sm text-text-secondary font-medium flex-1">{i + 1}. {c.supplierName}</Text>
-                                                <Text className="text-sm text-text font-semibold">{formatCurrency(c.amount)}</Text>
+                                        <View key={c.supplierId} style={styles.listItem}>
+                                            <View style={styles.listRow}>
+                                                <Text style={styles.listName}>{i + 1}. {c.supplierName}</Text>
+                                                <Text style={styles.listValue}>{formatCurrency(c.amount)}</Text>
                                             </View>
-                                            <View className="h-1.5 bg-surface-hover rounded-full overflow-hidden">
-                                                <View className="h-full bg-warning rounded-full" style={{ width: `${(c.amount / maxSupplierAmount) * 100}%` }} />
+                                            <View style={styles.progressBarBg}>
+                                                <View style={[styles.progressBarFill, { width: `${(c.amount / maxSupplierAmount) * 100}%` }]} />
                                             </View>
                                         </View>
                                     ))}
@@ -164,3 +146,36 @@ export function PurchaseSummaryScreen() {
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderColor: colors.border, marginTop: Platform.OS === 'android' ? 24 : 0 },
+    iconBtn: { padding: 8 },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.text },
+    content: { padding: 16, paddingBottom: 40 },
+    dateDisplay: { alignItems: 'center', marginBottom: 16 },
+    dateText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+    loadingText: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
+    grid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+    card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 16 },
+    summaryCard: { flex: 1 },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    cardLabel: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+    iconBox: { padding: 6, borderRadius: 8 },
+    bigValue: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 2 },
+    subText: { fontSize: 11, color: colors.textMuted },
+    sectionCard: { marginBottom: 16 },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+    chartContainer: { flexDirection: 'row', height: 120, alignItems: 'flex-end', gap: 8, paddingTop: 10 },
+    barGroup: { flex: 1, alignItems: 'center', gap: 4 },
+    bar: { width: 12, backgroundColor: colors.warning, borderRadius: 4 },
+    barLabel: { fontSize: 10, color: colors.textMuted },
+    list: { gap: 12 },
+    listItem: { gap: 6 },
+    listRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    listName: { fontSize: 14, color: colors.textSecondary, fontWeight: '500', flex: 1 },
+    listValue: { fontSize: 14, color: colors.text, fontWeight: '600' },
+    progressBarBg: { height: 6, backgroundColor: colors.surfaceHover, borderRadius: 3, overflow: 'hidden' },
+    progressBarFill: { height: '100%', backgroundColor: colors.warning, borderRadius: 3 },
+    noData: { textAlign: 'center', color: colors.textMuted, padding: 20 },
+});

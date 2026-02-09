@@ -1,14 +1,9 @@
 import {
   createRouter,
-  createRootRouteWithContext,
+  createRootRoute,
   createRoute,
   redirect,
 } from "@tanstack/react-router";
-import type { QueryClient } from "@tanstack/react-query";
-import type { PowerSyncDatabase } from "@powersync/web";
-import { customersQueryOptions } from "@/hooks/useCustomers";
-import { NotFoundPage } from "@/components/common/NotFoundPage";
-import { ErrorPage } from "@/components/common/ErrorPage";
 import { RootLayout } from "./__root";
 import { useAuthStore } from "@/stores";
 
@@ -124,14 +119,7 @@ function redirectIfAuthenticated(): void {
 // ============================================================================
 
 // Root route (for all routes - used as base)
-interface RouterContext {
-  auth: { isAuthenticated: boolean; isInitialized: boolean };
-  db: PowerSyncDatabase;
-  queryClient: QueryClient;
-}
-
-// Root route (for all routes - used as base)
-const rootRoute = createRootRouteWithContext<RouterContext>()();
+const rootRoute = createRootRoute();
 
 // Auth routes (public - no sidebar layout)
 const loginRoute = createRoute({
@@ -172,8 +160,6 @@ const indexRoute = createRoute({
 
 // Customers
 const customersRoute = createRoute({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(customersQueryOptions(context.db)),
   getParentRoute: () => protectedLayoutRoute,
   path: "/customers",
   component: CustomersPage,
@@ -550,16 +536,6 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
-  defaultNotFoundComponent: NotFoundPage,
-  defaultErrorComponent: ErrorPage,
-  context: {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    auth: undefined!,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    db: undefined!,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    queryClient: undefined!,
-  },
 });
 
 // Type declaration for router

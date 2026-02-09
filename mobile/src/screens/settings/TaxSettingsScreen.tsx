@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
+    StyleSheet,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
@@ -13,34 +14,70 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import type { TaxRate } from "../../hooks/useSettings"; // Removed useTaxRates from here as we'll mock it or it should be passed in if needed. Wait, the original imported it. Let's assume it exists.
-import { useTaxRates } from "../../hooks/useSettings";
-import { TrashIcon, PlusIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
+import { useInvoiceSettings, useTaxRates, InvoiceSettings, TaxRate } from "../../hooks/useSettings";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { Trash2, Plus, X } from "lucide-react-native";
+
+function Section({ title, children, styles, action }: any) {
+    return (
+        <View style={styles.section}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm }}>
+                <Text style={styles.sectionTitle}>{title}</Text>
+                {action}
+            </View>
+            <View style={styles.card}>
+                {children}
+            </View>
+        </View>
+    );
+}
 
 export function TaxSettingsScreen() {
     const { colors } = useTheme();
+    const styles = React.useMemo(() => createStyles(colors), [colors]);
+    const { settings: invoiceSettings, updateInvoiceSettings } = useInvoiceSettings();
     const { taxRates, createTaxRate, deleteTaxRate } = useTaxRates();
 
+    const [formState, setFormState] = useState<InvoiceSettings | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newRateName, setNewRateName] = useState("");
-    const [newRateValue, setNewRateValue] = useState("");
+    const [newRate, setNewRate] = useState<Partial<TaxRate>>({ name: "", rate: 0, type: "percentage", isDefault: false });
+
+    useEffect(() => {
+        if (invoiceSettings && !formState) {
+            setFormState(invoiceSettings);
+        }
+    }, [invoiceSettings]);
+
+    const handleSaveInvoiceSettings = async () => {
+        if (!formState) return;
+        setIsSaving(true);
+        try {
+            await updateInvoiceSettings(formState);
+            Alert.alert("Success", "Invoice settings updated.");
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Error", "Failed to save settings.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleAddRate = async () => {
-        if (!newRateName || !newRateValue) {
+        if (!newRate.name || newRate.rate === undefined) {
             Alert.alert("Error", "Name and Rate are required.");
             return;
         }
         try {
             await createTaxRate({
-                name: newRateName,
-                rate: Number(newRateValue),
-                type: "percentage",
-                isDefault: false,
-                description: ""
-            } as any); // Casting as any to bypass potential partial type issues if necessary, or just matching interface
+                name: newRate.name,
+                rate: Number(newRate.rate),
+                type: newRate.type || "percentage",
+                isDefault: newRate.isDefault || false,
+                description: newRate.description
+            });
             setIsAddModalOpen(false);
-            setNewRateName("");
-            setNewRateValue("");
+            setNewRate({ name: "", rate: 0, type: "percentage", isDefault: false });
         } catch (e) {
             console.error(e);
             Alert.alert("Error", "Failed to add tax rate.");
@@ -54,69 +91,119 @@ export function TaxSettingsScreen() {
         ]);
     };
 
+    const updateField = (field: keyof InvoiceSettings, value: any) => {
+        setFormState(prev => prev ? ({ ...prev, [field]: value }) : null);
+    };
+
+    if (!formState) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: colors.textMuted }}>Loading...</Text>
+            </View>
+        );
+    }
+
     return (
-        <View className="flex-1 bg-background-light">
-            <CustomHeader title="Manage Tax Rates" showBack />
+        <View style={styles.container}>
+            <CustomHeader title="Tax & Invoice" showBack />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                className="flex-1"
+                style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={{ padding: 16 }}>
-                    <View className="mb-6">
-                        <View className="flex-row justify-between items-center mb-2">
-                            <Text className="text-sm font-bold text-text-muted uppercase tracking-widest">Tax Rates</Text>
-                            <TouchableOpacity onPress={() => { setIsAddModalOpen(true); }} className="p-1">
-                                <PlusIcon size={20} color={colors.primary} />
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+
+                    <Section title="Invoice Settings" styles={styles}>
+                        <Input
+                            label="Invoice Prefix"
+                            value={formState.prefix}
+                            onChangeText={(v) => updateField("prefix", v)}
+                            placeholder="INV-"
+                        />
+                        <Input
+                            label="Terms & Conditions"
+                            value={formState.termsAndConditions}
+                            onChangeText={(v) => updateField("termsAndConditions", v)}
+                            multiline
+                            numberOfLines={3}
+                            style={{ height: 80, textAlignVertical: 'top' }}
+                        />
+                        <Input
+                            label="Default Notes"
+                            value={formState.notes}
+                            onChangeText={(v) => updateField("notes", v)}
+                            multiline
+                            numberOfLines={2}
+                            style={{ height: 60, textAlignVertical: 'top' }}
+                        />
+                        <Input
+                            label="Due Days"
+                            value={formState.dueDateDays?.toString()}
+                            onChangeText={(v) => updateField("dueDateDays", parseInt(v) || 0)}
+                            keyboardType="number-pad"
+                        />
+                        <Button
+                            onPress={handleSaveInvoiceSettings}
+                            disabled={isSaving}
+                            isLoading={isSaving}
+                            style={{ marginTop: spacing.md }}
+                        >
+                            {isSaving ? "Saving..." : "Save Settings"}
+                        </Button>
+                    </Section>
+
+                    <Section
+                        title="Tax Rates"
+                        styles={styles}
+                        action={
+                            <TouchableOpacity onPress={() => setIsAddModalOpen(true)}>
+                                <Plus size={20} color={colors.primary} />
                             </TouchableOpacity>
-                        </View>
-                        <View className="bg-surface rounded-lg p-4 shadow-sm">
-                            {taxRates.map((rate: TaxRate) => (
-                                <View key={rate.id} className="flex-row justify-between items-center py-3 border-b border-border last:border-b-0">
-                                    <View>
-                                        <Text className="text-md font-medium text-text">{rate.name}</Text>
-                                        <Text className="text-sm text-text-muted">{rate.rate}% {rate.type}</Text>
-                                    </View>
-                                    <TouchableOpacity onPress={() => { handleDeleteRate(rate.id); }} className="p-2">
-                                        <TrashIcon size={18} color={colors.danger} />
-                                    </TouchableOpacity>
+                        }
+                    >
+                        {taxRates.map((rate: TaxRate) => (
+                            <View key={rate.id} style={styles.rateItem}>
+                                <View>
+                                    <Text style={styles.rateName}>{rate.name}</Text>
+                                    <Text style={styles.rateValue}>{rate.rate}% {rate.type}</Text>
                                 </View>
-                            ))}
-                            {taxRates.length === 0 && (
-                                <Text className="text-text-muted italic text-center py-4">No tax rates defined.</Text>
-                            )}
-                        </View>
-                    </View>
+                                <TouchableOpacity onPress={() => handleDeleteRate(rate.id)}>
+                                    <Trash2 size={18} color={colors.danger} />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                        {taxRates.length === 0 && (
+                            <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>No tax rates defined.</Text>
+                        )}
+                    </Section>
+
                 </ScrollView>
             </KeyboardAvoidingView>
 
             {/* Add Rate Modal */}
             <Modal visible={isAddModalOpen} transparent animationType="slide">
-                <View className="flex-1 bg-black/50 justify-center p-6">
-                    <View className="bg-surface rounded-xl p-6 shadow-xl space-y-4">
-                        <View className="flex-row justify-between items-center mb-4">
-                            <Text className="text-lg font-bold text-text">Add Tax Rate</Text>
-                            <TouchableOpacity onPress={() => { setIsAddModalOpen(false); }}>
-                                <XCloseIcon size={24} color={colors.text} />
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Add Tax Rate</Text>
+                            <TouchableOpacity onPress={() => setIsAddModalOpen(false)}>
+                                <X size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
-                        <View className="space-y-4">
-                            <Input
-                                label="Name"
-                                value={newRateName}
-                                onChangeText={setNewRateName}
-                                placeholder="e.g. VAT"
-                            />
-                            <Input
-                                label="Rate (%)"
-                                value={newRateValue}
-                                onChangeText={setNewRateValue}
-                                keyboardType="numeric"
-                                placeholder="0.00"
-                            />
-                        </View>
+                        <Input
+                            label="Name"
+                            value={newRate.name}
+                            onChangeText={(v) => setNewRate(prev => ({ ...prev, name: v }))}
+                            placeholder="e.g. VAT"
+                        />
+                        <Input
+                            label="Rate (%)"
+                            value={newRate.rate?.toString()}
+                            onChangeText={(v) => setNewRate(prev => ({ ...prev, rate: v as any }))}
+                            keyboardType="numeric"
+                        />
                         <Button
                             onPress={handleAddRate}
-                            className="mt-6"
+                            style={{ marginTop: spacing.lg }}
                         >
                             Add Rate
                         </Button>
@@ -126,3 +213,70 @@ export function TaxSettingsScreen() {
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.backgroundLight,
+    },
+    scrollContent: {
+        padding: spacing.lg,
+    },
+    section: {
+        marginBottom: spacing.xl,
+    },
+    sectionTitle: {
+        fontSize: fontSize.sm,
+        fontWeight: fontWeight.bold,
+        color: colors.textMuted,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+    },
+    card: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
+        gap: spacing.md,
+    },
+    rateItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderLight,
+    },
+    rateName: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.medium,
+        color: colors.text,
+    },
+    rateValue: {
+        fontSize: fontSize.sm,
+        color: colors.textMuted,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: spacing.lg,
+    },
+    modalContent: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
+        gap: spacing.md,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.sm,
+    },
+    modalTitle: {
+        fontSize: fontSize.lg,
+        fontWeight: fontWeight.bold,
+        color: colors.text,
+    }
+});

@@ -131,6 +131,23 @@ export async function clearSession(): Promise<void> {
 }
 
 /**
+ * Check if a stored session exists (without loading full data)
+ */
+export async function hasStoredSession(): Promise<boolean> {
+  if (isTauri()) {
+    try {
+      const s = await getStore();
+      const session = await s.get<StoredSession>(SESSION_KEY);
+      return session !== undefined;
+    } catch {
+      // Fallback to localStorage check
+      return localStorage.getItem(SESSION_KEY) !== null;
+    }
+  }
+  return localStorage.getItem(SESSION_KEY) !== null;
+}
+
+/**
  * Get stored tokens for session restoration
  * Used by Supabase client to restore session
  */

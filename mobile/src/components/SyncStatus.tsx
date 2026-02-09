@@ -50,7 +50,7 @@ export function SyncStatus() {
     // Better Approach: Polling for status in this MVP to ensure compability without docs.
     const interval = setInterval(updateStatus, 2000);
 
-    return () => { clearInterval(interval); };
+    return () => clearInterval(interval);
   }, [db]);
 
   if (!status.connected) {

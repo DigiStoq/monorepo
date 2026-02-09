@@ -1,7 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
-import type { Loan } from "@/features/cash-bank/types";
+import type { Loan, LoanPayment } from "@/features/cash-bank/types";
 
 // Database row types (snake_case columns from SQLite)
 interface LoanRow {
@@ -28,6 +28,19 @@ interface LoanRow {
   updated_at: string;
 }
 
+interface LoanPaymentRow {
+  id: string;
+  loan_id: string;
+  date: string;
+  principal_amount: number;
+  interest_amount: number;
+  total_amount: number;
+  payment_method: string | null;
+  reference_number: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 function mapRowToLoan(row: LoanRow): Loan {
   return {
     id: row.id,
@@ -51,6 +64,21 @@ function mapRowToLoan(row: LoanRow): Loan {
     linkedBankAccountId: row.linked_bank_account_id ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapRowToLoanPayment(row: LoanPaymentRow): LoanPayment {
+  return {
+    id: row.id,
+    loanId: row.loan_id,
+    date: row.date,
+    principalAmount: row.principal_amount,
+    interestAmount: row.interest_amount,
+    totalAmount: row.total_amount,
+    paymentMethod: (row.payment_method ?? "cash") as "cash" | "bank" | "cheque",
+    referenceNumber: row.reference_number ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: row.created_at,
   };
 }
 
@@ -91,6 +119,34 @@ export function useLoans(filters?: {
   const loans = useMemo(() => data.map(mapRowToLoan), [data]);
 
   return { loans, isLoading, error };
+}
+
+export function useLoanById(id: string | null): {
+  loan: Loan | null;
+  payments: LoanPayment[];
+  isLoading: boolean;
+} {
+  const { data: loanData, isLoading: loanLoading } = useQuery<LoanRow>(
+    id ? `SELECT * FROM loans WHERE id = ?` : `SELECT * FROM loans WHERE 1 = 0`,
+    id ? [id] : []
+  );
+
+  const { data: paymentsData, isLoading: paymentsLoading } =
+    useQuery<LoanPaymentRow>(
+      id
+        ? `SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY date DESC`
+        : `SELECT * FROM loan_payments WHERE 1 = 0`,
+      id ? [id] : []
+    );
+
+  const loan = loanData[0] ? mapRowToLoan(loanData[0]) : null;
+  const payments = paymentsData.map(mapRowToLoanPayment);
+
+  return {
+    loan,
+    payments,
+    isLoading: loanLoading || paymentsLoading,
+  };
 }
 
 interface LoanMutations {
@@ -202,37 +258,35 @@ export function useLoanMutations(): LoanMutations {
       const now = new Date().toISOString();
       const totalAmount = data.principalAmount + data.interestAmount;
 
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(
-          `INSERT INTO loan_payments (
-            id, loan_id, date, principal_amount, interest_amount, total_amount,
-            payment_method, reference_number, notes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            data.loanId,
-            data.date,
-            data.principalAmount,
-            data.interestAmount,
-            totalAmount,
-            data.paymentMethod ?? null,
-            data.referenceNumber ?? null,
-            data.notes ?? null,
-            now,
-          ]
-        );
+      await db.execute(
+        `INSERT INTO loan_payments (
+          id, loan_id, date, principal_amount, interest_amount, total_amount,
+          payment_method, reference_number, notes, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.loanId,
+          data.date,
+          data.principalAmount,
+          data.interestAmount,
+          totalAmount,
+          data.paymentMethod ?? null,
+          data.referenceNumber ?? null,
+          data.notes ?? null,
+          now,
+        ]
+      );
 
-        // Update loan outstanding amount and paid EMIs
-        await tx.execute(
-          `UPDATE loans
-            SET outstanding_amount = outstanding_amount - ?,
-                paid_emis = paid_emis + 1,
-                status = CASE WHEN outstanding_amount - ? <= 0 THEN 'closed' ELSE status END,
-                updated_at = ?
-            WHERE id = ?`,
-          [data.principalAmount, data.principalAmount, now, data.loanId]
-        );
-      });
+      // Update loan outstanding amount and paid EMIs
+      await db.execute(
+        `UPDATE loans
+         SET outstanding_amount = outstanding_amount - ?,
+             paid_emis = paid_emis + 1,
+             status = CASE WHEN outstanding_amount - ? <= 0 THEN 'closed' ELSE status END,
+             updated_at = ?
+         WHERE id = ?`,
+        [data.principalAmount, data.principalAmount, now, data.loanId]
+      );
 
       return id;
     },
@@ -255,10 +309,8 @@ export function useLoanMutations(): LoanMutations {
 
   const deleteLoan = useCallback(
     async (id: string): Promise<void> => {
-      await db.writeTransaction(async (tx) => {
-        await tx.execute(`DELETE FROM loan_payments WHERE loan_id = ?`, [id]);
-        await tx.execute(`DELETE FROM loans WHERE id = ?`, [id]);
-      });
+      await db.execute(`DELETE FROM loan_payments WHERE loan_id = ?`, [id]);
+      await db.execute(`DELETE FROM loans WHERE id = ?`, [id]);
     },
     [db]
   );
@@ -268,5 +320,31 @@ export function useLoanMutations(): LoanMutations {
     recordPayment,
     updateLoanStatus,
     deleteLoan,
+  };
+}
+
+interface LoanStats {
+  totalTakenAmount: number;
+  totalTakenCount: number;
+  totalGivenAmount: number;
+  totalGivenCount: number;
+}
+
+export function useLoanStats(): LoanStats {
+  const { data: loansTaken } = useQuery<{ sum: number; count: number }>(
+    `SELECT COALESCE(SUM(outstanding_amount), 0) as sum, COUNT(*) as count
+     FROM loans WHERE type = 'taken' AND status = 'active'`
+  );
+
+  const { data: loansGiven } = useQuery<{ sum: number; count: number }>(
+    `SELECT COALESCE(SUM(outstanding_amount), 0) as sum, COUNT(*) as count
+     FROM loans WHERE type = 'given' AND status = 'active'`
+  );
+
+  return {
+    totalTakenAmount: loansTaken[0]?.sum ?? 0,
+    totalTakenCount: loansTaken[0]?.count ?? 0,
+    totalGivenAmount: loansGiven[0]?.sum ?? 0,
+    totalGivenCount: loansGiven[0]?.count ?? 0,
   };
 }

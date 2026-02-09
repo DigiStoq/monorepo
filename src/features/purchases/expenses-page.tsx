@@ -18,7 +18,6 @@ import type { Expense, ExpenseFormData, ExpenseCategory } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { Receipt, PieChart } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { toast } from "sonner";
 
 export function ExpensesPage(): React.ReactNode {
   // Data from PowerSync
@@ -175,16 +174,10 @@ export function ExpensesPage(): React.ReactNode {
           notes: data.notes,
         });
       }
-      toast.success(
-        isEditing
-          ? "Expense updated successfully"
-          : "Expense recorded successfully"
-      );
       setIsFormOpen(false);
       setIsEditing(false);
     } catch (err) {
       console.error("Failed to save expense:", err);
-      toast.error("Failed to save expense");
     } finally {
       setIsSubmitting(false);
     }
@@ -205,10 +198,8 @@ export function ExpensesPage(): React.ReactNode {
         setSelectedExpense(null);
         setIsDeleteModalOpen(false);
         setExpenseToDelete(null);
-        toast.success("Expense deleted successfully");
       } catch (err) {
         console.error("Failed to delete expense:", err);
-        toast.error("Failed to delete expense");
       } finally {
         setIsSubmitting(false);
       }

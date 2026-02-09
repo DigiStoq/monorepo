@@ -1,11 +1,13 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useState, useCallback, useMemo } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@powersync/react-native";
+import { Plus, HandCoins, ArrowRight } from "lucide-react-native";
+import { LoanRecord } from "../lib/powersync";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../lib/theme";
 import { CustomHeader } from "../components/CustomHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
-import { useLoans } from "../hooks/useLoans";
-import { CoinsHandIcon } from "../components/ui/UntitledIcons";
 
 export function LoansScreen() {
     const navigation = useNavigation();
@@ -13,14 +15,18 @@ export function LoansScreen() {
     const [filterType, setFilterType] = useState<'all' | 'given' | 'taken'>('all');
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
-    const { loans, isLoading } = useLoans({
-        type: filterType === 'all' ? undefined : filterType
-    });
+    // Loans Query
+    const query = filterType === 'all'
+        ? `SELECT * FROM loans ORDER BY start_date DESC, created_at DESC`
+        : `SELECT * FROM loans WHERE type = '${filterType}' ORDER BY start_date DESC, created_at DESC`;
+
+    const { data: loans } = useQuery<LoanRecord>(query);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        setTimeout(() => { setRefreshing(false); }, 1000);
+        setTimeout(() => setRefreshing(false), 1000);
     }, []);
 
     const getStatusColor = (status: string) => {
@@ -32,19 +38,24 @@ export function LoansScreen() {
     };
 
     return (
-        <View className="flex-1 bg-background-light">
+        <View style={styles.container}>
             <CustomHeader title="Loans" showBack />
 
-            <View className="px-5 py-3">
-                <View className="flex-row gap-2">
+            <View style={styles.subHeader}>
+                <View style={styles.filterContainer}>
                     {['all', 'given', 'taken'].map((type) => (
                         <TouchableOpacity
                             key={type}
-                            className={`px-4 py-2 rounded-full ${filterType === type ? 'bg-primary' : 'bg-surface-hover'}`}
-                            style={{ backgroundColor: filterType === type ? colors.primary : colors.surface + '20' }}
-                            onPress={() => { setFilterType(type as any); }}
+                            style={[
+                                styles.filterPill,
+                                filterType === type && styles.filterPillActive
+                            ]}
+                            onPress={() => setFilterType(type as any)}
                         >
-                            <Text className={`text-sm font-medium ${filterType === type ? 'text-white' : 'text-text-secondary'}`}>
+                            <Text style={[
+                                styles.filterText,
+                                filterType === type && styles.filterTextActive
+                            ]}>
                                 {type === 'all' ? 'All Loans' : type === 'given' ? 'Given (Assets)' : 'Taken (Liabilities)'}
                             </Text>
                         </TouchableOpacity>
@@ -55,81 +66,126 @@ export function LoansScreen() {
             {/* List */}
             <FlatList
                 data={loans || []}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id || item.created_at}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
                 }
-                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100, gap: 12 }}
+                contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
                     <TouchableOpacity
-                        className="bg-surface rounded-lg p-4 shadow-sm"
-                        onPress={() => (navigation as any).navigate("LoanForm", { id: item.id })}
+                        style={styles.card}
+                        onPress={() => navigation.navigate("LoanForm" as any, { id: item.id })}
                         activeOpacity={0.7}
                     >
-                        <View className="flex-row items-center gap-4 mb-4">
-                            <View
-                                className="w-11 h-11 rounded-full items-center justify-center"
-                                style={{
-                                    backgroundColor: item.type === 'given' ? colors.success + '20' : colors.danger + '20'
-                                }}
-                            >
-                                <CoinsHandIcon color={item.type === 'given' ? colors.success : colors.danger} size={20} />
+                        <View style={styles.cardHeader}>
+                            <View style={[styles.iconBox, { backgroundColor: item.type === 'given' ? colors.success + '20' : colors.danger + '20' }]}>
+                                <HandCoins color={item.type === 'given' ? colors.success : colors.danger} size={20} />
                             </View>
-                            <View className="flex-1">
-                                <Text className="text-md font-semibold text-text">{item.type === 'given' ? item.customerName : item.lenderName}</Text>
-                                <Text className="text-sm text-text-muted mt-0.5">{item.type === 'given' ? 'Money Lent' : 'Money Borrowed'}</Text>
+                            <View style={styles.headerInfo}>
+                                <Text style={styles.partyName}>{item.type === 'given' ? item.customer_name : item.lender_name}</Text>
+                                <Text style={styles.loanType}>{item.type === 'given' ? 'Money Lent' : 'Money Borrowed'}</Text>
                             </View>
-                            <View
-                                className="px-2 py-0.5 rounded-sm"
-                                style={{ backgroundColor: getStatusColor(item.status || 'active') + '20' }}
-                            >
-                                <Text
-                                    className="text-xs font-semibold capitalize"
-                                    style={{ color: getStatusColor(item.status || 'active') }}
-                                >
+                            <View style={[styles.badge, { backgroundColor: getStatusColor(item.status || 'active') + '20' }]}>
+                                <Text style={[styles.badgeText, { color: getStatusColor(item.status || 'active') }]}>
                                     {item.status || 'Active'}
                                 </Text>
                             </View>
                         </View>
 
-                        <View className="flex-row justify-between mb-4 px-1">
+                        <View style={styles.detailsRow}>
                             <View>
-                                <Text className="text-sm text-text-muted mb-0.5">Principal</Text>
-                                <Text className="text-md font-bold text-text">${(item.principalAmount || 0).toFixed(2)}</Text>
+                                <Text style={styles.label}>Principal</Text>
+                                <Text style={styles.value}>${(item.principal_amount || 0).toFixed(2)}</Text>
                             </View>
-                            <View className="items-end">
-                                <Text className="text-sm text-text-muted mb-0.5">Outstanding</Text>
-                                <Text
-                                    className="text-md font-bold"
-                                    style={{ color: (item.outstandingAmount || 0) > 0 ? colors.warning : colors.success }}
-                                >
-                                    ${(item.outstandingAmount || 0).toFixed(2)}
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <Text style={styles.label}>Outstanding</Text>
+                                <Text style={[styles.value, { color: (item.outstanding_amount || 0) > 0 ? colors.warning : colors.success }]}>
+                                    ${(item.outstanding_amount || 0).toFixed(2)}
                                 </Text>
                             </View>
                         </View>
 
-                        <View className="bg-background p-2 rounded-md items-center border border-border">
-                            <Text className="text-sm text-text-secondary font-medium">
-                                {item.interestRate}% Interest • {item.paidEmis || 0}/{item.totalEmis || 0} EMIs Paid
+                        <View style={styles.progressContainer}>
+                            <Text style={styles.progressText}>
+                                {item.interest_rate}% Interest • {item.paid_emis || 0}/{item.total_emis || 0} EMIs Paid
                             </Text>
                         </View>
                     </TouchableOpacity>
                 )}
                 ListEmptyComponent={
-                    <View className="items-center p-10">
-                        <Text className="text-text-muted text-md">No loans found</Text>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>No loans found</Text>
                     </View>
                 }
             />
 
             {/* FAB */}
             <TouchableOpacity
-                className="absolute right-5 bg-primary px-5 py-3 rounded-full shadow-md"
-                style={{ bottom: insets.bottom + 80, backgroundColor: colors.primary }}
+                style={[styles.fab, { bottom: insets.bottom + spacing.xl }]}
                 onPress={() => (navigation as any).navigate("LoanForm")}
             >
-                <Text className="text-white font-semibold text-md bg-transparent">+ Add</Text>
+                <Text style={styles.fabText}>+ Add</Text>
             </TouchableOpacity>
         </View>
     );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    subHeader: {
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+    },
+    filterContainer: { flexDirection: 'row', gap: spacing.sm, flex: 1 },
+    filterPill: {
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderRadius: borderRadius.full,
+        backgroundColor: colors.surfaceHover,
+    },
+    filterPillActive: { backgroundColor: colors.primary },
+    filterText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: fontWeight.medium },
+    filterTextActive: { color: "#ffffff" },
+    listContent: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.sm },
+    card: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.md,
+        ...shadows.sm,
+    },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+    iconBox: { width: 44, height: 44, borderRadius: borderRadius.full, alignItems: 'center', justifyContent: 'center' },
+    headerInfo: { flex: 1 },
+    partyName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
+    loanType: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
+    badge: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.sm },
+    badgeText: { fontSize: fontSize.xs, fontWeight: fontWeight.semibold, textTransform: 'capitalize' },
+    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md, paddingHorizontal: 4 },
+    label: { fontSize: fontSize.sm, color: colors.textMuted, marginBottom: 2 },
+    value: { fontSize: fontSize.md, fontWeight: fontWeight.bold, color: colors.text },
+    progressContainer: {
+        backgroundColor: colors.background,
+        padding: spacing.sm,
+        borderRadius: borderRadius.md,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border
+    },
+    progressText: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: fontWeight.medium },
+    emptyState: { alignItems: 'center', padding: 40 },
+    emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+    fab: {
+        position: 'absolute',
+        right: spacing.xl,
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.full,
+        ...shadows.md,
+    },
+    fabText: {
+        fontSize: fontSize.md,
+        fontWeight: fontWeight.semibold,
+        color: "#ffffff",
+    },
+});
