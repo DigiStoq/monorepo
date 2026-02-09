@@ -7,13 +7,6 @@ export interface DateRange {
   to: string;
 }
 
-export interface ReportFilters {
-  dateRange: DateRange;
-  customerId?: string;
-  itemId?: string;
-  categoryId?: string;
-}
-
 export type ReportPeriod =
   | "today"
   | "yesterday"
@@ -26,21 +19,6 @@ export type ReportPeriod =
   | "this_year"
   | "last_year"
   | "custom";
-
-export interface ReportCategory {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  reports: ReportLink[];
-}
-
-export interface ReportLink {
-  id: string;
-  title: string;
-  description: string;
-  path: string;
-}
 
 // ============================================================================
 // SALES REPORT TYPES
@@ -80,6 +58,21 @@ export interface SalesRegisterEntry {
 // ============================================================================
 // PURCHASE REPORT TYPES
 // ============================================================================
+
+export interface PurchaseRegisterEntry {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  customerName: string; // The hook maps supplierName to customerName or similar field
+  itemCount: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paid: number;
+  due: number;
+  status: string;
+}
 
 export interface PurchaseSummary {
   totalPurchases: number;
@@ -121,12 +114,6 @@ export interface CustomerStatement {
   totalCredit: number;
   closingBalance: number;
   entries: CustomerLedgerEntry[];
-}
-
-export interface AgingBucket {
-  label: string;
-  amount: number;
-  count: number;
 }
 
 export interface CustomerAging {

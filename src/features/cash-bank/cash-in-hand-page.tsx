@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
@@ -45,9 +46,11 @@ export function CashInHandPage(): React.ReactNode {
         amount: data.amount,
         description: data.description || "Cash balance adjustment",
       });
+      toast.success("Cash balance adjusted successfully");
       setIsAdjustmentOpen(false);
     } catch (err) {
       console.error("Failed to create adjustment:", err);
+      toast.error("Failed to adjust cash balance");
     }
   };
 

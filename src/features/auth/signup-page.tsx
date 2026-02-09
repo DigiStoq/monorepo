@@ -4,6 +4,7 @@ import { Mail, Lock, User } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { Button, Input } from "@/components/ui";
 import { useAuthStore } from "@/stores";
+import { toast } from "sonner";
 
 export function SignupPage(): ReactNode {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export function SignupPage(): ReactNode {
       await signInWithGoogle();
     } catch (err) {
       console.error("Google sign up error", err);
+      toast.error("Google sign up failed");
     }
   };
 
@@ -54,9 +56,11 @@ export function SignupPage(): ReactNode {
       // Check if email confirmation is required
       const authState = useAuthStore.getState();
       if (authState.isAuthenticated) {
+        toast.success("Account created successfully!");
         void navigate({ to: "/" });
       } else {
         // Email confirmation required
+        toast.success("Account created! Please check your email.");
         setSuccess(true);
       }
     }

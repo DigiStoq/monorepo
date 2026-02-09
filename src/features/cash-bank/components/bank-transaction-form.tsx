@@ -192,6 +192,8 @@ export function BankTransactionForm({
           onChange={(value) => {
             handleChange("relatedCustomerId", value);
           }}
+          searchable
+          searchPlaceholder="Search customers..."
         />
       )}
 

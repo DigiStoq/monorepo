@@ -1,20 +1,18 @@
-import React from "react";
-import { View, StyleSheet, ScrollView, Text, Alert, Platform } from "react-native";
+import { View, ScrollView, Text, Alert, Platform } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useAuth } from "../../contexts/AuthContext";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
 
 export function UserProfileScreen() {
     const { colors } = useTheme();
-    const styles = React.useMemo(() => createStyles(colors), [colors]);
-    const { user, signOut } = useAuth();
+    const { user, signOut } = useAuth(); // Assuming useAuth is correctly imported
 
     const displayName = user?.user_metadata?.full_name || "User";
     const email = user?.email || "";
-    const initials = displayName.charAt(0).toUpperCase();
+    // Handle cases where displayName might be empty or undefined safely
+    const initials = (displayName && displayName.length > 0) ? displayName.charAt(0).toUpperCase() : "U";
 
     const handleSignOut = async () => {
         Alert.alert(
@@ -27,9 +25,14 @@ export function UserProfileScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            await signOut();
-                            // Navigation to Login is usually handled by AuthContext state change
-                        } catch (e) {
+                            // Verify signOut exists on the context before calling
+                            if (signOut) {
+                                await signOut();
+                            } else {
+                                console.error("signOut function is not available in useAuth context");
+                                Alert.alert("Error", "Sign out functionality is currently unavailable.");
+                            }
+                        } catch (_e) {
                             Alert.alert("Error", "Failed to sign out");
                         }
                     }
@@ -39,23 +42,23 @@ export function UserProfileScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background-light">
             <CustomHeader title="User Profile" showBack />
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.headerCard}>
-                    <View style={styles.avatarContainer}>
-                        <View style={styles.avatarPlaceholder}>
-                            <Text style={styles.avatarText}>{initials}</Text>
+            <ScrollView contentContainerStyle={{ padding: 24 }}>
+                <View className="items-center mb-8 bg-surface rounded-xl p-6 shadow-sm border border-border">
+                    <View className="mb-4 shadow-md">
+                        <View className="w-24 h-24 rounded-full bg-primary justify-center items-center" style={{ backgroundColor: colors.primary }}>
+                            <Text className="text-4xl font-bold text-white">{initials}</Text>
                         </View>
                     </View>
-                    <Text style={styles.nameText}>{displayName}</Text>
-                    <Text style={styles.emailText}>{email}</Text>
+                    <Text className="text-xl font-bold text-text mb-1">{displayName}</Text>
+                    <Text className="text-md text-text-muted">{email}</Text>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account Details</Text>
-                    <View style={styles.card}>
+                <View className="mb-8">
+                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Account Details</Text>
+                    <View className="bg-surface rounded-lg p-4 shadow-sm space-y-4">
                         <Input
                             label="Full Name"
                             value={displayName}
@@ -70,6 +73,7 @@ export function UserProfileScreen() {
                             label="User ID"
                             value={user?.id}
                             editable={false}
+                            // Using a monospaced font style if possible via class or style
                             style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
                         />
                     </View>
@@ -77,8 +81,8 @@ export function UserProfileScreen() {
 
                 <Button
                     onPress={handleSignOut}
-                    variant="destructive"
-                    style={{ marginTop: spacing.xl }}
+                    variant="danger"
+                    className="mt-4"
                 >
                     Sign Out
                 </Button>
@@ -87,63 +91,3 @@ export function UserProfileScreen() {
         </View>
     );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.backgroundLight,
-    },
-    scrollContent: {
-        padding: spacing.lg,
-    },
-    headerCard: {
-        alignItems: 'center',
-        marginBottom: spacing.xl,
-        padding: spacing.xl,
-    },
-    avatarContainer: {
-        marginBottom: spacing.md,
-    },
-    avatarPlaceholder: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...shadows.md,
-    },
-    avatarText: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: '#ffffff',
-    },
-    nameText: {
-        fontSize: fontSize.xl,
-        fontWeight: fontWeight.bold,
-        color: colors.text,
-        marginBottom: 4,
-    },
-    emailText: {
-        fontSize: fontSize.md,
-        color: colors.textMuted,
-    },
-    section: {
-        marginBottom: spacing.xl,
-    },
-    sectionTitle: {
-        fontSize: fontSize.sm,
-        fontWeight: fontWeight.bold,
-        color: colors.textMuted,
-        marginBottom: spacing.sm,
-        textTransform: "uppercase",
-        letterSpacing: 1,
-    },
-    card: {
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.lg,
-        padding: spacing.md,
-        ...shadows.sm,
-        gap: spacing.md,
-    },
-});

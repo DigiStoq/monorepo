@@ -71,6 +71,18 @@ export function PaymentInForm({
   const [invoiceId, setInvoiceId] = useState(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
+  // Handle invoice selection
+  const handleInvoiceChange = (value: string): void => {
+    setInvoiceId(value);
+    if (value) {
+      const invoice = invoices.find((inv) => inv.id === value);
+      if (invoice) {
+        setCustomerId(invoice.customerId);
+        setAmount(invoice.amountDue);
+      }
+    }
+  };
+
   // Customer options - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
@@ -160,6 +172,7 @@ export function PaymentInForm({
                       setInvoiceId(""); // Reset invoice when customer changes
                     }}
                     placeholder="Select customer"
+                    searchable
                   />
                 </div>
 
@@ -237,8 +250,9 @@ export function PaymentInForm({
                     showOptionalLabel
                     options={invoiceOptions}
                     value={invoiceId}
-                    onChange={setInvoiceId}
+                    onChange={handleInvoiceChange}
                     disabled={!customerId}
+                    searchable
                   />
                 </div>
               </div>

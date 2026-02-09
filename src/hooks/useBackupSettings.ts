@@ -134,67 +134,69 @@ export function useBackupSettingsMutations(): BackupSettingsMutations {
       const fields: string[] = [];
       const values: (string | number | null)[] = [];
 
-      const existing = await db.getAll<BackupSettingsRow>(
-        `SELECT user_id FROM backup_settings WHERE user_id = ?`,
-        [userId]
-      );
-
-      if (existing.length === 0) {
-        // Init default settings
-        await db.execute(
-          `INSERT INTO backup_settings (
-            user_id, auto_backup_enabled, backup_frequency, backup_time, 
-            retention_days, backup_destination, cloud_provider, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            data.autoBackupEnabled ? 1 : 0,
-            data.backupFrequency ?? "daily",
-            data.backupTime ?? "00:00",
-            data.retentionDays ?? 30,
-            data.backupDestination ?? "local",
-            data.cloudProvider ?? null,
-            now,
-            now,
-          ]
+      await db.writeTransaction(async (tx) => {
+        const existing = await tx.getAll<BackupSettingsRow>(
+          `SELECT user_id FROM backup_settings WHERE user_id = ?`,
+          [userId]
         );
-      } else {
-        if (data.autoBackupEnabled !== undefined) {
-          fields.push("auto_backup_enabled = ?");
-          values.push(data.autoBackupEnabled ? 1 : 0);
-        }
-        if (data.backupFrequency !== undefined) {
-          fields.push("backup_frequency = ?");
-          values.push(data.backupFrequency);
-        }
-        if (data.backupTime !== undefined) {
-          fields.push("backup_time = ?");
-          values.push(data.backupTime);
-        }
-        if (data.retentionDays !== undefined) {
-          fields.push("retention_days = ?");
-          values.push(data.retentionDays);
-        }
-        if (data.backupDestination !== undefined) {
-          fields.push("backup_destination = ?");
-          values.push(data.backupDestination);
-        }
-        if (data.cloudProvider !== undefined) {
-          fields.push("cloud_provider = ?");
-          values.push(data.cloudProvider ?? null);
-        }
 
-        fields.push("updated_at = ?");
-        values.push(now);
-        values.push(userId);
-
-        if (fields.length > 0) {
-          await db.execute(
-            `UPDATE backup_settings SET ${fields.join(", ")} WHERE user_id = ?`,
-            values
+        if (existing.length === 0) {
+          // Init default settings
+          await tx.execute(
+            `INSERT INTO backup_settings (
+                user_id, auto_backup_enabled, backup_frequency, backup_time, 
+                retention_days, backup_destination, cloud_provider, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              userId,
+              data.autoBackupEnabled ? 1 : 0,
+              data.backupFrequency ?? "daily",
+              data.backupTime ?? "00:00",
+              data.retentionDays ?? 30,
+              data.backupDestination ?? "local",
+              data.cloudProvider ?? null,
+              now,
+              now,
+            ]
           );
+        } else {
+          if (data.autoBackupEnabled !== undefined) {
+            fields.push("auto_backup_enabled = ?");
+            values.push(data.autoBackupEnabled ? 1 : 0);
+          }
+          if (data.backupFrequency !== undefined) {
+            fields.push("backup_frequency = ?");
+            values.push(data.backupFrequency);
+          }
+          if (data.backupTime !== undefined) {
+            fields.push("backup_time = ?");
+            values.push(data.backupTime);
+          }
+          if (data.retentionDays !== undefined) {
+            fields.push("retention_days = ?");
+            values.push(data.retentionDays);
+          }
+          if (data.backupDestination !== undefined) {
+            fields.push("backup_destination = ?");
+            values.push(data.backupDestination);
+          }
+          if (data.cloudProvider !== undefined) {
+            fields.push("cloud_provider = ?");
+            values.push(data.cloudProvider ?? null);
+          }
+
+          fields.push("updated_at = ?");
+          values.push(now);
+          values.push(userId);
+
+          if (fields.length > 0) {
+            await tx.execute(
+              `UPDATE backup_settings SET ${fields.join(", ")} WHERE user_id = ?`,
+              values
+            );
+          }
         }
-      }
+      });
     },
     [db, userId]
   );
@@ -210,21 +212,23 @@ export function useBackupSettingsMutations(): BackupSettingsMutations {
     }): Promise<void> => {
       if (!userId) return;
       const now = new Date().toISOString();
-      await db.execute(
-        `INSERT INTO backup_history (
-              user_id, timestamp, type, destination, file_size, status, error_message, file_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          userId,
-          now,
-          data.type,
-          data.destination,
-          data.fileSize,
-          data.status,
-          data.errorMessage ?? null,
-          data.filePath ?? null,
-        ]
-      );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO backup_history (
+                user_id, timestamp, type, destination, file_size, status, error_message, file_path
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            now,
+            data.type,
+            data.destination,
+            data.fileSize,
+            data.status,
+            data.errorMessage ?? null,
+            data.filePath ?? null,
+          ]
+        );
+      });
     },
     [db, userId]
   );
