@@ -77,6 +77,19 @@ export function PaymentOutForm({
   );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
+  // Additional Payment Details State
+  const [chequeNumber, setChequeNumber] = useState(
+    initialData?.chequeNumber ?? ""
+  );
+  const [chequeDate, setChequeDate] = useState(
+    initialData?.chequeDate ?? defaultDate
+  );
+  const [bankName, setBankName] = useState(initialData?.bankName ?? "");
+  const [bankAccountNumber, setBankAccountNumber] = useState(
+    initialData?.bankAccountNumber ?? ""
+  );
+  const [cardNumber, setCardNumber] = useState(initialData?.cardNumber ?? "");
+
   // Customer options - hook already filters by type (suppliers)
   const customerOptions: SelectOption[] = useMemo(() => {
     return [
@@ -132,6 +145,15 @@ export function PaymentOutForm({
       referenceNumber: referenceNumber || undefined,
       invoiceId: invoiceId || undefined,
       notes: notes || undefined,
+      // Include conditional fields
+      chequeNumber: paymentMode === "cheque" ? chequeNumber : undefined,
+      chequeDate: paymentMode === "cheque" ? chequeDate : undefined,
+      bankName:
+        paymentMode === "bank" || paymentMode === "cheque"
+          ? bankName
+          : undefined,
+      bankAccountNumber: paymentMode === "bank" ? bankAccountNumber : undefined,
+      cardNumber: paymentMode === "card" ? cardNumber : undefined,
     };
 
     onSubmit(formData);
@@ -208,11 +230,96 @@ export function PaymentOutForm({
                   onChange={(e) => {
                     setReferenceNumber(e.target.value);
                   }}
-                  placeholder="Transaction ID, cheque number, etc."
+                  placeholder="Transaction ID, Ref #, etc."
                 />
               </div>
             </CardBody>
           </Card>
+
+          {/* Conditional Payment Details Card */}
+          {(paymentMode === "cheque" ||
+            paymentMode === "bank" ||
+            paymentMode === "card") && (
+            <Card>
+              <CardHeader
+                title={`${paymentMode.charAt(0).toUpperCase() + paymentMode.slice(1)} Details`}
+              />
+              <CardBody className="space-y-4">
+                {paymentMode === "cheque" && (
+                  <>
+                    <Input
+                      label="Cheque Number"
+                      required
+                      value={chequeNumber}
+                      onChange={(e) => {
+                        setChequeNumber(e.target.value);
+                      }}
+                      placeholder="Enter cheque number"
+                    />
+                    <Input
+                      type="date"
+                      label="Cheque Date"
+                      value={chequeDate}
+                      onChange={(e) => {
+                        setChequeDate(e.target.value);
+                      }}
+                    />
+                    <Input
+                      label="Bank Name"
+                      value={bankName}
+                      onChange={(e) => {
+                        setBankName(e.target.value);
+                      }}
+                      placeholder="Issuing Bank"
+                    />
+                  </>
+                )}
+
+                {paymentMode === "bank" && (
+                  <>
+                    <Input
+                      label="Bank Name"
+                      value={bankName}
+                      onChange={(e) => {
+                        setBankName(e.target.value);
+                      }}
+                      placeholder="Bank Name"
+                    />
+                    <Input
+                      label="Account Number"
+                      value={bankAccountNumber}
+                      onChange={(e) => {
+                        setBankAccountNumber(e.target.value);
+                      }}
+                      placeholder="Account Number"
+                    />
+                  </>
+                )}
+
+                {paymentMode === "card" && (
+                  <>
+                    <Input
+                      label="Card Number (Last 4)"
+                      value={cardNumber}
+                      onChange={(e) => {
+                        setCardNumber(e.target.value);
+                      }}
+                      placeholder="xxxx"
+                      maxLength={4}
+                    />
+                    <Input
+                      label="Bank / Provider"
+                      value={bankName}
+                      onChange={(e) => {
+                        setBankName(e.target.value);
+                      }}
+                      placeholder="Bank or Provider Name"
+                    />
+                  </>
+                )}
+              </CardBody>
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Invoice & Notes */}

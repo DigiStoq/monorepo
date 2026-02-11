@@ -71,6 +71,19 @@ export function PaymentInForm({
   const [invoiceId, setInvoiceId] = useState(initialData?.invoiceId ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
 
+  // Additional Payment Details State
+  const [chequeNumber, setChequeNumber] = useState(
+    initialData?.chequeNumber ?? ""
+  );
+  const [chequeDate, setChequeDate] = useState(
+    initialData?.chequeDate ?? defaultDate
+  );
+  const [bankName, setBankName] = useState(initialData?.bankName ?? "");
+  const [bankAccountNumber, setBankAccountNumber] = useState(
+    initialData?.bankAccountNumber ?? ""
+  );
+  const [cardNumber, setCardNumber] = useState(initialData?.cardNumber ?? "");
+
   // Handle invoice selection
   const handleInvoiceChange = (value: string): void => {
     setInvoiceId(value);
@@ -93,6 +106,7 @@ export function PaymentInForm({
 
   // Invoice options for selected customer
   const invoiceOptions: SelectOption[] = useMemo(() => {
+    // Show all unpaid invoices for the customer
     const customerInvoices = invoices.filter(
       (inv) => inv.customerId === customerId && inv.amountDue > 0
     );
@@ -123,6 +137,15 @@ export function PaymentInForm({
       referenceNumber: referenceNumber || undefined,
       invoiceId: invoiceId || undefined,
       notes: notes || undefined,
+      // Include conditional fields
+      chequeNumber: paymentMode === "cheque" ? chequeNumber : undefined,
+      chequeDate: paymentMode === "cheque" ? chequeDate : undefined,
+      bankName:
+        paymentMode === "bank" || paymentMode === "cheque"
+          ? bankName
+          : undefined,
+      bankAccountNumber: paymentMode === "bank" ? bankAccountNumber : undefined,
+      cardNumber: paymentMode === "card" ? cardNumber : undefined,
     };
 
     onSubmit(formData);
@@ -240,7 +263,7 @@ export function PaymentInForm({
                     onChange={(e) => {
                       setReferenceNumber(e.target.value);
                     }}
-                    placeholder="Transaction ID, Check #, etc."
+                    placeholder="Transaction ID, Ref #, etc."
                   />
                 </div>
 
@@ -256,6 +279,80 @@ export function PaymentInForm({
                   />
                 </div>
               </div>
+
+              {/* Conditional Payment Details */}
+              {paymentMode === "cheque" && (
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                  <Input
+                    label="Cheque Number"
+                    required
+                    value={chequeNumber}
+                    onChange={(e) => {
+                      setChequeNumber(e.target.value);
+                    }}
+                    placeholder="Enter cheque number"
+                  />
+                  <Input
+                    type="date"
+                    label="Cheque Date"
+                    value={chequeDate}
+                    onChange={(e) => {
+                      setChequeDate(e.target.value);
+                    }}
+                  />
+                  <Input
+                    label="Bank Name"
+                    value={bankName}
+                    onChange={(e) => {
+                      setBankName(e.target.value);
+                    }}
+                    placeholder="Issuing Bank"
+                  />
+                </div>
+              )}
+
+              {paymentMode === "bank" && (
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                  <Input
+                    label="Bank Name"
+                    value={bankName}
+                    onChange={(e) => {
+                      setBankName(e.target.value);
+                    }}
+                    placeholder="Bank Name"
+                  />
+                  <Input
+                    label="Account Number"
+                    value={bankAccountNumber}
+                    onChange={(e) => {
+                      setBankAccountNumber(e.target.value);
+                    }}
+                    placeholder="Account Number"
+                  />
+                </div>
+              )}
+
+              {paymentMode === "card" && (
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                  <Input
+                    label="Card Number (Last 4)"
+                    value={cardNumber}
+                    onChange={(e) => {
+                      setCardNumber(e.target.value);
+                    }}
+                    placeholder="xxxx"
+                    maxLength={4}
+                  />
+                  <Input
+                    label="Bank / Provider"
+                    value={bankName}
+                    onChange={(e) => {
+                      setBankName(e.target.value);
+                    }}
+                    placeholder="Bank or Provider Name"
+                  />
+                </div>
+              )}
 
               {selectedInvoice && (
                 <div className="mt-4 p-3 bg-primary-50 rounded-lg border border-primary-100">
@@ -303,22 +400,24 @@ export function PaymentInForm({
           <Card>
             <CardHeader title="Payment Summary" />
             <CardBody className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Customer</span>
-                <span className="font-medium">
+              <div className="flex justify-between items-start text-sm">
+                <span className="text-slate-500 shrink-0">Customer</span>
+                <span className="font-medium text-right ml-4 break-words">
                   {selectedCustomer?.name ?? "-"}
                 </span>
               </div>
 
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Payment Mode</span>
-                <span className="font-medium capitalize">{paymentMode}</span>
+              <div className="flex justify-between items-start text-sm">
+                <span className="text-slate-500 shrink-0">Payment Mode</span>
+                <span className="font-medium capitalize text-right ml-4">
+                  {paymentMode}
+                </span>
               </div>
 
               {selectedInvoice && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Invoice</span>
-                  <span className="font-medium">
+                <div className="flex justify-between items-start text-sm">
+                  <span className="text-slate-500 shrink-0">Invoice</span>
+                  <span className="font-medium text-right ml-4 break-words">
                     {selectedInvoice.invoiceNumber}
                   </span>
                 </div>

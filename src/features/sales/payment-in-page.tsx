@@ -24,7 +24,7 @@ export function PaymentInPage(): React.ReactNode {
   // Data from PowerSync
   const { payments, isLoading, error } = usePaymentIns();
   const { customers } = useCustomers({ type: "customer" });
-  const { invoices } = useSaleInvoices({ status: "partial" });
+  const { invoices } = useSaleInvoices();
   const { createPayment, deletePayment } = usePaymentInMutations();
 
   // State

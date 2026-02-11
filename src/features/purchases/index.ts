@@ -13,7 +13,6 @@ export type {
   PurchaseInvoiceFormData,
   PurchaseInvoiceItemFormData,
   PurchaseInvoiceStatus,
-  PurchaseFilters,
   PaymentOut,
   PaymentOutFormData,
   PaymentOutMode,

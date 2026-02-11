@@ -23,6 +23,7 @@ import {
   usePurchaseInvoices,
   usePurchaseInvoiceMutations,
   usePurchaseInvoiceLinkedItems,
+  usePurchaseInvoiceItems,
 } from "@/hooks/usePurchaseInvoices";
 import { usePaymentOutMutations } from "@/hooks/usePaymentOuts";
 import { useCashTransactionMutations } from "@/hooks/useCashTransactions";
@@ -124,10 +125,22 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   );
 
   // Update selected purchase when data changes
-  const currentSelectedPurchase = useMemo(() => {
+  const selectedInvoiceFromList = useMemo(() => {
     if (!selectedPurchase) return null;
     return invoices.find((p) => p.id === selectedPurchase.id) ?? null;
   }, [invoices, selectedPurchase]);
+
+  const { items: invoiceItems } = usePurchaseInvoiceItems(
+    selectedInvoiceFromList?.id
+  );
+
+  const currentSelectedPurchase = useMemo(() => {
+    if (!selectedInvoiceFromList) return null;
+    return {
+      ...selectedInvoiceFromList,
+      items: invoiceItems,
+    };
+  }, [selectedInvoiceFromList, invoiceItems]);
 
   // Derived initial data for edit form
   const formInitialData = useMemo<
@@ -816,6 +829,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
           </ModalHeader>
           <ModalBody className="p-0 overflow-y-auto">
             <PurchaseInvoiceForm
+              key={currentSelectedPurchase?.id ?? "new"}
               customers={customers}
               items={items}
               bankAccounts={bankAccounts}

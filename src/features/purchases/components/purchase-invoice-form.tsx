@@ -364,7 +364,7 @@ export function PurchaseInvoiceForm({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            New Purchase Invoice
+            {initialData ? "Edit Purchase Invoice" : "New Purchase Invoice"}
           </h1>
           <p className="text-slate-500">Record a purchase from your supplier</p>
         </div>

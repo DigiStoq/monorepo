@@ -17,6 +17,11 @@ interface PaymentInRow {
   invoice_id: string | null;
   invoice_number: string | null;
   notes: string | null;
+  cheque_number?: string | null;
+  cheque_date?: string | null;
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  card_number?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +39,11 @@ function mapRowToPaymentIn(row: PaymentInRow): PaymentIn {
     invoiceId: row.invoice_id ?? undefined,
     invoiceNumber: row.invoice_number ?? undefined,
     notes: row.notes ?? undefined,
+    chequeNumber: row.cheque_number ?? undefined,
+    chequeDate: row.cheque_date ?? undefined,
+    bankName: row.bank_name ?? undefined,
+    bankAccountNumber: row.bank_account_number ?? undefined,
+    cardNumber: row.card_number ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -130,6 +140,12 @@ interface CreatePaymentData {
   invoiceId?: string;
   invoiceNumber?: string;
   notes?: string;
+  // Payment Details
+  chequeNumber?: string;
+  chequeDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  cardNumber?: string;
 }
 
 interface PaymentInMutations {
@@ -153,8 +169,9 @@ export function usePaymentInMutations(): PaymentInMutations {
           `INSERT INTO payment_ins (
             id, receipt_number, customer_id, customer_name, date, amount,
             payment_mode, reference_number, invoice_id, invoice_number, notes,
+            cheque_number, cheque_date, bank_name, bank_account_number, card_number,
             created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.receiptNumber,
@@ -167,6 +184,11 @@ export function usePaymentInMutations(): PaymentInMutations {
             data.invoiceId ?? null,
             data.invoiceNumber ?? null,
             data.notes ?? null,
+            data.chequeNumber ?? null,
+            data.chequeDate ?? null,
+            data.bankName ?? null,
+            data.bankAccountNumber ?? null,
+            data.cardNumber ?? null,
             now,
             now,
           ]

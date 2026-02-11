@@ -132,6 +132,12 @@ export interface PaymentIn {
   invoiceId?: string;
   invoiceNumber?: string;
   notes?: string;
+  // Payment Details
+  chequeNumber?: string;
+  chequeDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  cardNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -144,6 +150,12 @@ export interface PaymentInFormData {
   referenceNumber?: string | undefined;
   invoiceId?: string | undefined;
   notes?: string | undefined;
+  // Payment Details
+  chequeNumber?: string | undefined;
+  chequeDate?: string | undefined;
+  bankName?: string | undefined;
+  bankAccountNumber?: string | undefined;
+  cardNumber?: string | undefined;
 }
 
 // ============================================================================

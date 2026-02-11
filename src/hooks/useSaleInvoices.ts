@@ -407,8 +407,10 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           await tx.execute(
             `INSERT INTO payment_ins (
               id, receipt_number, customer_id, customer_name, date, amount,
-              payment_mode, invoice_id, invoice_number, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              payment_mode, invoice_id, invoice_number,
+              cheque_number, cheque_date, bank_name,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               crypto.randomUUID(),
               receiptNumber,
@@ -419,6 +421,10 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
               paymentMode,
               id,
               data.invoiceNumber,
+              // Map cheque details if applicable
+              paymentMode === "cheque" ? data.initialChequeNumber : null,
+              paymentMode === "cheque" ? data.initialChequeDueDate : null,
+              paymentMode === "cheque" ? data.initialChequeBankName : null,
               now,
               now,
             ]

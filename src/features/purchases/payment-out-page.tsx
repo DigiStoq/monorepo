@@ -24,7 +24,7 @@ export function PaymentOutPage(): React.ReactNode {
   // Data from PowerSync
   const { payments, isLoading, error } = usePaymentOuts();
   const { customers } = useCustomers({ type: "supplier" });
-  const { invoices } = usePurchaseInvoices({ status: "partial" });
+  const { invoices } = usePurchaseInvoices();
   const { createPayment, deletePayment } = usePaymentOutMutations();
 
   // State
