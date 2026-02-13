@@ -49,6 +49,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       // If token expires in more than BUFFER seconds, reuse it
       if (this.currentSession.expires_at > now + this.TOKEN_EXPIRY_BUFFER) {
         const endpoint = this.powersyncUrl.replace(/\/$/, "");
+         // console.debug("[SupabaseConnector] Using cached session");
         return {
           endpoint,
           token: this.currentSession.access_token,
@@ -95,6 +96,11 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     const userId = session?.user?.id;
 
     try {
+      // Improve logging
+      if (transaction.crud && transaction.crud.length > 0) {
+        // console.log(`[SupabaseConnector] Processing ${transaction.crud.length} CRUD operations`);
+      }
+
       // Batch operations for efficiency
       const batches = this.batchOperations(transaction.crud, userId);
 
@@ -103,10 +109,11 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
         await this.executeBatch(batch);
       }
 
-      // Complete transaction (Custom Write Checkpoints require Team plan $599+)
+      // Complete transaction
       await transaction.complete();
     } catch (error) {
       console.error("[SupabaseConnector] Upload error:", error);
+      // Ideally we shouldn't throw if we want to retry later, but PowerSync handles retries if we throw.
       throw error;
     }
   }
@@ -171,26 +178,25 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
   private async executeBatch(batch: BatchedOperation): Promise<void> {
     const { table, op, records } = batch;
+    // console.log(`[SupabaseConnector] Executing batch: ${op} on ${table} (${records.length} records)`);
 
     switch (op) {
       case UpdateType.PUT: {
         const payload = records.map((r) => ({ id: r.id, ...r.data }));
-        // Options to reduce egress bandwidth
         const options: {
           onConflict?: string;
           returning?: "minimal";
           count?: "exact";
         } = {
           returning: "minimal",
-          count: "exact", // Returns only count, not rows - reduces egress
+          count: "exact",
         };
 
-        // Handle special conflict resolution for user_preferences
         if (table === "user_preferences") {
           options.onConflict = "user_id";
         }
 
-        const { error } = await this.client
+        const { error, count } = await this.client
           .from(table)
           .upsert(payload, options);
 
@@ -203,20 +209,24 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
       case UpdateType.DELETE: {
         const ids = records.map((r) => r.id);
-        const { error } = await this.client
+        const { error, count } = await this.client
           .from(table)
           .delete({ count: "exact" })
           .in("id", ids);
 
         if (error) {
-          console.error(`[SupabaseConnector] Error deleting ${table}:`, error);
+          console.error(`[SupabaseConnector] Error deleting ${table} (Ids: ${ids.join(', ')}):`, error);
           throw error;
+        }
+        
+        // Log if 0 rows were deleted (might indicate RLS issue or already deleted)
+        if (count === 0 && ids.length > 0) {
+           console.warn(`[SupabaseConnector] Delete command successful but 0 rows affected for ${table}. Check RLS policies.`);
         }
         break;
       }
 
       case UpdateType.PATCH: {
-        // PATCH is always single record - partial update
         const { id, data } = records[0];
         const { error } = await this.client
           .from(table)
@@ -224,15 +234,13 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
           .eq("id", id);
 
         if (error) {
-          console.error(`[SupabaseConnector] Error updating ${table}:`, error);
+          console.error(`[SupabaseConnector] Error updating ${table} (Id: ${id}):`, error);
           throw error;
         }
         break;
       }
     }
   }
-
-
 
   // ============================================================================
   // DATA TRANSFORMATION

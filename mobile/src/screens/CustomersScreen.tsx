@@ -6,7 +6,7 @@ import { useCustomers } from "../hooks/useCustomers";
 import { SearchIcon, UsersIcon, ChevronRightIcon } from "../components/ui/UntitledIcons";
 import { CustomHeader } from "../components/CustomHeader";
 import { useTheme } from "../contexts/ThemeContext";
-import type { ThemeColors} from "../lib/theme";
+import type { ThemeColors } from "../lib/theme";
 import { profColors } from "../lib/theme";
 
 function CustomerCard({ customer, colors }: { customer: any, colors: ThemeColors }) {
@@ -78,7 +78,7 @@ export function CustomersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
 
-  const { customers, isLoading } = useCustomers({ search });
+  const { customers, isLoading } = useCustomers({ search, isActive: true });
 
   const onRefresh = () => {
     setRefreshing(true);

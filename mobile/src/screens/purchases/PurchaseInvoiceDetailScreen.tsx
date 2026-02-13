@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,6 +7,8 @@ import { ChevronRightIcon, EditIcon, ShareIcon } from "../../components/ui/Untit
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
+import { Button } from "../../components/ui";
+import { usePurchaseInvoiceMutations } from "../../hooks/usePurchaseInvoices";
 
 export function PurchaseInvoiceDetailScreen() {
     const navigation = useNavigation();
@@ -16,6 +18,9 @@ export function PurchaseInvoiceDetailScreen() {
     const insets = useSafeAreaInsets();
     const { generateInvoicePDF, generatePDF, previewPDF, isGenerating } = usePDFGenerator();
     const { settings: companySettings } = useCompanySettings();
+
+    const { receiveInvoice, deleteInvoice } = usePurchaseInvoiceMutations();
+    const [isActionLoading, setIsActionLoading] = useState(false);
 
     // Fetch Invoice
     const { data: invoiceData, isLoading: loadingInvoice } = useQuery(
@@ -112,10 +117,64 @@ export function PurchaseInvoiceDetailScreen() {
         (navigation as any).navigate("PurchaseInvoiceForm", { id: invoice.id });
     };
 
+    const handleReceive = () => {
+        Alert.alert(
+            "Receive Stock",
+            "This will update inventory quantities and supplier balance. Are you sure?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        setIsActionLoading(true);
+                        try {
+                            await receiveInvoice(id);
+                            Alert.alert("Success", "Stock received and status updated.");
+                            // Query will auto-update status in UI
+                        } catch (error: any) {
+                            console.error(error);
+                            Alert.alert("Error", error.message || "Failed to receive stock");
+                        } finally {
+                            setIsActionLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Delete Invoice",
+            "Are you sure you want to delete this invoice? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsActionLoading(true);
+                        try {
+                            await deleteInvoice(id);
+                            Alert.alert("Success", "Invoice deleted successfully");
+                            navigation.goBack();
+                        } catch (error: any) {
+                            console.error(error);
+                            Alert.alert("Error", error.message || "Failed to delete invoice");
+                        } finally {
+                            setIsActionLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const statusColors: Record<string, { bg: string; text: string }> = {
         draft: { bg: colors.surfaceHover, text: colors.textMuted },
         sent: { bg: colors.info + '20', text: colors.info },
         paid: { bg: colors.success + '20', text: colors.success },
+        received: { bg: colors.success + '20', text: colors.success },
         partial: { bg: colors.warning + '20', text: colors.warning },
         overdue: { bg: colors.danger + '20', text: colors.danger },
         pending: { bg: colors.warning + '20', text: colors.warning },
@@ -140,7 +199,7 @@ export function PurchaseInvoiceDetailScreen() {
                 </View>
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}>
+            <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 100 }}>
                 {/* Status & Supplier Card */}
                 <View className="bg-surface rounded-lg p-4 shadow-sm">
                     <View
@@ -181,6 +240,32 @@ export function PurchaseInvoiceDetailScreen() {
                         <Text className="text-lg font-bold text-text">Total</Text>
                         <Text className="text-xl font-bold text-primary">${(invoice.total_amount || 0).toFixed(2)}</Text>
                     </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View className="flex-col gap-3 mt-4">
+                    {invoice.status === 'draft' && (
+                        <Button
+                            onPress={handleReceive}
+                            isLoading={isActionLoading}
+                            className="bg-primary"
+                        >
+                            Receive Stock
+                        </Button>
+                    )}
+
+                    <Button
+                        onPress={handleDelete}
+                        isLoading={isActionLoading}
+                        variant="danger"
+                        // Note: variant 'destructive' was flagged by lint as invalid? 
+                        // Checked ui/Button.tsx? Usually 'danger' or 'destructive'. 
+                        // Lint said: '"primary" | "secondary" | "outline" | "ghost" | "danger"'.
+                        // So 'danger' is correct.
+                        className="bg-red-500"
+                    >
+                        Delete Invoice
+                    </Button>
                 </View>
 
             </ScrollView>

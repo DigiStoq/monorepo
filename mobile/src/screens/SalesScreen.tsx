@@ -10,8 +10,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSaleInvoices } from "../hooks/useSaleInvoices";
-import { SearchIcon, FileTextIcon, ChevronRightIcon } from "../components/ui/UntitledIcons";
-import type { ThemeColors} from "../lib/theme";
+import { SearchIcon, ReceiptIcon, ChevronRightIcon } from "../components/ui/UntitledIcons";
+import type { ThemeColors } from "../lib/theme";
 import { spacing, borderRadius, fontSize, fontWeight, shadows, profColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -51,7 +51,7 @@ function InvoiceCard({ invoice, colors }: { invoice: any; colors: ThemeColors })
         className="w-12 h-12 rounded-md justify-center items-center"
         style={{ backgroundColor: profColors.items.bg, borderWidth: 1, borderColor: profColors.items.border }}
       >
-        <FileTextIcon size={20} color={profColors.items.icon} />
+        <ReceiptIcon size={20} color={profColors.items.icon} />
       </View>
       <View className="flex-1">
         <View className="flex-row items-center justify-between mb-0.5">
@@ -128,7 +128,7 @@ export function SalesScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center py-16 gap-2">
-              <FileTextIcon size={48} color={colors.textMuted} />
+              <ReceiptIcon size={48} color={colors.textMuted} />
               <Text className="text-lg font-semibold text-text mt-3">No invoices yet</Text>
               <Text className="text-sm text-text-muted">Create your first sale</Text>
               <TouchableOpacity

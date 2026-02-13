@@ -20,7 +20,7 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { SaveIcon, XCloseIcon } from "../components/ui/UntitledIcons";
+import { SaveIcon, XCloseIcon, TrashIcon } from "../components/ui/UntitledIcons";
 import { generateUUID } from "../lib/utils";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -210,6 +210,41 @@ export function ItemFormScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this item? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // Switch to Soft Delete to handle Sync and FK constraints safely
+              const now = new Date().toISOString();
+              await db.execute("UPDATE items SET is_active = 0, updated_at = ? WHERE id = ?", [now, id]);
+
+              Alert.alert("Success", "Item deleted");
+              navigation.goBack();
+              // If navigated from ItemDetail, we might need to pop twice or handle it.
+              // Usually navigation.goBack() goes to ItemsScreen.
+              // If we were on ItemDetail, going back goes to ItemDetail which might crash if item is gone.
+              // Ideally we navigate to "Items" tab.
+              (navigation as any).navigate("Items");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to delete item");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const typeOptions = [
@@ -450,6 +485,17 @@ export function ItemFormScreen() {
         >
           Save Item
         </Button>
+
+        {isEditing && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="mt-4 flex-row justify-center items-center p-4 rounded-lg border border-danger bg-danger-10"
+            style={{ borderColor: colors.danger, backgroundColor: colors.danger + '10' }}
+          >
+            <TrashIcon size={20} color={colors.danger} />
+            <Text className="ml-2 font-bold text-danger" style={{ color: colors.danger }}>Delete Item</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

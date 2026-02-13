@@ -314,5 +314,102 @@ export function usePurchaseInvoiceMutations() {
     [db, addHistoryEntry]
   );
 
-  return { createInvoice };
+  const receiveInvoice = useCallback(
+    async (id: string): Promise<void> => {
+      const now = new Date().toISOString();
+      const userId = user?.id ?? null;
+      const userName = (user?.user_metadata?.full_name as string) ?? user?.email ?? "Unknown User";
+
+      await db.writeTransaction(async (tx) => {
+        // 1. Fetch Invoice
+        const invRes = await tx.execute(`SELECT * FROM purchase_invoices WHERE id = ?`, [id]);
+        const invoice = invRes.rows?.item(0);
+
+        if (!invoice) throw new Error("Invoice not found");
+        if (invoice.status === 'received' || invoice.status === 'paid') {
+             // Already received
+             return; 
+        }
+
+        // 2. Fetch Items
+        const itemsRes = await tx.execute(`SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
+        
+        // 3. Update Stock
+        for (let i = 0; i < itemsRes.rows.length; i++) {
+            const item = itemsRes.rows.item(i);
+            if (item.item_id) {
+                await tx.execute(
+                    `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+                    [item.quantity, now, item.item_id]
+                );
+            }
+        }
+
+        // 4. Update Supplier Balance (We owe them)
+        await tx.execute(
+            `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
+            [invoice.total, now, invoice.customer_id]
+        );
+
+        // 5. Update Status
+        await tx.execute(
+            `UPDATE purchase_invoices SET status = 'received', updated_at = ? WHERE id = ?`,
+            [now, id]
+        );
+
+        // 6. History
+        await addHistoryEntry({
+            invoiceId: id,
+            action: 'updated',
+            description: 'Invoice marked as Received',
+            newValues: { status: 'received' }
+        }, tx);
+
+      });
+    },
+    [db, addHistoryEntry, user]
+  );
+
+  const deleteInvoice = useCallback(
+    async (id: string): Promise<void> => {
+       const now = new Date().toISOString();
+       await db.writeTransaction(async (tx) => {
+          const invRes = await tx.execute(`SELECT * FROM purchase_invoices WHERE id = ?`, [id]);
+          const invoice = invRes.rows?.item(0);
+          if (!invoice) return;
+
+          if (invoice.amount_paid > 0) {
+              throw new Error("Cannot delete invoice with payments. Delete payments first.");
+          }
+
+          // If Received/Paid, Revert Stock and Balance
+          if (['received', 'paid', 'partial'].includes(invoice.status)) {
+               const itemsRes = await tx.execute(`SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
+               for (let i = 0; i < itemsRes.rows.length; i++) {
+                  const item = itemsRes.rows.item(i);
+                  if (item.item_id) {
+                      await tx.execute(
+                          `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
+                          [item.quantity, now, item.item_id]
+                      );
+                  }
+               }
+
+               // Revert Balance (We don't owe them anymore -> Increase Balance Back to 0 from negative)
+               // Current Balance -100. Invoice Deleted. Balance + 100 = 0.
+               await tx.execute(
+                   `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+                   [invoice.total, now, invoice.customer_id]
+               );
+          }
+
+          await tx.execute(`DELETE FROM invoice_history WHERE invoice_id = ?`, [id]);
+          await tx.execute(`DELETE FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
+          await tx.execute(`DELETE FROM purchase_invoices WHERE id = ?`, [id]);
+       });
+    },
+    [db]
+  );
+
+  return { createInvoice, receiveInvoice, deleteInvoice };
 }

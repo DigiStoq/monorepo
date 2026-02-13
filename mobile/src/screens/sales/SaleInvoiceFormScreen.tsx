@@ -30,7 +30,7 @@ import {
   TrashIcon,
   SaveIcon,
   XCloseIcon,
-  FileTextIcon
+  ReceiptIcon
 } from "../../components/ui/UntitledIcons";
 import { CustomHeader } from "../../components/CustomHeader";
 
@@ -52,6 +52,8 @@ interface ItemData {
   sku: string;
   is_active: number;
   batch_number?: string;
+  stock_quantity: number;
+  type: string;
 }
 
 interface LineItem {
@@ -274,7 +276,19 @@ export function SaleInvoiceFormScreen() {
       return;
     }
 
+    const selectedItem = items.find(i => i.id === currentItem.itemId);
     const qty = currentItem.quantity || 0;
+
+    // Stock Validation
+    if (selectedItem && selectedItem.type !== 'service') {
+      const otherLines = lineItems.filter(i => i.itemId === currentItem.itemId && i.id !== editingItemId);
+      const totalOtherQty = otherLines.reduce((acc, i) => acc + i.quantity, 0);
+
+      if (totalOtherQty + qty > selectedItem.stock_quantity) {
+        Alert.alert("Insufficient Stock", `You only have ${selectedItem.stock_quantity} quantity available for ${selectedItem.name}.`);
+        return;
+      }
+    }
     const rate = currentItem.unitPrice || 0;
     const disc = currentItem.discountPercent || 0;
     const tax = currentItem.taxPercent || 0;
@@ -433,7 +447,7 @@ export function SaleInvoiceFormScreen() {
                 disabled={isGeneratingPDF}
                 className="p-2"
               >
-                {isGeneratingPDF ? <ActivityIndicator size="small" color={colors.text} /> : <FileTextIcon size={24} color={colors.text} />}
+                {isGeneratingPDF ? <ActivityIndicator size="small" color={colors.text} /> : <ReceiptIcon size={24} color={colors.text} />}
               </TouchableOpacity>
             )}
             <TouchableOpacity
