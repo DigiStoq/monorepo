@@ -12,6 +12,7 @@ export interface Item {
   description?: string;
   category?: string;
   unit: string;
+  mrp?: number;
   salePrice: number;
   purchasePrice: number;
   taxRate?: number;
@@ -39,6 +40,7 @@ export interface ItemFormData {
   description?: string | undefined;
   category?: string | undefined;
   unit: string;
+  mrp?: number | undefined;
   salePrice: number;
   purchasePrice?: number | undefined;
   taxRate?: number | undefined;
@@ -70,41 +72,4 @@ export interface Category {
   name: string;
   description?: string;
   itemCount: number;
-}
-
-// Legacy types for backwards compatibility
-export interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  description: string;
-  category: string;
-  unit_price: number;
-  cost_price: number;
-  quantity_in_stock: number;
-  reorder_level: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-// ts-prune-ignore-next (exported for future product form feature)
-export interface ProductFormData {
-  name: string;
-  sku: string;
-  description: string;
-  category: string;
-  unit_price: number;
-  cost_price: number;
-  quantity_in_stock: number;
-  reorder_level: number;
-  is_active: boolean;
-}
-
-// ts-prune-ignore-next (exported for future product filtering feature)
-export interface ProductFilters {
-  search: string;
-  category: string | null;
-  showInactive: boolean;
-  lowStockOnly: boolean;
 }

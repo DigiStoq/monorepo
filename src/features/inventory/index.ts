@@ -11,16 +11,12 @@ export type {
   ItemFilters,
   ItemType,
   Category,
-  // Legacy types
-  Product,
-  ProductFormData,
-  ProductFilters,
 } from "./types";
 
 // Legacy exports
-export { ProductList } from "./ProductList";
-export {
-  useProducts,
-  useProductSearch,
-  useLowStockProducts,
-} from "./hooks/useProducts";
+// export { ProductList } from "./ProductList";
+// export {
+//   useProducts,
+//   useProductSearch,
+//   useLowStockProducts,
+// } from "./hooks/useProducts";

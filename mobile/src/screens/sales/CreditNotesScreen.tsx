@@ -9,21 +9,13 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useQuery } from "@powersync/react-native";
+import { useCreditNotes } from "../../hooks/useCreditNotes";
 import { wp, hp } from "../../lib/responsive";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ThemeColors } from "../../lib/theme";
+import type { ThemeColors } from "../../lib/theme";
+import { ReverseLeftIcon, SearchIcon, PlusIcon } from "../../components/ui/Icons";
 
-interface CreditNote {
-  id: string;
-  credit_note_number: string;
-  customer_name: string;
-  date: string;
-  total: number;
-  reason: string;
-}
-
-function CreditNoteCard({ note, styles, colors }: { note: CreditNote, styles: any, colors: ThemeColors }) {
+function CreditNoteCard({ note, styles, colors }: { note: any, styles: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const formatDate = (dateStr: string) => {
@@ -47,7 +39,7 @@ function CreditNoteCard({ note, styles, colors }: { note: CreditNote, styles: an
       <View style={styles.cardHeader}>
         <View style={styles.info}>
           <Text style={styles.customerName}>
-            {note.customer_name || "Unknown Customer"}
+            {note.customerName || "Unknown Customer"}
           </Text>
           <Text style={styles.date}>{formatDate(note.date)}</Text>
         </View>
@@ -57,7 +49,7 @@ function CreditNoteCard({ note, styles, colors }: { note: CreditNote, styles: an
         <Text style={styles.reason}>
           {note.reason ? `Reason: ${note.reason}` : "Credit Note"}
         </Text>
-        <Text style={styles.ref}>#{note.credit_note_number}</Text>
+        <Text style={styles.ref}>#{note.creditNoteNumber}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -70,12 +62,7 @@ export function CreditNotesScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { data: notes, isLoading } = useQuery<CreditNote>(
-    `SELECT * FROM credit_notes 
-         WHERE ($1 IS NULL OR customer_name LIKE $1 OR credit_note_number LIKE $1) 
-         ORDER BY date DESC`,
-    [search ? `%${search}%` : null]
-  );
+  const { creditNotes: notes, isLoading } = useCreditNotes({ search });
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -98,7 +85,7 @@ export function CreditNotesScreen() {
           style={styles.addButton}
           onPress={() => (navigation as any).navigate("CreditNoteForm")}
         >
-          <Text style={styles.addButtonText}>+</Text>
+          <PlusIcon size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -116,7 +103,9 @@ export function CreditNotesScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>↩️</Text>
+            <View style={{ marginBottom: 16 }}>
+              <ReverseLeftIcon size={48} color={colors.textMuted} />
+            </View>
             <Text style={styles.emptyText}>No credit notes</Text>
             <Text style={styles.emptySubtext}>
               Record sales returns and credits
@@ -154,7 +143,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  addButtonText: { color: "#ffffff", fontSize: 24, fontWeight: "600" },
+  // addButtonText removed
   list: { padding: wp(4), paddingTop: 0, paddingBottom: hp(10) },
   card: {
     backgroundColor: colors.surface,
@@ -191,7 +180,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   reason: { fontSize: 13, color: colors.textSecondary },
   ref: { fontSize: 12, color: colors.textMuted },
   empty: { alignItems: "center", justifyContent: "center", marginTop: hp(10) },
-  emptyIcon: { fontSize: 48, marginBottom: 16 },
+  // emptyIcon removed
   emptyText: {
     fontSize: 18,
     fontWeight: "600",

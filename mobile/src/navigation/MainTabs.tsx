@@ -1,15 +1,16 @@
-import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
-  Home,
-  Box,
-  BarChart3,
-  Grid,
-} from "lucide-react-native";
+  HomeIcon,
+  BoxIcon,
+  MenuIcon,
+  UsersIcon,
+  ReceiptIcon, // Using ReceiptIcon instead of ShoppingCartIcon
+} from "../components/ui/UntitledIcons";
 import { Platform, View, StyleSheet, Pressable } from "react-native";
 import { DashboardScreen } from "../screens/DashboardScreen";
-import { ItemsScreen } from "../screens/ItemsScreen"; // This will be the Inventory Screen
-import { ReportsScreen } from "../screens/reports/ReportsScreen";
+import { ItemsScreen } from "../screens/ItemsScreen";
+import { SalesNavigator } from "../navigation/SalesNavigator";
+import { CustomersScreen } from "../screens/CustomersScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { colors } from "../lib/theme";
 
@@ -62,7 +63,13 @@ export function MainTabs() {
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarShowLabel: false,
+          tabBarItemStyle: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
         }}
+        id="MainTabs"
       >
         <Tab.Screen
           name="DashboardTab"
@@ -73,7 +80,35 @@ export function MainTabs() {
             tabBarIcon: ({ color, focused }) => (
               <View style={styles.tabItem}>
                 {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
-                <Home color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+                <HomeIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+              </View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="SalesTab"
+          component={SalesNavigator}
+          options={{
+            tabBarLabel: "Sales",
+            tabBarButton: (props) => <TabButton {...props} testID="sales-tab" accessibilityLabel="Sales" />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={styles.tabItem}>
+                {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
+                <ReceiptIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+              </View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="CustomersTab"
+          component={CustomersScreen}
+          options={{
+            tabBarLabel: "Customers",
+            tabBarButton: (props) => <TabButton {...props} testID="customers-tab" accessibilityLabel="Customers" />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={styles.tabItem}>
+                {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
+                <UsersIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
               </View>
             ),
           }}
@@ -87,21 +122,7 @@ export function MainTabs() {
             tabBarIcon: ({ color, focused }) => (
               <View style={styles.tabItem}>
                 {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
-                <Box color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
-              </View>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="ReportsTab"
-          component={ReportsScreen}
-          options={{
-            tabBarLabel: "Reports",
-            tabBarButton: (props) => <TabButton {...props} testID="reports-tab" accessibilityLabel="Reports" />,
-            tabBarIcon: ({ color, focused }) => (
-              <View style={styles.tabItem}>
-                {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
-                <BarChart3 color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+                <BoxIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
               </View>
             ),
           }}
@@ -115,7 +136,7 @@ export function MainTabs() {
             tabBarIcon: ({ color, focused }) => (
               <View style={styles.tabItem}>
                 {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
-                <Grid color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+                <MenuIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
               </View>
             ),
           }}

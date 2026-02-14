@@ -4,6 +4,7 @@ import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { Button, Input } from "@/components/ui";
 import { useAuthStore } from "@/stores";
+import { toast } from "sonner";
 
 export function ForgotPasswordPage(): ReactNode {
   const { resetPassword, isLoading, error, clearError } = useAuthStore();
@@ -26,6 +27,7 @@ export function ForgotPasswordPage(): ReactNode {
     const { error } = await resetPassword(email);
 
     if (!error) {
+      toast.success("Password reset link sent to your email");
       setSuccess(true);
     }
   };

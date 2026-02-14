@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
+import { toast } from "sonner";
 import { Card, CardBody } from "@/components/ui";
 import {
   Database,
@@ -97,9 +98,9 @@ export function BackupSettingsPage(): React.ReactNode {
       console.error("Failed to connect Google Drive:", err);
       // Fallback: If linkIdentity fails (e.g. not supported or user conflict), try re-auth which merges if email matches
       if (err instanceof Error && err.message.includes("identities")) {
-        alert("This Google account is already linked to another user.");
+        toast.error("This Google account is already linked to another user.");
       } else {
-        alert(
+        toast.error(
           "Could not initiate Google Drive connection: " +
             (err instanceof Error ? err.message : String(err))
         );
@@ -246,14 +247,14 @@ export function BackupSettingsPage(): React.ReactNode {
       const result = await backupService.restoreBackup(fileContent);
 
       if (result.success) {
-        alert("Restore successful! The application will reload.");
+        toast.success("Restore successful! The application will reload.");
         window.location.reload();
       } else {
-        alert(`Restore failed: ${result.message}`);
+        toast.error(`Restore failed: ${result.message}`);
       }
     } catch (err) {
       console.error("Restore failed:", err);
-      alert("An unexpected error occurred during restore.");
+      toast.error("An unexpected error occurred during restore.");
     } finally {
       setIsRestoring(false);
     }

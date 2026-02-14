@@ -23,6 +23,7 @@ import {
   usePurchaseInvoices,
   usePurchaseInvoiceMutations,
   usePurchaseInvoiceLinkedItems,
+  usePurchaseInvoiceItems,
 } from "@/hooks/usePurchaseInvoices";
 import { usePaymentOutMutations } from "@/hooks/usePaymentOuts";
 import { useCashTransactionMutations } from "@/hooks/useCashTransactions";
@@ -43,6 +44,7 @@ import type {
 } from "./types";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "sonner";
 
 export function PurchaseInvoicesPage(): React.ReactNode {
   // Data from PowerSync
@@ -50,7 +52,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   const { customers } = useCustomers({ type: "supplier" });
   const { items } = useItems({ isActive: true });
   const { accounts: bankAccounts } = useBankAccounts({ isActive: true });
-  const { createInvoice, deleteInvoice, updateInvoiceStatus } =
+  const { createInvoice, updateInvoice, deleteInvoice, updateInvoiceStatus } =
     usePurchaseInvoiceMutations();
   const { createPayment } = usePaymentOutMutations();
   const { createTransaction: createCashTransaction } =
@@ -99,6 +101,12 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   const [newBankName, setNewBankName] = useState<string>("");
   const [newBankAccountNumber, setNewBankAccountNumber] = useState<string>("");
 
+  // Workflow modals state
+  const [isOrderedModalOpen, setIsOrderedModalOpen] = useState(false);
+  const [isReceivedModalOpen, setIsReceivedModalOpen] = useState(false);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>("");
+  const [isPaidOnReceipt, setIsPaidOnReceipt] = useState(false);
+
   // Payment mode options
   const paymentModeOptions: SelectOption[] = [
     { value: "cash", label: "Cash" },
@@ -117,10 +125,52 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   );
 
   // Update selected purchase when data changes
-  const currentSelectedPurchase = useMemo(() => {
+  const selectedInvoiceFromList = useMemo(() => {
     if (!selectedPurchase) return null;
     return invoices.find((p) => p.id === selectedPurchase.id) ?? null;
   }, [invoices, selectedPurchase]);
+
+  const { items: invoiceItems } = usePurchaseInvoiceItems(
+    selectedInvoiceFromList?.id
+  );
+
+  const currentSelectedPurchase = useMemo(() => {
+    if (!selectedInvoiceFromList) return null;
+    return {
+      ...selectedInvoiceFromList,
+      items: invoiceItems,
+    };
+  }, [selectedInvoiceFromList, invoiceItems]);
+
+  // Derived initial data for edit form
+  const formInitialData = useMemo<
+    Partial<PurchaseInvoiceFormData> | undefined
+  >(() => {
+    if (!currentSelectedPurchase) return undefined;
+
+    // Calculate discount percent from amount if possible
+    const subtotal = currentSelectedPurchase.subtotal;
+    const discountAmount = currentSelectedPurchase.discountAmount;
+    const discountPercent =
+      subtotal > 0 ? (discountAmount / subtotal) * 100 : 0;
+
+    return {
+      invoiceNumber: currentSelectedPurchase.invoiceNumber,
+      supplierInvoiceNumber: currentSelectedPurchase.supplierInvoiceNumber,
+      customerId: currentSelectedPurchase.customerId,
+      date: currentSelectedPurchase.date,
+      dueDate: currentSelectedPurchase.dueDate,
+      discountPercent: Number(discountPercent.toFixed(2)),
+      notes: currentSelectedPurchase.notes ?? undefined,
+      items: currentSelectedPurchase.items.map((item) => ({
+        itemId: item.itemId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discountPercent: item.discountPercent,
+        taxPercent: item.taxPercent,
+      })),
+    };
+  }, [currentSelectedPurchase]);
 
   // Handlers
   const handlePurchaseClick = (purchase: PurchaseInvoice): void => {
@@ -132,6 +182,13 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   };
 
   const handleCreatePurchase = (): void => {
+    // Clear selection so we start fresh (no initial data)
+    setSelectedPurchase(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditPurchase = (): void => {
+    // currentSelectedPurchase is already set, just open form
     setIsFormOpen(true);
   };
 
@@ -144,9 +201,6 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   ): Promise<void> => {
     setIsSubmitting(true);
     try {
-      // Generate invoice number
-      const invoiceNumber = `PUR-${Date.now()}`;
-
       // Lookup supplier name from customerId (suppliers are stored in customers table)
       const supplier = customers.find((c) => c.id === data.customerId);
       const supplierName = supplier?.name ?? "Unknown";
@@ -181,25 +235,58 @@ export function PurchaseInvoicesPage(): React.ReactNode {
       );
       const discountAmount = subtotal * ((data.discountPercent ?? 0) / 100);
 
-      await createInvoice(
-        {
-          invoiceNumber,
-          ...(data.supplierInvoiceNumber && {
+      if (currentSelectedPurchase) {
+        // UPDATE
+        await updateInvoice(
+          currentSelectedPurchase.id,
+          {
+            invoiceNumber: currentSelectedPurchase.invoiceNumber,
             supplierInvoiceNumber: data.supplierInvoiceNumber,
-          }),
-          supplierId: data.customerId,
-          supplierName,
-          date: data.date,
-          dueDate: data.dueDate ?? data.date, // Default to invoice date if not provided
-          status: "draft",
-          discountAmount,
-          ...(data.notes && { notes: data.notes }),
-        },
-        purchaseItems
-      );
+            supplierId: data.customerId,
+            supplierName,
+            date: data.date,
+            dueDate: data.dueDate ?? data.date,
+            status: currentSelectedPurchase.status, // Keep existing status
+            discountAmount,
+            notes: data.notes,
+          },
+          purchaseItems
+        );
+        toast.success("Purchase invoice updated successfully");
+      } else {
+        // CREATE
+        // Generate invoice number
+        const invoiceNumber = `PUR-${Date.now()}`;
+
+        await createInvoice(
+          {
+            invoiceNumber,
+            ...(data.supplierInvoiceNumber && {
+              supplierInvoiceNumber: data.supplierInvoiceNumber,
+            }),
+            supplierId: data.customerId,
+            supplierName,
+            date: data.date,
+            dueDate: data.dueDate ?? data.date,
+            status: "draft",
+            discountAmount,
+            ...(data.notes && { notes: data.notes }),
+            initialPaymentStatus: data.initialPaymentStatus,
+            initialAmountPaid: data.initialAmountPaid,
+            initialPaymentMode: data.initialPaymentMode,
+            initialBankAccountId: data.initialBankAccountId,
+            initialChequeNumber: data.initialChequeNumber,
+            initialChequeBankName: data.initialChequeBankName,
+            initialChequeDueDate: data.initialChequeDueDate,
+          },
+          purchaseItems
+        );
+      }
+      toast.success("Purchase invoice created successfully");
       setIsFormOpen(false);
     } catch (err) {
-      console.error("Failed to create purchase invoice:", err);
+      console.error("Failed to save purchase invoice:", err);
+      toast.error("Failed to save purchase invoice");
     } finally {
       setIsSubmitting(false);
     }
@@ -320,8 +407,11 @@ export function PurchaseInvoicesPage(): React.ReactNode {
         setSelectedPurchase(null);
         setIsDeleteModalOpen(false);
         setInvoiceToDelete(null);
+        setInvoiceToDelete(null);
+        toast.success("Purchase invoice deleted successfully");
       } catch (err) {
         console.error("Failed to delete purchase invoice:", err);
+        toast.error("Failed to delete purchase invoice");
       } finally {
         setIsSubmitting(false);
       }
@@ -353,11 +443,62 @@ export function PurchaseInvoicesPage(): React.ReactNode {
       currentSelectedPurchase &&
       newStatus !== currentSelectedPurchase.status
     ) {
+      if (newStatus === "ordered") {
+        setExpectedDeliveryDate(
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 10)
+        ); // Default +7 days
+        setIsOrderedModalOpen(true);
+        return;
+      }
+
+      if (newStatus === "received") {
+        setIsPaidOnReceipt(false);
+        setIsReceivedModalOpen(true);
+        return;
+      }
+
       try {
         await updateInvoiceStatus(currentSelectedPurchase.id, newStatus);
+        toast.success(`Status updated to ${newStatus}`);
       } catch (err) {
         console.error("Failed to update status:", err);
+        toast.error("Failed to update status");
       }
+    }
+  };
+
+  const handleConfirmOrder = async (): Promise<void> => {
+    if (!currentSelectedPurchase) return;
+
+    try {
+      await updateInvoiceStatus(currentSelectedPurchase.id, "ordered", {
+        expectedDeliveryDate,
+      });
+      toast.success("Order confirmed");
+      setIsOrderedModalOpen(false);
+    } catch (err) {
+      console.error("Failed to confirm order:", err);
+      toast.error("Failed to confirm order");
+    }
+  };
+
+  const handleConfirmReceipt = async (): Promise<void> => {
+    if (!currentSelectedPurchase) return;
+
+    try {
+      await updateInvoiceStatus(currentSelectedPurchase.id, "received");
+      toast.success("Receipt confirmed");
+      setIsReceivedModalOpen(false);
+
+      if (isPaidOnReceipt) {
+        // Prepare and open payment modal
+        handleRecordPayment();
+      }
+    } catch (err) {
+      console.error("Failed to confirm receipt:", err);
+      toast.error("Failed to confirm receipt");
     }
   };
 
@@ -379,8 +520,10 @@ export function PurchaseInvoicesPage(): React.ReactNode {
       setNewBankAccountName("");
       setNewBankName("");
       setNewBankAccountNumber("");
+      toast.success("Bank account created successfully");
     } catch (err) {
       console.error("Failed to create bank account:", err);
+      toast.error("Failed to create bank account");
     }
   };
 
@@ -474,9 +617,12 @@ export function PurchaseInvoicesPage(): React.ReactNode {
         setSelectedBankAccountId("");
         setChequeNumber("");
         setChequeBankName("");
+        setChequeBankName("");
         setChequeDueDate("");
+        toast.success("Payment recorded successfully");
       } catch (err) {
         console.error("Failed to record payment:", err);
+        toast.error("Failed to record payment");
       } finally {
         setIsSubmitting(false);
       }
@@ -649,9 +795,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
                     <PurchaseInvoiceDetail
                       invoice={currentSelectedPurchase}
                       onClose={handleCloseDetail}
-                      onEdit={() => {
-                        setIsFormOpen(true);
-                      }}
+                      onEdit={handleEditPurchase}
                       onDelete={handleDeleteClick}
                       onDownload={handleDownloadPurchase}
                       onPrint={handlePrintPurchase}
@@ -679,19 +823,130 @@ export function PurchaseInvoicesPage(): React.ReactNode {
       <Modal isOpen={isFormOpen} onClose={handleCloseForm} size="full">
         <ModalContent className="max-w-6xl mx-auto my-4 h-[calc(100vh-2rem)]">
           <ModalHeader onClose={handleCloseForm}>
-            New Purchase Invoice
+            {currentSelectedPurchase
+              ? "Edit Purchase Invoice"
+              : "New Purchase Invoice"}
           </ModalHeader>
           <ModalBody className="p-0 overflow-y-auto">
             <PurchaseInvoiceForm
+              key={currentSelectedPurchase?.id ?? "new"}
               customers={customers}
               items={items}
+              bankAccounts={bankAccounts}
+              initialData={formInitialData}
               onSubmit={(data) => {
                 void handleSubmitPurchase(data);
               }}
               onCancel={handleCloseForm}
+              onAddBankAccount={async (data) => {
+                return await createBankAccount({
+                  ...data,
+                  accountType: "savings",
+                });
+              }}
               className="p-6"
             />
           </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Confirm Order Modal */}
+      <Modal
+        isOpen={isOrderedModalOpen}
+        onClose={() => {
+          setIsOrderedModalOpen(false);
+        }}
+        size="sm"
+      >
+        <ModalContent>
+          <ModalHeader title="Confirm Order" />
+          <ModalBody>
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">
+                When do you expect this order to be received?
+              </p>
+              <Input
+                label="Expected Delivery Date"
+                type="date"
+                value={expectedDeliveryDate}
+                onChange={(e) => {
+                  setExpectedDeliveryDate(e.target.value);
+                }}
+              />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsOrderedModalOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                void handleConfirmOrder();
+              }}
+            >
+              Confirm Order
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Confirm Receipt Modal */}
+      <Modal
+        isOpen={isReceivedModalOpen}
+        onClose={() => {
+          setIsReceivedModalOpen(false);
+        }}
+        size="sm"
+      >
+        <ModalContent>
+          <ModalHeader title="Confirm Receipt" />
+          <ModalBody>
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">
+                Are you sure you want to mark this order as received? Stocks
+                will be updated.
+              </p>
+              <div className="flex items-center gap-2 p-3 bg-subtle rounded-lg border border-border-primary">
+                <input
+                  type="checkbox"
+                  id="paidCheck"
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  checked={isPaidOnReceipt}
+                  onChange={(e) => {
+                    setIsPaidOnReceipt(e.target.checked);
+                  }}
+                />
+                <label
+                  htmlFor="paidCheck"
+                  className="text-sm font-medium text-text-heading cursor-pointer"
+                >
+                  Mark as Paid?
+                </label>
+              </div>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsReceivedModalOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                void handleConfirmReceipt();
+              }}
+            >
+              Confirm Receipt
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 

@@ -77,7 +77,7 @@ export interface TaxRate {
 
 export function useCompanySettings() {
   const db = usePowerSync();
-  const { data, loading, error } = useQuery<any>(
+  const { data, isLoading, error } = useQuery(
     "SELECT * FROM company_settings LIMIT 1"
   );
 
@@ -159,12 +159,12 @@ export function useCompanySettings() {
     );
   };
 
-  return { settings, isLoading: loading, error, updateCompanySettings };
+  return { settings, isLoading, error, updateCompanySettings };
 }
 
 export function useInvoiceSettings() {
   const db = usePowerSync();
-  const { data, loading, error } = useQuery<any>(
+  const { data, isLoading, error } = useQuery(
     "SELECT * FROM invoice_settings LIMIT 1"
   );
 
@@ -247,6 +247,10 @@ export function useInvoiceSettings() {
     if (updates.lateFeesPercentage !== undefined) flatUpdates.late_fees_percentage = updates.lateFeesPercentage;
     if (updates.pdfTemplate !== undefined) flatUpdates.pdf_template = updates.pdfTemplate;
 
+    if (updates.taxEnabled !== undefined) flatUpdates.tax_enabled = updates.taxEnabled ? 1 : 0;
+    if (updates.taxInclusive !== undefined) flatUpdates.tax_inclusive = updates.taxInclusive ? 1 : 0;
+    if (updates.roundTax !== undefined) flatUpdates.round_tax = updates.roundTax ? 1 : 0;
+
     flatUpdates.updated_at = new Date().toISOString();
 
     // Check if we have tax columns in DB schema before trying to update them?
@@ -254,17 +258,17 @@ export function useInvoiceSettings() {
     // I will verify schema in a separate step if needed.
 
     await db.execute(
-      `UPDATE invoice_settings SET ${Object.keys(flatUpdates).map(k => `${k} = ?`).join(', ')} WHERE user_id = ?`, // using user_id or id? assuming single row per user.
-      [...Object.values(flatUpdates), data[0].user_id] 
+      `UPDATE invoice_settings SET ${Object.keys(flatUpdates).map(k => `${k} = ?`).join(', ')} WHERE id = ?`,
+      [...Object.values(flatUpdates), settings.id] 
     );
   }
 
-  return { settings, isLoading: loading, error, updateInvoiceSettings };
+  return { settings, isLoading, error, updateInvoiceSettings };
 }
 
 export function useTaxRates() {
   const db = usePowerSync();
-  const { data, loading, error } = useQuery<any>(
+  const { data, isLoading, error } = useQuery(
     "SELECT * FROM tax_rates WHERE is_active = 1 ORDER BY name"
   );
 
@@ -309,5 +313,5 @@ export function useTaxRates() {
       await db.execute(`UPDATE tax_rates SET is_active = 0 WHERE id = ?`, [id]);
   };
 
-  return { taxRates, isLoading: loading, error, createTaxRate, updateTaxRate, deleteTaxRate };
+  return { taxRates, isLoading, error, createTaxRate, updateTaxRate, deleteTaxRate };
 }

@@ -7,10 +7,11 @@ export type InvoiceStatus = "draft" | "unpaid" | "paid" | "returned";
 export interface SaleInvoice {
   id: string;
   invoiceNumber: string;
+  invoiceName?: string; // Custom display name/title for the invoice
   customerId: string;
   customerName: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   status: InvoiceStatus;
   items: SaleInvoiceItem[];
   subtotal: number;
@@ -57,15 +58,23 @@ export interface SaleInvoiceFormData {
   transportName?: string | undefined;
   deliveryDate?: string | undefined;
   deliveryLocation?: string | undefined;
+  // Payment fields
+  initialPaymentStatus?: "paid" | "unpaid" | "partial";
+  initialAmountPaid?: number;
+  initialPaymentMode?: PaymentMode;
+  initialBankAccountId?: string;
+  initialChequeNumber?: string;
+  initialChequeBankName?: string;
+  initialChequeDueDate?: string;
 }
 
-// Form data used for creating an invoice (dueDate is required by database)
+// Form data used for creating an invoice
 export interface InvoiceFormData {
   invoiceNumber: string;
   customerId: string;
   customerName: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   status?: string;
   discountAmount?: number;
   notes?: string;
@@ -73,6 +82,14 @@ export interface InvoiceFormData {
   transportName?: string;
   deliveryDate?: string;
   deliveryLocation?: string;
+  // Payment fields
+  initialPaymentStatus?: "paid" | "unpaid" | "partial";
+  initialAmountPaid?: number;
+  initialPaymentMode?: PaymentMode;
+  initialBankAccountId?: string;
+  initialChequeNumber?: string;
+  initialChequeBankName?: string;
+  initialChequeDueDate?: string;
 }
 
 export interface SaleInvoiceItemFormData {
@@ -115,6 +132,12 @@ export interface PaymentIn {
   invoiceId?: string;
   invoiceNumber?: string;
   notes?: string;
+  // Payment Details
+  chequeNumber?: string;
+  chequeDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  cardNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -127,6 +150,12 @@ export interface PaymentInFormData {
   referenceNumber?: string | undefined;
   invoiceId?: string | undefined;
   notes?: string | undefined;
+  // Payment Details
+  chequeNumber?: string | undefined;
+  chequeDate?: string | undefined;
+  bankName?: string | undefined;
+  bankAccountNumber?: string | undefined;
+  cardNumber?: string | undefined;
 }
 
 // ============================================================================
@@ -220,13 +249,4 @@ export interface CreditNote {
   notes?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CreditNoteFormData {
-  customerId: string;
-  invoiceId?: string | undefined;
-  date: string;
-  reason: CreditNoteReason;
-  items: SaleInvoiceItemFormData[];
-  notes?: string | undefined;
 }
