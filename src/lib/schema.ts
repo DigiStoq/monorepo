@@ -130,6 +130,11 @@ const payment_ins = new Table({
   invoice_id: column.text,
   invoice_number: column.text,
   notes: column.text,
+  cheque_number: column.text,
+  cheque_date: column.text,
+  bank_name: column.text,
+  bank_account_number: column.text,
+  card_number: column.text,
   created_at: column.text,
   updated_at: column.text,
 });
@@ -265,6 +270,11 @@ const payment_outs = new Table({
   invoice_id: column.text,
   invoice_number: column.text,
   notes: column.text,
+  cheque_number: column.text,
+  cheque_date: column.text,
+  bank_name: column.text,
+  bank_account_number: column.text,
+  card_number: column.text,
   created_at: column.text,
   updated_at: column.text,
 });

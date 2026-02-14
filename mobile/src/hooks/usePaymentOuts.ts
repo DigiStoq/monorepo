@@ -192,5 +192,94 @@ export function usePaymentOutMutations() {
     [db, user]
   );
 
-  return { createPayment };
+  const deletePayment = useCallback(
+    async (id: string): Promise<void> => {
+      const now = new Date().toISOString();
+      const userId = user?.id ?? null;
+      const userName = (user?.user_metadata?.full_name as string) ?? user?.email ?? "Unknown User";
+
+      await db.writeTransaction(async (tx) => {
+        // Get payment details
+        const result = await tx.execute(
+          `SELECT customer_id, invoice_id, amount, payment_number FROM payment_outs WHERE id = ?`,
+          [id]
+        );
+        const payment = result.rows?.item(0);
+
+        if (payment) {
+          // Reverse customer (supplier) balance
+          // Payment Out added to calculate balance (reducing debt), so deleting it subtracts (increases debt)
+          await tx.execute(
+            `UPDATE customers
+             SET current_balance = current_balance - ?, updated_at = ?
+             WHERE id = ?`,
+            [payment.amount, now, payment.customer_id]
+          );
+
+          // Reverse invoice payment if linked
+          if (payment.invoice_id) {
+            await tx.execute(
+              `UPDATE purchase_invoices
+               SET amount_paid = amount_paid - ?,
+                   amount_due = amount_due + ?,
+                   status = CASE 
+                     WHEN amount_paid - ? <= 0 AND status != 'cancelled' THEN 'received' -- Revert to received/ordered? Maybe just check due
+                     ELSE 'partial'
+                   END,
+                   updated_at = ?
+               WHERE id = ?`,
+              [
+                payment.amount,
+                payment.amount,
+                payment.amount,
+                now,
+                payment.invoice_id,
+              ]
+            );
+            // Fix status logic: If Due > 0, it's not 'paid'. If it was 'paid', it might become 'partial' or 'received'.
+            // Simple approach: reset calculated status based on amounts if possible, but SQL CASE is limited.
+            // Better: If amount_due > 0, status is 'partial' (or 'received' if paid == 0).
+            // Let's refine status update:
+            // IF (amount_paid - payment.amount) <= 0 THEN 'received' (assuming it was received before paying)
+            // ELSE 'partial'.
+             await tx.execute(
+                `UPDATE purchase_invoices
+                 SET status = CASE
+                    WHEN (amount_paid - ?) <= 0.01 THEN 'received' -- Floating point tol
+                    WHEN (amount_due + ?) > 0 THEN 'partial'
+                    ELSE status
+                 END
+                 WHERE id = ? AND status = 'paid'`,
+                 [payment.amount, payment.amount, payment.invoice_id]
+             );
+          }
+
+          // Log History
+          const historyId = Date.now().toString() + Math.random().toString(36).substring(7);
+          await tx.execute(
+            `INSERT INTO invoice_history (
+              id, invoice_id, invoice_type, action, description, old_values, new_values, user_id, user_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              historyId,
+              id,
+              "payment_out",
+              "deleted",
+              `Deleted payment ${payment.payment_number}`,
+              JSON.stringify(payment),
+              null,
+              userId,
+              userName,
+              now,
+            ]
+          );
+        }
+
+        await tx.execute(`DELETE FROM payment_outs WHERE id = ?`, [id]);
+      });
+    },
+    [db, user]
+  );
+
+  return { createPayment, deletePayment };
 }

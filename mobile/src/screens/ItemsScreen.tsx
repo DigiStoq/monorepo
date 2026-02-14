@@ -11,9 +11,9 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useItems, useItemStats } from "../hooks/useItems";
 import { CustomHeader } from "../components/CustomHeader";
-import { SearchIcon, ChevronRightIcon, BoxIcon, PlusIcon } from "../components/ui/UntitledIcons";
-import type { ThemeColors} from "../lib/theme";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, profColors } from "../lib/theme";
+import { SearchIcon, PlusIcon, BoxIcon } from "../components/ui/UntitledIcons";
+import type { ThemeColors } from "../lib/theme";
+import { profColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface Item {
@@ -94,11 +94,11 @@ function ItemCard({ item, colors }: { item: any, colors: ThemeColors }) {
       >
         <BoxIcon size={24} color={profColors.items.icon} />
       </View>
-      <View className="flex-1 justify-center">
-        <Text className="text-md font-bold text-text mb-1" numberOfLines={1}>{item.name}</Text>
+      <View className="flex-1 justify-center mr-2">
+        <Text className="text-md font-bold text-text mb-1" numberOfLines={1} style={{ flexShrink: 1 }}>{item.name}</Text>
         <Text className="text-xs text-text-muted">SKU: {item.sku || "N/A"}</Text>
       </View>
-      <View className="items-end gap-1">
+      <View className="items-end gap-1 shrink-0">
         {item.type !== 'service' && <Text className="text-sm font-medium text-text">{item.stockQuantity || 0} in Stock</Text>}
         <View
           className="px-2 py-0.5 rounded-sm"

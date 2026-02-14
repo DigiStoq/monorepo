@@ -1,9 +1,11 @@
 # Supabase Authentication System for DigiStoq (Tauri Desktop)
 
 ## Overview
+
 Implement Supabase Email/Password authentication with secure token storage for the Tauri desktop app. Tokens stored securely on OS (not cookies). No user roles - all authenticated users have full access.
 
 ## Scope
+
 - **Auth Method**: Email/Password only
 - **Roles**: None (all users equal)
 - **Token Storage**: Tauri Store plugin (OS secure storage)
@@ -47,6 +49,7 @@ Implement Supabase Email/Password authentication with secure token storage for t
 
 3. **Create Auth Store**
    - `src/stores/auth-store.ts`
+
    ```typescript
    // Zustand store for auth state
    interface AuthState {
@@ -133,6 +136,7 @@ Implement Supabase Email/Password authentication with secure token storage for t
 ## Implementation Order
 
 ### Step 1: Tauri Store Plugin
+
 ```toml
 # src-tauri/Cargo.toml
 tauri-plugin-store = "2"
@@ -144,51 +148,56 @@ tauri-plugin-store = "2"
 ```
 
 ### Step 2: Token Storage (`src/lib/token-storage.ts`)
+
 - Save/load tokens using Tauri store
 - Fallback to localStorage for web dev
 
 ### Step 3: Auth Store (`src/stores/auth-store.ts`)
+
 - Zustand store with auth methods
 - Integrates with token storage
 
 ### Step 4: Auth Pages
+
 - Login, Signup, Forgot Password
 - Using existing UI components
 
 ### Step 5: Route Updates
+
 - Add auth routes
 - Protect existing routes
 - Redirect logic
 
 ### Step 6: App Integration
+
 - AuthProvider wrapper
 - PowerSync after auth
 - Sidebar user update
 
 ## Key Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src-tauri/Cargo.toml` | Add tauri-plugin-store |
-| `src-tauri/src/lib.rs` | Register store plugin |
-| `src/lib/supabase-connector.ts` | Token-based session |
-| `src/app/App.tsx` | AuthProvider, auth flow |
-| `src/routes/router.tsx` | Auth routes, protection |
-| `src/routes/__root.tsx` | Dynamic user in sidebar |
+| File                            | Changes                 |
+| ------------------------------- | ----------------------- |
+| `src-tauri/Cargo.toml`          | Add tauri-plugin-store  |
+| `src-tauri/src/lib.rs`          | Register store plugin   |
+| `src/lib/supabase-connector.ts` | Token-based session     |
+| `src/app/App.tsx`               | AuthProvider, auth flow |
+| `src/routes/router.tsx`         | Auth routes, protection |
+| `src/routes/__root.tsx`         | Dynamic user in sidebar |
 
 ## New Files to Create
 
-| File | Purpose |
-|------|---------|
-| `src/lib/token-storage.ts` | Secure token persistence |
-| `src/stores/auth-store.ts` | Auth state management |
-| `src/providers/auth-provider.tsx` | Auth context provider |
-| `src/features/auth/login-page.tsx` | Login UI |
-| `src/features/auth/signup-page.tsx` | Signup UI |
-| `src/features/auth/forgot-password-page.tsx` | Password reset |
-| `src/components/auth/auth-layout.tsx` | Auth page layout |
-| `src/features/auth/index.ts` | Barrel export |
-| `src/features/auth/types.ts` | Auth types |
+| File                                         | Purpose                  |
+| -------------------------------------------- | ------------------------ |
+| `src/lib/token-storage.ts`                   | Secure token persistence |
+| `src/stores/auth-store.ts`                   | Auth state management    |
+| `src/providers/auth-provider.tsx`            | Auth context provider    |
+| `src/features/auth/login-page.tsx`           | Login UI                 |
+| `src/features/auth/signup-page.tsx`          | Signup UI                |
+| `src/features/auth/forgot-password-page.tsx` | Password reset           |
+| `src/components/auth/auth-layout.tsx`        | Auth page layout         |
+| `src/features/auth/index.ts`                 | Barrel export            |
+| `src/features/auth/types.ts`                 | Auth types               |
 
 ## Supabase Setup Required
 

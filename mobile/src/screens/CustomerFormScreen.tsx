@@ -20,7 +20,7 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { SaveIcon, XCloseIcon } from "../components/ui/UntitledIcons";
+import { SaveIcon, XCloseIcon, TrashIcon } from "../components/ui/UntitledIcons";
 import { useTheme } from "../contexts/ThemeContext";
 
 export function CustomerFormScreen() {
@@ -158,6 +158,41 @@ export function CustomerFormScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this customer? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // Check if they have invoices first? 
+              // DB usually handles FK constraints, but PowerSync might not fail locally if FK not enforced.
+              // But Supabase will fail if FK exists.
+              // For now, allow delete.
+              // Switch to Soft Delete to handle Sync and FK constraints safely
+              const now = new Date().toISOString();
+              await db.execute("UPDATE customers SET is_active = 0, updated_at = ? WHERE id = ?", [now, id]);
+
+              Alert.alert("Success", "Customer deleted");
+              navigation.goBack();
+              (navigation as any).navigate("Customers");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to delete customer");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const typeOptions = [
@@ -304,6 +339,17 @@ export function CustomerFormScreen() {
         >
           Save Contact
         </Button>
+
+        {isEditing && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="mt-4 flex-row justify-center items-center p-4 rounded-lg border border-danger bg-danger-10"
+            style={{ borderColor: colors.danger, backgroundColor: colors.danger + '10' }}
+          >
+            <TrashIcon size={20} color={colors.danger} />
+            <Text className="ml-2 font-bold text-danger" style={{ color: colors.danger }}>Delete Contact</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -1,11 +1,10 @@
-import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   HomeIcon,
   BoxIcon,
   MenuIcon,
   UsersIcon,
-  ShoppingCartIcon, // Using Untitled Icon
+  ReceiptIcon, // Using ReceiptIcon instead of ShoppingCartIcon
 } from "../components/ui/UntitledIcons";
 import { Platform, View, StyleSheet, Pressable } from "react-native";
 import { DashboardScreen } from "../screens/DashboardScreen";
@@ -95,7 +94,7 @@ export function MainTabs() {
             tabBarIcon: ({ color, focused }) => (
               <View style={styles.tabItem}>
                 {focused && <View style={[styles.activeBackground, { backgroundColor: colors.primary + '15' }]} />}
-                <ShoppingCartIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+                <ReceiptIcon color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
               </View>
             ),
           }}

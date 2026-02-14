@@ -140,6 +140,20 @@ export function usePurchaseInvoices(filters?: {
   return { invoices, isLoading, error };
 }
 
+export function usePurchaseInvoiceItems(invoiceId?: string): {
+  items: PurchaseInvoiceItem[];
+  isLoading: boolean;
+} {
+  const { data, isLoading } = useQuery<PurchaseInvoiceItemRow>(
+    `SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`,
+    invoiceId ? [invoiceId] : []
+  );
+
+  const items = useMemo(() => data.map(mapRowToPurchaseInvoiceItem), [data]);
+
+  return { items, isLoading };
+}
+
 interface PurchaseInvoiceMutations {
   createInvoice: (
     data: {
@@ -341,8 +355,10 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
           await tx.execute(
             `INSERT INTO payment_outs (
               id, payment_number, customer_id, customer_name, date, amount,
-              payment_mode, invoice_id, invoice_number, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              payment_mode, invoice_id, invoice_number,
+              cheque_number, cheque_date, bank_name,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               crypto.randomUUID(),
               paymentNumber,
@@ -353,6 +369,10 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
               paymentMode,
               id,
               data.invoiceNumber,
+              // Map cheque details if applicable
+              paymentMode === "cheque" ? data.initialChequeNumber : null,
+              paymentMode === "cheque" ? data.initialChequeDueDate : null,
+              paymentMode === "cheque" ? data.initialChequeBankName : null,
               now,
               now,
             ]

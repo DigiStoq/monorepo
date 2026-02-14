@@ -29,6 +29,14 @@ function PaymentCard({ payment, styles, colors }: { payment: PaymentIn, styles: 
     });
   };
 
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -42,7 +50,10 @@ function PaymentCard({ payment, styles, colors }: { payment: PaymentIn, styles: 
           <Text style={styles.customerName}>
             {payment.customerName || "Unknown Customer"}
           </Text>
-          <Text style={styles.date}>{formatDate(payment.date)}</Text>
+          <Text style={styles.date}>
+            {formatDate(payment.date)}
+            {payment.createdAt && ` • ${formatTime(payment.createdAt)}`}
+          </Text>
         </View>
         <Text style={styles.amount}>${payment.amount?.toFixed(2)}</Text>
       </View>

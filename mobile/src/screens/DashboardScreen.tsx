@@ -18,8 +18,9 @@ import {
   AlertTriangleIcon,
   XCircleIcon,
   DollarSignIcon,
-  ShoppingCartIcon,
+  ReceiptIcon,
   FileTextIcon,
+  CheckCircleIcon,
   ArrowUpRightIcon,
   ArrowDownRightIcon
 } from "../components/ui/UntitledIcons";
@@ -70,9 +71,9 @@ export function DashboardScreen() {
 
   const getTransactionIcon = (type: DashboardTransaction['type']) => {
     switch (type) {
-      case 'sale': return <ShoppingCartIcon size={20} color={profColors.sales.icon} strokeWidth={2} />;
+      case 'sale': return <ReceiptIcon size={20} color={profColors.sales.icon} strokeWidth={2} />;
       case 'purchase': return <FileTextIcon size={20} color={profColors.payable.icon} strokeWidth={2} />;
-      case 'payment-in': return <TrendingUpIcon size={20} color={profColors.receivable.icon} strokeWidth={2} />;
+      case 'payment-in': return <CheckCircleIcon size={20} color={profColors.receivable.icon} strokeWidth={2} />;
       case 'payment-out': return <TrendingDownIcon size={20} color={profColors.payable.icon} strokeWidth={2} />;
       default: return <DollarSignIcon size={20} color={colors.text} />;
     }
@@ -195,7 +196,7 @@ export function DashboardScreen() {
                   borderColor: colors.info + '25',
                 }}
               >
-                <ShoppingCartIcon size={18} color={colors.info} strokeWidth={2.5} />
+                <ReceiptIcon size={18} color={colors.info} strokeWidth={2.5} />
               </View>
             </View>
             <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(metrics.todaySales)}</Text>

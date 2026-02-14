@@ -1,9 +1,7 @@
-import React, { useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
-import { FileTextIcon, ChevronRightIcon, ShareIcon, EditIcon, WalletIcon } from "../../components/ui/UntitledIcons";
+import { ReceiptIcon, CheckCircleIcon, ChevronRightIcon, ShareIcon, EditIcon, WalletIcon } from "../../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
@@ -13,7 +11,6 @@ export function SaleInvoiceDetailScreen() {
     const route = useRoute<any>();
     const { id } = route.params || {};
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const { generateInvoicePDF, generatePDF, previewPDF, isGenerating } = usePDFGenerator();
     const { settings: companySettings } = useCompanySettings();
 
@@ -177,7 +174,11 @@ export function SaleInvoiceDetailScreen() {
                 {/* Status & Customer Card */}
                 <View className="bg-surface rounded-lg p-4 shadow-sm">
                     <View className="flex-row justify-between items-center mb-2">
-                        <View className="px-3 py-1 rounded-sm" style={{ backgroundColor: statusStyle.bg }}>
+                        <View className="flex-row items-center px-3 py-1 rounded-sm gap-1.5" style={{ backgroundColor: statusStyle.bg }}>
+                            {invoice.status.toLowerCase() === 'paid' ?
+                                <CheckCircleIcon size={14} color={statusStyle.text} /> :
+                                <ReceiptIcon size={14} color={statusStyle.text} />
+                            }
                             <Text className="text-xs font-bold" style={{ color: statusStyle.text }}>{invoice.status.toUpperCase()}</Text>
                         </View>
                         <Text className="text-sm text-text-muted">Inv Date: {new Date(invoice.date).toLocaleDateString()}</Text>

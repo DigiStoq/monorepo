@@ -11,7 +11,13 @@ export type InvoiceHistoryAction =
   | "payment_recorded"
   | "deleted";
 
-export type InvoiceType = "sale" | "purchase";
+export type InvoiceType =
+  | "sale"
+  | "purchase"
+  | "estimate"
+  | "credit_note"
+  | "payment_in"
+  | "payment_out";
 
 export interface InvoiceHistory {
   id: string;

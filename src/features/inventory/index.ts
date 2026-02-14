@@ -11,10 +11,6 @@ export type {
   ItemFilters,
   ItemType,
   Category,
-  // Legacy types
-  Product,
-  ProductFormData,
-  ProductFilters,
 } from "./types";
 
 // Legacy exports
