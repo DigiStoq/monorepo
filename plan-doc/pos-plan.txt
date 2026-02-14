@@ -1,0 +1,533 @@
+POS Integration Master Plan
+
+For Tauri-Based Inventory Management System
+(Web + Desktop + Mobile)
+
+1. High-Level Goal (continued)
+
+The objective is to integrate a full POS (Point of Sale) module into your existing inventory management ecosystem such that:
+
+POS works seamlessly with existing inventory, products, customers, and reports
+
+POS supports real-time & offline-first billing
+
+POS UI/UX is fast, keyboard-friendly, and cashier-optimized
+
+POS logic is shared across Web, Desktop (Tauri), and Mobile
+
+POS remains fully configurable via settings
+
+All data syncs safely with the central system
+
+This POS is not a standalone app, but a core module inside your product.
+
+2. POS as a Dedicated Domain (Very Important)
+
+Treat POS as its own bounded context, not “just another page”.
+
+Recommended Domain Separation
+/domains
+  /inventory
+  /customers
+  /suppliers
+  /reports
+  /pos   <-- NEW
+
+
+Why?
+
+POS has unique flows (billing, payment, printing)
+
+POS has state-heavy UI
+
+POS must work offline
+
+POS logic should evolve independently
+
+3. POS Core Functional Scope
+
+Based on your screenshots + industry standards, your POS must cover:
+
+3.1 Billing Flow
+
+Scan/Search item
+
+Add item to bill
+
+Adjust quantity
+
+Apply discounts (item & bill level)
+
+Handle tax
+
+Show running total
+
+Save bill
+
+Print / Export invoice
+
+3.2 Inventory Interaction
+
+Reduce stock on sale
+
+Warn on low / zero stock
+
+Allow override (Continue Anyway)
+
+Track free quantity
+
+Support non-stock items (services)
+
+3.3 Customer Handling
+
+Optional customer selection
+
+Walk-in customer support
+
+Attach bill to customer history
+
+Loyalty points (optional toggle)
+
+3.4 Payment Handling
+
+Cash
+
+Card (future-ready)
+
+Split payments
+
+Credit / Due payments
+
+Change return calculation
+
+3.5 Settings
+
+Bill discount toggle
+
+Tax toggle
+
+Price with/without tax
+
+Rounding rules
+
+Payment modes
+
+Primary bill action
+
+Warnings (low stock, confirmations)
+
+4. POS Architecture Overview
+4.1 POS Layered Architecture
+POS UI (React / Vue / Svelte)
+│
+├── POS State Engine
+│
+├── POS Domain Logic
+│   ├── Pricing Engine
+│   ├── Tax Engine
+│   ├── Discount Engine
+│   ├── Stock Validation
+│
+├── Local Persistence Layer
+│
+├── Sync Engine
+│
+└── Platform Bridges (Tauri / Web / Mobile)
+
+
+This keeps logic portable, testable, and reusable.
+
+5. POS UI Architecture
+5.1 Main POS Screen (Billing Workspace)
+
+Left Panel (Bill Table)
+
+Item Code
+
+Item Name
+
+Qty
+
+Unit
+
+Price
+
+Free Qty
+
+Line Total
+
+Top Bar
+
+Search / Scan input
+
+Keyboard shortcuts hint
+
+Date selector
+
+New Bill button
+
+Right Panel (Summary & Payment)
+
+Customer selector
+
+Item count
+
+Quantity
+
+Subtotal
+
+Tax
+
+Discount
+
+Grand total
+
+Payment mode
+
+Amount received
+
+Change to return
+
+Bottom Action Bar
+
+Save & Print
+
+Save Only
+
+Other Payments
+
+Bill Discount
+
+Item Discount
+
+Remarks
+
+This exactly mirrors the reference screenshots behavior, but stays tech-agnostic.
+
+6. Keyboard-First POS Interaction
+
+This is non-negotiable for a professional POS.
+
+Suggested Shortcut Map
+Key	Action
+F1	Item Search
+F2	Change Quantity
+F3	Item Discount
+F4	Remove Item
+F6	Change Unit
+F8	Additional Charges
+F9	Bill Discount
+F10	Loyalty Points
+F11	Customer Search
+F12	Remarks
+Ctrl + P	Save & Print
+Ctrl + M	Other Payments
+Esc	Close modal
+
+Your screenshots already reflect this → good sign.
+
+7. POS State Management Strategy
+7.1 POS State Shape (Example)
+POSState {
+  billId
+  items: POSItem[]
+  customer
+  pricing {
+    subtotal
+    tax
+    discount
+    rounding
+    total
+  }
+  payment {
+    mode
+    received
+    change
+    due
+  }
+  settings
+  status: draft | completed | synced
+}
+
+7.2 Why Central POS State?
+
+Fast UI updates
+
+Easy undo/redo
+
+Predictable billing logic
+
+Works offline
+
+8. Item Search & Quick Add Flow
+8.1 Item Search Logic
+
+User types / scans code
+
+Search:
+
+SKU
+
+Barcode
+
+Item name
+
+If found → add to bill
+
+If not found → Quick Add Modal
+
+8.2 Quick Add Item Modal
+
+Fields:
+
+Item name (required)
+
+Auto-generated or manual code
+
+Sale price
+
+Purchase price
+
+Tax rate
+
+Stock behavior (tracked / non-tracked)
+
+On save:
+
+Create item in inventory
+
+Add to current bill
+
+Mark item as locally created (sync later)
+
+Exactly matches your screenshots.
+
+9. Stock Validation & Warnings
+9.1 Stock Check Triggers
+
+On adding item
+
+On quantity change
+
+Before bill completion
+
+9.2 Low Stock Modal
+
+Show item list
+
+Current stock
+
+Required qty
+
+Allow:
+
+Cancel
+
+Continue anyway
+
+“Do not show again” toggle (per user/device)
+
+This must be configurable via settings.
+
+10. Pricing, Tax & Discount Engine
+10.1 Pricing Engine
+
+Unit price
+
+Multiple units support
+
+Price inclusive / exclusive tax
+
+10.2 Discount Engine
+
+Item-level discount (₹ / %)
+
+Bill-level discount
+
+Stackable or exclusive (setting-based)
+
+10.3 Tax Engine
+
+Multiple tax slabs
+
+Item-specific tax
+
+Tax toggle per bill
+
+Tax inclusive/exclusive pricing
+
+All engines must be pure functions (no UI dependency).
+
+11. Bill Saving Strategy
+11.1 Bill Lifecycle
+Draft → Completed → Synced → Locked
+
+11.2 Local First Save
+
+Save bill locally instantly
+
+Reduce stock locally
+
+Print invoice immediately
+
+11.3 Sync Later
+
+Push bill to server
+
+Resolve conflicts
+
+Mark synced
+
+This avoids POS downtime.
+
+12. Invoice Generation & Printing
+12.1 Invoice Template System
+
+HTML → PDF
+
+Customizable per business
+
+Logo, GST/VAT, footer notes
+
+12.2 Printing Options
+
+Thermal printer
+
+A4 printer
+
+PDF export
+
+Email / WhatsApp (future)
+
+12.3 Tauri Printing
+
+Use OS print dialog
+
+Silent print (optional)
+
+Printer preference memory
+
+Matches your final screenshot exactly.
+
+13. POS Settings System
+13.1 Settings Scope
+
+Per business
+
+Per device
+
+Per user (optional)
+
+13.2 Settings Categories
+
+General
+
+Pricing
+
+Tax
+
+Payments
+
+POS Behavior
+
+Warnings
+
+Printing
+
+Settings must be live-applied (no reload).
+
+14. Offline-First & Sync Strategy
+14.1 Local Storage
+
+SQLite (Tauri)
+
+IndexedDB (Web)
+
+Secure storage (Mobile)
+
+14.2 Sync Engine
+
+Queue-based sync
+
+Retry logic
+
+Conflict resolution
+
+Timestamp + device ID
+
+POS must never block sales due to internet.
+
+15. Security & Audit
+
+Every bill has:
+
+Created by
+
+Device ID
+
+Timestamp
+
+Immutable completed bills
+
+Void / refund flow (future)
+
+Audit logs
+
+16. Implementation Phases (Recommended)
+Phase 1 – Core POS
+
+Bill screen
+
+Item add/remove
+
+Save bill
+
+Print invoice
+
+Phase 2 – Inventory Sync
+
+Stock deduction
+
+Low stock warnings
+
+Quick add item
+
+Phase 3 – Payments & Settings
+
+Multiple payment modes
+
+Discounts
+
+Tax
+
+Rounding
+
+Phase 4 – Offline & Sync
+
+Local DB
+
+Sync engine
+
+Conflict handling
+
+Phase 5 – Advanced
+
+Loyalty
+
+Refunds
+
+Reports
+
+Multi-terminal sync
+
+17. Final Notes (Professional Reality Check)
+
+Your reference POS screenshots are solid
+
+Don’t copy UI blindly — copy flows
+
+POS success depends more on state & sync correctness than UI polish
+
+Keep POS logic shared and platform-agnostic
+
+Treat printing and payments as pluggable modules

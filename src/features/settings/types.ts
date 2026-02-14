@@ -234,3 +234,15 @@ export interface BackupRecord {
   status: "success" | "failed" | "in-progress";
   errorMessage?: string;
 }
+
+export type SettingsSection = "company" | "profile" | "preferences" | "security" | "backup" | "tax" | "invoice";
+
+export interface AllSettings {
+  company: CompanySettings;
+  profile: UserProfile;
+  app: AppPreferences;
+  tax: TaxSettings;
+  invoice: InvoiceSettings;
+  security: SecuritySettings;
+  backup: BackupSettings;
+}

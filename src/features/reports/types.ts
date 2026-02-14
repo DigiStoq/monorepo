@@ -20,6 +20,27 @@ export type ReportPeriod =
   | "last_year"
   | "custom";
 
+export interface ReportFilters {
+  dateRange: DateRange;
+  period: ReportPeriod;
+}
+
+export type ReportCategory = "sales" | "purchases" | "inventory" | "financial" | "tax";
+
+export interface ReportLink {
+  id: string;
+  title: string;
+  description: string;
+  path: string;
+  icon: any;
+}
+
+export interface AgingBucket {
+  label: string;
+  amount: number;
+  count: number;
+}
+
 // ============================================================================
 // SALES REPORT TYPES
 // ============================================================================
@@ -173,12 +194,12 @@ export interface DayBookEntry {
   id: string;
   date: string;
   type:
-    | "sale"
-    | "purchase"
-    | "payment_in"
-    | "payment_out"
-    | "expense"
-    | "adjustment";
+  | "sale"
+  | "purchase"
+  | "payment_in"
+  | "payment_out"
+  | "expense"
+  | "adjustment";
   referenceNumber: string;
   customerName?: string;
   description: string;

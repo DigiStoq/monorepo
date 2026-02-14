@@ -73,3 +73,7 @@ export interface Category {
   description?: string;
   itemCount: number;
 }
+
+export type Product = Item;
+export type ProductFormData = ItemFormData;
+export type ProductFilters = ItemFilters;

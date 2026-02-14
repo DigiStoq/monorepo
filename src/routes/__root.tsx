@@ -35,6 +35,12 @@ const navigationItems: NavItem[] = [
     href: "/",
   },
   {
+    id: "pos",
+    label: "POS",
+    icon: ShoppingCart, // Using ShoppingCart temporarily, or a better icon if available
+    href: "/pos",
+  },
+  {
     id: "customers",
     label: "Customers",
     icon: Users,

@@ -73,6 +73,12 @@ export interface PurchaseInvoiceItemFormData {
   taxPercent?: number | undefined;
 }
 
+export interface PurchaseFilters {
+  search: string;
+  status: PurchaseInvoiceStatus | "all";
+  dateRangeStr: string;
+}
+
 // ============================================================================
 // PAYMENT OUT TYPES
 // ============================================================================

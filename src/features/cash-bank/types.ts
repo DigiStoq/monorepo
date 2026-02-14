@@ -187,3 +187,16 @@ export interface LoanFilters {
   type: LoanType | "all";
   status: LoanStatus | "all";
 }
+
+export interface BankAccountFilters {
+  search: string;
+  type: BankAccountType | "all";
+  status: "active" | "inactive" | "all";
+}
+
+export interface ChequeFilters {
+  search: string;
+  status: ChequeStatus | "all";
+  type: ChequeType | "all";
+  dateRangeStr: string;
+}

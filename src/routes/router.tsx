@@ -70,6 +70,8 @@ import {
   BackupSettingsPage,
 } from "@/features/settings";
 import { UtilitiesPage } from "@/features/utilities";
+import { PosLayout } from "@/features/pos/components/PosLayout";
+import { PosPage } from "@/features/pos/pages/PosPage";
 
 // Placeholder pages (will be replaced with actual implementations)
 function PlaceholderPage({ title }: { title: string }): React.ReactNode {
@@ -468,6 +470,20 @@ const helpRoute = createRoute({
   component: () => <PlaceholderPage title="Help & Support" />,
 });
 
+// POS Routes
+const posLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/pos",
+  component: PosLayout,
+  beforeLoad: requireAuth,
+});
+
+const posIndexRoute = createRoute({
+  getParentRoute: () => posLayoutRoute,
+  path: "/",
+  component: PosPage,
+});
+
 // ============================================================================
 // ROUTE TREE
 // ============================================================================
@@ -541,6 +557,8 @@ const routeTree = rootRoute.addChildren([
   forgotPasswordRoute,
   // Protected routes (require auth)
   protectedRoutes,
+  // POS Routes
+  posLayoutRoute.addChildren([posIndexRoute]),
 ]);
 
 // ============================================================================
