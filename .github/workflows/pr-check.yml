@@ -45,6 +45,7 @@ jobs:
               uses: gitleaks/gitleaks-action@v2
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
             # 4. Build Check (Does it build?)
             # This ensures you didn't break the build logic
