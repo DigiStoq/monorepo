@@ -77,6 +77,13 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
       year: "numeric",
     });
 
+  const formatTime = (dateStr: string): string =>
+    new Date(dateStr).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
   return (
     <button
       type="button"
@@ -119,6 +126,8 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {formatDate(payment.date)}
+              <span className="text-slate-300 mx-1">|</span>
+              {formatTime(payment.createdAt)}
             </span>
             {payment.invoiceNumber && (
               <span className="flex items-center gap-1">

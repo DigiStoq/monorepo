@@ -5,3 +5,4 @@ export {
   StockAdjustmentModal,
   type StockAdjustmentModalProps,
 } from "./stock-adjustment-modal";
+export { StockHistoryModal } from "./stock-history-modal";

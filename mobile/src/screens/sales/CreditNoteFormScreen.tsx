@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   Platform,
@@ -22,11 +21,10 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { Plus, Trash2, Save, X } from "lucide-react-native";
-import { wp, hp } from "../../lib/responsive";
+import { PlusIcon, TrashIcon, SaveIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
 import { generateUUID } from "../../lib/utils";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { CustomHeader } from "../../components/CustomHeader";
 
 interface CustomerData {
   id: string;
@@ -53,7 +51,6 @@ interface LineItem {
 export function CreditNoteFormScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -70,7 +67,6 @@ export function CreditNoteFormScreen() {
   const [noteNumber, setNoteNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [reason, setReason] = useState("return");
-  const [invoiceId, setInvoiceId] = useState(""); // Not hooked up to invoice selection yet for MVP
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -227,33 +223,23 @@ export function CreditNoteFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Credit Note" : "New Credit Note"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
-        </Button>
-      </View>
-      <ScrollView contentContainerStyle={styles.content}>
+
+      <CustomHeader
+        title={isEditing ? "Edit Credit Note" : "New Credit Note"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-2"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Card>
           <CardHeader title="Details" />
           <CardBody>
@@ -262,14 +248,15 @@ export function CreditNoteFormScreen() {
               options={customerOptions}
               value={customerId}
               onChange={setCustomerId}
+              placeholder="Select Customer"
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="CN #"
                 value={noteNumber}
                 onChangeText={setNoteNumber}
                 placeholder="CN-001"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Date"
@@ -283,18 +270,19 @@ export function CreditNoteFormScreen() {
               options={reasonOptions}
               value={reason}
               onChange={setReason}
+              placeholder="Select Reason"
             />
           </CardBody>
         </Card>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Items</Text>
+        <View className="flex-row justify-between items-center mb-3 mt-2">
+          <Text className="text-md font-semibold text-text">Items</Text>
           <Button
             size="sm"
             variant="outline"
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color={colors.text} />}
+            leftIcon={<PlusIcon size={16} color={colors.text} />}
           >
             Add Item
           </Button>
@@ -306,17 +294,17 @@ export function CreditNoteFormScreen() {
               openItemModal(item);
             }}
           >
-            <Card style={styles.itemCard}>
+            <Card style={{ marginBottom: 8 }}>
               <CardBody>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemNumber}>
+                <View className="flex-row justify-between mb-1">
+                  <Text className="text-sm font-semibold text-text">
                     #{index + 1} - {item.itemName}
                   </Text>
-                  <Text style={styles.itemSummary}>
+                  <Text className="text-sm font-semibold text-text">
                     ${item.amount.toFixed(2)}
                   </Text>
                 </View>
-                <Text style={styles.itemMeta}>
+                <Text className="text-xs text-text-muted">
                   {item.quantity} {item.unit} x ${item.unitPrice}
                 </Text>
               </CardBody>
@@ -331,10 +319,11 @@ export function CreditNoteFormScreen() {
               onChangeText={setNotes}
               multiline
               numberOfLines={2}
+              placeholder="Notes..."
             />
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total Refund</Text>
-              <Text style={styles.totalValue}>${totals.total.toFixed(2)}</Text>
+            <View className="flex-row justify-between pt-2 border-t border-border mt-2">
+              <Text className="text-lg font-bold text-text">Total Refund</Text>
+              <Text className="text-lg font-bold text-primary">${totals.total.toFixed(2)}</Text>
             </View>
           </CardBody>
         </Card>
@@ -347,10 +336,10 @@ export function CreditNoteFormScreen() {
           setModalVisible(false);
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-background rounded-t-xl h-[80%] w-full">
+            <View className="flex-row justify-between items-center p-4 border-b border-border bg-surface rounded-t-xl">
+              <Text className="text-lg font-bold text-text">
                 {editingItemId ? "Edit Item" : "Add Item"}
               </Text>
               <TouchableOpacity
@@ -358,17 +347,18 @@ export function CreditNoteFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color={colors.textSecondary} />
+                <XCloseIcon size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={styles.modalBody}>
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
               <Select
                 label="Item"
                 options={itemOptions}
                 value={tempItem.itemId}
                 onChange={handleItemSelect}
+                placeholder="Choose Item"
               />
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Quantity"
                   value={String(tempItem.quantity)}
@@ -379,7 +369,7 @@ export function CreditNoteFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Rate"
@@ -394,9 +384,10 @@ export function CreditNoteFormScreen() {
                   containerStyle={{ flex: 1 }}
                 />
               </View>
-              <Button fullWidth onPress={saveItem} style={{ marginTop: 16 }}>
+              <Button fullWidth onPress={saveItem} className="mt-4">
                 Save Item
               </Button>
+              <View className="h-10" />
             </ScrollView>
           </View>
         </View>
@@ -404,78 +395,3 @@ export function CreditNoteFormScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: { flex: 1, alignItems: "center" },
-  title: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
-  content: { padding: wp(4), paddingBottom: hp(5) },
-  row: { flexDirection: "row", marginBottom: 8 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
-  itemCard: {
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-  },
-  itemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  itemNumber: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
-  itemSummary: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.text },
-  itemMeta: { fontSize: 13, color: colors.textSecondary },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  totalLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text },
-  totalValue: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.primary },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "90%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text },
-  modalBody: { padding: 16, paddingBottom: 40 },
-});

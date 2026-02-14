@@ -76,15 +76,16 @@ export async function initializePowerSync(): Promise<PowerSyncDatabase> {
 }
 
 export async function disconnectPowerSync(): Promise<void> {
-  if (powerSyncInstance) {
+  const db = powerSyncInstance;
+  powerSyncInstance = null;
+  if (db) {
     try {
-      await powerSyncInstance.close();
+      await db.close();
       // eslint-disable-next-line no-console
       console.log("[PowerSync] Closed successfully.");
     } catch (e) {
       console.warn("[PowerSync] Close error:", e);
     }
-    powerSyncInstance = null;
   }
 }
 

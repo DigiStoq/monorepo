@@ -2,30 +2,18 @@ import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   FlatList,
-  StyleSheet,
   Text,
   TouchableOpacity,
   RefreshControl,
   TextInput,
 } from "react-native";
-import { useQuery } from "@powersync/react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Plus, Search, Filter, CreditCard } from "lucide-react-native";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, ThemeColors } from "../../lib/theme";
+import { usePurchaseInvoices } from "../../hooks/usePurchaseInvoices";
+import { PlusIcon, SearchIcon, FilterIcon, FileTextIcon } from "../../components/ui/UntitledIcons";
 import { useTheme } from "../../contexts/ThemeContext";
+import type { ThemeColors } from "../../lib/theme";
 
-// Types
-interface PurchaseInvoice {
-  id: string;
-  invoice_number: string;
-  customer_name: string;
-  date: string;
-  total: number;
-  status: string;
-  amount_due: number;
-}
-
-function PurchaseInvoiceCard({ item, styles, colors }: { item: PurchaseInvoice, styles: any, colors: ThemeColors }) {
+function PurchaseInvoiceCard({ item, colors }: { item: any, colors: ThemeColors }) {
   const navigation = useNavigation();
 
   const statusColors: Record<string, { bg: string; text: string }> = {
@@ -50,28 +38,34 @@ function PurchaseInvoiceCard({ item, styles, colors }: { item: PurchaseInvoice, 
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      className="bg-surface rounded-lg p-4 shadow-sm mb-3"
       activeOpacity={0.7}
       onPress={() => {
-        (navigation as any).navigate("PurchaseInvoiceForm", { id: item.id });
+        (navigation as any).navigate("PurchaseInvoiceDetail", { id: item.id });
       }}
     >
-      <View style={styles.cardHeader}>
-        <View style={styles.iconBox}>
-          <CreditCard size={22} color={colors.primary} />
+      <View className="flex-row items-center gap-3">
+        <View className="w-11 h-11 rounded-md bg-surface-hover justify-center items-center">
+          <FileTextIcon size={22} color={colors.primary} />
         </View>
-        <View style={styles.info}>
-          <View style={styles.billHeaderRow}>
-            <Text style={styles.billNumber}>{item.invoice_number || "Draft"}</Text>
-            <Text style={styles.totalValue}>
+        <View className="flex-1">
+          <View className="flex-row justify-between items-center mb-0.5">
+            <Text className="text-md font-semibold text-text">{item.invoiceNumber || "Draft"}</Text>
+            <Text className="text-lg font-bold text-text">
               ${item.total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
           </View>
-          <Text style={styles.vendorName}>{item.customer_name || "Unknown Supplier"}</Text>
-          <View style={styles.billFooterRow}>
-            <Text style={styles.dateValue}>{formatDate(item.date)}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-              <Text style={[styles.statusText, { color: statusStyle.text }]}>
+          <Text className="text-sm text-text-secondary mb-2">{item.customerName || "Unknown Supplier"}</Text>
+          <View className="flex-row justify-between items-center">
+            <Text className="text-xs text-text-muted">{formatDate(item.date)}</Text>
+            <View
+              className="px-2 py-1 rounded-sm"
+              style={{ backgroundColor: statusStyle.bg }}
+            >
+              <Text
+                className="text-xs font-bold uppercase"
+                style={{ color: statusStyle.text }}
+              >
                 {item.status}
               </Text>
             </View>
@@ -87,18 +81,10 @@ export function PurchaseInvoicesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { data: invoices, isLoading } = useQuery<PurchaseInvoice>(`
-        SELECT * FROM purchase_invoices 
-        ORDER BY date DESC, created_at DESC
-    `);
+  const { invoices, isLoading } = usePurchaseInvoices({ search: searchQuery });
 
-  const filteredInvoices = (invoices || []).filter(
-    (inv) =>
-      inv.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInvoices = invoices || [];
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -108,28 +94,30 @@ export function PurchaseInvoicesScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchBar}>
-        <View style={styles.searchInput}>
-          <Search size={18} color={colors.textMuted} />
+    <View className="flex-1 bg-background">
+      <View className="px-5 py-2 flex-row items-center gap-2">
+        <View className="flex-1 flex-row items-center bg-surface rounded-lg px-3 py-2 gap-2 border border-border">
+          <SearchIcon size={18} color={colors.textMuted} />
           <TextInput
-            style={styles.searchText}
+            className="flex-1 text-md text-text"
             placeholder="Search bills..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+
+        {/* Filter Button Placeholder - if needed */}
+        {/* <TouchableOpacity className="w-12 h-12 bg-surface rounded-lg justify-center items-center border border-border">
+          <FilterIcon size={20} color={colors.textSecondary} />
+        </TouchableOpacity> */}
       </View>
 
       <FlatList
         data={filteredInvoices}
-        renderItem={({ item }) => <PurchaseInvoiceCard item={item} styles={styles} colors={colors} />}
+        renderItem={({ item }) => <PurchaseInvoiceCard item={item} colors={colors} />}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -141,19 +129,19 @@ export function PurchaseInvoicesScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View style={styles.empty}>
-              <View style={styles.emptyIconContainer}>
-                <CreditCard size={48} color={colors.textMuted} />
+            <View className="items-center py-20 px-10">
+              <View className="w-24 h-24 rounded-full bg-surface-hover justify-center items-center mb-6">
+                <FileTextIcon size={48} color={colors.textMuted} />
               </View>
-              <Text style={styles.emptyText}>No bills found</Text>
-              <Text style={styles.emptySubtext}>
+              <Text className="text-lg font-semibold text-text mb-2">No bills found</Text>
+              <Text className="text-sm text-text-secondary text-center mb-6">
                 Record your purchases and keep track of your expenses.
               </Text>
               <TouchableOpacity
-                style={styles.emptyAddButton}
+                className="bg-surface border border-primary px-6 py-3 rounded-lg"
                 onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
               >
-                <Text style={styles.emptyAddButtonText}>Add New Bill</Text>
+                <Text className="text-primary font-bold text-md">Add New Bill</Text>
               </TouchableOpacity>
             </View>
           ) : null
@@ -161,167 +149,11 @@ export function PurchaseInvoicesScreen() {
       />
 
       <TouchableOpacity
-        style={styles.fab}
+        className="absolute bottom-5 right-5 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md"
         onPress={() => (navigation as any).navigate("PurchaseInvoiceForm")}
       >
-        <Plus size={24} color={"#ffffff"} />
+        <PlusIcon size={24} color={"#ffffff"} />
       </TouchableOpacity>
     </View>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  searchBar: {
-    flexDirection: "row",
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-    alignItems: "center",
-  },
-  searchInput: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchText: {
-    flex: 1,
-    fontSize: fontSize.md,
-    color: colors.text,
-    marginLeft: spacing.sm,
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  list: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 100,
-    gap: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadows.sm,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceHover,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  info: {
-    flex: 1,
-  },
-  billHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  billNumber: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  totalValue: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-  },
-  vendorName: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  billFooterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateValue: {
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-  },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-  },
-  statusText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.bold,
-    textTransform: "uppercase",
-  },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.xl,
-    right: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.md,
-  },
-  empty: {
-    alignItems: "center",
-    paddingVertical: 80,
-  },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.surfaceHover,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  emptyText: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  emptySubtext: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    marginBottom: spacing.xl,
-  },
-  emptyAddButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  emptyAddButtonText: {
-    color: colors.primary,
-    fontWeight: fontWeight.bold,
-    fontSize: fontSize.md,
-  }
-});

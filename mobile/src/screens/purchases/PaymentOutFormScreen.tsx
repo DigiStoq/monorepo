@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   Platform,
   KeyboardAvoidingView,
   Text,
-  ActivityIndicator
+  ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../../lib/powersync";
@@ -20,35 +20,36 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { Save, X } from "lucide-react-native";
-import { wp, hp } from "../../lib/responsive";
+import { SaveIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
 import { generateUUID } from "../../lib/utils";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { CustomHeader } from "../../components/CustomHeader";
+import { usePaymentOutMutations } from "../../hooks/usePaymentOuts";
+import { usePurchaseInvoices } from "../../hooks/usePurchaseInvoices";
 
 interface CustomerData {
   id: string;
   name: string;
-  type: string;
 }
 
 export function PaymentOutFormScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
+  const { createPayment, deletePayment } = usePaymentOutMutations();
 
-  // Data Fetching - Get only Suppliers or Both
+  // Data Fetching
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT id, name, type FROM customers WHERE type IN ('supplier', 'both') ORDER BY name ASC"
+    "SELECT id, name FROM customers ORDER BY name ASC" // Suppliers are in customers table
   );
 
   // Form State
   const [supplierId, setSupplierId] = useState("");
+  const [invoiceId, setInvoiceId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [amount, setAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("cash");
@@ -56,22 +57,31 @@ export function PaymentOutFormScreen() {
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch Unpaid Purchase Invoices (Bills)
+  const { data: unpaidInvoices } = useQuery(
+    supplierId
+      ? `SELECT id, supplier_invoice_number, total, amount_due FROM purchase_invoices 
+         WHERE customer_id = ? AND status != 'paid' 
+         ORDER BY date DESC`
+      : "SELECT 1 WHERE 0",
+    [supplierId]
+  );
+
   // Initial Load
   useEffect(() => {
     if (id) {
-      db.execute("SELECT * FROM payment_outs WHERE id = ?", [id]).then(
-        (res) => {
-          if (res.rows?.length > 0) {
-            const data = res.rows.item(0);
-            setSupplierId(data.customer_id); // Schema uses customer_id for supplier
-            setDate(data.date);
-            setAmount(String(data.amount || ""));
-            setPaymentMode(data.payment_mode || "cash");
-            setReference(data.reference_number || "");
-            setNotes(data.notes || "");
-          }
+      db.execute("SELECT * FROM payment_outs WHERE id = ?", [id]).then((res) => {
+        if (res.rows?.length > 0) {
+          const data = res.rows.item(0);
+          setSupplierId(data.customer_id);
+          setDate(data.date);
+          setAmount(String(data.amount || ""));
+          setPaymentMode(data.payment_mode || "cash");
+          setReference(data.reference_number || "");
+          setNotes(data.notes || "");
+          setInvoiceId(data.invoice_id || "");
         }
-      );
+      });
     }
   }, [id]);
 
@@ -79,6 +89,14 @@ export function PaymentOutFormScreen() {
     () => customers.map((c) => ({ label: c.name, value: c.id })),
     [customers]
   );
+
+  const invoiceOptions = useMemo(() => {
+    const options = (unpaidInvoices || []).map((inv: any) => ({
+      label: `#${inv.supplier_invoice_number || 'Bill'} (Due: $${inv.amount_due.toFixed(2)})`,
+      value: inv.id,
+    }));
+    return [{ label: "None (On Account)", value: "" }, ...options];
+  }, [unpaidInvoices]);
 
   const modeOptions = [
     { label: "Cash", value: "cash" },
@@ -88,6 +106,32 @@ export function PaymentOutFormScreen() {
     { label: "Other", value: "other" },
   ];
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Payment",
+      "Are you sure you want to delete this payment? This will reverse the balance update.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              await deletePayment(id!);
+              Alert.alert("Success", "Payment deleted");
+              navigation.goBack();
+            } catch (e: any) {
+              Alert.alert("Error", e.message || "Failed to delete");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleSubmit = async () => {
     if (!supplierId || !amount) {
       Alert.alert("Error", "Supplier and Amount are required");
@@ -96,56 +140,43 @@ export function PaymentOutFormScreen() {
 
     setIsLoading(true);
     try {
-      const paymentId = id || generateUUID();
-      const numAmount = parseFloat(amount) || 0;
-      const supplierName =
-        customers.find((c) => c.id === supplierId)?.name || "";
-
       if (isEditing) {
+        // Update (Inline SQL - Metadata only for now)
         await db.execute(
-          `
-                    UPDATE payment_outs SET 
-                    customer_id=?, customer_name=?, date=?, amount=?, 
-                    payment_mode=?, reference_number=?, notes=?, updated_at=?
-                    WHERE id=?
-                `,
+          `UPDATE payment_outs SET 
+             customer_id=?, customer_name=?, date=?, amount=?, 
+             payment_mode=?, reference_number=?, notes=?, invoice_id=?, updated_at=?
+             WHERE id=?`,
           [
             supplierId,
-            supplierName,
+            customers.find((c) => c.id === supplierId)?.name || "",
             date,
-            numAmount,
+            parseFloat(amount) || 0,
             paymentMode,
             reference,
             notes,
+            invoiceId || null,
             new Date().toISOString(),
-            paymentId,
+            id,
           ]
         );
       } else {
-        await db.execute(
-          `
-                    INSERT INTO payment_outs (
-                        id, customer_id, customer_name, date, amount, 
-                        payment_mode, reference_number, notes, created_at, updated_at
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
-          [
-            paymentId,
-            supplierId,
-            supplierName,
-            date,
-            numAmount,
-            paymentMode,
-            reference,
-            notes,
-            new Date().toISOString(),
-            new Date().toISOString(),
-          ]
-        );
+        // Create (Use Hook)
+        await createPayment({
+          paymentNumber: reference || generateUUID().slice(0, 8),
+          supplierId,
+          supplierName: customers.find((c) => c.id === supplierId)?.name || "",
+          date,
+          amount: parseFloat(amount) || 0,
+          paymentMode,
+          referenceNumber: reference,
+          invoiceId: invoiceId || undefined,
+          invoiceNumber: unpaidInvoices?.find((i: any) => i.id === invoiceId)?.supplier_invoice_number,
+          notes
+        });
       }
 
-      Alert.alert("Success", "Payment saved successfully");
+      Alert.alert("Success", "Payment recorded successfully");
       navigation.goBack();
     } catch (error) {
       console.error(error);
@@ -158,34 +189,23 @@ export function PaymentOutFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Payment Out" : "Record Payment Out"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
-        </Button>
-      </View>
+      <CustomHeader
+        title={isEditing ? "Edit Payment Out" : "Record Payment Out"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-2"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Card>
           <CardHeader title="Payment Details" />
           <CardBody>
@@ -193,9 +213,22 @@ export function PaymentOutFormScreen() {
               label="Supplier"
               options={supplierOptions}
               value={supplierId}
-              onChange={setSupplierId}
+              onChange={(val) => {
+                setSupplierId(val);
+                setInvoiceId("");
+              }}
               placeholder="Select Supplier"
             />
+
+            <Select
+              label="Link to Bill (Optional)"
+              options={invoiceOptions}
+              value={invoiceId}
+              onChange={setInvoiceId}
+              placeholder="Select Bill"
+              containerStyle={{ marginTop: 8 }}
+            />
+
             <Input
               label="Amount"
               value={amount}
@@ -203,13 +236,13 @@ export function PaymentOutFormScreen() {
               keyboardType="numeric"
               placeholder="0.00"
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="Date"
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Select
                 label="Mode"
@@ -240,49 +273,23 @@ export function PaymentOutFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          style={styles.submitButton}
+          className="mt-6"
         >
           Save Payment
         </Button>
+
+        {isEditing && (
+          <Button
+            fullWidth
+            variant="danger"
+            onPress={handleDelete}
+            isLoading={isLoading}
+            className="mt-4 bg-red-500"
+          >
+            Delete Payment
+          </Button>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(5),
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  submitButton: {
-    marginTop: spacing.xl,
-  },
-});

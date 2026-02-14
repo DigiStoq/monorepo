@@ -101,47 +101,49 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
 
-      await db.execute(
-        `INSERT INTO loan_payments (
-          id, loan_id, date, principal_amount, interest_amount, total_amount,
-          payment_method, reference_number, notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          data.loanId,
-          data.date,
-          data.principalAmount,
-          data.interestAmount,
-          data.totalAmount,
-          data.paymentMethod ?? null,
-          data.referenceNumber ?? null,
-          data.notes ?? null,
-          now,
-        ]
-      );
-
-      // Update loan outstanding amount and paid EMIs
-      await db.execute(
-        `UPDATE loans SET
-          outstanding_amount = outstanding_amount - ?,
-          paid_emis = paid_emis + 1,
-          updated_at = ?
-         WHERE id = ?`,
-        [data.principalAmount, now, data.loanId]
-      );
-
-      const result = await db.execute(
-        `SELECT outstanding_amount FROM loans WHERE id = ?`,
-        [data.loanId]
-      );
-      const rows = (result.rows?._array ?? []) as LoanQueryRow[];
-      const loan = rows[0];
-      if (rows.length > 0 && loan.outstanding_amount <= 0) {
-        await db.execute(
-          `UPDATE loans SET status = 'closed', updated_at = ? WHERE id = ?`,
-          [now, data.loanId]
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO loan_payments (
+            id, loan_id, date, principal_amount, interest_amount, total_amount,
+            payment_method, reference_number, notes, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            data.loanId,
+            data.date,
+            data.principalAmount,
+            data.interestAmount,
+            data.totalAmount,
+            data.paymentMethod ?? null,
+            data.referenceNumber ?? null,
+            data.notes ?? null,
+            now,
+          ]
         );
-      }
+
+        // Update loan outstanding amount and paid EMIs
+        await tx.execute(
+          `UPDATE loans SET
+            outstanding_amount = outstanding_amount - ?,
+            paid_emis = paid_emis + 1,
+            updated_at = ?
+            WHERE id = ?`,
+          [data.principalAmount, now, data.loanId]
+        );
+
+        const result = await tx.execute(
+          `SELECT outstanding_amount FROM loans WHERE id = ?`,
+          [data.loanId]
+        );
+        const rows = (result.rows?._array ?? []) as LoanQueryRow[];
+        const loan = rows[0];
+        if (rows.length > 0 && loan.outstanding_amount <= 0) {
+          await tx.execute(
+            `UPDATE loans SET status = 'closed', updated_at = ? WHERE id = ?`,
+            [now, data.loanId]
+          );
+        }
+      });
 
       return id;
     },
@@ -150,29 +152,31 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
 
   const deletePayment = useCallback(
     async (id: string): Promise<void> => {
-      // Get payment details to reverse the loan update
-      const result = await db.execute(
-        `SELECT loan_id, principal_amount FROM loan_payments WHERE id = ?`,
-        [id]
-      );
-      const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
-      const payment = rows[0];
-
-      if (rows.length > 0) {
-        const now = new Date().toISOString();
-        // Reverse the loan outstanding amount
-        await db.execute(
-          `UPDATE loans SET
-            outstanding_amount = outstanding_amount + ?,
-            paid_emis = MAX(0, paid_emis - 1),
-            status = 'active',
-            updated_at = ?
-           WHERE id = ?`,
-          [payment.principal_amount, now, payment.loan_id]
+      await db.writeTransaction(async (tx) => {
+        // Get payment details to reverse the loan update
+        const result = await tx.execute(
+          `SELECT loan_id, principal_amount FROM loan_payments WHERE id = ?`,
+          [id]
         );
-      }
+        const rows = (result.rows?._array ?? []) as PaymentQueryRow[];
+        const payment = rows[0];
 
-      await db.execute(`DELETE FROM loan_payments WHERE id = ?`, [id]);
+        if (rows.length > 0) {
+          const now = new Date().toISOString();
+          // Reverse the loan outstanding amount
+          await tx.execute(
+            `UPDATE loans SET
+                outstanding_amount = outstanding_amount + ?,
+                paid_emis = MAX(0, paid_emis - 1),
+                status = 'active',
+                updated_at = ?
+            WHERE id = ?`,
+            [payment.principal_amount, now, payment.loan_id]
+          );
+        }
+
+        await tx.execute(`DELETE FROM loan_payments WHERE id = ?`, [id]);
+      });
     },
     [db]
   );

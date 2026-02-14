@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import { CustomHeader } from "../components/CustomHeader";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import {
@@ -18,9 +20,7 @@ import {
   CardBody,
   Select,
 } from "../components/ui";
-import { Save, X } from "lucide-react-native";
-import { wp, hp } from "../lib/responsive";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../lib/theme";
+import { SaveIcon, XCloseIcon, TrashIcon } from "../components/ui/UntitledIcons";
 import { useTheme } from "../contexts/ThemeContext";
 
 export function CustomerFormScreen() {
@@ -29,7 +29,6 @@ export function CustomerFormScreen() {
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const db = getPowerSyncDatabase();
 
@@ -161,6 +160,41 @@ export function CustomerFormScreen() {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this customer? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // Check if they have invoices first? 
+              // DB usually handles FK constraints, but PowerSync might not fail locally if FK not enforced.
+              // But Supabase will fail if FK exists.
+              // For now, allow delete.
+              // Switch to Soft Delete to handle Sync and FK constraints safely
+              const now = new Date().toISOString();
+              await db.execute("UPDATE customers SET is_active = 0, updated_at = ? WHERE id = ?", [now, id]);
+
+              Alert.alert("Success", "Customer deleted");
+              navigation.goBack();
+              (navigation as any).navigate("Customers");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to delete customer");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const typeOptions = [
     { label: "Customer", value: "customer" },
     { label: "Supplier", value: "supplier" },
@@ -170,34 +204,23 @@ export function CustomerFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Contact" : "New Contact"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          isLoading={isLoading}
-        >
-          <Save size={24} color={colors.primary} />
-        </Button>
-      </View>
+      <CustomHeader
+        title={isEditing ? "Edit Contact" : "New Contact"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-1.5"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Card>
           <CardHeader title="Basic Details" />
           <CardBody>
@@ -246,12 +269,12 @@ export function CustomerFormScreen() {
               onChangeText={setAddress}
               multiline
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="City"
                 value={city}
                 onChangeText={setCity}
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="State"
@@ -279,16 +302,15 @@ export function CustomerFormScreen() {
                 onChangeText={setOpeningBalance}
                 keyboardType="numeric"
                 placeholder="0.00"
-                helperText="Positive = To Receive, Negative = To Pay"
               />
             )}
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="Credit Limit"
                 value={creditLimit}
                 onChangeText={setCreditLimit}
                 keyboardType="numeric"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Credit Days"
@@ -313,48 +335,22 @@ export function CustomerFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          style={styles.submitButton}
+          className="mt-6"
         >
           Save Contact
         </Button>
+
+        {isEditing && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="mt-4 flex-row justify-center items-center p-4 rounded-lg border border-danger bg-danger-10"
+            style={{ borderColor: colors.danger, backgroundColor: colors.danger + '10' }}
+          >
+            <TrashIcon size={20} color={colors.danger} />
+            <Text className="ml-2 font-bold text-danger" style={{ color: colors.danger }}>Delete Contact</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(5),
-  },
-  row: {
-    flexDirection: "row",
-  },
-  submitButton: {
-    marginTop: spacing.xl,
-  },
-});

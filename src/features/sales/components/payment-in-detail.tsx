@@ -90,6 +90,13 @@ export function PaymentInDetail({
       year: "numeric",
     });
 
+  const formatTime = (dateStr: string): string =>
+    new Date(dateStr).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
   return (
     <div className={cn("h-full flex flex-col", className)}>
       {/* Header */}
@@ -157,6 +164,9 @@ export function PaymentInDetail({
                 <p className="text-xs text-slate-500">Date</p>
                 <p className="font-medium text-text-heading">
                   {formatDate(payment.date)}
+                  <span className="text-slate-400 font-normal ml-2">
+                    {formatTime(payment.createdAt)}
+                  </span>
                 </p>
               </div>
             </div>
@@ -175,6 +185,67 @@ export function PaymentInDetail({
                 <p className="font-medium text-text-heading">{mode.label}</p>
               </div>
             </div>
+
+            {/* Conditional Payment Details */}
+            {payment.chequeNumber && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Cheque Details</p>
+                  <p className="font-medium text-text-heading">
+                    #{payment.chequeNumber}
+                  </p>
+                  {payment.chequeDate && (
+                    <p className="text-xs text-slate-500">
+                      Date: {formatDate(payment.chequeDate)}
+                    </p>
+                  )}
+                  {payment.bankName && (
+                    <p className="text-xs text-slate-500">
+                      Bank: {payment.bankName}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {payment.paymentMode === "bank" && payment.bankName && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Bank Details</p>
+                  <p className="font-medium text-text-heading">
+                    {payment.bankName}
+                  </p>
+                  {payment.bankAccountNumber && (
+                    <p className="text-xs text-slate-500">
+                      Acc: {payment.bankAccountNumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {payment.paymentMode === "card" && payment.cardNumber && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Card Details</p>
+                  <p className="font-medium text-text-heading">
+                    Ending in {payment.cardNumber}
+                  </p>
+                  {payment.bankName && (
+                    <p className="text-xs text-slate-500">{payment.bankName}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {payment.referenceNumber && (
               <div className="flex items-start gap-3">
@@ -221,7 +292,10 @@ export function PaymentInDetail({
         {/* Timestamps */}
         <Card>
           <CardBody className="text-xs text-slate-400 space-y-1">
-            <p>Created: {formatDate(payment.createdAt)}</p>
+            <p>
+              Created: {formatDate(payment.createdAt)}{" "}
+              {formatTime(payment.createdAt)}
+            </p>
             <p>Updated: {formatDate(payment.updatedAt)}</p>
           </CardBody>
         </Card>

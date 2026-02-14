@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { RouterProvider } from "@tanstack/react-router";
+import {
+  QueryClient,
+  QueryClientProvider,
+  MutationCache,
+} from "@tanstack/react-query";
+import { toast } from "sonner";
+import { DevTools } from "@/components/common/DevTools";
 import { PowerSyncContext } from "@powersync/react";
 import type { PowerSyncDatabase } from "@powersync/web";
 import { initializePowerSync, disconnectPowerSync } from "@/lib/powersync";
@@ -9,6 +16,26 @@ import { useAuthStore } from "@/stores";
 import { router } from "@/routes";
 import { Spinner } from "@/components/common";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
+
+// ============================================================================
+// TANSTACK QUERY CLIENT
+// ============================================================================
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+    },
+  },
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      console.error("Global Mutation Error:", error);
+      toast.error(error.message || "An unexpected error occurred");
+    },
+  }),
+});
 
 // ============================================================================
 // TYPES
@@ -125,8 +152,11 @@ export function App(): React.ReactNode {
   const [error, setError] = useState<string | null>(null);
 
   // Auth state
-  const { initialize: initializeAuth, isInitialized: authInitialized } =
-    useAuthStore();
+  const {
+    initialize: initializeAuth,
+    isInitialized: authInitialized,
+    isAuthenticated,
+  } = useAuthStore();
 
   useEffect(() => {
     let mounted = true;
@@ -278,10 +308,21 @@ export function App(): React.ReactNode {
 
   // Ready - render app with router
   return (
-    <PowerSyncContext.Provider value={db}>
-      <ThemeProvider>
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </PowerSyncContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <PowerSyncContext.Provider value={db}>
+        <ThemeProvider>
+          <RouterProvider
+            router={router}
+            context={{
+              auth: { isAuthenticated, isInitialized: authInitialized },
+              db: db,
+              queryClient,
+            }}
+          />
+          <Toaster />
+          <DevTools />
+        </ThemeProvider>
+      </PowerSyncContext.Provider>
+    </QueryClientProvider>
   );
 }

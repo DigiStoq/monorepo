@@ -23,6 +23,7 @@ import type { Estimate, EstimateFormData, EstimateStatus } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { CheckCircle, Clock, DollarSign, FileText } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "sonner";
 
 export function EstimatesPage(): React.ReactNode {
   const navigate = useNavigate();
@@ -234,9 +235,11 @@ export function EstimatesPage(): React.ReactNode {
         },
         estimateItems
       );
+      toast.success("Estimate created successfully");
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to create estimate:", err);
+      toast.error("Failed to create estimate");
     } finally {
       setIsSubmitting(false);
     }
@@ -246,8 +249,10 @@ export function EstimatesPage(): React.ReactNode {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "sent");
+        toast.success("Estimate marked as sent");
       } catch (err) {
         console.error("Failed to send estimate:", err);
+        toast.error("Failed to update estimate status");
       }
     }
   };
@@ -256,8 +261,10 @@ export function EstimatesPage(): React.ReactNode {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "accepted");
+        toast.success("Estimate marked as accepted");
       } catch (err) {
         console.error("Failed to update estimate:", err);
+        toast.error("Failed to update estimate status");
       }
     }
   };
@@ -266,8 +273,10 @@ export function EstimatesPage(): React.ReactNode {
     if (currentSelectedEstimate) {
       try {
         await updateEstimateStatus(currentSelectedEstimate.id, "rejected");
+        toast.success("Estimate marked as rejected");
       } catch (err) {
         console.error("Failed to update estimate:", err);
+        toast.error("Failed to update estimate status");
       }
     }
   };
@@ -289,9 +298,11 @@ export function EstimatesPage(): React.ReactNode {
 
         // Navigate to the invoices page
         setSelectedEstimateId(null);
+        toast.success("Estimate converted to invoice");
         void navigate({ to: "/sale/invoices" });
       } catch (err) {
         console.error("Failed to convert estimate to invoice:", err);
+        toast.error("Failed to convert estimate to invoice");
       } finally {
         setIsSubmitting(false);
       }
@@ -322,9 +333,11 @@ export function EstimatesPage(): React.ReactNode {
       setIsSubmitting(true);
       try {
         await deleteEstimate(currentSelectedEstimate.id);
+        toast.success("Estimate deleted successfully");
         setSelectedEstimateId(null);
       } catch (err) {
         console.error("Failed to delete estimate:", err);
+        toast.error("Failed to delete estimate");
       } finally {
         setIsSubmitting(false);
       }

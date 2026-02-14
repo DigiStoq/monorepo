@@ -105,23 +105,6 @@ export function useExpenses(filters?: {
   return { expenses, isLoading, error };
 }
 
-export function useExpenseById(id: string | null): {
-  expense: Expense | null;
-  isLoading: boolean;
-  error: Error | undefined;
-} {
-  const { data, isLoading, error } = useQuery<ExpenseRow>(
-    id
-      ? `SELECT * FROM expenses WHERE id = ?`
-      : `SELECT * FROM expenses WHERE 1 = 0`,
-    id ? [id] : []
-  );
-
-  const expense = data[0] ? mapRowToExpense(data[0]) : null;
-
-  return { expense, isLoading, error };
-}
-
 interface ExpenseMutations {
   createExpense: (data: {
     expenseNumber: string;
@@ -308,35 +291,5 @@ export function useExpenseMutations(): ExpenseMutations {
     createExpense,
     updateExpense,
     deleteExpense,
-  };
-}
-
-interface ExpenseStats {
-  totalExpenses: number;
-  thisMonthExpenses: number;
-  byCategory: { category: string; sum: number }[];
-}
-
-export function useExpenseStats(): ExpenseStats {
-  const { data: totalExpenses } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM expenses`
-  );
-
-  const { data: thisMonthExpenses } = useQuery<{ sum: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as sum FROM expenses
-     WHERE date >= date('now', 'start of month')`
-  );
-
-  const { data: byCategory } = useQuery<{ category: string; sum: number }>(
-    `SELECT category, COALESCE(SUM(amount), 0) as sum FROM expenses
-     WHERE date >= date('now', 'start of month')
-     GROUP BY category
-     ORDER BY sum DESC`
-  );
-
-  return {
-    totalExpenses: totalExpenses[0]?.sum ?? 0,
-    thisMonthExpenses: thisMonthExpenses[0]?.sum ?? 0,
-    byCategory: byCategory,
   };
 }

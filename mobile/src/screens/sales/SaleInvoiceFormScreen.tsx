@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Alert,
   Platform,
@@ -22,11 +21,18 @@ import {
   CardBody,
   Select,
 } from "../../components/ui";
-import { Plus, Trash2, Save, X, Truck, Calendar } from "lucide-react-native";
-import { wp, hp } from "../../lib/responsive";
-import { generateUUID } from "../../lib/utils";
-import { spacing, borderRadius, fontSize, fontWeight, ThemeColors } from "../../lib/theme";
+import { usePDFGenerator } from "../../hooks/usePDFGenerator";
+import type { PDFInvoiceData } from "../../lib/pdf/htmlTemplates";
+import { round } from "../../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
+import {
+  PlusIcon,
+  TrashIcon,
+  SaveIcon,
+  XCloseIcon,
+  ReceiptIcon
+} from "../../components/ui/UntitledIcons";
+import { CustomHeader } from "../../components/CustomHeader";
 
 // Types
 interface CustomerData {
@@ -46,6 +52,8 @@ interface ItemData {
   sku: string;
   is_active: number;
   batch_number?: string;
+  stock_quantity: number;
+  type: string;
 }
 
 interface LineItem {
@@ -64,7 +72,6 @@ interface LineItem {
 export function SaleInvoiceFormScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { id } = (route.params as { id?: string }) || {};
   const isEditing = !!id;
@@ -98,6 +105,47 @@ export function SaleInvoiceFormScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<LineItem>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  const { generateInvoicePDF, isGenerating: isGeneratingPDF } = usePDFGenerator();
+
+  const handleGeneratePDF = async () => {
+    if (!customerId || lineItems.length === 0) {
+      Alert.alert("Error", "Invoice is incomplete");
+      return;
+    }
+
+    const customer = customers.find(c => c.id === customerId);
+
+    const pdfData: PDFInvoiceData = {
+      documentTitle: "INVOICE",
+      documentNumber: id ? id.slice(0, 8).toUpperCase() : "DRAFT",
+      date: date,
+      dueDate: dueDate,
+      companyName: "DigiStoq",
+      companyAddress: "123 Business St, Tech City",
+      companyEmail: "support@digistoq.com",
+      customerName: customer?.name || "Unknown",
+      customerAddress: customer?.address,
+      customerPhone: customer?.phone,
+      customerEmail: customer?.email,
+      items: lineItems.map(item => ({
+        description: item.itemName,
+        quantity: item.quantity,
+        rate: item.unitPrice,
+        amount: item.amount
+      })),
+      subtotal: totals.subtotal,
+      taxTotal: totals.tax,
+      discountTotal: totals.discount,
+      total: totals.total,
+      balanceDue: totals.total,
+      currencySymbol: "$",
+      notes: notes,
+      terms: terms
+    };
+
+    await generateInvoicePDF(pdfData);
+  };
 
   // Initial Data Load (if editing)
   useEffect(() => {
@@ -142,7 +190,7 @@ export function SaleInvoiceFormScreen() {
         }
       );
     }
-  }, [id]);
+  }, [id, db]);
 
   // Options for Select
   const customerOptions = useMemo(
@@ -167,15 +215,15 @@ export function SaleInvoiceFormScreen() {
     let subVal = 0;
 
     lineItems.forEach((item) => {
-      const base = item.quantity * item.unitPrice;
-      const disc = base * (item.discountPercent / 100);
-      const taxable = base - disc;
-      const tax = taxable * (item.taxPercent / 100);
+      const base = round(item.quantity * item.unitPrice);
+      const disc = round(base * (item.discountPercent / 100));
+      const taxable = round(base - disc);
+      const tax = round(taxable * (item.taxPercent / 100));
 
-      subVal += base;
-      totalDisc += disc;
-      totalTax += tax;
-      totalVal += taxable + tax;
+      subVal = round(subVal + base);
+      totalDisc = round(totalDisc + disc);
+      totalTax = round(totalTax + tax);
+      totalVal = round(totalVal + taxable + tax);
     });
 
     return {
@@ -228,19 +276,31 @@ export function SaleInvoiceFormScreen() {
       return;
     }
 
+    const selectedItem = items.find(i => i.id === currentItem.itemId);
     const qty = currentItem.quantity || 0;
+
+    // Stock Validation
+    if (selectedItem && selectedItem.type !== 'service') {
+      const otherLines = lineItems.filter(i => i.itemId === currentItem.itemId && i.id !== editingItemId);
+      const totalOtherQty = otherLines.reduce((acc, i) => acc + i.quantity, 0);
+
+      if (totalOtherQty + qty > selectedItem.stock_quantity) {
+        Alert.alert("Insufficient Stock", `You only have ${selectedItem.stock_quantity} quantity available for ${selectedItem.name}.`);
+        return;
+      }
+    }
     const rate = currentItem.unitPrice || 0;
     const disc = currentItem.discountPercent || 0;
     const tax = currentItem.taxPercent || 0;
 
-    const base = qty * rate;
-    const discAmt = base * (disc / 100);
-    const taxable = base - discAmt;
-    const taxAmt = taxable * (tax / 100);
-    const finalAmt = taxable + taxAmt;
+    const base = round(qty * rate);
+    const discAmt = round(base * (disc / 100));
+    const taxable = round(base - discAmt);
+    const taxAmt = round(taxable * (tax / 100));
+    const finalAmt = round(taxable + taxAmt);
 
     const newItem: LineItem = {
-      id: editingItemId || generateUUID(),
+      id: editingItemId || crypto.randomUUID(),
       itemId: currentItem.itemId,
       itemName: currentItem.itemName || "",
       quantity: qty,
@@ -277,7 +337,8 @@ export function SaleInvoiceFormScreen() {
 
     setIsLoading(true);
     try {
-      const invoiceId = id || generateUUID();
+      // Check if crypto.randomUUID is available, strictly calling it or falling back if needed (should be polyfilled)
+      const invoiceId = id || (global.crypto?.randomUUID ? global.crypto.randomUUID() : Math.random().toString(36).substring(2));
 
       await db.writeTransaction(async (tx) => {
         // 1. Insert/Update Invoice
@@ -344,7 +405,7 @@ export function SaleInvoiceFormScreen() {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      `,
             [
-              generateUUID(),
+              (global.crypto?.randomUUID ? global.crypto.randomUUID() : Math.random().toString(36).substring(2)),
               invoiceId,
               item.itemId,
               item.itemName,
@@ -373,34 +434,34 @@ export function SaleInvoiceFormScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.header}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <X size={24} color={colors.text} />
-        </Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>
-            {isEditing ? "Edit Sale Invoice" : "New Sale Invoice"}
-          </Text>
-        </View>
-        <Button
-          variant="ghost"
-          size="icon"
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? <ActivityIndicator color={colors.primary} /> : <Save size={24} color={colors.primary} />}
-        </Button>
-      </View>
+      <CustomHeader
+        title={isEditing ? "Edit Sale Invoice" : "New Sale Invoice"}
+        showBack
+        rightAction={
+          <View className="flex-row gap-2">
+            {isEditing && (
+              <TouchableOpacity
+                onPress={handleGeneratePDF}
+                disabled={isGeneratingPDF}
+                className="p-2"
+              >
+                {isGeneratingPDF ? <ActivityIndicator size="small" color={colors.text} /> : <ReceiptIcon size={24} color={colors.text} />}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={isLoading}
+              className="p-2"
+            >
+              {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Customer Section */}
         <Card>
           <CardHeader title="Customer Details" />
@@ -412,13 +473,13 @@ export function SaleInvoiceFormScreen() {
               onChange={setCustomerId}
               placeholder="Select Customer"
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="Invoice Date"
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Due Date"
@@ -441,13 +502,13 @@ export function SaleInvoiceFormScreen() {
               onChangeText={setTransportName}
               placeholder="e.g. FedEx"
             />
-            <View style={styles.row}>
+            <View className="flex-row gap-2">
               <Input
                 label="Delivery Date"
                 value={deliveryDate}
                 onChangeText={setDeliveryDate}
                 placeholder="YYYY-MM-DD"
-                containerStyle={{ flex: 1, marginRight: 8 }}
+                containerStyle={{ flex: 1 }}
               />
               <Input
                 label="Delivery Location"
@@ -461,32 +522,32 @@ export function SaleInvoiceFormScreen() {
         </Card>
 
         {/* Items Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Items</Text>
+        <View className="flex-row justify-between items-center mb-3 mt-2">
+          <Text className="text-md font-semibold text-text">Items</Text>
           <Button
             size="sm"
             variant="outline"
             onPress={() => {
               openItemModal();
             }}
-            leftIcon={<Plus size={16} color={colors.text} />}
+            leftIcon={<PlusIcon size={16} color={colors.text} />}
           >
             Add Item
           </Button>
         </View>
 
-        {lineItems.map((item, index) => (
-          <Card key={item.id} style={styles.itemCard}>
+        {lineItems.map((item) => (
+          <Card key={item.id} style={{ marginBottom: 12 }}>
             <TouchableOpacity
               onPress={() => {
                 openItemModal(item);
               }}
             >
               <CardBody>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemName}>{item.itemName}</Text>
-                  <View style={styles.itemActions}>
-                    <Text style={styles.itemAmount}>
+                <View className="flex-row justify-between items-center mb-1">
+                  <Text className="text-md font-semibold text-text">{item.itemName}</Text>
+                  <View className="flex-row items-center">
+                    <Text className="text-md font-bold text-text">
                       ${item.amount.toFixed(2)}
                     </Text>
                     <TouchableOpacity
@@ -495,16 +556,16 @@ export function SaleInvoiceFormScreen() {
                       }}
                       style={{ marginLeft: 8 }}
                     >
-                      <Trash2 size={18} color={colors.danger} />
+                      <TrashIcon size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
-                <View style={styles.itemMeta}>
-                  <Text style={styles.metaText}>
+                <View className="flex-row justify-between">
+                  <Text className="text-sm text-text-muted">
                     {item.quantity} x ${item.unitPrice}
                   </Text>
                   {item.batchNumber ? (
-                    <Text style={styles.metaText}>
+                    <Text className="text-sm text-text-muted">
                       Batch: {item.batchNumber}
                     </Text>
                   ) : null}
@@ -540,25 +601,25 @@ export function SaleInvoiceFormScreen() {
         {/* Summary Section */}
         <Card>
           <CardBody>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Subtotal</Text>
+              <Text className="text-md font-semibold text-text">
                 ${totals.subtotal.toFixed(2)}
               </Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Discount</Text>
-              <Text style={styles.summaryValue}>
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Discount</Text>
+              <Text className="text-md font-semibold text-danger">
                 -${totals.discount.toFixed(2)}
               </Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax</Text>
-              <Text style={styles.summaryValue}>${totals.tax.toFixed(2)}</Text>
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-sm text-text-secondary">Tax</Text>
+              <Text className="text-md font-semibold text-text">${totals.tax.toFixed(2)}</Text>
             </View>
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${totals.total.toFixed(2)}</Text>
+            <View className="flex-row justify-between pt-2 border-t border-border mt-2">
+              <Text className="text-lg font-bold text-text">Total</Text>
+              <Text className="text-lg font-bold text-primary">${totals.total.toFixed(2)}</Text>
             </View>
           </CardBody>
         </Card>
@@ -567,7 +628,7 @@ export function SaleInvoiceFormScreen() {
           fullWidth
           onPress={handleSubmit}
           isLoading={isLoading}
-          style={styles.submitButton}
+          className="mt-6"
         >
           {isEditing ? "Save Changes" : "Create"}
         </Button>
@@ -581,10 +642,10 @@ export function SaleInvoiceFormScreen() {
           setModalVisible(false);
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-background rounded-t-xl h-[85%] w-full">
+            <View className="flex-row justify-between items-center p-4 border-b border-border bg-surface rounded-t-xl">
+              <Text className="text-lg font-bold text-text">
                 {editingItemId ? "Edit Item" : "Add Item"}
               </Text>
               <TouchableOpacity
@@ -592,10 +653,10 @@ export function SaleInvoiceFormScreen() {
                   setModalVisible(false);
                 }}
               >
-                <X size={24} color={colors.textSecondary} />
+                <XCloseIcon size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={styles.modalBody}>
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
               <Select
                 label="Select Item"
                 options={itemOptions}
@@ -604,14 +665,14 @@ export function SaleInvoiceFormScreen() {
                 placeholder="Choose..."
               />
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Batch Number"
                   value={currentItem.batchNumber}
                   onChangeText={(v) => {
                     setCurrentItem((p) => ({ ...p, batchNumber: v }));
                   }}
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                   placeholder="Opt"
                 />
                 <Input
@@ -625,7 +686,7 @@ export function SaleInvoiceFormScreen() {
                 />
               </View>
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Rate"
                   value={String(currentItem.unitPrice || "")}
@@ -636,7 +697,7 @@ export function SaleInvoiceFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Quantity"
@@ -652,7 +713,7 @@ export function SaleInvoiceFormScreen() {
                 />
               </View>
 
-              <View style={styles.row}>
+              <View className="flex-row gap-2">
                 <Input
                   label="Discount %"
                   value={String(currentItem.discountPercent || "")}
@@ -663,7 +724,7 @@ export function SaleInvoiceFormScreen() {
                     }));
                   }}
                   keyboardType="numeric"
-                  containerStyle={{ flex: 1, marginRight: 8 }}
+                  containerStyle={{ flex: 1 }}
                 />
                 <Input
                   label="Tax %"
@@ -679,9 +740,11 @@ export function SaleInvoiceFormScreen() {
                 />
               </View>
 
-              <Button fullWidth onPress={saveItem} style={{ marginTop: 16 }}>
+              <Button fullWidth onPress={saveItem} className="mt-4">
                 {editingItemId ? "Update Item" : "Add to Invoice"}
               </Button>
+
+              <View className="h-10" />
             </ScrollView>
           </View>
         </View>
@@ -689,144 +752,3 @@ export function SaleInvoiceFormScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginTop: Platform.OS === "android" ? 24 : 0,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  content: {
-    padding: wp(4),
-    paddingBottom: hp(5),
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  itemCard: {
-    marginBottom: 12,
-  },
-  itemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  itemName: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  itemAmount: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  itemActions: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  itemMeta: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 4,
-  },
-  metaText: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  summaryValue: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.text,
-  },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  totalLabel: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-  },
-  totalValue: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.primary,
-  },
-  submitButton: {
-    marginTop: spacing.xl,
-  },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "85%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  modalBody: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-});

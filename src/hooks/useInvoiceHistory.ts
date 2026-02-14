@@ -1,6 +1,4 @@
 import { useQuery } from "@powersync/react";
-import { useCallback } from "react";
-import { getPowerSyncDatabase } from "@/lib/powersync";
 
 // ============================================================================
 // TYPES
@@ -13,7 +11,13 @@ export type InvoiceHistoryAction =
   | "payment_recorded"
   | "deleted";
 
-export type InvoiceType = "sale" | "purchase";
+export type InvoiceType =
+  | "sale"
+  | "purchase"
+  | "estimate"
+  | "credit_note"
+  | "payment_in"
+  | "payment_out";
 
 export interface InvoiceHistory {
   id: string;
@@ -117,59 +121,4 @@ export function useInvoiceHistory(
   const history = data.map(mapRowToHistory);
 
   return { history, isLoading, error };
-}
-
-export interface InvoiceHistoryMutations {
-  addHistoryEntry: (entry: {
-    invoiceId: string;
-    invoiceType: InvoiceType;
-    action: InvoiceHistoryAction;
-    description: string;
-    oldValues?: Record<string, unknown>;
-    newValues?: Record<string, unknown>;
-    userName?: string;
-  }) => Promise<string>;
-}
-
-export function useInvoiceHistoryMutations(): InvoiceHistoryMutations {
-  const db = getPowerSyncDatabase();
-
-  const addHistoryEntry = useCallback(
-    async (entry: {
-      invoiceId: string;
-      invoiceType: InvoiceType;
-      action: InvoiceHistoryAction;
-      description: string;
-      oldValues?: Record<string, unknown>;
-      newValues?: Record<string, unknown>;
-      userName?: string;
-    }): Promise<string> => {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-
-      await db.execute(
-        `INSERT INTO invoice_history (
-          id, invoice_id, invoice_type, action, description,
-          old_values, new_values, user_id, user_name, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          entry.invoiceId,
-          entry.invoiceType,
-          entry.action,
-          entry.description,
-          entry.oldValues ? JSON.stringify(entry.oldValues) : null,
-          entry.newValues ? JSON.stringify(entry.newValues) : null,
-          null, // user_id - would come from auth context
-          entry.userName ?? "User",
-          now,
-        ]
-      );
-
-      return id;
-    },
-    [db]
-  );
-
-  return { addHistoryEntry };
 }

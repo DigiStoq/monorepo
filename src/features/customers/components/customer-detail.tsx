@@ -35,6 +35,7 @@ export interface CustomerDetailProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onAddTransaction?: (type: "payment-in" | "payment-out") => void;
+  onTransactionClick?: (transaction: CustomerTransaction) => void;
   className?: string;
 }
 
@@ -77,6 +78,7 @@ export function CustomerDetail({
   onEdit,
   onDelete,
   onAddTransaction,
+  onTransactionClick,
   className,
 }: CustomerDetailProps): React.ReactNode {
   const { formatCurrency } = useCurrency();
@@ -296,7 +298,7 @@ export function CustomerDetail({
               label="Tax ID"
               value={customer.taxId}
             />
-            {customer.creditLimit && customer.creditLimit > 0 && (
+            {customer.creditLimit !== undefined && customer.creditLimit > 0 && (
               <InfoItem
                 icon={<CreditCard className="h-4 w-4 text-slate-500" />}
                 label="Credit Limit"
@@ -343,6 +345,7 @@ export function CustomerDetail({
               data={transactions}
               getRowKey={(row) => row.id}
               hoverable
+              onRowClick={onTransactionClick}
             />
           )}
         </CardBody>
