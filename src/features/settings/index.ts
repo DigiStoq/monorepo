@@ -40,6 +40,4 @@ export type {
   LoginRecord,
   BackupSettings,
   BackupRecord,
-  SettingsSection,
-  AllSettings,
 } from "./types";

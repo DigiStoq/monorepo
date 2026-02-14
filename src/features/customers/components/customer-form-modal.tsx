@@ -10,12 +10,20 @@ import {
   Select,
   type SelectOption,
 } from "@/components/ui";
+import { toast } from "sonner";
 import { User, Phone, Mail, MapPin, Building2 } from "lucide-react";
 import type { Customer, CustomerFormData, CustomerType } from "../types";
 
 // ============================================================================
 // VALIDATION SCHEMA
 // ============================================================================
+
+// Helper for optional number fields that might be NaN (from valueAsNumber) or empty string
+const optionalNumber = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return undefined;
+  const num = Number(val);
+  return Number.isNaN(num) ? undefined : num;
+}, z.number().min(0).optional());
 
 const customerSchema = z.object({
   name: z.string().min(1, "Customer name is required").max(100),
@@ -27,9 +35,20 @@ const customerSchema = z.object({
   city: z.string().max(50).optional(),
   state: z.string().max(50).optional(),
   zipCode: z.string().max(10).optional(),
-  openingBalance: z.number().optional(),
-  creditLimit: z.number().min(0).optional(),
-  creditDays: z.number().min(0).max(365).optional(),
+  openingBalance: z.preprocess(
+    (val) => {
+      if (val === "" || val === null || val === undefined) return undefined;
+      const num = Number(val);
+      return Number.isNaN(num) ? undefined : num;
+    },
+    z.number().optional() // Allow negative for opening balance (payables)
+  ),
+  creditLimit: optionalNumber,
+  creditDays: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = Number(val);
+    return Number.isNaN(num) ? undefined : num;
+  }, z.number().min(0).max(365).optional()),
   notes: z.string().max(500).optional(),
 });
 
@@ -42,7 +61,7 @@ type CustomerSchemaType = z.infer<typeof customerSchema>;
 export interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CustomerFormData) => void;
+  onSubmit: (data: CustomerFormData) => void | Promise<void>;
   customer?: Customer | null;
   isLoading?: boolean;
 }
@@ -81,7 +100,8 @@ export function CustomerFormModal({
     watch,
     formState: { errors },
   } = useForm<CustomerSchemaType>({
-    resolver: zodResolver(customerSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(customerSchema) as any,
     defaultValues: {
       name: "",
       type: "customer",
@@ -139,18 +159,29 @@ export function CustomerFormModal({
     setActiveTab("basic");
   }, [customer, reset, isOpen]);
 
-  const handleFormSubmit = (data: CustomerSchemaType): void => {
-    onSubmit({
-      ...data,
-      phone: data.phone ?? undefined,
-      email: data.email ?? undefined,
-      taxId: data.taxId ?? undefined,
-      address: data.address ?? undefined,
-      city: data.city ?? undefined,
-      state: data.state ?? undefined,
-      zipCode: data.zipCode ?? undefined,
-      notes: data.notes ?? undefined,
-    });
+  const handleFormSubmit = async (data: CustomerSchemaType): Promise<void> => {
+    try {
+      await (onSubmit({
+        ...data,
+        phone: data.phone ?? undefined,
+        email: data.email ?? undefined,
+        taxId: data.taxId ?? undefined,
+        address: data.address ?? undefined,
+        city: data.city ?? undefined,
+        state: data.state ?? undefined,
+        zipCode: data.zipCode ?? undefined,
+        notes: data.notes ?? undefined,
+      }) as unknown as Promise<void>);
+      toast.success(
+        isEditing
+          ? "Customer updated successfully"
+          : "Customer created successfully"
+      );
+      onClose();
+    } catch (error) {
+      console.error("Failed to save customer:", error);
+      toast.error("Failed to save customer");
+    }
   };
 
   const tabs = [
@@ -175,7 +206,8 @@ export function CustomerFormModal({
           </Button>
           <Button
             onClick={() => {
-              void handleSubmit(handleFormSubmit)();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              void handleSubmit(handleFormSubmit as any)();
             }}
             isLoading={isLoading}
           >

@@ -18,12 +18,13 @@ import type { PaymentOut, PaymentOutFormData, PaymentOutMode } from "./types";
 import { SearchInput, Select, type SelectOption } from "@/components/ui";
 import { Wallet, Banknote, Building2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "sonner";
 
 export function PaymentOutPage(): React.ReactNode {
   // Data from PowerSync
   const { payments, isLoading, error } = usePaymentOuts();
   const { customers } = useCustomers({ type: "supplier" });
-  const { invoices } = usePurchaseInvoices({ status: "partial" });
+  const { invoices } = usePurchaseInvoices();
   const { createPayment, deletePayment } = usePaymentOutMutations();
 
   // State
@@ -178,9 +179,11 @@ export function PaymentOutPage(): React.ReactNode {
         invoiceNumber: invoice?.invoiceNumber,
         notes: data.notes,
       });
+      toast.success("Payment recorded successfully");
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to record payment:", err);
+      toast.error("Failed to record payment");
     } finally {
       setIsSubmitting(false);
     }
@@ -201,8 +204,10 @@ export function PaymentOutPage(): React.ReactNode {
         setSelectedPayment(null);
         setIsDeleteModalOpen(false);
         setPaymentToDelete(null);
+        toast.success("Payment deleted successfully");
       } catch (err) {
         console.error("Failed to delete payment:", err);
+        toast.error("Failed to delete payment");
       } finally {
         setIsSubmitting(false);
       }
@@ -371,6 +376,7 @@ export function PaymentOutPage(): React.ReactNode {
             <PaymentOutForm
               customers={customers}
               invoices={invoices}
+              initialData={selectedPayment ?? undefined}
               onSubmit={(data) => {
                 void handleSubmitPayment(data);
               }}

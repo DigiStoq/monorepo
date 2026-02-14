@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/cn";
 import { Button, Badge } from "@/components/ui";
 import { EmptyState, CardSkeleton } from "@/components/common";
@@ -36,86 +38,202 @@ function CustomerCard({
 
   const { formatCurrency } = useCurrency();
 
+  const getTypeBadge = (
+    type: string
+  ): {
+    label: string;
+    variant: "success" | "warning" | "info" | "secondary";
+  } => {
+    switch (type) {
+      case "customer":
+        return { label: "Customer", variant: "success" as const };
+      case "supplier":
+        return { label: "Supplier", variant: "warning" as const };
+      case "both":
+        return { label: "Both", variant: "info" as const };
+      default:
+        return { label: type, variant: "secondary" as const };
+    }
+  };
+
+  const typeConfig = getTypeBadge(customer.type);
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full p-4 bg-white rounded-lg border border-slate-200",
-        "hover:border-primary-300 hover:shadow-soft",
-        "transition-all duration-200 text-left",
+        "group w-full bg-white rounded-xl border border-slate-200",
+        "hover:border-primary-300 hover:shadow-md",
+        "transition-all duration-200 text-left overflow-hidden",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        {/* Customer Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-slate-900 truncate">
-              {customer.name}
-            </h3>
-            <Badge
-              variant={
-                customer.type === "customer"
-                  ? "success"
-                  : customer.type === "supplier"
-                    ? "warning"
-                    : "info"
-              }
-              size="sm"
-            >
-              {customer.type === "both"
-                ? "C/S"
-                : customer.type.charAt(0).toUpperCase()}
-            </Badge>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-            {customer.phone && (
-              <span className="flex items-center gap-1">
-                <Phone className="h-3.5 w-3.5" />
-                {customer.phone}
-              </span>
-            )}
-            {customer.email && (
-              <span className="flex items-center gap-1 truncate max-w-[180px]">
-                <Mail className="h-3.5 w-3.5" />
-                {customer.email}
-              </span>
-            )}
-          </div>
-
-          {customer.city && (
-            <p className="text-xs text-slate-400 mt-1 truncate">
-              {customer.city}
-              {customer.state && `, ${customer.state}`}
-            </p>
-          )}
-        </div>
-
-        {/* Balance */}
-        {hasBalance && (
-          <div className="text-right shrink-0">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          {/* Left: Avatar & Info */}
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {/* Avatar / Icon */}
             <div
               className={cn(
-                "flex items-center gap-1 text-sm font-semibold",
-                isReceivable ? "text-success" : "text-error"
+                "h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold text-sm",
+                customer.type === "customer"
+                  ? "bg-success-50 text-success-600"
+                  : customer.type === "supplier"
+                    ? "bg-warning-50 text-warning-700"
+                    : "bg-primary-50 text-primary-600"
               )}
             >
-              {isReceivable ? (
-                <ArrowDownLeft className="h-4 w-4" />
-              ) : (
-                <ArrowUpRight className="h-4 w-4" />
-              )}
-              {formatCurrency(Math.abs(customer.currentBalance))}
+              {customer.name.charAt(0).toUpperCase()}
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {isReceivable ? "To Receive" : "To Pay"}
-            </p>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-slate-900 truncate text-base group-hover:text-primary-600 transition-colors">
+                  {customer.name}
+                </h3>
+              </div>
+
+              {/* Contact Info (Stacked) */}
+              <div className="space-y-1">
+                {customer.phone ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{customer.phone}</span>
+                  </div>
+                ) : (
+                  <div className="h-5" /> /* Spacer to maintain height consistency if needed */
+                )}
+
+                {customer.email ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{customer.email}</span>
+                  </div>
+                ) : null}
+
+                {/* City/State */}
+                {(!!customer.city || !!customer.state) && (
+                  <p className="text-xs text-slate-400 mt-1 truncate">
+                    {customer.city}
+                    {customer.city && customer.state && ", "}
+                    {customer.state}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Right: Balance & Badge */}
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <Badge
+              variant={typeConfig.variant}
+              size="sm"
+              className="capitalize"
+            >
+              {typeConfig.label}
+            </Badge>
+
+            {hasBalance && (
+              <div className="text-right mt-1">
+                <div
+                  className={cn(
+                    "flex items-center justify-end gap-1 text-sm font-bold",
+                    isReceivable ? "text-success-600" : "text-error-600"
+                  )}
+                >
+                  {isReceivable ? (
+                    <ArrowDownLeft className="h-3.5 w-3.5" />
+                  ) : (
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  )}
+                  {formatCurrency(Math.abs(customer.currentBalance))}
+                </div>
+                <p
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider font-medium",
+                    isReceivable ? "text-success-600/70" : "text-error-600/70"
+                  )}
+                >
+                  {isReceivable ? "To Receive" : "To Pay"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </button>
+  );
+}
+
+// ============================================================================
+// VIRTUALIZED LIST COMPONENT
+// ============================================================================
+
+const GAP = 12;
+
+interface VirtualizedCustomerListProps {
+  customers: Customer[];
+  onCustomerClick?: (customer: Customer) => void;
+}
+
+function VirtualizedCustomerList({
+  customers,
+  onCustomerClick,
+}: VirtualizedCustomerListProps): React.ReactNode {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: customers.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 160, // approximate initial height
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  return (
+    <div
+      ref={parentRef}
+      className="h-full overflow-auto"
+      style={{ contain: "strict" }}
+    >
+      <p className="text-sm text-slate-500 mb-2 px-1 sticky top-0 bg-inherit z-10">
+        {customers.length} {customers.length === 1 ? "customer" : "customers"}
+      </p>
+
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualItems.map((virtualRow) => {
+          const customer = customers[virtualRow.index];
+          return (
+            <div
+              key={customer.id}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+                paddingBottom: `${GAP}px`, // Use padding for gap
+              }}
+            >
+              <CustomerCard
+                customer={customer}
+                onClick={() => onCustomerClick?.(customer)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -145,7 +263,7 @@ export function CustomerList({
   const displayCustomers = customers ?? [];
 
   return (
-    <div className={className}>
+    <div className={cn("h-full flex flex-col", className)}>
       {/* Customer List */}
       {displayCustomers.length === 0 ? (
         <EmptyState
@@ -168,20 +286,10 @@ export function CustomerList({
           }
         />
       ) : (
-        <div className="space-y-2">
-          <p className="text-sm text-slate-500 mb-2 px-1">
-            {displayCustomers.length}{" "}
-            {displayCustomers.length === 1 ? "customer" : "customers"}
-          </p>
-
-          {displayCustomers.map((customer) => (
-            <CustomerCard
-              key={customer.id}
-              customer={customer}
-              onClick={() => onCustomerClick?.(customer)}
-            />
-          ))}
-        </div>
+        <VirtualizedCustomerList
+          customers={displayCustomers}
+          onCustomerClick={onCustomerClick}
+        />
       )}
     </div>
   );

@@ -100,12 +100,14 @@ function InvoiceCard({ invoice, onClick }: InvoiceCardProps): React.ReactNode {
               <Calendar className="h-3 w-3" />
               {formatDate(invoice.date)}
             </span>
-            {invoice.status !== "paid" && invoice.status !== "returned" && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Due: {formatDate(invoice.dueDate)}
-              </span>
-            )}
+            {invoice.status !== "paid" &&
+              invoice.status !== "returned" &&
+              invoice.dueDate && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Due: {formatDate(invoice.dueDate)}
+                </span>
+              )}
           </div>
         </div>
 

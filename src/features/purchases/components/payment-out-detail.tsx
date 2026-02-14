@@ -144,6 +144,61 @@ export function PaymentOutDetail({
               </div>
             </div>
 
+            {/* Conditional Payment Details */}
+            {payment.chequeNumber && (
+              <div className="flex items-start gap-3">
+                <CreditCard className="h-5 w-5 text-orange-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-slate-500">Cheque Details</p>
+                  <p className="font-medium text-slate-900">
+                    #{payment.chequeNumber}
+                  </p>
+                  {payment.chequeDate && (
+                    <p className="text-xs text-slate-500">
+                      Date: {formatDate(payment.chequeDate)}
+                    </p>
+                  )}
+                  {payment.bankName && (
+                    <p className="text-xs text-slate-500">
+                      Bank: {payment.bankName}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {payment.paymentMode === "bank" && payment.bankName && (
+              <div className="flex items-start gap-3">
+                <Building2 className="h-5 w-5 text-blue-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-slate-500">Bank Details</p>
+                  <p className="font-medium text-slate-900">
+                    {payment.bankName}
+                  </p>
+                  {payment.bankAccountNumber && (
+                    <p className="text-xs text-slate-500">
+                      Acc: {payment.bankAccountNumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {payment.paymentMode === "card" && payment.cardNumber && (
+              <div className="flex items-start gap-3">
+                <CreditCard className="h-5 w-5 text-purple-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-slate-500">Card Details</p>
+                  <p className="font-medium text-slate-900">
+                    Ending in {payment.cardNumber}
+                  </p>
+                  {payment.bankName && (
+                    <p className="text-xs text-slate-500">{payment.bankName}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start gap-3">
               <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>

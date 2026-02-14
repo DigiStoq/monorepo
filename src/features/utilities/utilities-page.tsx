@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import { Card, CardBody, Button } from "@/components/ui";
 import { useNavigate } from "@tanstack/react-router";
@@ -146,7 +147,7 @@ export function UtilitiesPage(): React.ReactNode {
       color: "bg-red-500",
       action: () => {
         // Will be implemented later
-        alert("Data cleanup feature coming soon!");
+        toast.info("Data cleanup feature coming soon!");
       },
     },
   ];

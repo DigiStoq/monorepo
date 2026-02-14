@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout";
 import {
   Button,
@@ -82,9 +83,11 @@ export function LoansPage(): React.ReactNode {
         totalEmis: data.totalEmis,
         notes: data.notes,
       });
+      toast.success("Loan created successfully");
       setIsFormOpen(false);
     } catch (err) {
       console.error("Failed to create loan:", err);
+      toast.error("Failed to create loan");
     }
   };
 
@@ -92,9 +95,11 @@ export function LoansPage(): React.ReactNode {
     if (currentSelectedLoan) {
       try {
         await deleteLoan(currentSelectedLoan.id);
+        toast.success("Loan deleted successfully");
         setSelectedLoan(null);
       } catch (err) {
         console.error("Failed to delete loan:", err);
+        toast.error("Failed to delete loan");
       }
     }
   };
@@ -124,9 +129,11 @@ export function LoansPage(): React.ReactNode {
         referenceNumber: data.referenceNumber,
         notes: data.notes,
       });
+      toast.success("Payment recorded successfully");
       setIsPaymentFormOpen(false);
     } catch (err) {
       console.error("Failed to record payment:", err);
+      toast.error("Failed to record payment");
     }
   };
 

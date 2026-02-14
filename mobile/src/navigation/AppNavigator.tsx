@@ -11,15 +11,20 @@ import { SyncStatus } from "../components/SyncStatus";
 // Screens
 import { DashboardScreen } from "../screens/DashboardScreen";
 import { CustomersScreen } from "../screens/CustomersScreen";
+import PDFViewerScreen from "../screens/PDFViewerScreen";
 import { ItemsScreen } from "../screens/ItemsScreen";
 import { SalesScreen } from "../screens/SalesScreen"; // Using as Sale Invoices for now
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { PlaceholderScreen } from "../screens/PlaceholderScreen";
 import { SaleInvoiceFormScreen } from "../screens/sales/SaleInvoiceFormScreen";
+import { SaleInvoiceDetailScreen } from "../screens/sales/SaleInvoiceDetailScreen";
 import { PurchaseInvoiceFormScreen } from "../screens/purchases/PurchaseInvoiceFormScreen";
+import { PurchaseInvoiceDetailScreen } from "../screens/purchases/PurchaseInvoiceDetailScreen";
 import { PurchaseOrderFormScreen } from "../screens/purchases/PurchaseOrderFormScreen";
 import { CustomerFormScreen } from "../screens/CustomerFormScreen";
+import { CustomerDetailScreen } from "../screens/CustomerDetailScreen";
 import { ItemFormScreen } from "../screens/ItemFormScreen";
+import { ItemDetailScreen } from "../screens/ItemDetailScreen";
 import { SalesNavigator } from "./SalesNavigator";
 import { PurchasesNavigator } from "./PurchasesNavigator";
 import { PaymentInFormScreen } from "../screens/sales/PaymentInFormScreen";
@@ -147,7 +152,7 @@ export function AppNavigator() {
           },
           headerTintColor: '#C4A484',
           headerShadowVisible: false,
-          headerBackTitleVisible: false,
+          headerBackVisible: false, // Changed from headerBackTitleVisible which might be invalid
           contentStyle: {
             backgroundColor: '#f8fafc',
           },
@@ -155,75 +160,99 @@ export function AppNavigator() {
         id="RootStack"
       >
         <Stack.Screen name="AppDrawer" component={AppDrawer} options={{ headerShown: false }} />
+        <Stack.Screen name="Reports" component={ReportsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="PDFViewer" component={PDFViewerScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="SalesModule" component={SalesNavigator} options={{ headerShown: false }} />
+        <Stack.Screen name="PurchasesModule" component={PurchasesNavigator} options={{ headerShown: false }} />
         <Stack.Screen
           name="SaleInvoiceForm"
           component={SaleInvoiceFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="SaleInvoiceDetail"
+          component={SaleInvoiceDetailScreen}
+          options={{ title: "Invoice Details" }}
         />
         <Stack.Screen
           name="PurchaseInvoiceForm"
           component={PurchaseInvoiceFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="PurchaseInvoiceDetail"
+          component={PurchaseInvoiceDetailScreen}
+          options={{ title: "Purchase Details" }}
         />
         <Stack.Screen
           name="PurchaseOrderForm"
           component={PurchaseOrderFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="CustomerForm"
           component={CustomerFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="CustomerDetail"
+          component={CustomerDetailScreen}
+          options={{ title: "Customer Details" }}
         />
         <Stack.Screen
           name="ItemForm"
           component={ItemFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="ItemDetail"
+          component={ItemDetailScreen}
+          options={{ title: "Item Details" }}
         />
         <Stack.Screen
           name="PaymentInForm"
           component={PaymentInFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="PaymentOutForm"
           component={PaymentOutFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="ExpenseForm"
           component={ExpenseFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="EstimateForm"
           component={EstimateFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="CreditNoteForm"
           component={CreditNoteFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="BankAccountForm"
           component={BankAccountFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="CashTransactionForm"
           component={CashTransactionFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="ChequeForm"
           component={ChequeFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
           name="LoanForm"
           component={LoanFormScreen}
-          options={{ presentation: "modal" }}
+          options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Group screenOptions={{ headerShown: false }}>
           <Stack.Screen name="SalesSummary" component={SalesSummaryScreen} />

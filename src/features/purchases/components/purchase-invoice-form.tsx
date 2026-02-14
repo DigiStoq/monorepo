@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { cn } from "@/lib/cn";
 import {
   Card,
@@ -23,6 +23,7 @@ import {
   type PurchaseLineItem,
 } from "./purchase-item-modal";
 import { Edit2 } from "lucide-react";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -33,6 +34,13 @@ export interface PurchaseInvoiceFormProps {
   items: Item[];
   initialData?: Partial<PurchaseInvoiceFormData>;
   isLoading?: boolean;
+  bankAccounts?: { id: string; name: string; bankName: string }[];
+  onAddBankAccount?: (data: {
+    name: string;
+    bankName: string;
+    accountNumber: string;
+    openingBalance: number;
+  }) => Promise<string>;
   onSubmit: (data: PurchaseInvoiceFormData) => void;
   onCancel: () => void;
   className?: string;
@@ -48,8 +56,10 @@ type LineItem = PurchaseLineItem;
 export function PurchaseInvoiceForm({
   customers,
   items,
+  bankAccounts = [], // Default to empty array
   initialData,
   isLoading,
+  onAddBankAccount,
   onSubmit,
   onCancel,
   className,
@@ -69,12 +79,61 @@ export function PurchaseInvoiceForm({
     initialData?.discountPercent ?? 0
   );
 
-  // Line items state
-  const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
-    undefined
+  // Payment State
+  const [paymentStatus, setPaymentStatus] = useState<
+    "paid" | "unpaid" | "partial"
+  >(initialData?.initialPaymentStatus ?? "unpaid");
+  const [amountPaid, setAmountPaid] = useState<number>(
+    initialData?.initialAmountPaid ?? 0
   );
+  const [paymentMode, setPaymentMode] = useState<"cash" | "bank" | "cheque">(
+    (initialData?.initialPaymentMode as
+      | "cash"
+      | "bank"
+      | "cheque"
+      | undefined) ?? "cash"
+  );
+
+  // Extra Payment Details State
+  const [bankAccountId, setBankAccountId] = useState<string>(
+    initialData?.initialBankAccountId ?? ""
+  );
+  const [chequeNumber, setChequeNumber] = useState<string>(
+    initialData?.initialChequeNumber ?? ""
+  );
+  const [chequeBankName, setChequeBankName] = useState<string>(
+    initialData?.initialChequeBankName ?? ""
+  );
+  const [chequeDueDate, setChequeDueDate] = useState<string>(
+    initialData?.initialChequeDueDate ?? ""
+  );
+
+  // Add Bank Account State
+  const [isAddingBankAccount, setIsAddingBankAccount] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newBankName, setNewBankName] = useState("");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
+
+  const handleCreateBankAccount = async (): Promise<void> => {
+    if (!onAddBankAccount) return;
+    try {
+      const id = await onAddBankAccount({
+        name: newAccountName,
+        bankName: newBankName,
+        accountNumber: newAccountNumber,
+        openingBalance: 0,
+      });
+      setBankAccountId(id);
+      setIsAddingBankAccount(false);
+      setNewAccountName("");
+      setNewBankName("");
+      setNewAccountNumber("");
+    } catch (error) {
+      console.error("Failed to create bank account", error);
+    }
+  };
+
+  const [showValidation, setShowValidation] = useState(false);
 
   // Customer options (suppliers) - hook already filters by type
   const customerOptions: SelectOption[] = useMemo(() => {
@@ -83,6 +142,68 @@ export function PurchaseInvoiceForm({
       ...customers.map((c) => ({ value: c.id, label: c.name })),
     ];
   }, [customers]);
+
+  // Initialize line items from initialData if editing
+  const getInitialLineItems = useCallback((): LineItem[] => {
+    if (!initialData?.items || initialData.items.length === 0) return [];
+
+    return initialData.items.map((formItem, index) => {
+      const selectedItem = items.find((i) => i.id === formItem.itemId);
+      const subtotal = formItem.quantity * formItem.unitPrice;
+      const discountPct = formItem.discountPercent ?? 0;
+      const taxPct = formItem.taxPercent ?? 0;
+      const discountAmount = subtotal * (discountPct / 100);
+      const taxableAmount = subtotal - discountAmount;
+      const taxAmount = taxableAmount * (taxPct / 100);
+      const amount = taxableAmount + taxAmount;
+
+      return {
+        id: `line-${Date.now()}-${index}`,
+        itemId: formItem.itemId,
+        itemName: selectedItem?.name ?? "Unknown",
+        batchNumber: formItem.batchNumber ?? "",
+        quantity: formItem.quantity,
+        unit: selectedItem?.unit ?? "pcs",
+        unitPrice: formItem.unitPrice,
+        mrp: formItem.mrp ?? 0,
+        discountPercent: discountPct,
+        taxPercent: taxPct,
+        amount,
+      };
+    });
+  }, [initialData, items]);
+
+  useEffect(() => {
+    if (initialData) {
+      setCustomerId(initialData.customerId ?? "");
+      setSupplierInvoiceNumber(initialData.supplierInvoiceNumber ?? "");
+      setDate(initialData.date ?? defaultDate);
+      setDueDate(initialData.dueDate ?? "");
+      setNotes(initialData.notes ?? "");
+      setDiscountPercent(initialData.discountPercent ?? 0);
+      setPaymentStatus(initialData.initialPaymentStatus ?? "unpaid");
+      setAmountPaid(initialData.initialAmountPaid ?? 0);
+      setPaymentMode(
+        (initialData.initialPaymentMode as
+          | "cash"
+          | "bank"
+          | "cheque"
+          | undefined) ?? "cash"
+      );
+      setBankAccountId(initialData.initialBankAccountId ?? "");
+      setChequeNumber(initialData.initialChequeNumber ?? "");
+      setChequeBankName(initialData.initialChequeBankName ?? "");
+      setChequeDueDate(initialData.initialChequeDueDate ?? "");
+      setLineItems(getInitialLineItems());
+    }
+  }, [initialData, defaultDate, getInitialLineItems]);
+
+  // Line items state
+  const [lineItems, setLineItems] = useState<LineItem[]>(getInitialLineItems());
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | undefined>(
+    undefined
+  );
 
   // Add line item
   const handleAddItem = (): void => {
@@ -142,15 +263,53 @@ export function PurchaseInvoiceForm({
 
     const total = taxableAmount + taxAmount;
 
-    return { subtotal, totalDiscount, taxAmount, total };
-  }, [lineItems, discountPercent]);
+    // Auto-update amount paid if status is paid
+    const effectiveAmountPaid =
+      paymentStatus === "paid"
+        ? total
+        : paymentStatus === "unpaid"
+          ? 0
+          : amountPaid;
+
+    const balanceDue = total - effectiveAmountPaid;
+
+    return {
+      subtotal,
+      totalDiscount,
+      taxAmount,
+      total,
+      effectiveAmountPaid,
+      balanceDue,
+    };
+  }, [lineItems, discountPercent, paymentStatus, amountPaid]);
 
   // Format currency
   const { formatCurrency } = useCurrency();
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || lineItems.length === 0) return;
+    if (!customerId || lineItems.length === 0) {
+      setShowValidation(true);
+      toast.error("Please select a supplier and add at least one item");
+      return;
+    }
+
+    // Validate Payment Fields
+    if (paymentStatus !== "unpaid") {
+      if (paymentMode === "bank" && !bankAccountId) {
+        setShowValidation(true);
+        toast.error("Please select a bank account");
+        return;
+      }
+      if (
+        paymentMode === "cheque" &&
+        (!chequeNumber || !chequeBankName || !chequeDueDate)
+      ) {
+        setShowValidation(true);
+        toast.error("Please fill in all cheque details");
+        return;
+      }
+    }
 
     const formData: PurchaseInvoiceFormData = {
       customerId,
@@ -168,6 +327,30 @@ export function PurchaseInvoiceForm({
       ),
       discountPercent: discountPercent || undefined,
       notes: notes || undefined,
+      initialPaymentStatus: paymentStatus,
+      initialAmountPaid:
+        paymentStatus === "paid"
+          ? totals.total
+          : paymentStatus === "partial"
+            ? amountPaid
+            : 0,
+      initialPaymentMode: paymentStatus !== "unpaid" ? paymentMode : undefined,
+      initialBankAccountId:
+        paymentStatus !== "unpaid" && paymentMode === "bank"
+          ? bankAccountId
+          : undefined,
+      initialChequeNumber:
+        paymentStatus !== "unpaid" && paymentMode === "cheque"
+          ? chequeNumber
+          : undefined,
+      initialChequeBankName:
+        paymentStatus !== "unpaid" && paymentMode === "cheque"
+          ? chequeBankName
+          : undefined,
+      initialChequeDueDate:
+        paymentStatus !== "unpaid" && paymentMode === "cheque"
+          ? chequeDueDate
+          : undefined,
     };
 
     onSubmit(formData);
@@ -181,7 +364,7 @@ export function PurchaseInvoiceForm({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            New Purchase Invoice
+            {initialData ? "Edit Purchase Invoice" : "New Purchase Invoice"}
           </h1>
           <p className="text-slate-500">Record a purchase from your supplier</p>
         </div>
@@ -214,6 +397,7 @@ export function PurchaseInvoiceForm({
                     value={customerId}
                     onChange={setCustomerId}
                     placeholder="Select supplier"
+                    searchable
                   />
                 </div>
 
@@ -453,6 +637,261 @@ export function PurchaseInvoiceForm({
                   </span>
                 </div>
               </div>
+
+              {/* Payment Details Display in Summary */}
+              {(paymentStatus === "paid" || paymentStatus === "partial") && (
+                <div className="pt-3 border-t border-slate-200 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Amount Paid</span>
+                    <span className="font-medium text-success">
+                      {formatCurrency(totals.effectiveAmountPaid)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Balance Due</span>
+                    <span className="font-medium text-error">
+                      {formatCurrency(totals.balanceDue)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Payment Options */}
+          <Card>
+            <CardHeader title="Payment Details" />
+            <CardBody className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Payment Status
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["unpaid", "partial", "paid"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => {
+                        setPaymentStatus(
+                          status as "unpaid" | "partial" | "paid"
+                        );
+                      }}
+                      className={cn(
+                        "px-3 py-2 text-sm font-medium rounded-lg border",
+                        paymentStatus === status
+                          ? "bg-primary-50 border-primary-500 text-primary-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      )}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {paymentStatus !== "unpaid" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Payment Mode
+                      </label>
+                      <Select
+                        options={[
+                          { value: "cash", label: "Cash" },
+                          { value: "bank", label: "Bank Transfer" },
+                          { value: "cheque", label: "Cheque" },
+                        ]}
+                        value={paymentMode}
+                        onChange={(val) => {
+                          setPaymentMode(val as "cash" | "bank" | "cheque");
+                        }}
+                        size="sm"
+                      />
+                    </div>
+
+                    {paymentStatus === "partial" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          Amount Paid
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max={totals.total}
+                          value={amountPaid}
+                          onChange={(e) => {
+                            setAmountPaid(parseFloat(e.target.value) || 0);
+                          }}
+                          size="sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bank Account Selection */}
+                  {paymentMode === "bank" && (
+                    <div className="mt-3">
+                      {!isAddingBankAccount ? (
+                        <>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-slate-700">
+                              Withdraw From Account{" "}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            {onAddBankAccount && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsAddingBankAccount(true);
+                                }}
+                                className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                              >
+                                <Plus className="h-3 w-3" />
+                                Add New
+                              </button>
+                            )}
+                          </div>
+                          <Select
+                            options={[
+                              { value: "", label: "Select Bank Account" },
+                              ...bankAccounts.map((acc) => ({
+                                value: acc.id,
+                                label: `${acc.name} - ${acc.bankName}`,
+                              })),
+                            ]}
+                            value={bankAccountId}
+                            onChange={setBankAccountId}
+                            size="sm"
+                            className={cn(
+                              showValidation &&
+                                !bankAccountId &&
+                                "border-red-500"
+                            )}
+                          />
+                        </>
+                      ) : (
+                        <div className="p-3 bg-slate-50 rounded-lg space-y-3 border border-slate-200">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-slate-700">
+                              New Bank Account
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsAddingBankAccount(false);
+                              }}
+                              className="text-xs text-slate-500 hover:text-slate-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Account Name (e.g. Business Checking)"
+                              value={newAccountName}
+                              onChange={(e) => {
+                                setNewAccountName(e.target.value);
+                              }}
+                              size="sm"
+                            />
+                            <Input
+                              placeholder="Bank Name (e.g. Chase)"
+                              value={newBankName}
+                              onChange={(e) => {
+                                setNewBankName(e.target.value);
+                              }}
+                              size="sm"
+                            />
+                            <Input
+                              placeholder="Account Number"
+                              value={newAccountNumber}
+                              onChange={(e) => {
+                                setNewAccountNumber(e.target.value);
+                              }}
+                              size="sm"
+                            />
+                            <Button
+                              size="sm"
+                              fullWidth
+                              onClick={() => {
+                                void handleCreateBankAccount();
+                              }}
+                              disabled={
+                                !newAccountName ||
+                                !newBankName ||
+                                !newAccountNumber
+                              }
+                            >
+                              Save Account
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Cheque Details */}
+                  {paymentMode === "cheque" && (
+                    <div className="space-y-3 pt-2 mt-3 border-t border-slate-100">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 mb-1">
+                            Cheque No. <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            value={chequeNumber}
+                            onChange={(e) => {
+                              setChequeNumber(e.target.value);
+                            }}
+                            size="sm"
+                            placeholder="XXXXXX"
+                            className={cn(
+                              showValidation &&
+                                !chequeNumber &&
+                                "border-red-500"
+                            )}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 mb-1">
+                            Bank Name <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            value={chequeBankName}
+                            onChange={(e) => {
+                              setChequeBankName(e.target.value);
+                            }}
+                            size="sm"
+                            placeholder="Bank Name"
+                            className={cn(
+                              showValidation &&
+                                !chequeBankName &&
+                                "border-red-500"
+                            )}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Cheque Date <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          type="date"
+                          value={chequeDueDate}
+                          onChange={(e) => {
+                            setChequeDueDate(e.target.value);
+                          }}
+                          size="sm"
+                          className={cn(
+                            showValidation && !chequeDueDate && "border-red-500"
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardBody>
           </Card>
 

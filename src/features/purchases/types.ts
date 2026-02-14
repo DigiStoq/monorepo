@@ -17,6 +17,7 @@ export interface PurchaseInvoice {
   customerName: string;
   date: string;
   dueDate: string;
+  expectedDeliveryDate?: string;
   status: PurchaseInvoiceStatus;
   items: PurchaseInvoiceItem[];
   subtotal: number;
@@ -48,30 +49,28 @@ export interface PurchaseInvoiceFormData {
   supplierInvoiceNumber?: string | undefined;
   date: string;
   dueDate?: string | undefined;
+  expectedDeliveryDate?: string | undefined;
   items: PurchaseInvoiceItemFormData[];
   discountPercent?: number | undefined;
   notes?: string | undefined;
+  // Payment fields
+  initialPaymentStatus?: "paid" | "unpaid" | "partial";
+  initialAmountPaid?: number;
+  initialPaymentMode?: PaymentOutMode;
+  initialBankAccountId?: string;
+  initialChequeNumber?: string;
+  initialChequeBankName?: string;
+  initialChequeDueDate?: string;
 }
 
 export interface PurchaseInvoiceItemFormData {
   itemId: string;
+  batchNumber?: string | undefined;
   quantity: number;
   unitPrice: number;
+  mrp?: number | undefined;
   discountPercent?: number | undefined;
   taxPercent?: number | undefined;
-}
-
-// ts-prune-ignore-next (exported for future purchase filtering feature)
-export interface PurchaseFilters {
-  search: string;
-  status: PurchaseInvoiceStatus | "all";
-  customerId: string;
-  dateRange: {
-    from: string | null;
-    to: string | null;
-  };
-  sortBy: "date" | "number" | "amount" | "supplier";
-  sortOrder: "asc" | "desc";
 }
 
 // ============================================================================
@@ -98,6 +97,12 @@ export interface PaymentOut {
   invoiceId?: string;
   invoiceNumber?: string;
   notes?: string;
+  // Payment Details
+  chequeNumber?: string;
+  chequeDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  cardNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -110,6 +115,12 @@ export interface PaymentOutFormData {
   referenceNumber?: string | undefined;
   invoiceId?: string | undefined;
   notes?: string | undefined;
+  // Payment Details
+  chequeNumber?: string | undefined;
+  chequeDate?: string | undefined;
+  bankName?: string | undefined;
+  bankAccountNumber?: string | undefined;
+  cardNumber?: string | undefined;
 }
 
 // ============================================================================

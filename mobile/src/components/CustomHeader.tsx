@@ -1,105 +1,65 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation, DrawerActions } from "@react-navigation/native";
+import type React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Menu, ArrowLeft } from "lucide-react-native";
-import { useAuth } from "../contexts/AuthContext";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { ArrowLeftIcon, BellIcon } from "./ui/UntitledIcons";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface CustomHeaderProps {
   title?: string;
   showBack?: boolean;
+  rightAction?: React.ReactNode;
 }
 
-export function CustomHeader({ title, showBack }: CustomHeaderProps) {
+export function CustomHeader({ title, showBack, rightAction }: CustomHeaderProps) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
-  const initials = displayName.charAt(0).toUpperCase();
-
+  const { colors } = useTheme();
   const canGoBack = showBack || navigation.canGoBack();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      {!title && (
-        <View style={styles.userSection}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
-          <Text style={styles.userName}>{displayName}</Text>
+    <View
+      className="bg-surface border-b border-border-light z-[100] shadow-sm"
+    >
+      <View className="flex-row items-center justify-between px-3 py-4">
+        {/* Left Section: Back Btn or Logo */}
+        <View className="flex-1 items-start justify-center">
+          {canGoBack ? (
+            <TouchableOpacity
+              onPress={() => { navigation.goBack(); }}
+              className="p-1.5 justify-center items-center"
+            >
+              <ArrowLeftIcon color={colors.text} size={24} strokeWidth={2} />
+            </TouchableOpacity>
+          ) : (
+            // Logo / Branding for Root Screens
+            <View className="flex-row items-center gap-2">
+              {/* Placeholder for Icon - using Text for now */}
+              <View className="w-7 h-7 rounded-lg bg-primary justify-center items-center">
+                <Text className="text-white font-[900] text-lg">D</Text>
+              </View>
+              <Text className="text-lg font-extrabold text-text -tracking-[0.5px]">DigiStoq</Text>
+            </View>
+          )}
         </View>
-      )}
 
-      <Text style={styles.appName}>{title || "DigiStoq"}</Text>
+        {/* Center Section: Title (Only if back button is present or explicit title) */}
+        <View className="flex-[2] items-center justify-center">
+          {title && (
+            <Text className="text-[17px] font-bold text-text text-center" numberOfLines={1}>{title}</Text>
+          )}
+        </View>
 
-      {canGoBack ? (
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.menuBtn}
-        >
-          <ArrowLeft color={colors.text} size={24} strokeWidth={2} />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuBtn}
-        >
-          <Menu color={colors.text} size={24} strokeWidth={2} />
-        </TouchableOpacity>
-      )}
+        {/* Right Section: Actions */}
+        <View className="flex-1 items-end justify-center">
+          {rightAction ? rightAction : (
+            // Default Right Action (e.g. Notifications)
+            <TouchableOpacity className="p-2 justify-center items-center">
+              <BellIcon color={colors.text} size={22} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold,
-    color: colors.textOnAccent,
-  },
-  userName: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    color: colors.text,
-  },
-  appName: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-  },
-  menuBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});

@@ -840,7 +840,7 @@ export function useReceivablesAgingReport(): {
     // Initialize totals
     const totalBuckets: Record<string, number> = {};
     bucketsStr.forEach(b => totalBuckets[b] = 0);
-    totalBuckets['Current'] = 0;
+    totalBuckets.Current = 0;
 
     const customerMap: Record<string, { id: string; name: string; totalDue: number; buckets: Record<string, number> }> = {};
 
@@ -925,7 +925,7 @@ export function usePayablesAgingReport(): {
     
     const totalBuckets: Record<string, number> = {};
     bucketsStr.forEach(b => totalBuckets[b] = 0);
-    totalBuckets['Current'] = 0;
+    totalBuckets.Current = 0;
 
     const customerMap: Record<string, { id: string; name: string; totalDue: number; buckets: Record<string, number> }> = {};
 

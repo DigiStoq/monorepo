@@ -1,8 +1,14 @@
 {
-  "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": ["index.html", "src/main.tsx"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["**/*.d.ts", "src-tauri/**/*", "mobile/**/*", "e2e/**/*"],
-  "ignoreDependencies": ["date-fns"],
+  "ignore": [
+    "mobile/**",
+    "src/lib/animations.ts",
+    "src/lib/pdf/utils/*",
+    "src/lib/pdf/components/*",
+    "src/lib/pdf/constants.ts",
+    "src/lib/pdf/pdf-generator.ts",
+    "src/lib/schema.ts",
+    "src/components/common/*",
+    "src/components/ui/*"
+  ],
   "ignoreExportsUsedInFile": true
 }
