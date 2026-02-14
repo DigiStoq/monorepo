@@ -1,0 +1,53 @@
+appId: com.anonymous.mobile
+---
+# Main Flow Test - Custom TabButton Selectors
+
+- launchApp:
+    clearState: true
+
+# Wait for splash and welcome
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Sign In"
+    timeout: 8000
+- tapOn: "Sign In"
+
+# Login
+- waitForAnimationToEnd
+- tapOn:
+    id: "email-input"
+- inputText: "admin@example.com"
+- tapOn:
+    id: "password-input"
+- inputText: "Abc123.a"
+- tapOn: "Sign In"
+
+# Wait for dashboard
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Total Sales Value"
+    timeout: 15000
+
+# Navigate to Items tab using coordinate (38%, 96%)
+- tapOn:
+    point: "38%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Inventory"
+    timeout: 8000
+
+# Navigate to Menu tab using coordinate (88%, 96%)
+- tapOn:
+    point: "88%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Menu"
+    timeout: 5000
+
+# Back to Dashboard using coordinate (13%, 96%)
+- tapOn:
+    point: "13%,96%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Total Sales Value"
+    timeout: 5000

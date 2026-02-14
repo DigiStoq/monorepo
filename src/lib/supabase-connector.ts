@@ -1,45 +1,96 @@
+import { UpdateType } from "@powersync/web";
 import type {
-  AbstractPowerSyncDatabase,
   CrudEntry,
   PowerSyncBackendConnector,
-  PowerSyncCredentials,
+  AbstractPowerSyncDatabase,
 } from "@powersync/web";
-import { UpdateType } from "@powersync/web";
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Environment variables for Supabase connection
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISABLE_KEY;
-const POWERSYNC_URL = import.meta.env.VITE_POWERSYNC_URL;
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Maximum number of records to batch in a single request */
+const MERGE_BATCH_LIMIT = 100;
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface BatchedOperation {
+  table: string;
+  op: UpdateType;
+  records: { id: string; data: Record<string, unknown> }[];
+}
+
+// ============================================================================
+// SUPABASE CONNECTOR
+// ============================================================================
 
 export class SupabaseConnector implements PowerSyncBackendConnector {
-  private supabase;
+  // Cache the session to avoid hitting Supabase Auth rate limits
+  private currentSession: { access_token: string; expires_at?: number } | null =
+    null;
 
-  constructor() {
-    this.supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  }
+  // Buffer time in seconds to refresh token before it strictly expires
+  private readonly TOKEN_EXPIRY_BUFFER = 60; // 1 minute
 
-  async fetchCredentials(): Promise<PowerSyncCredentials> {
-    // Get the current session
-    const {
-      data: { session },
-    } = await this.supabase.auth.getSession();
+  constructor(
+    private client: SupabaseClient,
+    private powersyncUrl: string
+  ) {}
 
-    if (!session) {
-      throw new Error("No active session. User must be authenticated.");
+  // ============================================================================
+  // CREDENTIALS (unchanged logic, cleaned up)
+  // ============================================================================
+
+  async fetchCredentials(): Promise<{
+    endpoint: string;
+    token: string;
+  } | null> {
+    // Basic online check to avoid hammering when offline
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return null;
     }
 
-    const credentials: PowerSyncCredentials = {
-      endpoint: POWERSYNC_URL,
+    // Check if we have a valid cached session
+    if (this.currentSession?.expires_at) {
+      const now = Math.floor(Date.now() / 1000);
+      // If token expires in more than BUFFER seconds, reuse it
+      if (this.currentSession.expires_at > now + this.TOKEN_EXPIRY_BUFFER) {
+        const endpoint = this.powersyncUrl.replace(/\/$/, "");
+        return {
+          endpoint,
+          token: this.currentSession.access_token,
+        };
+      }
+    }
+
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+
+    if (!session) {
+      return null;
+    }
+
+    // Cache the new session
+    this.currentSession = {
+      access_token: session.access_token,
+      expires_at: session.expires_at,
+    };
+
+    const credentials = {
+      endpoint: this.powersyncUrl.replace(/\/$/, ""),
       token: session.access_token,
     };
 
-    if (session.expires_at) {
-      credentials.expiresAt = new Date(session.expires_at * 1000);
-    }
-
     return credentials;
   }
+
+  // ============================================================================
+  // UPLOAD DATA - BATCHED IMPLEMENTATION
+  // ============================================================================
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
     const transaction = await database.getNextCrudTransaction();
@@ -48,63 +99,188 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       return;
     }
 
+    // Get current user ID for this batch
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+    const userId = session?.user.id;
+
     try {
-      for (const operation of transaction.crud) {
-        await this.applyOperation(operation);
+      // Batch operations for efficiency
+      const batches = this.batchOperations(transaction.crud, userId);
+      // eslint-disable-next-line no-console
+      console.log("[SupabaseConnector] Executing", batches.length, "batches");
+
+      // Execute each batch
+      for (const batch of batches) {
+        await this.executeBatch(batch);
       }
+
+      // Complete transaction (Custom Write Checkpoints require Team plan $599+)
       await transaction.complete();
     } catch (error) {
-      console.error("Error uploading data:", error);
+      console.error("[SupabaseConnector] Upload error:", error);
       throw error;
     }
   }
 
-  private async applyOperation(operation: CrudEntry): Promise<void> {
-    const { op, table, opData, id } = operation;
+  // ============================================================================
+  // BATCHING LOGIC
+  // ============================================================================
+
+  private batchOperations(
+    operations: CrudEntry[],
+    userId?: string
+  ): BatchedOperation[] {
+    const batches: BatchedOperation[] = [];
+    let currentBatch: BatchedOperation | null = null;
+
+    // eslint-disable-next-line no-console
+    console.log(
+      `[SupabaseConnector] Processing ${operations.length} CRUD operations:`
+    );
+    for (const op of operations) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[SupabaseConnector] - ${op.op} on ${op.table} (id: ${op.id})`
+      );
+    }
+
+    for (const op of operations) {
+      const transformedData =
+        this.transformData(op.table, op.opData, userId) ?? {};
+
+      // PATCH operations are always individual (partial updates)
+      if (op.op === UpdateType.PATCH) {
+        if (currentBatch) {
+          batches.push(currentBatch);
+          currentBatch = null;
+        }
+        batches.push({
+          table: op.table,
+          op: op.op,
+          records: [{ id: op.id, data: transformedData }],
+        });
+        continue;
+      }
+
+      // Check if we can add to current batch
+      const canBatch =
+        currentBatch &&
+        currentBatch.table === op.table &&
+        currentBatch.op === op.op &&
+        currentBatch.records.length < MERGE_BATCH_LIMIT;
+
+      if (currentBatch && canBatch) {
+        currentBatch.records.push({ id: op.id, data: transformedData });
+      } else {
+        // Start new batch
+        if (currentBatch) batches.push(currentBatch);
+        currentBatch = {
+          table: op.table,
+          op: op.op,
+          records: [{ id: op.id, data: transformedData }],
+        };
+      }
+    }
+
+    // Push final batch
+    if (currentBatch) batches.push(currentBatch);
+
+    return batches;
+  }
+
+  // ============================================================================
+  // BATCH EXECUTION
+  // ============================================================================
+
+  private async executeBatch(batch: BatchedOperation): Promise<void> {
+    const { table, op, records } = batch;
 
     switch (op) {
       case UpdateType.PUT: {
-        // Insert or update
-        const { error } = await this.supabase
-          .from(table)
-          .upsert({ id, ...opData });
+        const payload = records.map((r) => ({ id: r.id, ...r.data }));
+        // Options to reduce egress bandwidth
+        const options: {
+          onConflict?: string;
+          returning?: "minimal";
+          count?: "exact";
+        } = {
+          returning: "minimal",
+          count: "exact", // Returns only count, not rows - reduces egress
+        };
 
-        if (error) {
-          throw error;
+        // Handle special conflict resolution for user_preferences
+        if (table === "user_preferences") {
+          options.onConflict = "user_id";
         }
-        break;
-      }
 
-      case UpdateType.PATCH: {
-        // Update existing record
-        const { error } = await this.supabase
+        const { error } = await this.client
           .from(table)
-          .update(opData ?? {})
-          .eq("id", id);
+          .upsert(payload, options);
 
         if (error) {
+          console.error(`[SupabaseConnector] Error upserting ${table}:`, error);
           throw error;
         }
         break;
       }
 
       case UpdateType.DELETE: {
-        // Delete record
-        const { error } = await this.supabase.from(table).delete().eq("id", id);
+        const ids = records.map((r) => r.id);
+        const { error } = await this.client
+          .from(table)
+          .delete({ count: "exact" })
+          .in("id", ids);
 
         if (error) {
+          console.error(`[SupabaseConnector] Error deleting ${table}:`, error);
           throw error;
         }
         break;
       }
 
-      default:
-        throw new Error(`Unknown operation type: ${op as string}`);
+      case UpdateType.PATCH: {
+        // PATCH is always single record - partial update
+        const { id, data } = records[0];
+        const { error } = await this.client
+          .from(table)
+          .update(data, { count: "exact" })
+          .eq("id", id);
+
+        if (error) {
+          console.error(`[SupabaseConnector] Error updating ${table}:`, error);
+          throw error;
+        }
+        break;
+      }
     }
   }
 
-  // Get the Supabase client for direct queries if needed
-  getSupabaseClient(): typeof this.supabase {
-    return this.supabase;
+  // ============================================================================
+  // DATA TRANSFORMATION
+  // ============================================================================
+
+  private transformData(
+    table: string,
+    data: Record<string, unknown> | undefined,
+    userId?: string
+  ): Record<string, unknown> | undefined {
+    if (!data) return data;
+
+    const transformed: Record<string, unknown> = { ...data };
+
+    if (userId) {
+      transformed.user_id = userId;
+    }
+
+    // Sanitize empty strings to null to comply with Postgres check constraints
+    Object.keys(transformed).forEach((key) => {
+      if (transformed[key] === "") {
+        transformed[key] = null;
+      }
+    });
+
+    return transformed;
   }
 }

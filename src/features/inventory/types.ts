@@ -1,33 +1,75 @@
-export interface Product {
+// ============================================================================
+// ITEM TYPES
+// ============================================================================
+
+export type ItemType = "product" | "service";
+
+export interface Item {
   id: string;
   name: string;
   sku: string;
-  description: string;
-  category: string;
-  unit_price: number;
-  cost_price: number;
-  quantity_in_stock: number;
-  reorder_level: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  type: ItemType;
+  description?: string;
+  category?: string;
+  unit: string;
+  mrp?: number;
+  salePrice: number;
+  purchasePrice: number;
+  taxRate?: number;
+  stockQuantity: number;
+  lowStockAlert: number;
+  isActive: boolean;
+  // Optional additional fields
+  batchNumber?: string;
+  expiryDate?: string;
+  manufactureDate?: string;
+  barcode?: string;
+  hsnCode?: string;
+  warrantyDays?: number;
+  brand?: string;
+  modelNumber?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ProductFormData {
+export interface ItemFormData {
   name: string;
-  sku: string;
-  description: string;
-  category: string;
-  unit_price: number;
-  cost_price: number;
-  quantity_in_stock: number;
-  reorder_level: number;
-  is_active: boolean;
+  sku?: string | undefined;
+  type: ItemType;
+  description?: string | undefined;
+  category?: string | undefined;
+  unit: string;
+  mrp?: number | undefined;
+  salePrice: number;
+  purchasePrice?: number | undefined;
+  taxRate?: number | undefined;
+  openingStock?: number | undefined;
+  lowStockAlert?: number | undefined;
+  // Optional additional fields
+  batchNumber?: string | undefined;
+  expiryDate?: string | undefined;
+  manufactureDate?: string | undefined;
+  barcode?: string | undefined;
+  hsnCode?: string | undefined;
+  warrantyDays?: number | undefined;
+  brand?: string | undefined;
+  modelNumber?: string | undefined;
+  location?: string | undefined;
 }
 
-export interface ProductFilters {
+export interface ItemFilters {
   search: string;
-  category: string | null;
-  showInactive: boolean;
-  lowStockOnly: boolean;
+  type: ItemType | "all";
+  category: string;
+  stockStatus: "all" | "in-stock" | "low-stock" | "out-of-stock";
+  sortBy: "name" | "price" | "stock" | "recent";
+  sortOrder: "asc" | "desc";
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  itemCount: number;
 }

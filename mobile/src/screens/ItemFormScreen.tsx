@@ -1,0 +1,502 @@
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  View,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { CustomHeader } from "../components/CustomHeader";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { getPowerSyncDatabase } from "../lib/powersync";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardBody,
+  Select,
+} from "../components/ui";
+import { SaveIcon, XCloseIcon, TrashIcon } from "../components/ui/UntitledIcons";
+import { generateUUID } from "../lib/utils";
+import { useTheme } from "../contexts/ThemeContext";
+
+export function ItemFormScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { id } = (route.params as { id?: string }) || {};
+  const isEditing = !!id;
+  const { colors } = useTheme();
+
+  const db = getPowerSyncDatabase();
+
+  const [name, setName] = useState("");
+  const [sku, setSku] = useState("");
+  const [type, setType] = useState("product"); // 'product' | 'service'
+  const [categoryId, setCategoryId] = useState("");
+  const [unit, setUnit] = useState("pcs");
+  const [mrp, setMrp] = useState("");
+
+  const [salePrice, setSalePrice] = useState("");
+  const [purchasePrice, setPurchasePrice] = useState("");
+  const [taxRate, setTaxRate] = useState("");
+
+  const [stockQuantity, setStockQuantity] = useState("");
+  const [lowStockAlert, setLowStockAlert] = useState("5");
+
+  const [description, setDescription] = useState("");
+
+  // Additional
+  const [batchNumber, setBatchNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState(""); // Text for now
+  const [barcode, setBarcode] = useState("");
+  const [hsnCode, setHsnCode] = useState("");
+  const [location, setLocation] = useState("");
+  const [brand, setBrand] = useState("");
+  const [modelNumber, setModelNumber] = useState("");
+
+  const [categories, setCategories] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAdditional, setShowAdditional] = useState(false);
+
+  useEffect(() => {
+    // Fetch categories
+    db.execute("SELECT id, name FROM categories ORDER BY name ASC")
+      .then((res) => {
+        const cats: { label: string; value: string }[] = [];
+        if (res.rows) {
+          for (let i = 0; i < res.rows.length; i++) {
+            const c = res.rows.item(i);
+            cats.push({ label: c.name, value: c.id });
+          }
+        }
+        setCategories(cats);
+      })
+      .catch(console.error);
+
+    if (id) {
+      db.execute("SELECT * FROM items WHERE id = ?", [id])
+        .then((result) => {
+          if (result.rows?.length > 0) {
+            const data = result.rows.item(0);
+            setName(data.name);
+            setSku(data.sku || "");
+            setType(data.type || "product");
+            setCategoryId(data.category_id || "");
+            setUnit(data.unit || "pcs");
+            setMrp(String(data.mrp || 0));
+            setSalePrice(String(data.sale_price || 0));
+            setPurchasePrice(String(data.purchase_price || 0));
+            setTaxRate(String(data.tax_rate || 0));
+            setStockQuantity(String(data.stock_quantity || 0));
+            setLowStockAlert(String(data.low_stock_alert || 5));
+            setDescription(data.description || "");
+            // Additional
+            setBatchNumber(data.batch_number || "");
+            setExpiryDate(data.expiry_date || "");
+            setBarcode(data.barcode || "");
+            setHsnCode(data.hsn_code || "");
+            setLocation(data.location || "");
+            setBrand(data.brand || "");
+            setModelNumber(data.model_number || "");
+          }
+        })
+        .catch(console.error);
+    }
+  }, [id]);
+
+  const handleSubmit = async () => {
+    if (!name) {
+      Alert.alert("Error", "Name is required");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const itemId = id || generateUUID();
+      const now = new Date().toISOString();
+      const itemMrp = parseFloat(mrp) || 0;
+      const sPrice = parseFloat(salePrice) || 0;
+      const pPrice = parseFloat(purchasePrice) || 0;
+      const tRate = parseFloat(taxRate) || 0;
+      const stock = parseFloat(stockQuantity) || 0;
+      const lStock = parseFloat(lowStockAlert) || 0;
+
+      if (isEditing) {
+        await db.execute(
+          `
+                    UPDATE items 
+                    SET name = ?, sku = ?, type = ?, category_id = ?, unit = ?,
+                        mrp = ?, sale_price = ?, purchase_price = ?, tax_rate = ?, 
+                        stock_quantity = ?, low_stock_alert = ?, description = ?,
+                        batch_number = ?, expiry_date = ?, barcode = ?, hsn_code = ?,
+                        location = ?, brand = ?, model_number = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                `,
+          [
+            name,
+            sku,
+            type,
+            categoryId,
+            unit,
+            sPrice,
+            pPrice,
+            tRate,
+            stock,
+            lStock,
+            description,
+            batchNumber,
+            expiryDate,
+            barcode,
+            hsnCode,
+            location,
+            brand,
+            modelNumber,
+            now,
+            itemId,
+          ]
+        );
+      } else {
+        await db.execute(
+          `
+                    INSERT INTO items (
+                        id, name, sku, type, category_id, unit,
+                        mrp, sale_price, purchase_price, tax_rate,
+                        stock_quantity, low_stock_alert, description,
+                        batch_number, expiry_date, barcode, hsn_code,
+                        location, brand, model_number,
+                        created_at, updated_at, is_active
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                `,
+          [
+            itemId,
+            name,
+            sku,
+            type,
+            categoryId,
+            unit,
+            itemMrp,
+            sPrice,
+            pPrice,
+            tRate,
+            stock,
+            lStock,
+            description,
+            batchNumber,
+            expiryDate,
+            barcode,
+            hsnCode,
+            location,
+            brand,
+            modelNumber,
+            now,
+            now,
+          ]
+        );
+      }
+
+      Alert.alert("Success", "Item saved");
+      navigation.goBack();
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to save item");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this item? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // Switch to Soft Delete to handle Sync and FK constraints safely
+              const now = new Date().toISOString();
+              await db.execute("UPDATE items SET is_active = 0, updated_at = ? WHERE id = ?", [now, id]);
+
+              Alert.alert("Success", "Item deleted");
+              navigation.goBack();
+              // If navigated from ItemDetail, we might need to pop twice or handle it.
+              // Usually navigation.goBack() goes to ItemsScreen.
+              // If we were on ItemDetail, going back goes to ItemDetail which might crash if item is gone.
+              // Ideally we navigate to "Items" tab.
+              (navigation as any).navigate("Items");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to delete item");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const typeOptions = [
+    { label: "Product", value: "product" },
+    { label: "Service", value: "service" },
+  ];
+
+  const unitOptions = [
+    { value: "pcs", label: "Pieces (pcs)" },
+    { value: "kg", label: "Kilograms (kg)" },
+    { value: "lbs", label: "Pounds (lbs)" },
+    { value: "box", label: "Box" },
+    { value: "pack", label: "Pack" },
+    { value: "unit", label: "Unit" },
+    { value: "hr", label: "Hour (hr)" },
+    { value: "day", label: "Day" },
+  ];
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-background"
+    >
+      <CustomHeader
+        title={isEditing ? "Edit Item" : "New Item"}
+        showBack
+        rightAction={
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            className="p-1.5"
+          >
+            {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <SaveIcon size={24} color={colors.primary} />}
+          </TouchableOpacity>
+        }
+      />
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <Card>
+          <CardHeader title="Basic Details" />
+          <CardBody>
+            <Input
+              label="Item Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Product Name / Service Name"
+            />
+            <View className="flex-row items-start gap-2">
+              <Select
+                label="Type"
+                options={typeOptions}
+                value={type}
+                onChange={setType}
+                containerStyle={{ flex: 1 }}
+              />
+              <Input
+                label="SKU"
+                value={sku}
+                onChangeText={setSku}
+                placeholder="Optional"
+                containerStyle={{ flex: 1 }}
+              />
+            </View>
+            <Select
+              label="Category"
+              options={[{ label: "No Category", value: "" }, ...categories]}
+              value={categoryId}
+              onChange={setCategoryId}
+            />
+            <Select
+              label="Unit"
+              options={unitOptions}
+              value={unit}
+              onChange={setUnit}
+            />
+            <Input
+              label="Description"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={2}
+              placeholder="Short description"
+            />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Pricing" />
+          <CardBody>
+            <View className="flex-row items-start gap-2">
+              <Input
+                label="MRP"
+                value={mrp}
+                onChangeText={setMrp}
+                keyboardType="numeric"
+                placeholder="0.00"
+                containerStyle={{ flex: 1 }}
+              />
+              <Input
+                label="Sale Price"
+                value={salePrice}
+                onChangeText={setSalePrice}
+                keyboardType="numeric"
+                placeholder="0.00"
+                containerStyle={{ flex: 1 }}
+              />
+            </View>
+            <View className="flex-row items-start gap-2 mt-3">
+              <Input
+                label="Cost Price"
+                value={purchasePrice}
+                onChangeText={setPurchasePrice}
+                keyboardType="numeric"
+                placeholder="0.00"
+                containerStyle={{ flex: 1 }}
+              />
+              <Input
+                label="Tax Rate (%)"
+                value={taxRate}
+                onChangeText={setTaxRate}
+                keyboardType="numeric"
+                placeholder="0"
+                containerStyle={{ flex: 1 }}
+              />
+            </View>
+          </CardBody>
+        </Card>
+
+        {type === "product" && (
+          <Card>
+            <CardHeader title="Inventory" />
+            <CardBody>
+              <View className="flex-row items-start gap-2">
+                <Input
+                  label={isEditing ? "Current Stock" : "Opening Stock"}
+                  value={stockQuantity}
+                  onChangeText={setStockQuantity}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  containerStyle={{ flex: 1 }}
+                />
+                <Input
+                  label="Low Stock Alert"
+                  value={lowStockAlert}
+                  onChangeText={setLowStockAlert}
+                  keyboardType="numeric"
+                  placeholder="5"
+                  containerStyle={{ flex: 1 }}
+                />
+              </View>
+            </CardBody>
+          </Card>
+        )}
+
+        <View className="mt-4">
+          <Button
+            variant="outline"
+            onPress={() => {
+              setShowAdditional(!showAdditional);
+            }}
+          >
+            {showAdditional
+              ? "Hide Additional Details"
+              : "Show Additional Details"}
+          </Button>
+        </View>
+
+        {showAdditional && (
+          <View className="mt-4 gap-4">
+            <Card>
+              <CardHeader title="Tracking & Location" />
+              <CardBody>
+                <View className="flex-row items-start gap-2">
+                  <Input
+                    label="Batch Number"
+                    value={batchNumber}
+                    onChangeText={setBatchNumber}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  <Input
+                    label="Expiry Date"
+                    value={expiryDate}
+                    onChangeText={setExpiryDate}
+                    placeholder="YYYY-MM-DD"
+                    containerStyle={{ flex: 1 }}
+                  />
+                </View>
+                <View className="flex-row items-start gap-2">
+                  <Input
+                    label="Barcode"
+                    value={barcode}
+                    onChangeText={setBarcode}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  <Input
+                    label="HSN Code"
+                    value={hsnCode}
+                    onChangeText={setHsnCode}
+                    containerStyle={{ flex: 1 }}
+                  />
+                </View>
+                <Input
+                  label="Location"
+                  value={location}
+                  onChangeText={setLocation}
+                  placeholder="Warehouse/Shelf"
+                />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader title="Brand & Model" />
+              <CardBody>
+                <View className="flex-row items-start gap-2">
+                  <Input
+                    label="Brand"
+                    value={brand}
+                    onChangeText={setBrand}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  <Input
+                    label="Model No"
+                    value={modelNumber}
+                    onChangeText={setModelNumber}
+                    containerStyle={{ flex: 1 }}
+                  />
+                </View>
+              </CardBody>
+            </Card>
+          </View>
+        )}
+
+        <Button
+          fullWidth
+          onPress={handleSubmit}
+          isLoading={isLoading}
+          className="mt-6"
+        >
+          Save Item
+        </Button>
+
+        {isEditing && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            className="mt-4 flex-row justify-center items-center p-4 rounded-lg border border-danger bg-danger-10"
+            style={{ borderColor: colors.danger, backgroundColor: colors.danger + '10' }}
+          >
+            <TrashIcon size={20} color={colors.danger} />
+            <Text className="ml-2 font-bold text-danger" style={{ color: colors.danger }}>Delete Item</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}

@@ -1,0 +1,56 @@
+# =============================================================================
+# PowerSync Sync Rules for DigiStoq
+# =============================================================================
+
+
+bucket_definitions:
+  user_data:
+    parameters:
+      - SELECT request.user_id() as user_id
+
+    data:
+      # --- Core ---
+      - SELECT * FROM customers WHERE user_id = bucket.user_id
+      - SELECT * FROM items WHERE user_id = bucket.user_id
+      - SELECT * FROM categories WHERE user_id = bucket.user_id
+ 
+      # --- Sales ---
+      - SELECT * FROM sale_invoices WHERE user_id = bucket.user_id
+      - SELECT * FROM sale_invoice_items WHERE user_id = bucket.user_id
+      - SELECT * FROM payment_ins WHERE user_id = bucket.user_id
+      - SELECT * FROM estimates WHERE user_id = bucket.user_id
+      - SELECT * FROM estimate_items WHERE user_id = bucket.user_id
+      - SELECT * FROM credit_notes WHERE user_id = bucket.user_id
+      - SELECT * FROM credit_note_items WHERE user_id = bucket.user_id
+
+      # --- Purchases ---
+      - SELECT * FROM purchase_invoices WHERE user_id = bucket.user_id
+      - SELECT * FROM purchase_invoice_items WHERE user_id = bucket.user_id
+      - SELECT * FROM payment_outs WHERE user_id = bucket.user_id
+      - SELECT * FROM expenses WHERE user_id = bucket.user_id
+
+      # --- Banking ---
+      - SELECT * FROM bank_accounts WHERE user_id = bucket.user_id
+      - SELECT * FROM bank_transactions WHERE user_id = bucket.user_id
+      - SELECT * FROM cash_transactions WHERE user_id = bucket.user_id
+      - SELECT * FROM cheques WHERE user_id = bucket.user_id
+      - SELECT * FROM loans WHERE user_id = bucket.user_id
+      - SELECT * FROM loan_payments WHERE user_id = bucket.user_id
+
+      # --- History ---
+      - SELECT * FROM item_history WHERE user_id = bucket.user_id
+      - SELECT * FROM invoice_history WHERE user_id = bucket.user_id
+      - SELECT * FROM login_history WHERE user_id = bucket.user_id
+      - SELECT * FROM backup_history WHERE user_id = bucket.user_id
+
+      # --- User Settings ---
+      - SELECT * FROM company_settings WHERE user_id = bucket.user_id
+      - SELECT * FROM tax_rates WHERE user_id = bucket.user_id
+      - SELECT * FROM invoice_settings WHERE user_id = bucket.user_id
+      - SELECT * FROM sequence_counters WHERE user_id = bucket.user_id
+      - SELECT * FROM user_profiles WHERE user_id = bucket.user_id
+      - SELECT * FROM user_preferences WHERE user_id = bucket.user_id
+      - SELECT * FROM security_settings WHERE user_id = bucket.user_id
+      - SELECT * FROM backup_settings WHERE user_id = bucket.user_id
+
+

@@ -1,0 +1,50 @@
+src/components/SyncStatus.tsx(35,35): error TS2339: Property 'downloading' does not exist on type 'SyncStatus'.
+src/components/SyncStatus.tsx(36,33): error TS2339: Property 'uploading' does not exist on type 'SyncStatus'.
+src/components/ui/__tests__/Button.test.tsx(64,43): error TS2322: Type '"destructive"' is not assignable to type '"primary" | "secondary" | "outline" | "ghost" | "danger"'.
+src/components/ui/__tests__/Input.test.tsx(40,45): error TS2322: Type '{ helperText: string; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'helperText' does not exist on type 'IntrinsicAttributes & InputProps'.
+src/components/ui/__tests__/Input.test.tsx(46,20): error TS2322: Type '{ helperText: string; error: string; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'helperText' does not exist on type 'IntrinsicAttributes & InputProps'.
+src/components/ui/__tests__/Input.test.tsx(54,42): error TS2322: Type '{ fullWidth: true; }' is not assignable to type 'IntrinsicAttributes & InputProps'.
+  Property 'fullWidth' does not exist on type 'IntrinsicAttributes & InputProps'.
+src/contexts/ThemeContext.tsx(55,55): error TS2322: Type '{ readonly background: "#f8fafc"; readonly backgroundLight: "#ffffff"; readonly backgroundCard: "#ffffff"; readonly primary: "#14b8a6"; readonly primaryLight: "#ccfbf1"; readonly primaryDark: "#0f766e"; ... 22 more ...; readonly accentDark: "#0f766e"; } | { ...; }' is not assignable to type '{ readonly background: "#f8fafc"; readonly backgroundLight: "#ffffff"; readonly backgroundCard: "#ffffff"; readonly primary: "#14b8a6"; readonly primaryLight: "#ccfbf1"; readonly primaryDark: "#0f766e"; ... 22 more ...; readonly accentDark: "#0f766e"; }'.
+  Type '{ readonly background: "#0f172a"; readonly backgroundLight: "#1e293b"; readonly backgroundCard: "#1e293b"; readonly primary: "#2dd4bf"; readonly primaryLight: "#134e4a"; readonly primaryDark: "#5eead4"; ... 22 more ...; readonly accentDark: "#5eead4"; }' is not assignable to type '{ readonly background: "#f8fafc"; readonly backgroundLight: "#ffffff"; readonly backgroundCard: "#ffffff"; readonly primary: "#14b8a6"; readonly primaryLight: "#ccfbf1"; readonly primaryDark: "#0f766e"; ... 22 more ...; readonly accentDark: "#0f766e"; }'.
+    Types of property 'background' are incompatible.
+      Type '"#0f172a"' is not assignable to type '"#f8fafc"'.
+src/hooks/__tests__/useUserPreferences.test.ts(4,10): error TS2305: Module '"../../lib/powersync"' has no exported member 'db'.
+src/hooks/useReports.ts(92,32): error TS2339: Property 'loading' does not exist on type 'QueryResult<SalesAggregateRow>'.
+src/hooks/useReports.ts(104,31): error TS2339: Property 'loading' does not exist on type 'QueryResult<CustomerSalesRow>'.
+src/hooks/useReports.ts(118,27): error TS2339: Property 'loading' does not exist on type 'QueryResult<ItemSalesRow>'.
+src/hooks/useReports.ts(134,28): error TS2339: Property 'loading' does not exist on type 'QueryResult<SalesMonthRow>'.
+src/hooks/useReports.ts(185,17): error TS2339: Property 'loading' does not exist on type 'QueryResult<SalesRegisterRow>'.
+src/hooks/useReports.ts(239,5): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ customer_id: string; customer_name: string; invoice_count: number; total_amount: number; paid_amount: number; due_amount: number; }>'.
+src/hooks/useReports.ts(303,28): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ total: number; }>'.
+src/hooks/useReports.ts(311,31): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ total: number; }>'.
+src/hooks/useReports.ts(317,30): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ category: string; amount: number; }>'.
+src/hooks/useReports.ts(380,28): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; name: string; sku: string; stock_quantity: number; purchase_price: number; sale_price: number; low_stock_alert: number; }>'.
+src/hooks/useReports.ts(461,29): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ type: string; amount: number; }>'.
+src/hooks/useReports.ts(471,30): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ type: string; amount: number; }>'.
+src/hooks/useReports.ts(538,31): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; name: string; type: string; opening_balance: number; }>'.
+src/hooks/useReports.ts(550,5): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; date: string; type: string; reference_number: string; description: string; debit: number; credit: number; }>'.
+src/hooks/useReports.ts(692,32): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ total_purchases: number; total_invoices: number; total_paid: number; total_due: number; }>'.
+src/hooks/useReports.ts(709,31): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ customer_id: string; customer_name: string; amount: number; }>'.
+src/hooks/useReports.ts(727,28): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ month: string; amount: number; }>'.
+src/hooks/useReports.ts(770,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; invoice_number: string; supplier_invoice_number: string; date: string; customer_name: string; total: number; amount_paid: number; amount_due: number; status: string; }>'.
+src/hooks/useReports.ts(821,17): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; customer_id: string; customer_name: string; due_date: string; date: string; amount_due: number; }>'.
+src/hooks/useReports.ts(907,17): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; customer_id: string; customer_name: string; date: string; amount_due: number; }>'.
+src/hooks/useReports.ts(980,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ category: string; amount: number; count: number; }>'.
+src/hooks/useReports.ts(996,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ item_id: string; item_name: string; quantity: number; amount: number; }>'.
+src/hooks/useReports.ts(1018,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; name: string; phone: string; current_balance: number; }>'.
+src/hooks/useReports.ts(1033,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ supplier_id: string; supplier_name: string; invoice_count: number; total_amount: number; }>'.
+src/hooks/useReports.ts(1056,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; name: string; stock_quantity: number; low_stock_alert: number; }>'.
+src/hooks/useReports.ts(1076,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ item_id: string; item_name: string; quantity_sold: number; revenue: number; cost: number; profit: number; }>'.
+src/hooks/useReports.ts(1104,29): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ total_tax: number; }>'.
+src/hooks/useReports.ts(1113,32): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ total_tax: number; }>'.
+src/hooks/useReports.ts(1133,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ id: string; type: string; description: string; amount_in: number; amount_out: number; }>'.
+src/hooks/useReports.ts(1161,19): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ item_id: string; item_name: string; in_qty: number; out_qty: number; }>'.
+src/hooks/useReports.ts(1193,27): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ mode: string; total: number; }>'.
+src/hooks/useReports.ts(1200,28): error TS2339: Property 'loading' does not exist on type 'QueryResult<{ mode: string; total: number; }>'.
+src/hooks/useUserPreferences.ts(3,10): error TS2305: Module '"../lib/powersync"' has no exported member 'db'.
+src/navigation/MainLayout.tsx(17,6): error TS2741: Property 'id' is missing in type '{ children: Element[]; screenOptions: { headerShown: false; contentStyle: { backgroundColor: "#f8fafc"; }; }; }' but required in type '{ id: string; }'.
+src/screens/CustomersScreen.tsx(36,29): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/reports/CustomerBalanceScreen.tsx(22,54): error TS2345: Argument of type '[string, any]' is not assignable to parameter of type 'never'.

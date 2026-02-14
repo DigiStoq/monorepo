@@ -1,0 +1,9 @@
+# Supabase Edge Functions Directory
+# Place your Deno edge functions here
+
+# Example structure:
+# supabase/functions/
+# ├── function-name/
+# │   └── index.ts
+# └── another-function/
+#     └── index.ts

@@ -1,5 +1,34 @@
 {
   "permissions": {
-    "allow": ["Bash(npx lint-staged)", "Bash(npx eslint:*)", "Bash(git add:*)"]
-  }
+    "allow": [
+      "Bash(npx lint-staged)",
+      "Bash(npx eslint:*)",
+      "Bash(git add:*)",
+      "Bash(npx tauri icon:*)",
+      "Bash(npm run tauri:dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cat:*)",
+      "Bash(npm search:*)",
+      "Bash(npm view:*)",
+      "Bash(npm install:*)",
+      "Skill(document-skills:docx)",
+      "Skill(document-skills:docx:*)",
+      "Bash(pandoc:*)",
+      "Bash(unzip:*)",
+      "Bash(dir:*)",
+      "Bash(taskkill:*)",
+      "Bash(del \"d:\\\\Software-Dev\\\\GitHub\\\\monorepo\\\\src\\\\features\\\\reports\\\\pages\\\\party-statement-report.tsx\")",
+      "Bash(cargo check:*)",
+      "Bash(Select-String \"error\")",
+      "Bash(Measure-Object)",
+      "Bash(Select-Object -ExpandProperty Count)",
+      "Bash(grep:*)",
+      "Bash(npx jq:*)",
+      "Bash(Select-Object -First 50)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }

@@ -1,0 +1,14 @@
+{
+  "ignore": [
+    "mobile/**",
+    "src/lib/animations.ts",
+    "src/lib/pdf/utils/*",
+    "src/lib/pdf/components/*",
+    "src/lib/pdf/constants.ts",
+    "src/lib/pdf/pdf-generator.ts",
+    "src/lib/schema.ts",
+    "src/components/common/*",
+    "src/components/ui/*"
+  ],
+  "ignoreExportsUsedInFile": true
+}
