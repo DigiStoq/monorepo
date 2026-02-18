@@ -158,9 +158,15 @@ export function SaleInvoiceDetailScreen() {
                 </TouchableOpacity>
                 <Text className="text-lg font-bold text-text">Invoice #{invoice.invoiceNumber}</Text>
                 <View className="flex-row gap-2">
-                    <TouchableOpacity onPress={handleRecordPayment} className="p-2 rounded-md" style={{ backgroundColor: colors.success + '20' }}>
-                        <WalletIcon size={20} color={colors.success} />
-                    </TouchableOpacity>
+                    {invoice.status !== "paid" && invoice.amount_due > 0 && (
+                        <TouchableOpacity
+                            onPress={handleRecordPayment}
+                            className="p-2 rounded-md"
+                            style={{ backgroundColor: colors.success + "20" }}
+                        >
+                            <WalletIcon size={20} color={colors.success} />
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity onPress={handlePDFAction} className="p-2 bg-primary-10 rounded-md" disabled={isGenerating}>
                         {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <ShareIcon size={20} color={colors.primary} />}
                     </TouchableOpacity>

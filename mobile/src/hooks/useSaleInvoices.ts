@@ -4,7 +4,7 @@ import { getPowerSyncDatabase } from "../lib/powersync";
 import type { SaleInvoiceRecord, SaleInvoiceItemRecord } from "../lib/powersync";
 import { useAuth } from "../contexts/AuthContext";
 
-export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "pending" | "paid" | "overdue" | "cancelled" | "partial";
 
 export interface SaleInvoice {
   id: string;

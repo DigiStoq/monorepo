@@ -2,7 +2,12 @@
 // SALE TYPES
 // ============================================================================
 
-export type InvoiceStatus = "draft" | "unpaid" | "paid" | "returned";
+export type InvoiceStatus =
+  | "draft"
+  | "unpaid"
+  | "paid"
+  | "partial"
+  | "returned";
 
 export interface SaleInvoice {
   id: string;

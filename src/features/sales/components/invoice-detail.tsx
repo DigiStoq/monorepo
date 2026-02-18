@@ -33,6 +33,7 @@ import {
   Check,
   Pencil,
   X,
+  AlertCircle,
 } from "lucide-react";
 import {
   useInvoiceHistory,
@@ -74,6 +75,7 @@ const statusConfig: Record<
 > = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
   unpaid: { label: "Unpaid", variant: "warning", icon: Clock },
+  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
   paid: { label: "Paid", variant: "success", icon: CheckCircle },
   returned: { label: "Returned", variant: "error", icon: RotateCcw },
 };
@@ -97,11 +99,18 @@ function getStatusOptions(currentStatus: InvoiceStatus): SelectOption[] {
         { value: "unpaid", label: "Unpaid" },
         { value: "paid", label: "Paid" },
       ];
+    case "partial":
+      return [
+        { value: "partial", label: "Partial" },
+        { value: "paid", label: "Paid" }, // Can manually mark as paid
+        { value: "returned", label: "Returned" },
+      ];
     case "unpaid":
     default:
       // Unpaid can go to paid or returned
       return [
         { value: "unpaid", label: "Unpaid" },
+        { value: "partial", label: "Partial" },
         { value: "paid", label: "Paid" },
         { value: "returned", label: "Returned" },
       ];
@@ -255,7 +264,9 @@ export function InvoiceDetail({
   const status = statusConfig[invoice.status];
   const StatusIcon = status.icon;
   const showPaymentButton =
-    (invoice.status === "unpaid" || invoice.status === "draft") &&
+    (invoice.status === "unpaid" ||
+      invoice.status === "draft" ||
+      invoice.status === "partial") &&
     invoice.amountDue > 0;
 
   return (
@@ -367,7 +378,9 @@ export function InvoiceDetail({
         <CardBody>
           {/* Amount Due Alert */}
           {invoice.amountDue > 0 &&
-            (invoice.status === "unpaid" || invoice.status === "draft") && (
+            (invoice.status === "unpaid" ||
+              invoice.status === "draft" ||
+              invoice.status === "partial") && (
               <div className="p-4 rounded-xl mb-6 bg-warning-light">
                 <div className="flex items-center justify-between">
                   <div>

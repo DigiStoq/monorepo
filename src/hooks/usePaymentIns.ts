@@ -195,6 +195,7 @@ export function usePaymentInMutations(): PaymentInMutations {
         );
 
         // Update invoice if linked
+        // Update invoice if linked
         if (data.invoiceId) {
           await tx.execute(
             `UPDATE sale_invoices
@@ -202,11 +203,19 @@ export function usePaymentInMutations(): PaymentInMutations {
                  amount_due = amount_due - ?,
                  status = CASE 
                     WHEN amount_due <= ? THEN 'paid' 
+                    WHEN amount_paid + ? > 0 THEN 'partial'
                     ELSE 'unpaid' 
                  END,
                  updated_at = ?
              WHERE id = ?`,
-            [data.amount, data.amount, data.amount, now, data.invoiceId]
+            [
+              data.amount,
+              data.amount,
+              data.amount,
+              data.amount,
+              now,
+              data.invoiceId,
+            ]
           );
         }
 
@@ -281,7 +290,7 @@ export function usePaymentInMutations(): PaymentInMutations {
                     status = CASE 
                       WHEN amount_paid - ? <= 0 AND status = 'draft' THEN 'draft' 
                       WHEN amount_paid - ? <= 0 THEN 'unpaid'
-                      ELSE 'unpaid' 
+                      ELSE 'partial' 
                     END,
                     updated_at = ?
                 WHERE id = ?`,

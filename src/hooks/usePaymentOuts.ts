@@ -217,12 +217,20 @@ export function usePaymentOutMutations(): PaymentOutMutations {
                  amount_due = amount_due - ?,
                  status = CASE
                    WHEN amount_due <= ? THEN 'paid'
+                   WHEN amount_paid + ? > 0 THEN 'partial'
                    WHEN status = 'draft' THEN 'ordered'
                    ELSE status
                  END,
                  updated_at = ?
              WHERE id = ?`,
-            [data.amount, data.amount, data.amount, now, data.invoiceId]
+            [
+              data.amount,
+              data.amount,
+              data.amount,
+              data.amount,
+              now,
+              data.invoiceId,
+            ]
           );
         }
 
@@ -293,7 +301,10 @@ export function usePaymentOutMutations(): PaymentOutMutations {
               `UPDATE purchase_invoices
                 SET amount_paid = amount_paid - ?,
                     amount_due = amount_due + ?,
-                    status = CASE WHEN amount_paid - ? <= 0 THEN 'received' ELSE status END,
+                    status = CASE 
+                        WHEN amount_paid - ? <= 0 THEN 'received' 
+                        ELSE 'partial' 
+                    END,
                     updated_at = ?
                 WHERE id = ?`,
               [

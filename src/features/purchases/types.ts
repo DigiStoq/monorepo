@@ -7,6 +7,7 @@ export type PurchaseInvoiceStatus =
   | "ordered"
   | "received"
   | "paid"
+  | "partial"
   | "returned";
 
 export interface PurchaseInvoice {

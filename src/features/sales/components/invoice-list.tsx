@@ -9,6 +9,7 @@ import {
   Clock,
   CheckCircle,
   RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import type { SaleInvoice, InvoiceStatus } from "../types";
@@ -40,6 +41,7 @@ const statusConfig: Record<
 > = {
   draft: { label: "Draft", variant: "secondary", icon: FileText },
   unpaid: { label: "Unpaid", variant: "warning", icon: Clock },
+  partial: { label: "Partial", variant: "warning", icon: AlertCircle },
   paid: { label: "Paid", variant: "success", icon: CheckCircle },
   returned: { label: "Returned", variant: "error", icon: RotateCcw },
 };

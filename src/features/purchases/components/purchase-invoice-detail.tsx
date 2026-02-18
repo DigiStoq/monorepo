@@ -42,6 +42,7 @@ const statusLabels: Record<string, string> = {
   ordered: "Ordered",
   received: "Received",
   paid: "Paid",
+  partial: "Partial",
   returned: "Returned",
 };
 
@@ -50,6 +51,7 @@ const statusOrder: string[] = [
   "draft",
   "ordered",
   "received",
+  "partial",
   "paid",
   "returned",
 ];
@@ -134,7 +136,9 @@ export function PurchaseInvoiceDetail({
               ? "bg-success-light border-success/20"
               : invoice.status === "returned"
                 ? "bg-error-light border-error/20"
-                : "bg-slate-50"
+                : invoice.status === "partial"
+                  ? "bg-warning-light border-warning/20"
+                  : "bg-slate-50"
           )}
         >
           <CardBody className="text-center py-6">
