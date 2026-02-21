@@ -199,7 +199,7 @@ interface PurchaseInvoiceMutations {
     data?: { expectedDeliveryDate?: string }
   ) => Promise<void>;
   recordPayment: (id: string, amount: number) => Promise<void>;
-  deleteInvoice: (id: string) => Promise<void>;
+  deleteInvoice: (id: string, restoreStock?: boolean) => Promise<void>;
 }
 
 export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
@@ -905,7 +905,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
   );
 
   const deleteInvoice = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, restoreStock): Promise<void> => {
       const now = new Date().toISOString();
       const { user } = useAuthStore.getState();
       const userName =
@@ -914,7 +914,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
       await db.writeTransaction(async (tx) => {
         // 1. Get info to reverse
         const invoiceResult = await tx.execute(
-          `SELECT customer_id, total, invoice_number FROM purchase_invoices WHERE id = ?`,
+          `SELECT customer_id, total, invoice_number, status FROM purchase_invoices WHERE id = ?`,
           [id]
         );
         const invoice = invoiceResult.rows?.item(0);
@@ -942,6 +942,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         }
 
         // 2. Reverse Payments Balance Effect
+        // Payments reduced debt (increased balance toward zero/positive).
+        // Deleting payment means debt remains (decrease balance).
         for (const payment of payments) {
           if (invoice) {
             await tx.execute(
@@ -954,22 +956,32 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
         // 3. Delete Payments
         await tx.execute(`DELETE FROM payment_outs WHERE invoice_id = ?`, [id]);
 
-        // 4. Reverse Stock (Decrease)
-        for (const item of items) {
-          if (item.item_id) {
-            await tx.execute(
-              `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
-              [item.quantity, now, item.item_id]
-            );
+        // Check if invoice was active (affected stock/balance)
+        const wasActive =
+          invoice &&
+          (invoice.status === "received" || invoice.status === "paid");
+
+        if (wasActive && restoreStock) {
+          // 4. Reverse Stock (Decrease)
+          for (const item of items) {
+            if (item.item_id) {
+              await tx.execute(
+                `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
+                [item.quantity, now, item.item_id]
+              );
+            }
           }
         }
 
-        // 5. Reverse Invoice Balance Effect (Increase - undo debt)
-        if (invoice) {
-          await tx.execute(
-            `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
-            [invoice.total, now, invoice.customer_id]
-          );
+        if (wasActive) {
+          // 5. Reverse Invoice Balance Effect (Increase - undo debt)
+          // Invoice creation decreased balance (created debt). Reversing it increases balance.
+          if (invoice) {
+            await tx.execute(
+              `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+              [invoice.total, now, invoice.customer_id]
+            );
+          }
         }
 
         // 6. Delete Items & Invoice

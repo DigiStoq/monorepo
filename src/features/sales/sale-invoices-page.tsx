@@ -124,6 +124,7 @@ export function SaleInvoicesPage(): React.ReactNode {
   const [invoiceToDelete, setInvoiceToDelete] = useState<SaleInvoice | null>(
     null
   );
+  const [restoreStock, setRestoreStock] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions: SelectOption[] = [
@@ -260,6 +261,7 @@ export function SaleInvoicesPage(): React.ReactNode {
   const handleDeleteInvoice = (): void => {
     if (currentSelectedInvoice) {
       setInvoiceToDelete(currentSelectedInvoice);
+      setRestoreStock(false);
       setIsDeleteModalOpen(true);
     }
   };
@@ -268,7 +270,7 @@ export function SaleInvoicesPage(): React.ReactNode {
     if (invoiceToDelete) {
       setIsSubmitting(true);
       try {
-        await deleteInvoice(invoiceToDelete.id);
+        await deleteInvoice(invoiceToDelete.id, restoreStock);
         toast.success("Invoice deleted successfully");
         setIsDeleteModalOpen(false);
         setInvoiceToDelete(null);
@@ -1013,7 +1015,25 @@ export function SaleInvoicesPage(): React.ReactNode {
           },
         ]}
         isLoading={isSubmitting}
-      />
+      >
+        <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg mt-2">
+          <input
+            type="checkbox"
+            id="restoreStock"
+            checked={restoreStock}
+            onChange={(e) => {
+              setRestoreStock(e.target.checked);
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          <label
+            htmlFor="restoreStock"
+            className="text-sm text-slate-700 font-medium cursor-pointer select-none"
+          >
+            Return items to stock
+          </label>
+        </div>
+      </ConfirmDeleteDialog>
 
       {/* Record Payment Modal */}
       <Modal

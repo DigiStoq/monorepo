@@ -65,6 +65,18 @@ const items = new Table({
   updated_at: column.text,
 });
 
+// Item history for audit trail
+const item_history = new Table({
+  item_id: column.text,
+  action: column.text, // 'created' | 'updated' | 'stock_adjusted' | 'activated' | 'deactivated' | 'deleted'
+  description: column.text,
+  old_values: column.text, // JSON string of changed fields
+  new_values: column.text, // JSON string of new values
+  user_id: column.text,
+  user_name: column.text,
+  created_at: column.text,
+});
+
 // ============================================================================
 // SALES TABLES
 // ============================================================================
@@ -576,6 +588,7 @@ export const AppSchema = new Schema({
   customers,
   categories,
   items,
+  item_history,
   // Sales
   sale_invoices,
   sale_invoice_items,

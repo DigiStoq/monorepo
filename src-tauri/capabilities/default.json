@@ -18,6 +18,7 @@
     "dialog:allow-save",
     "core:path:default",
     "core:window:allow-create",
+    "core:window:allow-close",
     "core:webview:allow-create-webview-window"
   ]
 }

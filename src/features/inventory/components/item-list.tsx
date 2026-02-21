@@ -165,16 +165,19 @@ function VirtualizedItemList({
           return (
             <div
               key={item.id}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 width: "100%",
-                height: `${virtualRow.size - GAP}px`,
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
-              <ItemCard item={item} onClick={() => onItemClick?.(item)} />
+              <div style={{ paddingBottom: GAP }}>
+                <ItemCard item={item} onClick={() => onItemClick?.(item)} />
+              </div>
             </div>
           );
         })}

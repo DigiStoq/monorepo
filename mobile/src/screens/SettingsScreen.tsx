@@ -1,4 +1,3 @@
-import React from "react";
 import {
   View,
   Text,
@@ -10,7 +9,6 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
-import { useCompanySettings } from "../hooks/useSettings";
 import { CustomHeader } from "../components/CustomHeader";
 
 // Icons
@@ -64,7 +62,7 @@ function MenuItem({
 }
 
 export function SettingsScreen() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigation = useNavigation<any>();
   const { colors, isDark, setMode } = useTheme();
   // const { settings: company } = useCompanySettings(); // Not used directly in UI yet
@@ -180,14 +178,7 @@ export function SettingsScreen() {
             onPress={() => navigation.navigate("SecuritySettings")}
             color={colors.textSecondary}
           />
-          <View className="h-[1px] bg-border-light ml-[72px]" />
-          <MenuItem
-            icon={SettingsIcon}
-            title="Backup & Restore"
-            subtitle="Cloud Saves"
-            onPress={() => navigation.navigate("BackupSettings")}
-            color={colors.textSecondary}
-          />
+
           <View className="h-[1px] bg-border-light ml-[72px]" />
 
           <TouchableOpacity

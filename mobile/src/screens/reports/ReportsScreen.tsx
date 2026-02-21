@@ -43,6 +43,7 @@ export function ReportsScreen() {
         { id: "purchase-summary", title: "Purchase Summary", route: "PurchaseSummary" },
         { id: "purchase-register", title: "Purchase Register", route: "PurchaseRegister" },
         { id: "purchase-by-supplier", title: "Purchases by Supplier", route: "PurchasesBySupplier" },
+        { id: "purchase-by-item", title: "Purchases by Item", route: "PurchaseByItem" },
         { id: "expense-report", title: "Expense Report", route: "ExpenseReport" },
       ],
     },

@@ -317,11 +317,9 @@ export function usePurchaseInvoiceMutations() {
   const receiveInvoice = useCallback(
     async (id: string): Promise<void> => {
       const now = new Date().toISOString();
-      const userId = user?.id ?? null;
-      const userName = (user?.user_metadata?.full_name as string) ?? user?.email ?? "Unknown User";
 
       await db.writeTransaction(async (tx) => {
-        // 1. Fetch Invoice
+        // ... (rest of receiveInvoice)
         const invRes = await tx.execute(`SELECT * FROM purchase_invoices WHERE id = ?`, [id]);
         const invoice = invRes.rows?.item(0);
 
@@ -371,19 +369,48 @@ export function usePurchaseInvoiceMutations() {
   );
 
   const deleteInvoice = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, restoreStock?: boolean): Promise<void> => {
        const now = new Date().toISOString();
+       const shouldRestoreStock = restoreStock ?? false;
        await db.writeTransaction(async (tx) => {
+          // 1. Fetch Invoice
           const invRes = await tx.execute(`SELECT * FROM purchase_invoices WHERE id = ?`, [id]);
+          if (invRes.rows?.length === 0) return;
           const invoice = invRes.rows?.item(0);
-          if (!invoice) return;
 
-          if (invoice.amount_paid > 0) {
-              throw new Error("Cannot delete invoice with payments. Delete payments first.");
+          // 2. Fetch Payments (Payment Outs)
+          const paymentsRes = await tx.execute(
+             `SELECT * FROM payment_outs WHERE invoice_id = ?`,
+             [id]
+          );
+          const payments: any[] = [];
+          if (paymentsRes.rows?.length) {
+              for (let i = 0; i < paymentsRes.rows.length; i++) {
+                  payments.push(paymentsRes.rows.item(i));
+              }
           }
 
-          // If Received/Paid, Revert Stock and Balance
-          if (['received', 'paid', 'partial'].includes(invoice.status)) {
+          // 3. Reverse Payments Balance Effect
+          // Payment Out reduced Supplier Balance (Debit? No, Payment Out reduces amount we owe).
+          // Purchase: Credit Supplier (Increase Balance).
+          // Payment: Debit Supplier (Decrease Balance).
+          // Delete Payment: Credit Supplier (Increase Balance).
+          for (const payment of payments) {
+              await tx.execute(
+                  `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
+                  [payment.amount, now, invoice.customer_id]
+              );
+          }
+
+          // 4. Delete Payments
+          await tx.execute(`DELETE FROM payment_outs WHERE invoice_id = ?`, [id]);
+
+          const wasActive = ['received', 'paid', 'partial'].includes(invoice.status);
+
+          // 5. Restore Stock (Optional)
+          // Purchase (Received) -> Stock + Qty.
+          // Delete -> Stock - Qty.
+          if (shouldRestoreStock && wasActive) {
                const itemsRes = await tx.execute(`SELECT * FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
                for (let i = 0; i < itemsRes.rows.length; i++) {
                   const item = itemsRes.rows.item(i);
@@ -394,15 +421,20 @@ export function usePurchaseInvoiceMutations() {
                       );
                   }
                }
+          }
 
-               // Revert Balance (We don't owe them anymore -> Increase Balance Back to 0 from negative)
-               // Current Balance -100. Invoice Deleted. Balance + 100 = 0.
-               await tx.execute(
+          // 6. Revert Invoice Balance Effect
+          // Purchase -> Balance + Total (Credit).
+          // Delete -> Balance - Total (Debit).
+          // Only if status was active (received/paid/partial). Draft doesn't affect balance (usually).
+          if (wasActive) {
+              await tx.execute(
                    `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
                    [invoice.total, now, invoice.customer_id]
                );
           }
 
+          // 7. Delete Items, History, Invoice
           await tx.execute(`DELETE FROM invoice_history WHERE invoice_id = ?`, [id]);
           await tx.execute(`DELETE FROM purchase_invoice_items WHERE invoice_id = ?`, [id]);
           await tx.execute(`DELETE FROM purchase_invoices WHERE id = ?`, [id]);
@@ -410,6 +442,7 @@ export function usePurchaseInvoiceMutations() {
     },
     [db]
   );
+
 
   return { createInvoice, receiveInvoice, deleteInvoice };
 }

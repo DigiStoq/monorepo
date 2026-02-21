@@ -1,10 +1,11 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ReceiptIcon, CheckCircleIcon, ChevronRightIcon, ShareIcon, EditIcon, WalletIcon } from "../../components/ui/UntitledIcons";
+import { ReceiptIcon, CheckCircleIcon, ChevronRightIcon, ShareIcon, EditIcon, WalletIcon, TrashIcon } from "../../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
+import { useSaleInvoiceMutations } from "../../hooks/useSaleInvoices";
 
 export function SaleInvoiceDetailScreen() {
     const navigation = useNavigation();
@@ -13,6 +14,7 @@ export function SaleInvoiceDetailScreen() {
     const { colors } = useTheme();
     const { generateInvoicePDF, generatePDF, previewPDF, isGenerating } = usePDFGenerator();
     const { settings: companySettings } = useCompanySettings();
+    const { deleteInvoice } = useSaleInvoiceMutations();
 
     // Fetch Invoice
     const { data: invoiceData, isLoading: loadingInvoice } = useQuery(
@@ -69,6 +71,42 @@ export function SaleInvoiceDetailScreen() {
             return;
         }
         (navigation as any).navigate("SaleInvoiceForm", { id: invoice.id });
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Delete Invoice",
+            "Are you sure you want to delete this invoice? This cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete & Restock Items",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteInvoice(invoice.id, true);
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error(error);
+                            Alert.alert("Error", "Failed to delete invoice.");
+                        }
+                    }
+                },
+                {
+                    text: "Delete Only",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteInvoice(invoice.id, false);
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error(error);
+                            Alert.alert("Error", "Failed to delete invoice.");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleRecordPayment = () => {

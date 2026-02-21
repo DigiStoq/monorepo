@@ -79,6 +79,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] =
     useState<PurchaseInvoice | null>(null);
+  const [restoreStock, setRestoreStock] = useState(false);
   const linkedItems = usePurchaseInvoiceLinkedItems(
     invoiceToDelete?.id ?? null
   );
@@ -395,6 +396,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
   const handleDeleteClick = (): void => {
     if (currentSelectedPurchase) {
       setInvoiceToDelete(currentSelectedPurchase);
+      setRestoreStock(false);
       setIsDeleteModalOpen(true);
     }
   };
@@ -403,10 +405,9 @@ export function PurchaseInvoicesPage(): React.ReactNode {
     if (invoiceToDelete) {
       setIsSubmitting(true);
       try {
-        await deleteInvoice(invoiceToDelete.id);
+        await deleteInvoice(invoiceToDelete.id, restoreStock);
         setSelectedPurchase(null);
         setIsDeleteModalOpen(false);
-        setInvoiceToDelete(null);
         setInvoiceToDelete(null);
         toast.success("Purchase invoice deleted successfully");
       } catch (err) {
@@ -1213,12 +1214,14 @@ export function PurchaseInvoicesPage(): React.ReactNode {
         title="Delete Purchase Invoice"
         itemName={invoiceToDelete?.invoiceNumber ?? ""}
         itemType="Purchase Invoice"
-        warningMessage="This will permanently delete the purchase invoice and reverse all related stock and balance changes."
+        warningMessage="This will permanently delete the purchase invoice. Balance changes will always be reversed."
         linkedItems={[
           {
             type: "Invoice Item",
             count: linkedItems.itemsCount,
-            description: "Stock will be reversed",
+            description: restoreStock
+              ? "Stock will be removed"
+              : "Stock NOT affected",
           },
           {
             type: "Payment",
@@ -1227,7 +1230,25 @@ export function PurchaseInvoicesPage(): React.ReactNode {
           },
         ]}
         isLoading={isSubmitting}
-      />
+      >
+        <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg mt-2">
+          <input
+            type="checkbox"
+            id="restoreStock"
+            checked={restoreStock}
+            onChange={(e) => {
+              setRestoreStock(e.target.checked);
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          <label
+            htmlFor="restoreStock"
+            className="text-sm text-slate-700 font-medium cursor-pointer select-none"
+          >
+            Remove items from stock (Reverse Stock Addition)
+          </label>
+        </div>
+      </ConfirmDeleteDialog>
     </div>
   );
 }

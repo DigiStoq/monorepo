@@ -1,10 +1,9 @@
-import React, { useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCustomerById } from "../hooks/useCustomers";
+import { useCustomerById, useCustomerMutations } from "../hooks/useCustomers";
 import { useTheme } from "../contexts/ThemeContext";
-import { UsersIcon, FileTextIcon, TrendingUpIcon, ChevronRightIcon, PlusIcon, WalletIcon } from "../components/ui/UntitledIcons";
+import { UsersIcon, FileTextIcon, TrendingUpIcon, ChevronRightIcon, PlusIcon, WalletIcon, TrashIcon, EditIcon } from "../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 
 export function CustomerDetailScreen() {
@@ -12,7 +11,8 @@ export function CustomerDetailScreen() {
     const route = useRoute<any>();
     const { id } = route.params || {};
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
+    const { deleteCustomer } = useCustomerMutations();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { customer, isLoading } = useCustomerById(id);
 
@@ -50,6 +50,48 @@ export function CustomerDetailScreen() {
         (navigation as any).navigate("CustomerForm", { id: customer.id });
     };
 
+    const handleDelete = () => {
+        Alert.alert(
+            "Delete Customer",
+            "This will delete the customer and all associated records (Invoices, Payments, etc). This cannot be undone. Do you want to restore items to stock before deleting?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Yes, Restore Stock",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsDeleting(true);
+                        try {
+                            await deleteCustomer(id, true, true); // Cascade=true, RestoreStock=true
+                            navigation.goBack();
+                        } catch (error: any) {
+                            console.error(error);
+                            Alert.alert("Error", error.message || "Failed to delete customer");
+                        } finally {
+                            setIsDeleting(false);
+                        }
+                    }
+                },
+                {
+                    text: "No, Just Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsDeleting(true);
+                        try {
+                            await deleteCustomer(id, true, false); // Cascade=true, RestoreStock=false
+                            navigation.goBack();
+                        } catch (error: any) {
+                            console.error(error);
+                            Alert.alert("Error", error.message || "Failed to delete customer");
+                        } finally {
+                            setIsDeleting(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <View className="flex-1 bg-background">
             <View className="flex-row items-center justify-between px-5 py-3 bg-surface border-b border-border">
@@ -57,9 +99,14 @@ export function CustomerDetailScreen() {
                     <ChevronRightIcon size={24} color={colors.primary} style={{ transform: [{ rotate: '180deg' }] }} />
                 </TouchableOpacity>
                 <Text className="text-lg font-bold text-text">{customer.name}</Text>
-                <TouchableOpacity onPress={handleEdit} className="p-2 bg-primary-10 rounded-md">
-                    <Text className="text-primary font-semibold">Edit</Text>
-                </TouchableOpacity>
+                <View className="flex-row gap-2">
+                    <TouchableOpacity onPress={handleDelete} className="p-2 bg-red-100 rounded-md">
+                        {isDeleting ? <ActivityIndicator size="small" color={colors.danger} /> : <TrashIcon size={20} color={colors.danger} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleEdit} className="p-2 bg-primary-10 rounded-md">
+                        <EditIcon size={20} color={colors.primary} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>

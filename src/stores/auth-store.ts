@@ -244,7 +244,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // Open popup immediately to prevent blockage (must be synchronous to user click)
     // HANDLE TAURI ENV
-    if (typeof window !== "undefined" && "__TAURI__" in window) {
+    // HANDLE TAURI ENV
+    // Check for Tauri v1 or v2 internals
+    const isTauri =
+      typeof window !== "undefined" &&
+      ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+
+    if (isTauri) {
       try {
         // Dynamic imports for Tauri APIs
         const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");

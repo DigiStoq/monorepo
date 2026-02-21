@@ -39,6 +39,8 @@ export interface ConfirmDeleteDialogProps {
   isLoading?: boolean;
   /** Confirmation word to type (defaults to "delete") */
   confirmWord?: string;
+  /** Custom content to render in the dialog body */
+  children?: ReactNode;
 }
 
 // ============================================================================
@@ -56,6 +58,7 @@ export function ConfirmDeleteDialog({
   linkedItems = [],
   isLoading = false,
   confirmWord = "delete",
+  children,
 }: ConfirmDeleteDialogProps): React.ReactNode {
   const [inputValue, setInputValue] = useState("");
   const isConfirmEnabled =
@@ -153,6 +156,9 @@ export function ConfirmDeleteDialog({
             </div>
           </div>
         )}
+
+        {/* Custom Children (e.g. Checkbox) */}
+        {children}
 
         {/* Confirmation input */}
         <div className="pt-2">

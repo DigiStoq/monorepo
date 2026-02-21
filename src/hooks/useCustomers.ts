@@ -144,7 +144,11 @@ interface CustomerMutations {
     id: string,
     data: Partial<CustomerFormData>
   ) => Promise<void>;
-  deleteCustomer: (id: string) => Promise<void>;
+  deleteCustomer: (
+    id: string,
+    cascade?: boolean,
+    restoreStock?: boolean
+  ) => Promise<void>;
   toggleCustomerActive: (id: string, isActive: boolean) => Promise<void>;
   updateCustomerBalance: (id: string, amount: number) => Promise<void>;
 }
@@ -260,8 +264,98 @@ export function useCustomerMutations(): CustomerMutations {
   );
 
   const deleteCustomer = useCallback(
-    async (id: string): Promise<void> => {
-      await db.execute(`DELETE FROM customers WHERE id = ?`, [id]);
+    async (id: string, cascade, restoreStock): Promise<void> => {
+      if (cascade) {
+        const now = new Date().toISOString();
+        await db.writeTransaction(async (tx) => {
+          if (restoreStock) {
+            // 1. Restore Stock from Sales Invoices (Sales always deduct stock, so we always restore)
+            const saleItemsResult = await tx.execute(
+              `SELECT sii.item_id, sii.quantity 
+             FROM sale_invoice_items sii
+             INNER JOIN sale_invoices si ON sii.invoice_id = si.id
+             WHERE si.customer_id = ?`,
+              [id]
+            );
+
+            if (saleItemsResult.rows?.length) {
+              for (let i = 0; i < saleItemsResult.rows.length; i++) {
+                const item = saleItemsResult.rows.item(i);
+                if (item.item_id) {
+                  await tx.execute(
+                    `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+                    [item.quantity, now, item.item_id]
+                  );
+                }
+              }
+            }
+
+            // 2. Remove Stock from Purchase Invoices (Only if received/paid)
+            const purchaseItemsResult = await tx.execute(
+              `SELECT pii.item_id, pii.quantity 
+             FROM purchase_invoice_items pii
+             INNER JOIN purchase_invoices pi ON pii.invoice_id = pi.id
+             WHERE pi.customer_id = ? AND (pi.status = 'received' OR pi.status = 'paid')`,
+              [id]
+            );
+
+            if (purchaseItemsResult.rows?.length) {
+              for (let i = 0; i < purchaseItemsResult.rows.length; i++) {
+                const item = purchaseItemsResult.rows.item(i);
+                if (item.item_id) {
+                  await tx.execute(
+                    `UPDATE items SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?`,
+                    [item.quantity, now, item.item_id]
+                  );
+                }
+              }
+            }
+          }
+
+          // Delete related records first
+          // Sales
+          await tx.execute(
+            `DELETE FROM sale_invoice_items WHERE invoice_id IN (SELECT id FROM sale_invoices WHERE customer_id = ?)`,
+            [id]
+          );
+          await tx.execute(`DELETE FROM sale_invoices WHERE customer_id = ?`, [
+            id,
+          ]);
+          await tx.execute(`DELETE FROM payment_ins WHERE customer_id = ?`, [
+            id,
+          ]);
+          await tx.execute(
+            `DELETE FROM estimate_items WHERE estimate_id IN (SELECT id FROM estimates WHERE customer_id = ?)`,
+            [id]
+          );
+          await tx.execute(`DELETE FROM estimates WHERE customer_id = ?`, [id]);
+          await tx.execute(
+            `DELETE FROM credit_note_items WHERE credit_note_id IN (SELECT id FROM credit_notes WHERE customer_id = ?)`,
+            [id]
+          );
+          await tx.execute(`DELETE FROM credit_notes WHERE customer_id = ?`, [
+            id,
+          ]);
+
+          // Purchases
+          await tx.execute(
+            `DELETE FROM purchase_invoice_items WHERE invoice_id IN (SELECT id FROM purchase_invoices WHERE customer_id = ?)`,
+            [id]
+          );
+          await tx.execute(
+            `DELETE FROM purchase_invoices WHERE customer_id = ?`,
+            [id]
+          );
+          await tx.execute(`DELETE FROM payment_outs WHERE customer_id = ?`, [
+            id,
+          ]);
+
+          // Finally delete customer
+          await tx.execute(`DELETE FROM customers WHERE id = ?`, [id]);
+        });
+      } else {
+        await db.execute(`DELETE FROM customers WHERE id = ?`, [id]);
+      }
     },
     [db]
   );

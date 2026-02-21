@@ -1,21 +1,14 @@
-import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 // Refresh trigger
-import { SafeAreaView } from "react-native-safe-area-context";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { DrawerContent } from "./DrawerContent";
 import { MainTabs } from "./MainTabs";
-import { SyncStatus } from "../components/SyncStatus";
 
 // Screens
-import { DashboardScreen } from "../screens/DashboardScreen";
 import { CustomersScreen } from "../screens/CustomersScreen";
 import PDFViewerScreen from "../screens/PDFViewerScreen";
-import { ItemsScreen } from "../screens/ItemsScreen";
-import { SalesScreen } from "../screens/SalesScreen"; // Using as Sale Invoices for now
 import { SettingsScreen } from "../screens/SettingsScreen";
-import { PlaceholderScreen } from "../screens/PlaceholderScreen";
 import { SaleInvoiceFormScreen } from "../screens/sales/SaleInvoiceFormScreen";
 import { SaleInvoiceDetailScreen } from "../screens/sales/SaleInvoiceDetailScreen";
 import { PurchaseInvoiceFormScreen } from "../screens/purchases/PurchaseInvoiceFormScreen";
@@ -31,6 +24,7 @@ import { PaymentInFormScreen } from "../screens/sales/PaymentInFormScreen";
 import { PaymentOutFormScreen } from "../screens/purchases/PaymentOutFormScreen";
 import { ExpenseFormScreen } from "../screens/purchases/ExpenseFormScreen";
 import { EstimateFormScreen } from "../screens/sales/EstimateFormScreen";
+import { EstimateDetailScreen } from "../screens/sales/EstimateDetailScreen";
 import { CreditNoteFormScreen } from "../screens/sales/CreditNoteFormScreen";
 import { BankAccountsScreen } from "../screens/BankAccountsScreen";
 import { BankAccountFormScreen } from "../screens/BankAccountFormScreen";
@@ -49,6 +43,7 @@ import { StockSummaryScreen } from "../screens/reports/StockSummaryScreen";
 import { CashFlowScreen } from "../screens/reports/CashFlowScreen";
 import { PurchaseSummaryScreen } from "../screens/reports/PurchaseSummaryScreen";
 import { PurchaseRegisterScreen } from "../screens/reports/PurchaseRegisterScreen";
+import { PurchaseByItemScreen } from "../screens/reports/PurchaseByItemScreen";
 import { ReceivablesAgingScreen } from "../screens/reports/ReceivablesAgingScreen";
 import { PayablesAgingScreen } from "../screens/reports/PayablesAgingScreen";
 import { ExpenseReportScreen } from "../screens/reports/ExpenseReportScreen";
@@ -69,7 +64,7 @@ import { TaxSettingsScreen } from "../screens/settings/TaxSettingsScreen";
 import { UserProfileScreen } from "../screens/settings/UserProfileScreen";
 import { PreferencesScreen } from "../screens/settings/PreferencesScreen";
 import { SecuritySettingsScreen } from "../screens/settings/SecuritySettingsScreen";
-import { BackupSettingsScreen } from "../screens/settings/BackupSettingsScreen";
+
 import { UtilitiesScreen } from "../screens/UtilitiesScreen";
 
 const Drawer = createDrawerNavigator();
@@ -230,6 +225,11 @@ export function AppNavigator() {
           options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
+          name="EstimateDetail"
+          component={EstimateDetailScreen}
+          options={{ title: "Estimate Details" }}
+        />
+        <Stack.Screen
           name="CreditNoteForm"
           component={CreditNoteFormScreen}
           options={{ presentation: "modal", headerShown: false }}
@@ -269,6 +269,7 @@ export function AppNavigator() {
           <Stack.Screen name="ExpenseReport" component={ExpenseReportScreen} />
           <Stack.Screen name="SalesByItem" component={SalesByItemScreen} />
           <Stack.Screen name="CustomerBalance" component={CustomerBalanceScreen} />
+          <Stack.Screen name="PurchaseByItem" component={PurchaseByItemScreen} />
           <Stack.Screen name="PurchasesBySupplier" component={PurchasesBySupplierScreen} />
           <Stack.Screen name="LowStock" component={LowStockScreen} />
           <Stack.Screen name="ItemProfitability" component={ItemProfitabilityScreen} />
@@ -286,7 +287,7 @@ export function AppNavigator() {
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="Preferences" component={PreferencesScreen} />
           <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} />
-          <Stack.Screen name="BackupSettings" component={BackupSettingsScreen} />
+
           <Stack.Screen name="Utilities" component={UtilitiesScreen} />
         </Stack.Group>
       </Stack.Navigator>

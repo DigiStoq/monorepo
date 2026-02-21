@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ChevronRightIcon, EditIcon, ShareIcon } from "../../components/ui/UntitledIcons";
+import { ChevronRightIcon, EditIcon, ShareIcon, TrashIcon } from "../../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
@@ -15,7 +14,6 @@ export function PurchaseInvoiceDetailScreen() {
     const route = useRoute<any>();
     const { id } = route.params || {};
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
     const { generateInvoicePDF, generatePDF, previewPDF, isGenerating } = usePDFGenerator();
     const { settings: companySettings } = useCompanySettings();
 
@@ -150,12 +148,29 @@ export function PurchaseInvoiceDetailScreen() {
             [
                 { text: "Cancel", style: "cancel" },
                 {
-                    text: "Delete",
+                    text: "Delete & Remove Stock",
                     style: "destructive",
                     onPress: async () => {
                         setIsActionLoading(true);
                         try {
-                            await deleteInvoice(id);
+                            await deleteInvoice(id, true);
+                            Alert.alert("Success", "Invoice deleted successfully");
+                            navigation.goBack();
+                        } catch (error: any) {
+                            console.error(error);
+                            Alert.alert("Error", error.message || "Failed to delete invoice");
+                        } finally {
+                            setIsActionLoading(false);
+                        }
+                    }
+                },
+                {
+                    text: "Delete Only",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsActionLoading(true);
+                        try {
+                            await deleteInvoice(id, false);
                             Alert.alert("Success", "Invoice deleted successfully");
                             navigation.goBack();
                         } catch (error: any) {
@@ -190,6 +205,9 @@ export function PurchaseInvoiceDetailScreen() {
                 </TouchableOpacity>
                 <Text className="text-lg font-bold text-text">Invoice #{invoice.invoice_number}</Text>
                 <View className="flex-row gap-2">
+                    <TouchableOpacity onPress={handleDelete} className="p-2 bg-red-100 rounded-md">
+                        <TrashIcon size={20} color={colors.danger} />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={handlePDFAction} className="p-2 bg-primary-10 rounded-md" disabled={isGenerating}>
                         {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <ShareIcon size={20} color={colors.primary} />}
                     </TouchableOpacity>

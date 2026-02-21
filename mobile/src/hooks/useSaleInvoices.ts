@@ -342,5 +342,84 @@ export function useSaleInvoiceMutations() {
     [db, addHistoryEntry]
   );
 
-  return { createInvoice };
+  const deleteInvoice = useCallback(
+    async (id: string, restoreStock?: boolean): Promise<void> => {
+      const now = new Date().toISOString();
+      const shouldRestore = restoreStock ?? false;
+      await db.writeTransaction(async (tx) => {
+        // 1. Fetch Invoice
+        const invoiceResult = await tx.execute(
+          `SELECT customer_id, total, status FROM sale_invoices WHERE id = ?`,
+          [id]
+        );
+        if (invoiceResult?.rows?.length === 0) {
+          throw new Error("Invoice not found");
+        }
+        const invoice = invoiceResult?.rows?.item(0);
+
+        // 2. Fetch Items (for stock restoration)
+        const itemsResult = await tx.execute(
+          `SELECT item_id, quantity FROM sale_invoice_items WHERE invoice_id = ?`,
+          [id]
+        );
+        const items: { item_id: string; quantity: number }[] = [];
+        if (itemsResult?.rows?.length) {
+          for (let i = 0; i < itemsResult.rows.length; i++) {
+            items.push(itemsResult.rows.item(i));
+          }
+        }
+
+        // 3. Fetch Payments (for balance reversal)
+        const paymentsResult = await tx.execute(
+          `SELECT id, amount, customer_id FROM payment_ins WHERE invoice_id = ?`,
+          [id]
+        );
+        const payments: { id: string; amount: number; customer_id: string }[] = [];
+        if (paymentsResult?.rows?.length) {
+          for (let i = 0; i < paymentsResult.rows.length; i++) {
+            payments.push(paymentsResult.rows.item(i));
+          }
+        }
+
+        // 4. Reverse Payments Balance Effect (Increase Balance)
+        // Payments decreased customer balance (Credit). Deleting payment increases it (Debit).
+        for (const payment of payments) {
+          await tx.execute(
+            `UPDATE customers SET current_balance = current_balance + ?, updated_at = ? WHERE id = ?`,
+            [payment.amount, now, invoice.customer_id]
+          );
+        }
+
+        // 5. Delete Payments
+        await tx.execute(`DELETE FROM payment_ins WHERE invoice_id = ?`, [id]);
+
+        // 6. Restore Stock (Optional)
+        // Sale decreased stock. Deletion restores it (Increase).
+        if (shouldRestore) {
+          for (const item of items) {
+            if (item.item_id) {
+              await tx.execute(
+                `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+                [item.quantity, now, item.item_id]
+              );
+            }
+          }
+        }
+
+        // 7. Reverse Invoice Balance Effect (Decrease Balance)
+        // Sale increased balance (Debit). Deletion decreases it (Credit).
+        await tx.execute(
+          `UPDATE customers SET current_balance = current_balance - ?, updated_at = ? WHERE id = ?`,
+          [invoice.total, now, invoice.customer_id]
+        );
+
+        // 8. Delete Items & Invoice
+        await tx.execute(`DELETE FROM sale_invoice_items WHERE invoice_id = ?`, [id]);
+        await tx.execute(`DELETE FROM sale_invoices WHERE id = ?`, [id]);
+      });
+    },
+    [db]
+  );
+
+  return { createInvoice, deleteInvoice };
 }

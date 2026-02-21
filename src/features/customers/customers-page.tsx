@@ -41,6 +41,8 @@ export function CustomersPage(): React.ReactNode {
     null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteRelated, setDeleteRelated] = useState(false);
+  const [restoreStock, setRestoreStock] = useState(false);
 
   // Filter State
   const [filters, setFilters] = useState<CustomerFilters>({
@@ -163,6 +165,8 @@ export function CustomersPage(): React.ReactNode {
   const handleDeleteCustomer = (): void => {
     if (currentSelectedCustomer) {
       setCustomerToDelete(currentSelectedCustomer);
+      setDeleteRelated(false);
+      setRestoreStock(false);
       setIsDeleteModalOpen(true);
     }
   };
@@ -171,7 +175,7 @@ export function CustomersPage(): React.ReactNode {
     if (customerToDelete) {
       setIsSubmitting(true);
       try {
-        await deleteCustomer(customerToDelete.id);
+        await deleteCustomer(customerToDelete.id, deleteRelated, restoreStock);
         toast.success("Customer deleted successfully");
         setIsDeleteModalOpen(false);
         setCustomerToDelete(null);
@@ -381,7 +385,6 @@ export function CustomersPage(): React.ReactNode {
         isLoading={isSubmitting}
       />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmDeleteDialog
         isOpen={isDeleteModalOpen}
         onClose={() => {
@@ -417,7 +420,51 @@ export function CustomersPage(): React.ReactNode {
             : []
         }
         isLoading={isSubmitting}
-      />
+      >
+        <div className="flex flex-col gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg mt-2">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="deleteRelated"
+              checked={deleteRelated}
+              onChange={(e) => {
+                setDeleteRelated(e.target.checked);
+              }}
+              className="h-4 w-4 rounded border-slate-300 text-error focus:ring-error cursor-pointer"
+            />
+            <label
+              htmlFor="deleteRelated"
+              className="text-sm text-slate-700 font-medium cursor-pointer select-none"
+            >
+              Also delete associated invoices and payments
+            </label>
+          </div>
+
+          {deleteRelated && (
+            <div className="flex items-center gap-3 ml-7">
+              <input
+                type="checkbox"
+                id="restoreStock"
+                checked={restoreStock}
+                onChange={(e) => {
+                  setRestoreStock(e.target.checked);
+                }}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <label
+                htmlFor="restoreStock"
+                className="text-sm text-slate-700 font-medium cursor-pointer select-none"
+              >
+                {customerToDelete?.type === "supplier"
+                  ? "Remove items from stock (Reverse Purchase)"
+                  : customerToDelete?.type === "both"
+                    ? "Reverse stock adjustments (Sales & Purchases)"
+                    : "Return items to stock (Reverse Sale)"}
+              </label>
+            </div>
+          )}
+        </div>
+      </ConfirmDeleteDialog>
     </div>
   );
 }

@@ -993,7 +993,7 @@ export function useExpenseReport(dateRange: DateRange) {
 }
 
 export function useSalesByItemReport(dateRange: DateRange) {
-    const { data, loading, error } = useQuery<{
+    const { data } = useQuery<{
         item_id: string;
         item_name: string;
         quantity: number;
@@ -1011,7 +1011,7 @@ export function useSalesByItemReport(dateRange: DateRange) {
          ORDER BY amount DESC`,
         [dateRange.from, dateRange.to]
     );
-    return { data, isLoading: loading, error };
+    return { data, isLoading: !data, error: undefined };
 }
 
 export function useCustomerBalanceReport() {
@@ -1027,6 +1027,28 @@ export function useCustomerBalanceReport() {
          ORDER BY current_balance DESC`
     );
     return { data, isLoading: loading, error };
+}
+
+export function usePurchaseByItemReport(dateRange: DateRange) {
+    const { data } = useQuery<{
+        item_id: string;
+        item_name: string;
+        quantity: number;
+        amount: number;
+    }>(
+        `SELECT 
+            pii.item_id, 
+            pii.item_name, 
+            SUM(pii.quantity) as quantity, 
+            SUM(pii.amount) as amount 
+         FROM purchase_invoice_items pii
+         JOIN purchase_invoices pi ON pii.invoice_id = pi.id
+         WHERE pi.date >= ? AND pi.date <= ? AND pi.status != 'cancelled'
+         GROUP BY pii.item_id, pii.item_name
+         ORDER BY amount DESC`,
+        [dateRange.from, dateRange.to]
+    );
+    return { data, isLoading: !data, error: undefined };
 }
 
 export function usePurchasesBySupplierReport(dateRange: DateRange) {

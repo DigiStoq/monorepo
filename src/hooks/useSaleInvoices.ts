@@ -207,7 +207,7 @@ interface SaleInvoiceMutations {
     amount: number,
     paymentMode?: string
   ) => Promise<void>;
-  deleteInvoice: (id: string) => Promise<void>;
+  deleteInvoice: (id: string, restoreStock?: boolean) => Promise<void>;
 }
 
 export function useSaleInvoiceMutations(): SaleInvoiceMutations {
@@ -945,7 +945,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
   );
 
   const deleteInvoice = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, restoreStock): Promise<void> => {
       const now = new Date().toISOString();
 
       // Get invoice details to reverse balance
@@ -995,12 +995,14 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
       await db.execute(`DELETE FROM payment_ins WHERE invoice_id = ?`, [id]);
 
       // Reverse stock for each item
-      for (const item of items) {
-        if (item.item_id) {
-          await db.execute(
-            `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
-            [item.quantity, now, item.item_id]
-          );
+      if (restoreStock) {
+        for (const item of items) {
+          if (item.item_id) {
+            await db.execute(
+              `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+              [item.quantity, now, item.item_id]
+            );
+          }
         }
       }
 

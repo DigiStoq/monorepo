@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEstimates } from "../../hooks/useEstimates";
-import { SearchIcon, PlusIcon, FilterIcon, FileIcon, ChevronRightIcon, CalculatorIcon } from "../../components/ui/Icons";
-import { wp, hp } from "../../lib/responsive";
+import { SearchIcon, PlusIcon, FilterIcon, ChevronRightIcon, CalculatorIcon } from "../../components/ui/UntitledIcons";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { ThemeColors } from "../../lib/theme";
 
@@ -44,7 +43,7 @@ function EstimateCard({ estimate, styles, colors }: { estimate: any, styles: any
       style={styles.card}
       activeOpacity={0.7}
       onPress={() =>
-        (navigation as any).navigate("EstimateForm", { id: estimate.id })
+        (navigation as any).navigate("EstimateDetail", { id: estimate.id })
       }
     >
       <View style={styles.cardMain}>
@@ -81,7 +80,7 @@ export function EstimatesScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { estimates, isLoading } = useEstimates({ search });
+  const { estimates } = useEstimates({ search });
 
   const onRefresh = () => {
     setRefreshing(true);

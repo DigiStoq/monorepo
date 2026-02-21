@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { ItemRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export type ItemType = "product" | "service";
 
@@ -162,6 +163,7 @@ export function useItemById(id: string | null): {
 
 export function useItemMutations() {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createItem = useCallback(
     async (data: ItemFormData): Promise<string> => {
@@ -260,12 +262,33 @@ export function useItemMutations() {
   const adjustStock = useCallback(
     async (id: string, quantity: number): Promise<void> => {
       const now = new Date().toISOString();
-      await db.execute(
-        `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
-        [quantity, now, id]
-      );
+      const historyId = Date.now().toString(); // Use UUID in production
+      
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `UPDATE items SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?`,
+          [quantity, now, id]
+        );
+
+        await tx.execute(
+          `INSERT INTO item_history (
+            id, item_id, action, description, old_values, new_values, user_id, user_name, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            historyId,
+            id,
+            'stock_adjusted',
+            'Manual Stock Adjustment',
+            null,
+            JSON.stringify({ adjustment: quantity }),
+            user?.id || 'unknown',
+            user?.email || 'System',
+            now
+          ]
+        );
+      });
     },
-    [db]
+    [db, user]
   );
 
   return { createItem, updateItem, adjustStock };
