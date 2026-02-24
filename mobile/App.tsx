@@ -13,6 +13,7 @@ import { AppNavigator } from "./src/navigation/AppNavigator";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { initializePowerSync } from "./src/lib/powersync";
 import type { PowerSyncDatabase } from "@powersync/react-native";
+import { generateUUID } from "./src/lib/utils";
 
 type AuthScreen = "splash" | "welcome" | "login" | "signup" | "forgot";
 
@@ -96,7 +97,7 @@ async function initializeUserData(db: PowerSyncDatabase, userId: string, email: 
   console.log("First login detected - creating default user data");
 
   await db.writeTransaction(async (tx) => {
-    const profileId = Date.now().toString() + Math.random().toString(36).substring(7);
+    const profileId = generateUUID();
     await tx.execute(
       `INSERT INTO user_profiles (
         id, user_id, first_name, last_name, phone, role, language,
@@ -106,7 +107,7 @@ async function initializeUserData(db: PowerSyncDatabase, userId: string, email: 
       [profileId, userId, "", "", "", "admin", "en", 0, 0, 0, now, now]
     );
 
-    const prefsId = Date.now().toString() + Math.random().toString(36).substring(7);
+    const prefsId = generateUUID();
     await tx.execute(
       `INSERT INTO user_preferences (
         id, user_id, theme, date_format, decimal_separator, thousands_separator,
@@ -115,7 +116,7 @@ async function initializeUserData(db: PowerSyncDatabase, userId: string, email: 
       [prefsId, userId, "light", "DD/MM/YYYY", ".", ",", 2, 0, 1, now, now]
     );
 
-    const companyId = Date.now().toString() + Math.random().toString(36).substring(7);
+    const companyId = generateUUID();
     await tx.execute(
       `INSERT INTO company_settings (
         id, user_id, name, currency, locale, timezone,
@@ -125,7 +126,7 @@ async function initializeUserData(db: PowerSyncDatabase, userId: string, email: 
       [companyId, userId, "My Company", "USD", "en-US", "America/New_York", 1, 1, now, now]
     );
 
-    const invoiceId = Date.now().toString() + Math.random().toString(36).substring(7);
+    const invoiceId = generateUUID();
     await tx.execute(
       `INSERT INTO invoice_settings (
         id, user_id, prefix, next_number, padding,
@@ -146,7 +147,7 @@ async function initializeUserData(db: PowerSyncDatabase, userId: string, email: 
       { prefix: "EXP-", label: "Expense" },
     ];
     for (const seq of sequences) {
-      const seqId = Date.now().toString() + Math.random().toString(36).substring(7);
+      const seqId = generateUUID();
       await tx.execute(
         `INSERT INTO sequence_counters (id, user_id, prefix, next_number, padding, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)`,

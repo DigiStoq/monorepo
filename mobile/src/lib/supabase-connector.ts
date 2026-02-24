@@ -192,7 +192,13 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
           count: "exact",
         };
 
-        if (table === "user_preferences") {
+        const userIdConflictTables = [
+          "user_profiles",
+          "user_preferences",
+          "company_settings",
+          "invoice_settings",
+        ];
+        if (userIdConflictTables.includes(table)) {
           options.onConflict = "user_id";
         }
 
