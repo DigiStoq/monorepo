@@ -1,12 +1,11 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, AlertTriangleIcon } from "../../components/ui/UntitledIcons";
+import { View, Text, ScrollView } from "react-native";
+import { CustomHeader } from "../../components/CustomHeader";
+import { AlertTriangleIcon } from "../../components/ui/UntitledIcons";
 import { useReceivablesAgingReport } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export function ReceivablesAgingScreen() {
-    const navigation = useNavigation();
     const { colors } = useTheme();
     const { report, isLoading } = useReceivablesAgingReport();
 
@@ -18,13 +17,7 @@ export function ReceivablesAgingScreen() {
 
     return (
         <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Receivables Aging</Text>
-                <View className="w-10" />
-            </View>
+            <CustomHeader title="Receivables Aging" showBack />
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
                 {isLoading ? (

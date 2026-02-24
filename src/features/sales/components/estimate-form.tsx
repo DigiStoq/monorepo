@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   Textarea,
   Select,
   type SelectOption,
@@ -16,6 +17,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import type { EstimateFormData, SaleInvoiceItemFormData } from "../types";
 import type { Customer } from "@/features/customers";
 import type { Item } from "@/features/inventory";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -184,7 +186,21 @@ export function EstimateForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || lineItems.length === 0) return;
+    if (!customerId) {
+      toast.error("Please select a customer");
+      return;
+    }
+    if (lineItems.length === 0) {
+      toast.error("Please add at least one item to the estimate");
+      return;
+    }
+    const hasInvalidItems = lineItems.some(
+      (item) => !item.itemId || item.quantity <= 0 || item.unitPrice < 0
+    );
+    if (hasInvalidItems) {
+      toast.error("Please fix invalid items before creating estimate");
+      return;
+    }
 
     const formData: EstimateFormData = {
       customerId,
@@ -251,26 +267,20 @@ export function EstimateForm({
                 </div>
 
                 <div>
-                  <Input
+                  <DateInput
                     label="Estimate Date"
                     required
-                    type="date"
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={setDate}
                   />
                 </div>
 
                 <div>
-                  <Input
+                  <DateInput
                     label="Valid Until"
                     showOptionalLabel
-                    type="date"
                     value={validUntil}
-                    onChange={(e) => {
-                      setValidUntil(e.target.value);
-                    }}
+                    onChange={setValidUntil}
                   />
                 </div>
               </div>

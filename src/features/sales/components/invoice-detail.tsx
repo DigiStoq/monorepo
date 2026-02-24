@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Badge,
+  DateInput,
   Table,
   Select,
   Input,
@@ -421,14 +422,10 @@ export function InvoiceDetail({
                 <Calendar className="h-4 w-4 text-slate-400" />
                 {isEditingDate ? (
                   <div className="flex items-center gap-1">
-                    <Input
-                      type="date"
+                    <DateInput
                       value={editDate}
-                      onChange={(e) => {
-                        setEditDate(e.target.value);
-                      }}
+                      onChange={setEditDate}
                       className="h-7 text-sm"
-                      autoFocus
                     />
                     <Button
                       variant="ghost"

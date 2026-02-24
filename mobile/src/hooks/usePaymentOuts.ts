@@ -124,8 +124,8 @@ export function usePaymentOutMutations() {
           `INSERT INTO payment_outs (
             id, payment_number, customer_id, customer_name, date, amount,
             payment_mode, reference_number, invoice_id, invoice_number, notes,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.paymentNumber,
@@ -140,6 +140,7 @@ export function usePaymentOutMutations() {
             data.notes || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 

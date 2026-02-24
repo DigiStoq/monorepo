@@ -16,6 +16,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -25,6 +26,7 @@ import { PlusIcon, TrashIcon, SaveIcon, XCloseIcon } from "../../components/ui/U
 import { generateUUID } from "../../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -74,6 +76,8 @@ export function PurchaseInvoiceFormScreen() {
     "SELECT * FROM items WHERE is_active = 1 ORDER BY name ASC"
   );
 
+  const { getNextNumber } = useSequenceMutations();
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -101,6 +105,13 @@ export function PurchaseInvoiceFormScreen() {
     batchNumber: "",
   });
 
+  // Auto-fill purchase invoice number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("purchase_invoice").then(setInvoiceNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   // Load Data if Editing
   useEffect(() => {
     if (id) {
@@ -108,6 +119,7 @@ export function PurchaseInvoiceFormScreen() {
         (res) => {
           if (res.rows?.length > 0) {
             const data = res.rows.item(0);
+            setInvoiceNumber(data.invoice_number || "");
             setSupplierId(data.customer_id);
             setSupplierInvoiceNumber(data.supplier_invoice_number || "");
             setDate(data.date);
@@ -249,11 +261,20 @@ export function PurchaseInvoiceFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!supplierId || lineItems.length === 0) {
-      Alert.alert(
-        "Error",
-        "Please select a supplier and add at least one item."
-      );
+    if (!supplierId) {
+      Alert.alert("Missing Supplier", "Please select a supplier.");
+      return;
+    }
+    if (lineItems.length === 0) {
+      Alert.alert("No Items", "Please add at least one item to the invoice.");
+      return;
+    }
+    if (!invoiceNumber.trim()) {
+      Alert.alert("Missing Invoice Number", "Purchase invoice number is required.");
+      return;
+    }
+    if (dueDate && date && dueDate < date) {
+      Alert.alert("Invalid Due Date", "Due date cannot be before the invoice date.");
       return;
     }
 
@@ -273,12 +294,13 @@ export function PurchaseInvoiceFormScreen() {
 
         await tx.execute(
           `
-                    INSERT OR REPLACE INTO purchase_invoices 
-                    (id, customer_id, customer_name, supplier_invoice_number, date, due_date, status, total, notes, discount_amount, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO purchase_invoices
+                    (id, invoice_number, customer_id, customer_name, supplier_invoice_number, date, due_date, status, total, notes, discount_amount, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                  `,
           [
             invoiceId,
+            invoiceNumber,
             supplierId,
             supplier?.name || "",
             supplierInvoiceNumber,
@@ -350,6 +372,12 @@ export function PurchaseInvoiceFormScreen() {
         <Card>
           <CardHeader title="Supplier Details" />
           <CardBody>
+            <Input
+              label="Purchase #"
+              value={invoiceNumber}
+              onChangeText={setInvoiceNumber}
+              placeholder="PUR-0001"
+            />
             <Select
               label="Supplier"
               options={supplierOptions}
@@ -364,18 +392,16 @@ export function PurchaseInvoiceFormScreen() {
               placeholder="e.g. INV-2024-001"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Date"
                 value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
-              <Input
+              <DateInput
                 label="Due Date"
                 value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDueDate}
                 containerStyle={{ flex: 1 }}
               />
             </View>

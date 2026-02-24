@@ -1,15 +1,10 @@
-import React, { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, CalendarIcon } from "../../components/ui/UntitledIcons";
-import { CustomHeader } from "../../components/CustomHeader";
+import React, { useState } from "react";
+import { View, Text, ScrollView } from "react-native";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
 import type { DateRange } from "../../hooks/useReports";
 import { useTaxSummaryReport } from "../../hooks/useReports";
-import { useTheme } from "../../contexts/ThemeContext";
 
 export function TaxSummaryScreen() {
-    const navigation = useNavigation();
-    const { colors } = useTheme();
 
     // Default to current month
     const now = new Date();
@@ -25,22 +20,8 @@ export function TaxSummaryScreen() {
     };
 
     return (
-        <View className="flex-1 bg-background">
-            <CustomHeader
-                title="Tax Summary"
-                showBack
-                rightAction={
-                    <TouchableOpacity className="p-2">
-                        <CalendarIcon color={colors.textSecondary} size={24} />
-                    </TouchableOpacity>
-                }
-            />
-
+        <ReportScreenLayout title="Tax Summary" dateRange={dateRange} onDateRangeChange={setDateRange}>
             <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-                <View className="items-center mb-2">
-                    <Text className="text-sm text-text-secondary font-medium">{dateRange.from} - {dateRange.to}</Text>
-                </View>
-
                 {isLoading ? (
                     <Text className="text-center mt-10 text-text-muted">Loading...</Text>
                 ) : !reportData ? (
@@ -71,6 +52,6 @@ export function TaxSummaryScreen() {
                     </>
                 )}
             </ScrollView>
-        </View>
+        </ReportScreenLayout>
     );
 }

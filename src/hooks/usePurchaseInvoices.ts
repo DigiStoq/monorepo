@@ -248,8 +248,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
           `INSERT INTO purchase_invoices (
             id, invoice_number, supplier_invoice_number, customer_id, customer_name,
             date, due_date, status, subtotal, tax_amount, discount_amount, total,
-            amount_paid, amount_due, expected_delivery_date, notes, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            amount_paid, amount_due, expected_delivery_date, notes, created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.invoiceNumber,
@@ -269,6 +269,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
             data.notes ?? null,
             now,
             now,
+            user?.id ?? null,
           ]
         );
 
@@ -281,8 +282,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
           await tx.execute(
             `INSERT INTO purchase_invoice_items (
               id, invoice_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -295,6 +296,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
               item.discountPercent ?? 0,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
 
@@ -357,8 +359,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
               id, payment_number, customer_id, customer_name, date, amount,
               payment_mode, invoice_id, invoice_number,
               cheque_number, cheque_date, bank_name,
-              created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              created_at, updated_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               crypto.randomUUID(),
               paymentNumber,
@@ -375,6 +377,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
               paymentMode === "cheque" ? data.initialChequeBankName : null,
               now,
               now,
+              user?.id ?? null,
             ]
           );
 
@@ -415,8 +418,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                 id, date, type, amount, description, category,
                 related_customer_id, related_customer_name,
                 related_invoice_id, related_invoice_number,
-                created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                created_at, updated_at, user_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.date,
@@ -430,6 +433,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
           } else if (paymentMode === "bank" && data.initialBankAccountId) {
@@ -438,8 +442,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                 id, account_id, date, type, amount, description,
                 related_customer_id, related_customer_name,
                 related_invoice_id, related_invoice_number,
-                created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                created_at, updated_at, user_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.initialBankAccountId,
@@ -453,6 +457,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
 
@@ -467,8 +472,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                     id, cheque_number, type, customer_id, customer_name,
                     bank_name, date, due_date, status, amount,
                     related_invoice_id, related_invoice_number,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    created_at, updated_at, user_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.initialChequeNumber,
@@ -484,6 +489,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
           }
@@ -692,8 +698,8 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
           await tx.execute(
             `INSERT INTO purchase_invoice_items (
               id, invoice_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -706,6 +712,7 @@ export function usePurchaseInvoiceMutations(): PurchaseInvoiceMutations {
               item.discountPercent ?? 0,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
 

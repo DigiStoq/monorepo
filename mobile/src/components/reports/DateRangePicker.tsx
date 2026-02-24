@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { ThemeColors } from '../../lib/theme';
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '../../lib/theme';
-import { Calendar, X, Check } from 'lucide-react-native';
+import { X, Check } from 'lucide-react-native';
+import { DateInput } from '../ui/DateInput';
 
 export interface DateRange {
     from: string;
@@ -120,32 +121,24 @@ export function DateRangePicker({ visible, onClose, onSelect, currentRange }: Da
                         </ScrollView>
 
                         <View style={styles.inputs}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.label}>From (YYYY-MM-DD)</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={customFrom}
-                                    onChangeText={(t) => {
-                                        setCustomFrom(t);
-                                        setSelectedPreset('custom');
-                                    }}
-                                    placeholder="YYYY-MM-DD"
-                                    placeholderTextColor={colors.textMuted}
-                                />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.label}>To (YYYY-MM-DD)</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={customTo}
-                                    onChangeText={(t) => {
-                                        setCustomTo(t);
-                                        setSelectedPreset('custom');
-                                    }}
-                                    placeholder="YYYY-MM-DD"
-                                    placeholderTextColor={colors.textMuted}
-                                />
-                            </View>
+                            <DateInput
+                                label="From"
+                                value={customFrom}
+                                onChange={(val) => {
+                                    setCustomFrom(val);
+                                    setSelectedPreset('custom');
+                                }}
+                                containerStyle={{ flex: 1 }}
+                            />
+                            <DateInput
+                                label="To"
+                                value={customTo}
+                                onChange={(val) => {
+                                    setCustomTo(val);
+                                    setSelectedPreset('custom');
+                                }}
+                                containerStyle={{ flex: 1 }}
+                            />
                         </View>
                     </View>
 

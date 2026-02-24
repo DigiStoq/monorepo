@@ -6,12 +6,14 @@ import { SalesScreen } from "../screens/SalesScreen";
 import { PaymentInScreen } from "../screens/sales/PaymentInScreen";
 import { EstimatesScreen } from "../screens/sales/EstimatesScreen";
 import { CreditNotesScreen } from "../screens/sales/CreditNotesScreen";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Tab = createMaterialTopTabNavigator();
 
 export function SalesNavigator() {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomHeader title="Sales" />
       <Tab.Navigator
         screenOptions={{
@@ -20,21 +22,21 @@ export function SalesNavigator() {
             fontWeight: "600",
             textTransform: "capitalize",
           },
-          tabBarActiveTintColor: "#C4A484",
-          tabBarInactiveTintColor: "#94a3b8",
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textMuted,
           tabBarIndicatorStyle: {
-            backgroundColor: "#C4A484",
+            backgroundColor: colors.primary,
             height: 3,
             borderRadius: 3,
           },
           tabBarStyle: {
-            backgroundColor: "#ffffff",
+            backgroundColor: colors.surface,
             elevation: 0,
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: "#e2e8f0",
+            borderBottomColor: colors.border,
           },
-          tabBarPressColor: "#C4A48420",
+          tabBarPressColor: colors.primaryMuted,
         }}
         id="SalesTabs"
       >

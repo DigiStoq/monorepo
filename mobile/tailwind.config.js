@@ -1,56 +1,55 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#14b8a6", // teal-500
-          light: "#ccfbf1",   // teal-100
-          dark: "#0f766e",    // teal-700
-          muted: "#f0fdfa",   // teal-50
+          DEFAULT: "rgb(var(--color-primary) / <alpha-value>)",
+          light: "rgb(var(--color-primary-light) / <alpha-value>)",
+          dark: "rgb(var(--color-primary-dark) / <alpha-value>)",
+          muted: "rgb(var(--color-primary-muted) / <alpha-value>)",
         },
-        secondary: "#0f172a", // slate-900
-        accent: "#8b5cf6",    // violet-500
+        secondary: "rgb(var(--color-secondary) / <alpha-value>)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
         background: {
-          DEFAULT: "#f8fafc", // slate-50
-          light: "#ffffff",
-          card: "#ffffff",
-          dark: "#0f172a",    // slate-900
+          DEFAULT: "rgb(var(--color-background) / <alpha-value>)",
+          light: "rgb(var(--color-background-light) / <alpha-value>)",
+          card: "rgb(var(--color-background-card) / <alpha-value>)",
         },
         surface: {
-          DEFAULT: "#ffffff",
-          hover: "#f1f5f9",   // slate-100
-          active: "#e2e8f0",  // slate-200
-          dark: "#1e293b",
+          DEFAULT: "rgb(var(--color-surface) / <alpha-value>)",
+          hover: "rgb(var(--color-surface-hover) / <alpha-value>)",
+          active: "rgb(var(--color-surface-active) / <alpha-value>)",
         },
         text: {
-          DEFAULT: "#0f172a", // slate-900
-          secondary: "#475569", // slate-600
-          muted: "#94a3b8",     // slate-400
-          light: "#f8fafc",     // slate-50
+          DEFAULT: "rgb(var(--color-text) / <alpha-value>)",
+          secondary: "rgb(var(--color-text-secondary) / <alpha-value>)",
+          muted: "rgb(var(--color-text-muted) / <alpha-value>)",
+          light: "rgb(var(--color-text-light) / <alpha-value>)",
         },
         success: {
-          DEFAULT: "#22c55e",
-          muted: "#dcfce7",
+          DEFAULT: "rgb(var(--color-success) / <alpha-value>)",
+          muted: "rgb(var(--color-success-muted) / <alpha-value>)",
         },
         warning: {
-          DEFAULT: "#f59e0b",
-          muted: "#fef3c7",
+          DEFAULT: "rgb(var(--color-warning) / <alpha-value>)",
+          muted: "rgb(var(--color-warning-muted) / <alpha-value>)",
         },
         danger: {
-          DEFAULT: "#ef4444",
-          muted: "#fee2e2",
+          DEFAULT: "rgb(var(--color-danger) / <alpha-value>)",
+          muted: "rgb(var(--color-danger-muted) / <alpha-value>)",
         },
         info: {
-          DEFAULT: "#3b82f6",
-          muted: "#dbeafe",
+          DEFAULT: "rgb(var(--color-info) / <alpha-value>)",
+          muted: "rgb(var(--color-info-muted) / <alpha-value>)",
         },
         border: {
-          DEFAULT: "#e2e8f0",
-          light: "#f1f5f9",
-          dark: "#334155",
+          DEFAULT: "rgb(var(--color-border) / <alpha-value>)",
+          light: "rgb(var(--color-border-light) / <alpha-value>)",
+          dark: "rgb(var(--color-border-dark) / <alpha-value>)",
         }
       },
       fontFamily: {
@@ -60,4 +59,3 @@ module.exports = {
   },
   plugins: [],
 }
-

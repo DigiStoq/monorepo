@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ReceiptIcon, CheckCircleIcon, ChevronRightIcon, ShareIcon, EditIcon, WalletIcon, TrashIcon } from "../../components/ui/UntitledIcons";
+import { ReceiptIcon, CheckCircleIcon, ChevronRightIcon, Download01Icon, EditIcon, WalletIcon, TrashIcon } from "../../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
@@ -146,11 +146,11 @@ export function SaleInvoiceDetailScreen() {
 
             // Totals
             subtotal: invoice.subtotal || 0,
-            taxTotal: invoice.taxAmount || 0,
-            total: invoice.totalAmount || 0,
-            amountPaid: 0, // TODO: Calculate from payments
-            balanceDue: invoice.totalAmount || 0, // TODO: Update if payments exist
-            currencySymbol: "$" // TODO: From settings
+            taxTotal: invoice.tax_amount || 0,
+            total: invoice.total || 0,
+            amountPaid: invoice.amount_paid || 0,
+            balanceDue: invoice.amount_due || 0,
+            currencySymbol: companySettings?.currency === "USD" ? "$" : companySettings?.currency || "$"
         };
 
         Alert.alert(
@@ -176,6 +176,8 @@ export function SaleInvoiceDetailScreen() {
             ]
         );
     };
+
+    const curr = companySettings?.currency === "USD" ? "$" : companySettings?.currency || "$";
 
     const statusColors: Record<string, { bg: string; text: string }> = {
         draft: { bg: colors.surfaceHover, text: colors.textMuted },
@@ -206,7 +208,7 @@ export function SaleInvoiceDetailScreen() {
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={handlePDFAction} className="p-2 bg-primary-10 rounded-md" disabled={isGenerating}>
-                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <ShareIcon size={20} color={colors.primary} />}
+                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <Download01Icon size={20} color={colors.primary} />}
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleEdit} className="p-2 bg-primary-10 rounded-md">
                         <EditIcon size={20} color={colors.primary} />
@@ -238,7 +240,7 @@ export function SaleInvoiceDetailScreen() {
                         <View className="flex-1">
                             <Text className="text-xs text-text-muted uppercase mb-1">Balance Due</Text>
                             <Text className="text-md font-medium" style={{ color: invoice.amount_due > 0 ? colors.danger : colors.success }}>
-                                ${(invoice.amount_due || 0).toFixed(2)}
+                                {curr}{(invoice.amount_due || 0).toFixed(2)}
                             </Text>
                         </View>
                     </View>
@@ -270,18 +272,18 @@ export function SaleInvoiceDetailScreen() {
                                     {item.batch_number ? <Text className="text-sm text-text-muted mt-0.5">Batch: {item.batch_number}</Text> : null}
                                     <View className="flex-row gap-3 mt-1">
                                         <Text className="text-sm text-text-muted">Qty: {item.quantity}</Text>
-                                        <Text className="text-sm text-text-muted">Rate: ${item.unit_price?.toFixed(2)}</Text>
+                                        <Text className="text-sm text-text-muted">Rate: {curr}{item.unit_price?.toFixed(2)}</Text>
                                     </View>
                                     <View className="flex-row gap-3">
-                                        {item.mrp ? <Text className="text-sm text-text-muted">MRP: ${item.mrp}</Text> : null}
+                                        {item.mrp ? <Text className="text-sm text-text-muted">MRP: {curr}{item.mrp}</Text> : null}
                                         {item.discount_percent ? <Text className="text-sm text-text-muted">Disc: {item.discount_percent}%</Text> : null}
                                         {item.tax_percent ? <Text className="text-sm text-text-muted">Tax: {item.tax_percent}%</Text> : null}
                                     </View>
                                 </View>
                                 <View className="items-end">
-                                    <Text className="text-md font-bold text-text">${((item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}</Text>
+                                    <Text className="text-md font-bold text-text">{curr}{((item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}</Text>
                                     {item.amount && item.amount !== ((item.quantity || 0) * (item.unit_price || 0)) && (
-                                        <Text className="text-xs text-text-muted mt-0.5">Net: ${item.amount.toFixed(2)}</Text>
+                                        <Text className="text-xs text-text-muted mt-0.5">Net: {curr}{item.amount.toFixed(2)}</Text>
                                     )}
                                 </View>
                             </View>
@@ -294,29 +296,29 @@ export function SaleInvoiceDetailScreen() {
                 <View className="bg-surface rounded-lg p-4 shadow-sm">
                     <View className="flex-row justify-between items-center mb-2">
                         <Text className="text-md text-text-muted">Subtotal</Text>
-                        <Text className="text-md text-text font-medium">${(invoice.subtotal || 0).toFixed(2)}</Text>
+                        <Text className="text-md text-text font-medium">{curr}{(invoice.subtotal || 0).toFixed(2)}</Text>
                     </View>
                     <View className="flex-row justify-between items-center mb-2">
                         <Text className="text-md text-text-muted">Discount</Text>
-                        <Text className="text-md text-text font-medium">-${(invoice.discount_amount || 0).toFixed(2)}</Text>
+                        <Text className="text-md text-text font-medium">-{curr}{(invoice.discount_amount || 0).toFixed(2)}</Text>
                     </View>
                     <View className="flex-row justify-between items-center mb-2">
                         <Text className="text-md text-text-muted">Tax</Text>
-                        <Text className="text-md text-text font-medium">+${(invoice.tax_amount || 0).toFixed(2)}</Text>
+                        <Text className="text-md text-text font-medium">+{curr}{(invoice.tax_amount || 0).toFixed(2)}</Text>
                     </View>
                     <View className="h-[1px] bg-border my-2" />
                     <View className="flex-row justify-between items-center mb-2">
                         <Text className="text-lg font-bold text-text">Total</Text>
-                        <Text className="text-xl font-bold text-primary">${(invoice.total || 0).toFixed(2)}</Text>
+                        <Text className="text-xl font-bold text-primary">{curr}{(invoice.total || 0).toFixed(2)}</Text>
                     </View>
                     <View className="flex-row justify-between items-center mb-2">
                         <Text className="text-md text-green-600">Paid</Text>
-                        <Text className="text-md text-green-600 font-medium">-${(invoice.amount_paid || 0).toFixed(2)}</Text>
+                        <Text className="text-md text-green-600 font-medium">-{curr}{(invoice.amount_paid || 0).toFixed(2)}</Text>
                     </View>
                     <View className="h-[1px] bg-border my-2" />
                     <View className="flex-row justify-between items-center">
                         <Text className="text-lg font-bold text-text">Balance Due</Text>
-                        <Text className="text-xl font-bold text-red-600">${(invoice.amount_due || 0).toFixed(2)}</Text>
+                        <Text className="text-xl font-bold text-red-600">{curr}{(invoice.amount_due || 0).toFixed(2)}</Text>
                     </View>
                 </View>
 
@@ -333,7 +335,7 @@ export function SaleInvoiceDetailScreen() {
                                         <Text className="text-md text-text font-medium">{new Date(pay.date).toLocaleDateString()}</Text>
                                         <Text className="text-sm text-text-muted mt-0.5">{pay.payment_mode?.toUpperCase()}</Text>
                                     </View>
-                                    <Text className="text-md font-bold text-green-600">+${pay.amount.toFixed(2)}</Text>
+                                    <Text className="text-md font-bold text-green-600">+{curr}{pay.amount.toFixed(2)}</Text>
                                 </View>
                                 {index < payments.length - 1 && <View className="h-[1px] bg-border my-3" />}
                             </View>

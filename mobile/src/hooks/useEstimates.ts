@@ -234,8 +234,8 @@ export function useEstimateMutations() {
           `INSERT INTO estimates (
             id, estimate_number, customer_id, customer_name, date, valid_until, status,
             subtotal, tax_amount, discount_amount, total, notes, terms,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.estimateNumber,
@@ -252,6 +252,7 @@ export function useEstimateMutations() {
             data.terms || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 
@@ -260,8 +261,8 @@ export function useEstimateMutations() {
           await tx.execute(
             `INSERT INTO estimate_items (
               id, estimate_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -274,6 +275,7 @@ export function useEstimateMutations() {
               item.discountPercent || 0,
               item.taxPercent || 0,
               item.amount,
+              user?.id || null,
             ]
           );
         }
@@ -339,8 +341,8 @@ export function useEstimateMutations() {
           `INSERT INTO sale_invoices (
             id, invoice_number, customer_id, customer_name, date, due_date, status,
             subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-            notes, terms, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            notes, terms, created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             newInvoiceId,
             invoiceNumber,
@@ -359,6 +361,7 @@ export function useEstimateMutations() {
             estimate.terms || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 
@@ -368,8 +371,8 @@ export function useEstimateMutations() {
           await tx.execute(
             `INSERT INTO sale_invoice_items (
               id, invoice_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               newInvoiceId,
@@ -382,6 +385,7 @@ export function useEstimateMutations() {
               item.discountPercent,
               item.taxPercent,
               item.amount,
+              user?.id || null,
             ]
           );
 

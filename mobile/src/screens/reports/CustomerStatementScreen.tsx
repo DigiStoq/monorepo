@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, Modal } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, SearchIcon, ShareIcon, CalendarIcon } from "../../components/ui/UntitledIcons";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
+import { SearchIcon } from "../../components/ui/UntitledIcons";
 import type { DateRange } from "../../hooks/useReports";
 import { useCustomerStatementReport } from "../../hooks/useReports";
 import { useQuery } from "@powersync/react-native";
@@ -13,7 +13,6 @@ interface CustomerSelection {
 }
 
 export function CustomerStatementScreen() {
-    const navigation = useNavigation();
     const { colors } = useTheme();
 
     // Default to current month
@@ -70,17 +69,7 @@ export function CustomerStatementScreen() {
     );
 
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Customer Statement</Text>
-                <TouchableOpacity className="p-2">
-                    <ShareIcon color={colors.textSecondary} size={20} />
-                </TouchableOpacity>
-            </View>
-
+        <ReportScreenLayout title="Customer Statement" dateRange={dateRange} onDateRangeChange={setDateRange}>
             {/* Inputs */}
             <View className="p-4 bg-surface border-b border-border">
                 <TouchableOpacity
@@ -92,10 +81,6 @@ export function CustomerStatementScreen() {
                         {selectedCustomer ? selectedCustomer.name : "Select Customer..."}
                     </Text>
                 </TouchableOpacity>
-                <View className="flex-row items-center gap-2 justify-end">
-                    <CalendarIcon size={16} color={colors.textSecondary} />
-                    <Text className="text-sm text-text-secondary">{dateRange.from} - {dateRange.to}</Text>
-                </View>
             </View>
 
             {/* Statement Content */}
@@ -176,6 +161,6 @@ export function CustomerStatementScreen() {
             )}
 
             {renderCustomerModal()}
-        </View>
+        </ReportScreenLayout>
     );
 }

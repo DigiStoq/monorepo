@@ -24,11 +24,15 @@
       "Bash(Select-Object -ExpandProperty Count)",
       "Bash(grep:*)",
       "Bash(npx jq:*)",
-      "Bash(Select-Object -First 50)"
+      "Bash(Select-Object -First 50)",
+      "Bash(node -e:*)",
+      "Bash(xargs basename:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npm ls:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

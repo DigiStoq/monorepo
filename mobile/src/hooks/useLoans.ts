@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { LoanRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface Loan {
   id: string;
@@ -137,6 +138,7 @@ interface LoanMutations {
 
 export function useLoanMutations(): LoanMutations {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createLoan = useCallback(
     async (data: {
@@ -161,8 +163,8 @@ export function useLoanMutations(): LoanMutations {
             principal_amount, interest_rate, interest_type,
             start_date, total_emis, emi_amount, paid_emis,
             outstanding_amount, linked_bank_account_id,
-            status, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            status, notes, created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.type,
@@ -182,6 +184,7 @@ export function useLoanMutations(): LoanMutations {
           data.notes || null,
           now,
           now,
+          user?.id || null,
         ]
       );
       return id;

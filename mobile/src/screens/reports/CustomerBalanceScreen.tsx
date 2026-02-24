@@ -1,13 +1,11 @@
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon } from "../../components/ui/UntitledIcons";
+import { CustomHeader } from "../../components/CustomHeader";
 import { useCustomerBalanceReport } from "../../hooks/useReports";
-import { useTheme } from "../../contexts/ThemeContext";
 
 export function CustomerBalanceScreen() {
     const navigation = useNavigation();
-    const { colors } = useTheme();
     const { data, isLoading } = useCustomerBalanceReport();
 
     const formatCurrency = (amount: number) => {
@@ -34,13 +32,7 @@ export function CustomerBalanceScreen() {
 
     return (
         <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Customer Balances</Text>
-                <View className="w-10" />
-            </View>
+            <CustomHeader title="Customer Balances" showBack />
 
             <View className="flex-1">
                 {isLoading ? (

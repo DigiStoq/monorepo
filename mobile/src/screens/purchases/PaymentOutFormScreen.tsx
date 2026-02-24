@@ -15,6 +15,7 @@ import { useQuery } from "@powersync/react-native";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -26,6 +27,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { usePaymentOutMutations } from "../../hooks/usePaymentOuts";
 import { usePurchaseInvoices } from "../../hooks/usePurchaseInvoices";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 interface CustomerData {
   id: string;
@@ -41,13 +43,15 @@ export function PaymentOutFormScreen() {
 
   const db = getPowerSyncDatabase();
   const { createPayment, deletePayment } = usePaymentOutMutations();
+  const { getNextNumber } = useSequenceMutations();
 
   // Data Fetching
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT id, name FROM customers ORDER BY name ASC" // Suppliers are in customers table
+    "SELECT id, name FROM customers WHERE type IN ('supplier', 'both') AND is_active = 1 ORDER BY name ASC"
   );
 
   // Form State
+  const [paymentNumber, setPaymentNumber] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [invoiceId, setInvoiceId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -67,12 +71,20 @@ export function PaymentOutFormScreen() {
     [supplierId]
   );
 
+  // Auto-fill payment number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("payment_out").then(setPaymentNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   // Initial Load
   useEffect(() => {
     if (id) {
       db.execute("SELECT * FROM payment_outs WHERE id = ?", [id]).then((res) => {
         if (res.rows?.length > 0) {
           const data = res.rows.item(0);
+          setPaymentNumber(data.payment_number || "");
           setSupplierId(data.customer_id);
           setDate(data.date);
           setAmount(String(data.amount || ""));
@@ -133,8 +145,12 @@ export function PaymentOutFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!supplierId || !amount) {
-      Alert.alert("Error", "Supplier and Amount are required");
+    if (!supplierId) {
+      Alert.alert("Missing Supplier", "Please select a supplier.");
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid amount greater than zero.");
       return;
     }
 
@@ -163,7 +179,7 @@ export function PaymentOutFormScreen() {
       } else {
         // Create (Use Hook)
         await createPayment({
-          paymentNumber: reference || generateUUID().slice(0, 8),
+          paymentNumber: paymentNumber || reference || generateUUID().slice(0, 8),
           supplierId,
           supplierName: customers.find((c) => c.id === supplierId)?.name || "",
           date,
@@ -209,6 +225,12 @@ export function PaymentOutFormScreen() {
         <Card>
           <CardHeader title="Payment Details" />
           <CardBody>
+            <Input
+              label="Payment #"
+              value={paymentNumber}
+              onChangeText={setPaymentNumber}
+              placeholder="PAY-0001"
+            />
             <Select
               label="Supplier"
               options={supplierOptions}
@@ -237,11 +259,10 @@ export function PaymentOutFormScreen() {
               placeholder="0.00"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Date"
                 value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
               <Select

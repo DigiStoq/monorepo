@@ -237,8 +237,8 @@ export function usePurchaseInvoiceMutations() {
           `INSERT INTO purchase_invoices (
             id, invoice_number, supplier_invoice_number, customer_id, customer_name,
             date, due_date, status, subtotal, tax_amount, discount_amount, total,
-            amount_paid, amount_due, notes, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            amount_paid, amount_due, notes, created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.invoiceNumber,
@@ -257,6 +257,7 @@ export function usePurchaseInvoiceMutations() {
             data.notes || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 
@@ -267,8 +268,8 @@ export function usePurchaseInvoiceMutations() {
           await tx.execute(
             `INSERT INTO purchase_invoice_items (
               id, invoice_id, item_id, item_name, description, quantity, unit,
-              unit_price, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -281,6 +282,7 @@ export function usePurchaseInvoiceMutations() {
               item.discountPercent || 0,
               item.taxPercent || 0,
               item.amount,
+              user?.id || null,
             ]
           );
 

@@ -16,6 +16,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -34,6 +35,7 @@ import {
   FileTextIcon
 } from "../../components/ui/UntitledIcons";
 import { CustomHeader } from "../../components/CustomHeader";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 // Inline Types (mirrors schema)
 interface CustomerData {
@@ -73,12 +75,13 @@ export function EstimateFormScreen() {
   const db = getPowerSyncDatabase();
 
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT * FROM customers ORDER BY name ASC"
+    "SELECT * FROM customers WHERE type IN ('customer', 'both') AND is_active = 1 ORDER BY name ASC"
   );
   const { data: items } = useQuery<ItemData>(
     "SELECT * FROM items ORDER BY name ASC"
   );
 
+  const { getNextNumber } = useSequenceMutations();
   const [customerId, setCustomerId] = useState("");
   const [estimateNumber, setEstimateNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -172,6 +175,13 @@ export function EstimateFormScreen() {
     return { subtotal, tax, total };
   }, [lineItems]);
 
+  // Auto-fill estimate number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("estimate").then(setEstimateNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   useEffect(() => {
     if (id) {
       db.execute("SELECT * FROM estimates WHERE id = ?", [id]).then((res) => {
@@ -259,8 +269,12 @@ export function EstimateFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!customerId || lineItems.length === 0) {
-      Alert.alert("Error", "Please select a customer and add items.");
+    if (!customerId) {
+      Alert.alert("Missing Customer", "Please select a customer.");
+      return;
+    }
+    if (lineItems.length === 0) {
+      Alert.alert("No Items", "Please add at least one item to the estimate.");
       return;
     }
     setIsLoading(true);
@@ -455,16 +469,16 @@ export function EstimateFormScreen() {
               placeholder="EST-001"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Date"
                 value={date}
-                onChangeText={setDate}
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
-              <Input
+              <DateInput
                 label="Valid Until"
                 value={validUntil}
-                onChangeText={setValidUntil}
+                onChange={setValidUntil}
                 containerStyle={{ flex: 1 }}
               />
             </View>

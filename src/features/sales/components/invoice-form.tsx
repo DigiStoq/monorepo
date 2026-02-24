@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   TableNumberInput,
   Textarea,
   Select,
@@ -14,7 +15,6 @@ import {
 import {
   Plus,
   Trash2,
-  Calendar,
   User,
   FileText,
   Truck,
@@ -392,9 +392,14 @@ export function InvoiceForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || lineItems.length === 0) {
+    if (!customerId) {
       setShowValidation(true);
-      toast.error("Please select a customer and add at least one item");
+      toast.error("Please select a customer");
+      return;
+    }
+    if (lineItems.length === 0) {
+      setShowValidation(true);
+      toast.error("Please add at least one item to the invoice");
       return;
     }
 
@@ -533,30 +538,18 @@ export function InvoiceForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Invoice Date
-                  </label>
-                  <Input
-                    type="date"
+                  <DateInput
+                    label="Invoice Date"
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={setDate}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Due Date
-                  </label>
-                  <Input
-                    type="date"
+                  <DateInput
+                    label="Due Date"
                     value={dueDate}
-                    onChange={(e) => {
-                      setDueDate(e.target.value);
-                    }}
+                    onChange={setDueDate}
                   />
                 </div>
               </div>
@@ -601,16 +594,10 @@ export function InvoiceForm({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Delivery Date
-                  </label>
-                  <Input
-                    type="date"
+                  <DateInput
+                    label="Delivery Date"
                     value={deliveryDate}
-                    onChange={(e) => {
-                      setDeliveryDate(e.target.value);
-                    }}
+                    onChange={setDeliveryDate}
                   />
                 </div>
                 <div>
@@ -1182,15 +1169,11 @@ export function InvoiceForm({
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Cheque Date <span className="text-red-500">*</span>
-                          </label>
-                          <Input
-                            type="date"
+                          <DateInput
+                            label="Cheque Date"
+                            required
                             value={chequeDueDate}
-                            onChange={(e) => {
-                              setChequeDueDate(e.target.value);
-                            }}
+                            onChange={setChequeDueDate}
                             size="sm"
                             className={cn(
                               showValidation &&

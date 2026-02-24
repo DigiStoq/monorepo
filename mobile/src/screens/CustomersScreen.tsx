@@ -7,10 +7,12 @@ import { SearchIcon, UsersIcon, ChevronRightIcon } from "../components/ui/Untitl
 import { CustomHeader } from "../components/CustomHeader";
 import { useTheme } from "../contexts/ThemeContext";
 import type { ThemeColors } from "../lib/theme";
-import { profColors } from "../lib/theme";
+import { getProfColors } from "../lib/theme";
 
 function CustomerCard({ customer, colors }: { customer: any, colors: ThemeColors }) {
   const navigation = useNavigation();
+  const { isDark } = useTheme();
+  const profColors = getProfColors(isDark);
   const typeColors: Record<string, { bg: string; text: string; border: string }> = {
     customer: { bg: profColors.receivable.bg, text: profColors.receivable.icon, border: profColors.receivable.border },
     supplier: { bg: profColors.payable.bg, text: profColors.payable.icon, border: profColors.payable.border },

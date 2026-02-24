@@ -15,6 +15,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -23,6 +24,7 @@ import {
 import { SaveIcon, XCloseIcon } from "../../components/ui/UntitledIcons";
 import { generateUUID } from "../../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 export function ExpenseFormScreen() {
   const navigation = useNavigation();
@@ -32,8 +34,10 @@ export function ExpenseFormScreen() {
   const { colors } = useTheme();
 
   const db = getPowerSyncDatabase();
+  const { getNextNumber } = useSequenceMutations();
 
   // Form State
+  const [expenseNumber, setExpenseNumber] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -45,12 +49,20 @@ export function ExpenseFormScreen() {
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Auto-fill expense number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("expense").then(setExpenseNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   // Initial Load
   useEffect(() => {
     if (id) {
       db.execute("SELECT * FROM expenses WHERE id = ?", [id]).then((res) => {
         if (res.rows?.length > 0) {
           const data = res.rows.item(0);
+          setExpenseNumber(data.expense_number || "");
           setCategory(data.category);
           setDate(data.date);
           setAmount(String(data.amount || ""));
@@ -88,8 +100,12 @@ export function ExpenseFormScreen() {
   ];
 
   const handleSubmit = async () => {
-    if (!category || !amount) {
-      Alert.alert("Error", "Category and Amount are required");
+    if (!category) {
+      Alert.alert("Missing Category", "Please select a category for this expense.");
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid amount greater than zero.");
       return;
     }
 
@@ -124,13 +140,14 @@ export function ExpenseFormScreen() {
         await db.execute(
           `
                     INSERT INTO expenses (
-                        id, category, date, amount, paid_to_name, paid_to_details, 
+                        id, expense_number, category, date, amount, paid_to_name, paid_to_details,
                         description, payment_mode, reference_number, notes, created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
           [
             expenseId,
+            expenseNumber,
             category,
             date,
             numAmount,
@@ -179,6 +196,12 @@ export function ExpenseFormScreen() {
         <Card>
           <CardHeader title="Expense Details" />
           <CardBody>
+            <Input
+              label="Expense #"
+              value={expenseNumber}
+              onChangeText={setExpenseNumber}
+              placeholder="EXP-0001"
+            />
             <Select
               label="Category"
               options={categoryOptions}
@@ -192,11 +215,10 @@ export function ExpenseFormScreen() {
               onChangeText={setDescription}
               placeholder="What was this expense for?"
             />
-            <Input
+            <DateInput
               label="Date"
               value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
+              onChange={setDate}
             />
             <Input
               label="Amount"

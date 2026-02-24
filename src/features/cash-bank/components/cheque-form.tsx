@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   NumberInput,
   Textarea,
   Select,
@@ -194,24 +195,18 @@ export function ChequeForm({
           <Card>
             <CardHeader title="Dates" />
             <CardBody className="space-y-4">
-              <Input
+              <DateInput
                 label="Cheque Date"
                 required
-                type="date"
                 value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                }}
+                onChange={setDate}
               />
 
-              <Input
+              <DateInput
                 label="Due Date"
                 required
-                type="date"
                 value={dueDate}
-                onChange={(e) => {
-                  setDueDate(e.target.value);
-                }}
+                onChange={setDueDate}
               />
             </CardBody>
           </Card>

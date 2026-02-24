@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   Textarea,
   Select,
   type SelectOption,
@@ -288,9 +289,14 @@ export function PurchaseInvoiceForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || lineItems.length === 0) {
+    if (!customerId) {
       setShowValidation(true);
-      toast.error("Please select a supplier and add at least one item");
+      toast.error("Please select a supplier");
+      return;
+    }
+    if (lineItems.length === 0) {
+      setShowValidation(true);
+      toast.error("Please add at least one item to the invoice");
       return;
     }
 
@@ -417,26 +423,20 @@ export function PurchaseInvoiceForm({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Input
-                    type="date"
+                  <DateInput
                     label="Invoice Date"
                     required
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={setDate}
                   />
                 </div>
 
                 <div>
-                  <Input
-                    type="date"
+                  <DateInput
                     label="Due Date"
                     showOptionalLabel
                     value={dueDate}
-                    onChange={(e) => {
-                      setDueDate(e.target.value);
-                    }}
+                    onChange={setDueDate}
                   />
                 </div>
               </div>
@@ -873,15 +873,11 @@ export function PurchaseInvoiceForm({
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">
-                          Cheque Date <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          type="date"
+                        <DateInput
+                          label="Cheque Date"
+                          required
                           value={chequeDueDate}
-                          onChange={(e) => {
-                            setChequeDueDate(e.target.value);
-                          }}
+                          onChange={setChequeDueDate}
                           size="sm"
                           className={cn(
                             showValidation && !chequeDueDate && "border-red-500"

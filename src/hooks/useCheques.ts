@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type {
   Cheque,
   ChequeType,
@@ -146,13 +147,14 @@ export function useChequeMutations(): ChequeMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.execute(
         `INSERT INTO cheques (
           id, cheque_number, type, customer_id, customer_name, bank_name,
           date, due_date, amount, status, related_invoice_id, related_invoice_number,
-          notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          notes, created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.chequeNumber,
@@ -169,6 +171,7 @@ export function useChequeMutations(): ChequeMutations {
           data.notes ?? null,
           now,
           now,
+          user?.id ?? null,
         ]
       );
 

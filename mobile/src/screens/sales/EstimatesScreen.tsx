@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEstimates } from "../../hooks/useEstimates";
-import { SearchIcon, PlusIcon, FilterIcon, ChevronRightIcon, CalculatorIcon } from "../../components/ui/UntitledIcons";
+import { SearchIcon, PlusIcon, FilterIcon, ChevronRightIcon } from "../../components/ui/UntitledIcons";
+import { CalculatorIcon } from "../../components/ui/Icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { ThemeColors } from "../../lib/theme";
 

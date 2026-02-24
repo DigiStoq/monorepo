@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { View, Text, FlatList, TouchableOpacity, TextInput, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, SearchIcon } from "../../components/ui/UntitledIcons";
-import { CustomHeader } from "../../components/CustomHeader";
+import { SearchIcon } from "../../components/ui/UntitledIcons";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
 import type { DateRange } from "../../hooks/useReports";
 import { useSalesRegisterReport } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -15,7 +15,7 @@ export function SalesRegisterScreen() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const today = now.toISOString().split('T')[0];
 
-    const [dateRange] = useState<DateRange>({ from: startOfMonth, to: today });
+    const [dateRange, setDateRange] = useState<DateRange>({ from: startOfMonth, to: today });
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'partial' | 'unpaid'>("all");
 
@@ -55,9 +55,7 @@ export function SalesRegisterScreen() {
     };
 
     return (
-        <View className="flex-1 bg-background">
-            <CustomHeader title="Sales Register" showBack />
-
+        <ReportScreenLayout title="Sales Register" dateRange={dateRange} onDateRangeChange={setDateRange}>
             {/* Filters */}
             <View className="p-4 bg-surface border-b border-border">
                 <View className="flex-row items-center bg-surface-hover rounded-lg px-3 h-10 mb-3">
@@ -71,7 +69,7 @@ export function SalesRegisterScreen() {
                     />
                 </View>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-3">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
                     {['all', 'paid', 'partial', 'unpaid'].map(s => {
                         const isActive = statusFilter === s;
                         const styleInfo = getStatusStyle(s);
@@ -88,10 +86,6 @@ export function SalesRegisterScreen() {
                         );
                     })}
                 </ScrollView>
-
-                <View className="flex-row justify-end">
-                    <Text className="text-sm text-text-muted">{dateRange.from} - {dateRange.to}</Text>
-                </View>
             </View>
 
             {/* Summary Strip */}
@@ -160,6 +154,6 @@ export function SalesRegisterScreen() {
                     </View>
                 }
             />
-        </View>
+        </ReportScreenLayout>
     );
 }

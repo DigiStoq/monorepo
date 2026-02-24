@@ -11,6 +11,7 @@ import { CustomHeader } from "../components/CustomHeader";
 import { SyncStatus } from "../components/SyncStatus";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { getProfColors } from "../lib/theme";
 import {
   TrendingUpIcon,
   TrendingDownIcon,
@@ -37,7 +38,7 @@ import {
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [refreshing, setRefreshing] = React.useState(false);
 
   // Hooks
@@ -59,15 +60,8 @@ export function DashboardScreen() {
     }).format(value);
   };
 
-  // Professional Palette Constants
-  const profColors = {
-    receivable: { bg: "#f0fdf4", icon: "#15803d", border: "#dcfce7" }, // emerald-50/700/100
-    payable: { bg: "#fef2f2", icon: "#be123c", border: "#fee2e2" }, // rose-50/700/100
-    sales: { bg: "#eef2ff", icon: "#4338ca", border: "#e0e7ff" }, // indigo-50/700/100
-    items: { bg: "#f8fafc", icon: "#334155", border: "#e2e8f0" }, // slate-50/700/200
-    warning: { bg: "#fffbeb", icon: "#b45309", border: "#fef3c7" }, // amber-50/700/100
-    danger: { bg: "#fff1f2", icon: "#e11d48", border: "#ffe4e6" }, // rose-50/600/100
-  };
+  // Professional Palette Constants (dark-mode-aware)
+  const profColors = getProfColors(isDark);
 
   const getTransactionIcon = (type: DashboardTransaction['type']) => {
     switch (type) {

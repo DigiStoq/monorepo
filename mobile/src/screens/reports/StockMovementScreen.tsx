@@ -1,14 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, CalendarIcon } from "../../components/ui/UntitledIcons";
+import { View, Text, FlatList } from "react-native";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
 import type { DateRange } from "../../hooks/useReports";
 import { useStockMovementReport } from "../../hooks/useReports";
-import { useTheme } from "../../contexts/ThemeContext";
 
 export function StockMovementScreen() {
-    const navigation = useNavigation();
-    const { colors } = useTheme();
 
     // Default to current month
     const now = new Date();
@@ -47,22 +43,8 @@ export function StockMovementScreen() {
     };
 
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Stock Movement</Text>
-                <TouchableOpacity className="p-2">
-                    <CalendarIcon color={colors.textSecondary} size={24} />
-                </TouchableOpacity>
-            </View>
-
+        <ReportScreenLayout title="Stock Movement" dateRange={dateRange} onDateRangeChange={setDateRange}>
             <View className="flex-1">
-                <View className="items-center py-3 bg-surface-hover">
-                    <Text className="text-sm text-text-secondary font-medium">{dateRange.from} - {dateRange.to}</Text>
-                </View>
-
                 {isLoading ? (
                     <Text className="text-center mt-10 text-text-muted">Loading...</Text>
                 ) : (
@@ -75,6 +57,6 @@ export function StockMovementScreen() {
                     />
                 )}
             </View>
-        </View>
+        </ReportScreenLayout>
     );
 }

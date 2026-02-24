@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Button,
   Input,
+  DateInput,
   NumberInput,
   Select,
   Textarea,
@@ -221,23 +222,21 @@ export function LoanForm({
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
+        <DateInput
           label="Start Date"
           required
-          type="date"
           value={formData.startDate}
-          onChange={(e) => {
-            handleChange("startDate", e.target.value);
+          onChange={(val) => {
+            handleChange("startDate", val);
           }}
           error={errors.startDate}
         />
-        <Input
+        <DateInput
           label="End Date"
           showOptionalLabel
-          type="date"
           value={formData.endDate ?? ""}
-          onChange={(e) => {
-            handleChange("endDate", e.target.value || undefined);
+          onChange={(val) => {
+            handleChange("endDate", val || undefined);
           }}
         />
       </div>

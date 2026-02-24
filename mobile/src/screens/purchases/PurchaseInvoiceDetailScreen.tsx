@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ChevronRightIcon, EditIcon, ShareIcon, TrashIcon } from "../../components/ui/UntitledIcons";
+import { ChevronRightIcon, EditIcon, Download01Icon, TrashIcon } from "../../components/ui/UntitledIcons";
 import { useQuery } from "@powersync/react-native";
 import { usePDFGenerator } from "../../hooks/usePDFGenerator";
 import { useCompanySettings } from "../../hooks/useSettings";
@@ -209,7 +209,7 @@ export function PurchaseInvoiceDetailScreen() {
                         <TrashIcon size={20} color={colors.danger} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handlePDFAction} className="p-2 bg-primary-10 rounded-md" disabled={isGenerating}>
-                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <ShareIcon size={20} color={colors.primary} />}
+                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <Download01Icon size={20} color={colors.primary} />}
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleEdit} className="p-2 bg-primary-10 rounded-md">
                         <EditIcon size={20} color={colors.primary} />

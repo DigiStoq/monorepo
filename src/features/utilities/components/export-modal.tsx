@@ -5,7 +5,7 @@ import {
   Modal,
   Button,
   Select,
-  Input,
+  DateInput,
   type SelectOption,
   Card,
   CardBody,
@@ -248,22 +248,12 @@ export function ExportModal({
               Date Range (optional)
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                type="date"
+              <DateInput
                 value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value);
-                }}
+                onChange={setDateFrom}
                 placeholder="From"
               />
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value);
-                }}
-                placeholder="To"
-              />
+              <DateInput value={dateTo} onChange={setDateTo} placeholder="To" />
             </div>
             <p className="text-xs text-slate-400 mt-1">
               Leave empty to export all records

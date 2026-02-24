@@ -8,11 +8,13 @@ import { SalesNavigator } from "./SalesNavigator";
 import { PurchasesNavigator } from "./PurchasesNavigator";
 import { ItemsScreen } from "../screens/ItemsScreen";
 import { ReportsScreen } from "../screens/reports/ReportsScreen";
-import { colors, borderRadius } from "../lib/theme";
+import { borderRadius } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Stack = createNativeStackNavigator();
 
 function ContentArea() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -30,6 +32,7 @@ function ContentArea() {
 }
 
 export function MainLayout() {
+  const { colors } = useTheme();
   const state = useNavigationState((state) => state);
   
   // Get the active route name from navigation state
@@ -45,9 +48,9 @@ export function MainLayout() {
   const activeRoute = getActiveRoute(state);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundLight }]}>
       <SidebarNav activeRoute={activeRoute} />
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: colors.background }]}>
         <ContentArea />
       </View>
     </View>
@@ -58,11 +61,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: colors.backgroundLight,
   },
   content: {
     flex: 1,
-    backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xxl,
     borderBottomLeftRadius: Platform.OS === "ios" ? borderRadius.xxl : 0,
     overflow: "hidden",

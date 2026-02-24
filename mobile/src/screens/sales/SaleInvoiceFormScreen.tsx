@@ -16,6 +16,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -33,6 +34,7 @@ import {
   ReceiptIcon
 } from "../../components/ui/UntitledIcons";
 import { CustomHeader } from "../../components/CustomHeader";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 // Types
 interface CustomerData {
@@ -80,13 +82,16 @@ export function SaleInvoiceFormScreen() {
 
   // Data Fetching
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT * FROM customers ORDER BY name ASC"
+    "SELECT * FROM customers WHERE type IN ('customer', 'both') AND is_active = 1 ORDER BY name ASC"
   );
   const { data: items } = useQuery<ItemData>(
     "SELECT * FROM items WHERE is_active = 1 ORDER BY name ASC"
   );
 
+  const { getNextNumber } = useSequenceMutations();
+
   // Form State
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
@@ -147,6 +152,13 @@ export function SaleInvoiceFormScreen() {
     await generateInvoicePDF(pdfData);
   };
 
+  // Auto-fill invoice number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("sale_invoice").then(setInvoiceNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   // Initial Data Load (if editing)
   useEffect(() => {
     if (id) {
@@ -154,6 +166,7 @@ export function SaleInvoiceFormScreen() {
         (res) => {
           if (res.rows?.length > 0) {
             const inv = res.rows.item(0);
+            setInvoiceNumber(inv.invoice_number || "");
             setCustomerId(inv.customer_id);
             setDate(inv.date);
             setDueDate(inv.due_date || "");
@@ -327,11 +340,20 @@ export function SaleInvoiceFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!customerId || lineItems.length === 0) {
-      Alert.alert(
-        "Error",
-        "Please select a customer and add at least one item."
-      );
+    if (!customerId) {
+      Alert.alert("Missing Customer", "Please select a customer.");
+      return;
+    }
+    if (lineItems.length === 0) {
+      Alert.alert("No Items", "Please add at least one item to the invoice.");
+      return;
+    }
+    if (!invoiceNumber.trim()) {
+      Alert.alert("Missing Invoice Number", "Invoice number is required.");
+      return;
+    }
+    if (dueDate && date && dueDate < date) {
+      Alert.alert("Invalid Due Date", "Due date cannot be before the invoice date.");
       return;
     }
 
@@ -369,11 +391,12 @@ export function SaleInvoiceFormScreen() {
         } else {
           await tx.execute(
             `
-                        INSERT INTO sale_invoices (id, customer_id, date, due_date, transport_name, delivery_date, delivery_location, notes, terms, status, total, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO sale_invoices (id, invoice_number, customer_id, date, due_date, transport_name, delivery_date, delivery_location, notes, terms, status, total, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      `,
             [
               invoiceId,
+              invoiceNumber,
               customerId,
               date,
               dueDate,
@@ -466,6 +489,12 @@ export function SaleInvoiceFormScreen() {
         <Card>
           <CardHeader title="Customer Details" />
           <CardBody>
+            <Input
+              label="Invoice #"
+              value={invoiceNumber}
+              onChangeText={setInvoiceNumber}
+              placeholder="INV-0001"
+            />
             <Select
               label="Customer"
               options={customerOptions}
@@ -474,18 +503,16 @@ export function SaleInvoiceFormScreen() {
               placeholder="Select Customer"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Invoice Date"
                 value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
-              <Input
+              <DateInput
                 label="Due Date"
                 value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDueDate}
                 containerStyle={{ flex: 1 }}
               />
             </View>
@@ -503,11 +530,10 @@ export function SaleInvoiceFormScreen() {
               placeholder="e.g. FedEx"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Delivery Date"
                 value={deliveryDate}
-                onChangeText={setDeliveryDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDeliveryDate}
                 containerStyle={{ flex: 1 }}
               />
               <Input

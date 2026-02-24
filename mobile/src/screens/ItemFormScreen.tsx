@@ -15,6 +15,7 @@ import { getPowerSyncDatabase } from "../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -424,11 +425,10 @@ export function ItemFormScreen() {
                     onChangeText={setBatchNumber}
                     containerStyle={{ flex: 1 }}
                   />
-                  <Input
+                  <DateInput
                     label="Expiry Date"
                     value={expiryDate}
-                    onChangeText={setExpiryDate}
-                    placeholder="YYYY-MM-DD"
+                    onChange={setExpiryDate}
                     containerStyle={{ flex: 1 }}
                   />
                 </View>

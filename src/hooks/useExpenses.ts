@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Expense } from "@/features/purchases/types";
 
 export type ExpenseCategory =
@@ -162,14 +163,15 @@ export function useExpenseMutations(): ExpenseMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.execute(
         `INSERT INTO expenses (
           id, expense_number, category, customer_id, customer_name,
           paid_to_name, paid_to_details, date, amount,
           payment_mode, reference_number, description, notes, attachment_url,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.expenseNumber,
@@ -187,6 +189,7 @@ export function useExpenseMutations(): ExpenseMutations {
           data.attachmentUrl ?? null,
           now,
           now,
+          user?.id ?? null,
         ]
       );
 

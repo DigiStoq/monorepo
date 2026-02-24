@@ -17,6 +17,7 @@ import type { CustomerRecord } from "../lib/powersync";
 import {
     Button,
     Input,
+    DateInput,
     Card,
     CardHeader,
     CardBody,
@@ -257,11 +258,10 @@ export function LoanFormScreen() {
                             />
                         </View>
 
-                        <Input
+                        <DateInput
                             label="Start Date"
                             value={startDate}
-                            onChangeText={setStartDate}
-                            placeholder="YYYY-MM-DD"
+                            onChange={setStartDate}
                         />
 
                         <View className="mb-4">

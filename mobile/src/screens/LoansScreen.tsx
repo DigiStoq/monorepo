@@ -113,6 +113,27 @@ export function LoansScreen() {
                                 {item.interestRate}% Interest • {item.paidEmis || 0}/{item.totalEmis || 0} EMIs Paid
                             </Text>
                         </View>
+
+                        {item.status === 'active' && (
+                            <TouchableOpacity
+                                className="mt-3 py-2.5 rounded-lg items-center border"
+                                style={{ borderColor: colors.primary, backgroundColor: colors.primary + '10' }}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    (navigation as any).navigate("LoanPaymentForm", {
+                                        loanId: item.id,
+                                        loanName: item.type === 'given' ? item.customerName : item.lenderName,
+                                        outstandingAmount: item.outstandingAmount || 0,
+                                        emiAmount: item.emiAmount || 0,
+                                    });
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+                                    Record Payment
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </TouchableOpacity>
                 )}
                 ListEmptyComponent={

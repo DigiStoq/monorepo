@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   NumberInput,
   Textarea,
   Select,
@@ -18,6 +19,7 @@ import type {
   PurchaseInvoice,
 } from "../types";
 import type { Customer } from "@/features/customers";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -135,7 +137,14 @@ export function PaymentOutForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || amount <= 0) return;
+    if (!customerId) {
+      toast.error("Please select a supplier");
+      return;
+    }
+    if (amount <= 0) {
+      toast.error("Payment amount must be greater than zero");
+      return;
+    }
 
     const formData: PaymentOutFormData = {
       customerId,
@@ -188,14 +197,11 @@ export function PaymentOutForm({
               </div>
 
               <div>
-                <Input
-                  type="date"
+                <DateInput
                   label="Payment Date"
                   required
                   value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                  }}
+                  onChange={setDate}
                 />
               </div>
 
@@ -256,13 +262,10 @@ export function PaymentOutForm({
                       }}
                       placeholder="Enter cheque number"
                     />
-                    <Input
-                      type="date"
+                    <DateInput
                       label="Cheque Date"
                       value={chequeDate}
-                      onChange={(e) => {
-                        setChequeDate(e.target.value);
-                      }}
+                      onChange={setChequeDate}
                     />
                     <Input
                       label="Bank Name"

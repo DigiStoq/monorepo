@@ -176,8 +176,8 @@ export function useItemMutations() {
           sale_price, purchase_price, tax_rate, stock_quantity, low_stock_alert,
           batch_number, expiry_date, manufacture_date, barcode, hsn_code,
           warranty_days, brand, model_number, location,
-          is_active, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          is_active, created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -203,6 +203,7 @@ export function useItemMutations() {
           1,
           now,
           now,
+          user?.id || null,
         ]
       );
 

@@ -15,6 +15,7 @@ import { useQuery } from "@powersync/react-native";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -25,6 +26,7 @@ import { generateUUID } from "../../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
 import { usePaymentInMutations } from "../../hooks/usePaymentIns";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 interface CustomerData {
   id: string;
@@ -40,13 +42,15 @@ export function PaymentInFormScreen() {
 
   const db = getPowerSyncDatabase();
   const { createPayment, deletePayment } = usePaymentInMutations();
+  const { getNextNumber } = useSequenceMutations();
 
   // Data Fetching
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT id, name FROM customers ORDER BY name ASC"
+    "SELECT id, name FROM customers WHERE type IN ('customer', 'both') AND is_active = 1 ORDER BY name ASC"
   );
 
   // Form State
+  const [receiptNumber, setReceiptNumber] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [invoiceId, setInvoiceId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -66,12 +70,20 @@ export function PaymentInFormScreen() {
     [customerId]
   );
 
+  // Auto-fill receipt number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("payment_in").then(setReceiptNumber).catch(console.error);
+    }
+  }, [isEditing]);
+
   // Initial Load
   useEffect(() => {
     if (id) {
       db.execute("SELECT * FROM payment_ins WHERE id = ?", [id]).then((res) => {
         if (res.rows?.length > 0) {
           const data = res.rows.item(0);
+          setReceiptNumber(data.receipt_number || "");
           setCustomerId(data.customer_id);
           setDate(data.date);
           setAmount(String(data.amount || ""));
@@ -132,8 +144,12 @@ export function PaymentInFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!customerId || !amount) {
-      Alert.alert("Error", "Customer and Amount are required");
+    if (!customerId) {
+      Alert.alert("Missing Customer", "Please select a customer.");
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid amount greater than zero.");
       return;
     }
 
@@ -167,7 +183,7 @@ export function PaymentInFormScreen() {
       } else {
         // Create using Hook
         await createPayment({
-          receiptNumber: reference || generateUUID().slice(0, 8),
+          receiptNumber: receiptNumber || reference || generateUUID().slice(0, 8),
           customerId,
           customerName: customers.find(c => c.id === customerId)?.name || "",
           date,
@@ -214,6 +230,12 @@ export function PaymentInFormScreen() {
         <Card>
           <CardHeader title="Payment Details" />
           <CardBody>
+            <Input
+              label="Receipt #"
+              value={receiptNumber}
+              onChangeText={setReceiptNumber}
+              placeholder="REC-0001"
+            />
             <Select
               label="Customer"
               options={customerOptions}
@@ -242,11 +264,10 @@ export function PaymentInFormScreen() {
               placeholder="0.00"
             />
             <View className="flex-row gap-2">
-              <Input
+              <DateInput
                 label="Date"
                 value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
               <Select

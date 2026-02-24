@@ -8,6 +8,7 @@ import {
   ModalBody,
   ModalFooter,
   Input,
+  DateInput,
   Select,
   ConfirmDeleteDialog,
   type SelectOption,
@@ -866,13 +867,10 @@ export function PurchaseInvoicesPage(): React.ReactNode {
               <p className="text-sm text-slate-600">
                 When do you expect this order to be received?
               </p>
-              <Input
+              <DateInput
                 label="Expected Delivery Date"
-                type="date"
                 value={expectedDeliveryDate}
-                onChange={(e) => {
-                  setExpectedDeliveryDate(e.target.value);
-                }}
+                onChange={setExpectedDeliveryDate}
               />
             </div>
           </ModalBody>
@@ -1147,15 +1145,10 @@ export function PurchaseInvoicesPage(): React.ReactNode {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Cheque Date (Due Date)
-                    </label>
-                    <Input
-                      type="date"
+                    <DateInput
+                      label="Cheque Date (Due Date)"
                       value={chequeDueDate}
-                      onChange={(e) => {
-                        setChequeDueDate(e.target.value);
-                      }}
+                      onChange={setChequeDueDate}
                     />
                   </div>
                 </>

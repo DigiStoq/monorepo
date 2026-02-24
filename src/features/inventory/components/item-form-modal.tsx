@@ -7,6 +7,7 @@ import {
   Sheet,
   Button,
   Input,
+  DateInput,
   Textarea,
   Select,
   type SelectOption,
@@ -655,19 +656,23 @@ export function ItemFormModal({
                     Dates
                   </h4>
                   <div className="grid grid-cols-2 gap-4">
-                    <Input
+                    <DateInput
                       label="Manufacture Date"
                       showOptionalLabel
-                      type="date"
+                      value={watch("manufactureDate") ?? ""}
+                      onChange={(val) => {
+                        setValue("manufactureDate", val);
+                      }}
                       error={errors.manufactureDate?.message}
-                      {...register("manufactureDate")}
                     />
-                    <Input
+                    <DateInput
                       label="Expiry Date"
                       showOptionalLabel
-                      type="date"
+                      value={watch("expiryDate") ?? ""}
+                      onChange={(val) => {
+                        setValue("expiryDate", val);
+                      }}
                       error={errors.expiryDate?.message}
-                      {...register("expiryDate")}
                     />
                   </div>
                 </div>

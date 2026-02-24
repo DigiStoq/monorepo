@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { CashTransaction } from "@/features/cash-bank/types";
 
 // Database row type (snake_case columns from SQLite)
@@ -128,6 +129,7 @@ export function useCashTransactionMutations(): CashTransactionMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.writeTransaction(async (tx) => {
         // Get current balance
@@ -153,8 +155,8 @@ export function useCashTransactionMutations(): CashTransactionMutations {
           `INSERT INTO cash_transactions (
             id, date, type, amount, description, category,
             related_customer_id, related_customer_name,
-            related_invoice_id, related_invoice_number, balance, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            related_invoice_id, related_invoice_number, balance, created_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.date,
@@ -168,6 +170,7 @@ export function useCashTransactionMutations(): CashTransactionMutations {
             data.relatedInvoiceNumber ?? null,
             newBalance,
             now,
+            user?.id ?? null,
           ]
         );
       });

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type {
   Customer,
   CustomerFormData,
@@ -160,13 +161,14 @@ export function useCustomerMutations(): CustomerMutations {
     async (data: CustomerFormData): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.execute(
         `INSERT INTO customers (
           id, name, type, phone, email, tax_id, address, city, state, zip_code,
           opening_balance, current_balance, credit_limit, credit_days, notes, is_active,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -186,6 +188,7 @@ export function useCustomerMutations(): CustomerMutations {
           1, // is_active
           now,
           now,
+          user?.id ?? null,
         ]
       );
 

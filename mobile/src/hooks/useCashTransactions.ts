@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { CashTransactionRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface CashTransaction {
   id: string;
@@ -139,6 +140,7 @@ interface CashTransactionMutations {
 
 export function useCashTransactionMutations(): CashTransactionMutations {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createTransaction = useCallback(
     async (data: {
@@ -178,8 +180,8 @@ export function useCashTransactionMutations(): CashTransactionMutations {
           `INSERT INTO cash_transactions (
             id, date, type, amount, description, category,
             related_customer_id, related_customer_name,
-            related_invoice_id, related_invoice_number, balance, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            related_invoice_id, related_invoice_number, balance, created_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.date,
@@ -193,6 +195,7 @@ export function useCashTransactionMutations(): CashTransactionMutations {
             data.relatedInvoiceNumber || null,
             newBalance,
             now,
+            user?.id || null,
           ]
         );
       });

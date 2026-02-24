@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { ChequeRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface Cheque {
   id: string;
@@ -140,6 +141,7 @@ interface ChequeMutations {
 
 export function useChequeMutations(): ChequeMutations {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createCheque = useCallback(
     async (data: {
@@ -160,8 +162,8 @@ export function useChequeMutations(): ChequeMutations {
       await db.execute(
         `INSERT INTO cheques (
             id, type, customer_id, customer_name, bank_name, cheque_number, 
-            amount, date, due_date, status, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            amount, date, due_date, status, notes, created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.type,
@@ -176,6 +178,7 @@ export function useChequeMutations(): ChequeMutations {
           data.notes || null,
           now,
           now,
+          user?.id || null,
         ]
       );
       return id;

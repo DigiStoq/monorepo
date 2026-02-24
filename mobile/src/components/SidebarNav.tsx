@@ -8,9 +8,9 @@ import {
   Package,
   PieChart,
   Settings,
-  Bell,
 } from "lucide-react-native";
-import { colors, spacing, borderRadius } from "../lib/theme";
+import { spacing, borderRadius } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface SidebarNavProps {
   activeRoute?: string;
@@ -30,16 +30,17 @@ const bottomItems = [
 export function SidebarNav({ activeRoute }: SidebarNavProps) {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const handlePress = (route: string) => {
     navigation.navigate("Main", { screen: route });
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.lg, backgroundColor: colors.backgroundLight }]}>
       {/* Logo Area */}
       <View style={styles.logoArea}>
-        <View style={styles.logo}>
+        <View style={[styles.logo, { backgroundColor: colors.surface }]}>
           <Package size={24} color={colors.accent} />
         </View>
       </View>
@@ -52,7 +53,7 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
           return (
             <TouchableOpacity
               key={item.route}
-              style={[styles.navItem, isActive && styles.navItemActive]}
+              style={[styles.navItem, isActive && { backgroundColor: colors.surfaceActive }]}
               onPress={() => { handlePress(item.route); }}
               activeOpacity={0.7}
             >
@@ -68,9 +69,6 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
 
       {/* Bottom Navigation */}
       <View style={[styles.bottomSection, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Bell size={22} color={colors.textMuted} strokeWidth={2} />
-        </TouchableOpacity>
         {bottomItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -92,7 +90,6 @@ export function SidebarNav({ activeRoute }: SidebarNavProps) {
 const styles = StyleSheet.create({
   container: {
     width: 60,
-    backgroundColor: colors.backgroundLight,
     alignItems: "center",
     justifyContent: "space-between",
   },
@@ -103,7 +100,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -117,9 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-  },
-  navItemActive: {
-    backgroundColor: colors.surfaceActive,
   },
   bottomSection: {
     gap: spacing.sm,

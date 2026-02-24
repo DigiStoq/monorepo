@@ -7,7 +7,7 @@ import type { DateRange} from './DateRangePicker';
 import { DateRangePicker } from './DateRangePicker';
 import type { ThemeColors } from '../../lib/theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '../../lib/theme';
-import { Calendar, Download, Share2 } from 'lucide-react-native';
+import { Calendar, Download } from 'lucide-react-native';
 
 interface ReportScreenLayoutProps {
     title: string;
@@ -39,7 +39,7 @@ export function ReportScreenLayout({
             <CustomHeader title={title} showBack
                 rightAction={onExport ? (
                     <TouchableOpacity onPress={onExport} style={styles.headerButton}>
-                        <Share2 size={22} color={colors.primary} />
+                        <Download size={22} color={colors.primary} />
                     </TouchableOpacity>
                 ) : undefined}
             />

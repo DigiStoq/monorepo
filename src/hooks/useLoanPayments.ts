@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { LoanPayment } from "@/features/cash-bank/types";
 
 // Database row type (snake_case columns from SQLite)
@@ -100,13 +101,14 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.writeTransaction(async (tx) => {
         await tx.execute(
           `INSERT INTO loan_payments (
             id, loan_id, date, principal_amount, interest_amount, total_amount,
-            payment_method, reference_number, notes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            payment_method, reference_number, notes, created_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.loanId,
@@ -118,6 +120,7 @@ export function useLoanPaymentMutations(): LoanPaymentMutations {
             data.referenceNumber ?? null,
             data.notes ?? null,
             now,
+            user?.id ?? null,
           ]
         );
 

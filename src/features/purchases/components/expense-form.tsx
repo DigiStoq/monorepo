@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardBody,
   Button,
+  DateInput,
   Input,
   NumberInput,
   Textarea,
@@ -18,6 +19,7 @@ import type {
   PaymentOutMode,
 } from "../types";
 import type { Customer } from "@/features/customers";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -110,7 +112,10 @@ export function ExpenseForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      toast.error("Please enter a valid amount greater than zero");
+      return;
+    }
 
     const formData: ExpenseFormData = {
       category,
@@ -162,14 +167,11 @@ export function ExpenseForm({
               </div>
 
               <div>
-                <Input
-                  type="date"
+                <DateInput
                   label="Date"
                   required
                   value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                  }}
+                  onChange={setDate}
                 />
               </div>
 

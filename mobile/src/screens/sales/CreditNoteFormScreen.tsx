@@ -16,6 +16,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -25,6 +26,7 @@ import { PlusIcon, TrashIcon, SaveIcon, XCloseIcon } from "../../components/ui/U
 import { generateUUID } from "../../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 import { CustomHeader } from "../../components/CustomHeader";
+import { useSequenceMutations } from "../../hooks/useSequence";
 
 interface CustomerData {
   id: string;
@@ -57,12 +59,13 @@ export function CreditNoteFormScreen() {
   const db = getPowerSyncDatabase();
 
   const { data: customers } = useQuery<CustomerData>(
-    "SELECT * FROM customers ORDER BY name ASC"
+    "SELECT * FROM customers WHERE type IN ('customer', 'both') AND is_active = 1 ORDER BY name ASC"
   );
   const { data: items } = useQuery<ItemData>(
     "SELECT * FROM items ORDER BY name ASC"
   );
 
+  const { getNextNumber } = useSequenceMutations();
   const [customerId, setCustomerId] = useState("");
   const [noteNumber, setNoteNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -83,6 +86,13 @@ export function CreditNoteFormScreen() {
     taxPercent: 0,
     amount: 0,
   });
+
+  // Auto-fill credit note number on create
+  useEffect(() => {
+    if (!isEditing) {
+      getNextNumber("credit_note").then(setNoteNumber).catch(console.error);
+    }
+  }, [isEditing]);
 
   useEffect(() => {
     if (id) {
@@ -179,8 +189,12 @@ export function CreditNoteFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!customerId || lineItems.length === 0) {
-      Alert.alert("Error", "Please select customer and items");
+    if (!customerId) {
+      Alert.alert("Missing Customer", "Please select a customer.");
+      return;
+    }
+    if (lineItems.length === 0) {
+      Alert.alert("No Items", "Please add at least one item to the credit note.");
       return;
     }
     setIsLoading(true);
@@ -258,10 +272,10 @@ export function CreditNoteFormScreen() {
                 placeholder="CN-001"
                 containerStyle={{ flex: 1 }}
               />
-              <Input
+              <DateInput
                 label="Date"
                 value={date}
-                onChangeText={setDate}
+                onChange={setDate}
                 containerStyle={{ flex: 1 }}
               />
             </View>

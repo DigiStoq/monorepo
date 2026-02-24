@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, FlatList, TouchableOpacity, TextInput } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon, SearchIcon } from "../../components/ui/UntitledIcons";
+import { View, Text, FlatList, TextInput } from "react-native";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
+import { SearchIcon } from "../../components/ui/UntitledIcons";
 import type { DateRange } from "../../hooks/useReports";
 import { useSalesByCustomerReport } from "../../hooks/useReports";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export function SalesByCustomerScreen() {
-    const navigation = useNavigation();
     const { colors } = useTheme();
 
     const now = new Date();
@@ -28,20 +27,9 @@ export function SalesByCustomerScreen() {
     const formatCurrency = (amount: number) => "$" + (amount || 0).toFixed(2);
 
     return (
-        <View className="flex-1 bg-background">
-            <View className="flex-row items-center justify-between p-4 bg-surface border-b border-border mt-6 android:mt-6">
-                <TouchableOpacity onPress={() => { navigation.goBack(); }} className="p-2">
-                    <ArrowLeftIcon color={colors.text} size={24} />
-                </TouchableOpacity>
-                <Text className="text-lg font-semibold text-text">Sales by Customer</Text>
-                <View className="w-10" />
-            </View>
-
+        <ReportScreenLayout title="Sales by Customer" dateRange={dateRange} onDateRangeChange={setDateRange}>
             {/* Filter Section */}
             <View className="p-4 bg-surface border-b border-border">
-                <View className="flex-row justify-end mb-3">
-                    <Text className="text-sm text-text-muted">{dateRange.from} - {dateRange.to}</Text>
-                </View>
                 <View className="flex-row items-center bg-surface-hover rounded-lg px-3 h-10">
                     <SearchIcon size={18} color={colors.textMuted} />
                     <TextInput
@@ -87,6 +75,6 @@ export function SalesByCustomerScreen() {
                     </View>
                 }
             />
-        </View>
+        </ReportScreenLayout>
     );
 }

@@ -16,6 +16,7 @@ import { getPowerSyncDatabase } from "../../lib/powersync";
 import {
   Button,
   Input,
+  DateInput,
   Card,
   CardHeader,
   CardBody,
@@ -317,8 +318,8 @@ export function PurchaseOrderFormScreen() {
             <Input label="PO Number" value={poNumber} onChangeText={setPoNumber} placeholder="Auto-generated if empty" />
 
             <View className="flex-row gap-2">
-              <Input label="Order Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" containerStyle={{ flex: 1 }} />
-              <Input label="Expected Date" value={expectedDate} onChangeText={setExpectedDate} placeholder="YYYY-MM-DD" containerStyle={{ flex: 1 }} />
+              <DateInput label="Order Date" value={date} onChange={setDate} containerStyle={{ flex: 1 }} />
+              <DateInput label="Expected Date" value={expectedDate} onChange={setExpectedDate} containerStyle={{ flex: 1 }} />
             </View>
           </CardBody>
         </Card>

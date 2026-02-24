@@ -13,7 +13,7 @@ import { useItems, useItemStats } from "../hooks/useItems";
 import { CustomHeader } from "../components/CustomHeader";
 import { SearchIcon, PlusIcon, BoxIcon } from "../components/ui/UntitledIcons";
 import type { ThemeColors } from "../lib/theme";
-import { profColors } from "../lib/theme";
+import { getProfColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface Item {
@@ -67,6 +67,8 @@ const FilterTabs = ({ activeTab, setActiveTab, counts, colors }: any) => {
 
 function ItemCard({ item, colors }: { item: any, colors: ThemeColors }) {
   const navigation = useNavigation();
+  const { isDark } = useTheme();
+  const profColors = getProfColors(isDark);
   const isOutOfStock = (item.stockQuantity || 0) <= 0 && item.type !== 'service';
   const isLowStock = !isOutOfStock && (item.stockQuantity || 0) <= (item.lowStockAlert || 0) && item.type !== 'service';
 

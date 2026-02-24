@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { Input, Select, type SelectOption } from "@/components/ui";
+import { DateInput, Select, type SelectOption } from "@/components/ui";
 import { Calendar } from "lucide-react";
 import type { DateRange, ReportPeriod } from "../types";
 
@@ -184,20 +184,18 @@ export function DateRangeFilter({
 
       {showCustom && (
         <>
-          <Input
-            type="date"
+          <DateInput
             value={value.from}
-            onChange={(e) => {
-              onChange({ ...value, from: e.target.value });
+            onChange={(val) => {
+              onChange({ ...value, from: val });
             }}
             className="w-36"
           />
           <span className="text-slate-400">to</span>
-          <Input
-            type="date"
+          <DateInput
             value={value.to}
-            onChange={(e) => {
-              onChange({ ...value, to: e.target.value });
+            onChange={(val) => {
+              onChange({ ...value, to: val });
             }}
             className="w-36"
           />

@@ -267,6 +267,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
       const today = now.split("T")[0]; // YYYY-MM-DD for comparison
+      const user = useAuthStore.getState().user;
 
       // Calculate totals
       const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -312,8 +313,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           `INSERT INTO sale_invoices (
             id, invoice_number, customer_id, customer_name, date, due_date, status,
             subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-            notes, terms, transport_name, delivery_date, delivery_location, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            notes, terms, transport_name, delivery_date, delivery_location, created_at, updated_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.invoiceNumber,
@@ -335,6 +336,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
             data.deliveryLocation ?? null,
             now,
             now,
+            user?.id ?? null,
           ]
         );
 
@@ -344,8 +346,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           await tx.execute(
             `INSERT INTO sale_invoice_items (
                 id, invoice_id, item_id, item_name, description, batch_number, quantity, unit,
-                unit_price, mrp, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                unit_price, mrp, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -360,6 +362,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
               item.discountPercent ?? 0,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
 
@@ -409,8 +412,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
               id, receipt_number, customer_id, customer_name, date, amount,
               payment_mode, invoice_id, invoice_number,
               cheque_number, cheque_date, bank_name,
-              created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              created_at, updated_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               crypto.randomUUID(),
               receiptNumber,
@@ -427,6 +430,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
               paymentMode === "cheque" ? data.initialChequeBankName : null,
               now,
               now,
+              user?.id ?? null,
             ]
           );
 
@@ -457,8 +461,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                 id, date, type, amount, description, category,
                 related_customer_id, related_customer_name,
                 related_invoice_id, related_invoice_number,
-                created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                created_at, updated_at, user_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.date,
@@ -472,6 +476,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
           }
@@ -482,8 +487,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                 id, account_id, date, type, amount, description,
                 related_customer_id, related_customer_name,
                 related_invoice_id, related_invoice_number,
-                created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                created_at, updated_at, user_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.initialBankAccountId,
@@ -497,6 +502,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
 
@@ -513,8 +519,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                     id, cheque_number, type, customer_id, customer_name,
                     bank_name, date, due_date, status, amount,
                     related_invoice_id, related_invoice_number,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    created_at, updated_at, user_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 crypto.randomUUID(),
                 data.initialChequeNumber,
@@ -530,6 +536,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
                 data.invoiceNumber,
                 now,
                 now,
+                user?.id ?? null,
               ]
             );
           }
@@ -750,8 +757,8 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
           await tx.execute(
             `INSERT INTO sale_invoice_items (
               id, invoice_id, item_id, item_name, description, batch_number, quantity, unit,
-              unit_price, mrp, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, mrp, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -766,6 +773,7 @@ export function useSaleInvoiceMutations(): SaleInvoiceMutations {
               item.discountPercent ?? 0,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
 

@@ -24,6 +24,10 @@ export type {
 } from "./input";
 export type { NumberInputProps } from "./number-input";
 
+// DateInput
+export { DateInput } from "./date-input";
+export type { DateInputProps } from "./date-input";
+
 // Card
 export { Card, CardHeader, CardBody, CardFooter, MetricCard } from "./card";
 export type {

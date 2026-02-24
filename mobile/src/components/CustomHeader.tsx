@@ -2,7 +2,7 @@ import type React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeftIcon, BellIcon } from "./ui/UntitledIcons";
+import { ArrowLeftIcon } from "./ui/UntitledIcons";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface CustomHeaderProps {
@@ -52,12 +52,7 @@ export function CustomHeader({ title, showBack, rightAction }: CustomHeaderProps
 
         {/* Right Section: Actions */}
         <View className="flex-1 items-end justify-center">
-          {rightAction ? rightAction : (
-            // Default Right Action (e.g. Notifications)
-            <TouchableOpacity className="p-2 justify-center items-center">
-              <BellIcon color={colors.text} size={22} />
-            </TouchableOpacity>
-          )}
+          {rightAction ?? null}
         </View>
       </View>
     </View>

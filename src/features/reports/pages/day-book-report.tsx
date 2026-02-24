@@ -5,7 +5,7 @@ import {
   Badge,
   Select,
   type SelectOption,
-  Input,
+  DateInput,
 } from "@/components/ui";
 import { ReportLayout } from "../components";
 import {
@@ -15,7 +15,6 @@ import {
   ArrowDownCircle,
   Receipt,
   Settings2,
-  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { DayBookEntry } from "../types";
@@ -135,12 +134,9 @@ export function DayBookReport(): React.ReactNode {
         subtitle="All transactions for a specific day"
         filters={
           <div className="flex items-center gap-4">
-            <Input
-              type="date"
+            <DateInput
               value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-              }}
+              onChange={setSelectedDate}
               className="w-40"
             />
           </div>
@@ -168,17 +164,11 @@ export function DayBookReport(): React.ReactNode {
       }}
       filters={
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-500" />
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-              }}
-              className="w-40"
-            />
-          </div>
+          <DateInput
+            value={selectedDate}
+            onChange={setSelectedDate}
+            className="w-40"
+          />
           <Select
             options={typeOptions}
             value={typeFilter}

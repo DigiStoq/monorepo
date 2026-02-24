@@ -8,7 +8,8 @@ import {
   StyleSheet,
   Animated
 } from "react-native";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Segment {
   label: string;
@@ -26,6 +27,7 @@ export function SegmentedControl({
   activeValue,
   onChange,
 }: SegmentedControlProps) {
+  const { colors } = useTheme();
   const [containerWidth, setContainerWidth] = React.useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -46,7 +48,7 @@ export function SegmentedControl({
   };
 
   return (
-    <View style={styles.container} onLayout={handleLayout}>
+    <View style={[styles.container, { backgroundColor: colors.surfaceHover }]} onLayout={handleLayout}>
       {/* Animated Background */}
       {containerWidth > 0 && (
         <Animated.View
@@ -55,6 +57,7 @@ export function SegmentedControl({
             {
               width: segmentWidth - 8,
               transform: [{ translateX }],
+              backgroundColor: colors.surface,
             },
           ]}
         />
@@ -70,7 +73,7 @@ export function SegmentedControl({
             onPress={() => { onChange(segment.value); }}
             activeOpacity={0.7}
           >
-            <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+            <Text style={[styles.segmentText, { color: colors.textSecondary }, isActive && { color: colors.text, fontWeight: fontWeight.semibold }]}>
               {segment.label}
             </Text>
           </TouchableOpacity>
@@ -83,7 +86,6 @@ export function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: colors.surfaceHover,
     borderRadius: borderRadius.full,
     padding: 4,
     position: "relative",
@@ -93,7 +95,6 @@ const styles = StyleSheet.create({
     top: 4,
     left: 4,
     bottom: 4,
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.full,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -111,11 +112,6 @@ const styles = StyleSheet.create({
   segmentText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
-  },
-  segmentTextActive: {
-    color: colors.text,
-    fontWeight: fontWeight.semibold,
   },
 });
 

@@ -109,6 +109,22 @@ export const profColors = {
   primary:    { bg: "#f0fdfa", icon: "#0f766e", border: "#ccfbf1" }, // teal-50/700/100
 };
 
+// Dark mode professional palette
+export const profColorsDark = {
+  receivable: { bg: "#052e16", icon: "#4ade80", border: "#14532d" }, // green-950/400/900
+  payable:    { bg: "#4c0519", icon: "#fb7185", border: "#881337" }, // rose-950/400/900
+  sales:      { bg: "#1e1b4b", icon: "#a5b4fc", border: "#312e81" }, // indigo-950/300/900
+  items:      { bg: "#0f172a", icon: "#94a3b8", border: "#1e293b" }, // slate-900/400/800
+  warning:    { bg: "#451a03", icon: "#fbbf24", border: "#78350f" }, // amber-950/400/900
+  danger:     { bg: "#450a0a", icon: "#f87171", border: "#7f1d1d" }, // red-950/400/900
+  neutral:    { bg: "#1e293b", icon: "#94a3b8", border: "#334155" }, // slate-800/400/700
+  primary:    { bg: "#042f2e", icon: "#2dd4bf", border: "#134e4a" }, // teal-950/400/900
+};
+
+export function getProfColors(isDark: boolean) {
+  return isDark ? profColorsDark : profColors;
+}
+
 export const colors = lightColors; // Backward compatibility
 export type ThemeColors = typeof lightColors;
 

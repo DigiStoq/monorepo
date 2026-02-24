@@ -7,7 +7,6 @@ import { useUserPreferences } from "../../hooks/useUserPreferences";
 import {
     Moon01Icon,
     Globe01Icon,
-    Bell01Icon,
     CalendarIcon,
     Hash01Icon,
     FileCheck02Icon,
@@ -246,19 +245,6 @@ export function PreferencesScreen() {
                             subtitle="English (US)"
                             type="arrow"
                             onPress={() => { Alert.alert("Coming Soon", "Language selection will be available soon."); }}
-                        />
-                    </View>
-                </View>
-
-                {/* Notifications */}
-                <View className="mb-6">
-                    <Text className="text-sm font-bold text-text-muted mb-2 uppercase tracking-widest">Notifications</Text>
-                    <View className="bg-surface rounded-lg overflow-hidden border border-border shadow-sm">
-                        <PreferenceItem
-                            icon={Bell01Icon}
-                            title="Push Notifications"
-                            value={true}
-                            onValueChange={() => { Alert.alert("Coming Soon", "Notification settings will be available soon."); }}
                         />
                     </View>
                 </View>

@@ -10,6 +10,7 @@ import {
   ModalBody,
   ModalFooter,
   Input,
+  DateInput,
   Select,
   ConfirmDeleteDialog,
   type SelectOption,
@@ -866,25 +867,23 @@ export function SaleInvoicesPage(): React.ReactNode {
                 size="md"
                 className="min-w-[140px]"
               />
-              <Input
-                type="date"
+              <DateInput
                 value={filters.dateRange.from ?? ""}
-                onChange={(e) => {
+                onChange={(val) => {
                   setFilters((f) => ({
                     ...f,
-                    dateRange: { ...f.dateRange, from: e.target.value || null },
+                    dateRange: { ...f.dateRange, from: val || null },
                   }));
                 }}
                 className="w-36"
                 aria-label="From date"
               />
-              <Input
-                type="date"
+              <DateInput
                 value={filters.dateRange.to ?? ""}
-                onChange={(e) => {
+                onChange={(val) => {
                   setFilters((f) => ({
                     ...f,
-                    dateRange: { ...f.dateRange, to: e.target.value || null },
+                    dateRange: { ...f.dateRange, to: val || null },
                   }));
                 }}
                 className="w-36"
@@ -1231,15 +1230,10 @@ export function SaleInvoicesPage(): React.ReactNode {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      Cheque Date (Due Date)
-                    </label>
-                    <Input
-                      type="date"
+                    <DateInput
+                      label="Cheque Date (Due Date)"
                       value={chequeDueDate}
-                      onChange={(e) => {
-                        setChequeDueDate(e.target.value);
-                      }}
+                      onChange={setChequeDueDate}
                     />
                   </div>
                 </>

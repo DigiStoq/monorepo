@@ -6,6 +6,7 @@ import {
   CardBody,
   Button,
   Input,
+  DateInput,
   NumberInput,
   Textarea,
   Select,
@@ -14,6 +15,7 @@ import {
 import type { PaymentInFormData, PaymentMode, SaleInvoice } from "../types";
 import type { Customer } from "@/features/customers";
 import { useCurrency } from "@/hooks/useCurrency";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -127,7 +129,14 @@ export function PaymentInForm({
 
   // Handle submit
   const handleSubmit = (): void => {
-    if (!customerId || amount <= 0) return;
+    if (!customerId) {
+      toast.error("Please select a customer");
+      return;
+    }
+    if (amount <= 0) {
+      toast.error("Payment amount must be greater than zero");
+      return;
+    }
 
     const formData: PaymentInFormData = {
       customerId,
@@ -200,14 +209,11 @@ export function PaymentInForm({
                 </div>
 
                 <div>
-                  <Input
-                    type="date"
+                  <DateInput
                     label="Payment Date"
                     required
                     value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                    }}
+                    onChange={setDate}
                   />
                 </div>
               </div>
@@ -292,13 +298,10 @@ export function PaymentInForm({
                     }}
                     placeholder="Enter cheque number"
                   />
-                  <Input
-                    type="date"
+                  <DateInput
                     label="Cheque Date"
                     value={chequeDate}
-                    onChange={(e) => {
-                      setChequeDate(e.target.value);
-                    }}
+                    onChange={setChequeDate}
                   />
                   <Input
                     label="Bank Name"

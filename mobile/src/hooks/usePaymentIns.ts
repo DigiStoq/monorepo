@@ -161,8 +161,8 @@ export function usePaymentInMutations() {
           `INSERT INTO payment_ins (
             id, receipt_number, customer_id, customer_name, date, amount,
             payment_mode, reference_number, invoice_id, invoice_number, notes,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.receiptNumber,
@@ -177,6 +177,7 @@ export function usePaymentInMutations() {
             data.notes || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 

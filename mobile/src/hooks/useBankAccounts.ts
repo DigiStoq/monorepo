@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { BankAccountRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface BankAccount {
   id: string;
@@ -105,6 +106,7 @@ interface BankAccountMutations {
 
 export function useBankAccountMutations(): BankAccountMutations {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createAccount = useCallback(
     async (data: {
@@ -119,8 +121,8 @@ export function useBankAccountMutations(): BankAccountMutations {
       const now = new Date().toISOString();
       
       await db.execute(
-        `INSERT INTO bank_accounts (id, name, bank_name, account_number, account_type, opening_balance, current_balance, is_active, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO bank_accounts (id, name, bank_name, account_number, account_type, opening_balance, current_balance, is_active, notes, created_at, updated_at, user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -133,6 +135,7 @@ export function useBankAccountMutations(): BankAccountMutations {
           data.notes || null,
           now,
           now,
+          user?.id || null,
         ]
       );
       return id;

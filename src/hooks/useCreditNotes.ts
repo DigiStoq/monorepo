@@ -164,8 +164,8 @@ export function useCreditNoteMutations(): CreditNoteMutations {
           `INSERT INTO credit_notes (
             id, credit_note_number, customer_id, customer_name, date,
             invoice_id, invoice_number, reason, subtotal, tax_amount, total, notes,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.creditNoteNumber,
@@ -181,6 +181,7 @@ export function useCreditNoteMutations(): CreditNoteMutations {
             data.notes ?? null,
             now,
             now,
+            user?.id ?? null,
           ]
         );
 
@@ -189,8 +190,8 @@ export function useCreditNoteMutations(): CreditNoteMutations {
           await tx.execute(
             `INSERT INTO credit_note_items (
               id, credit_note_id, item_id, item_name, description, quantity, unit,
-              unit_price, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -202,6 +203,7 @@ export function useCreditNoteMutations(): CreditNoteMutations {
               item.unitPrice,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
         }
@@ -324,8 +326,8 @@ export function useCreditNoteMutations(): CreditNoteMutations {
           await tx.execute(
             `INSERT INTO credit_note_items (
               id, credit_note_id, item_id, item_name, description, quantity, unit,
-              unit_price, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              unit_price, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -337,6 +339,7 @@ export function useCreditNoteMutations(): CreditNoteMutations {
               item.unitPrice,
               item.taxPercent ?? 0,
               item.amount,
+              user?.id ?? null,
             ]
           );
         }

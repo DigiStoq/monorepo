@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Category } from "@/features/inventory/types";
 
 // Database row type (snake_case columns from SQLite)
@@ -62,12 +63,13 @@ export function useCategoryMutations(): CategoryMutations {
     async (data: { name: string; description?: string }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.writeTransaction(async (tx) => {
         await tx.execute(
-          `INSERT INTO categories (id, name, description, item_count, created_at)
-            VALUES (?, ?, ?, ?, ?)`,
-          [id, data.name, data.description ?? null, 0, now]
+          `INSERT INTO categories (id, name, description, item_count, created_at, user_id)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+          [id, data.name, data.description ?? null, 0, now, user?.id ?? null]
         );
       });
 

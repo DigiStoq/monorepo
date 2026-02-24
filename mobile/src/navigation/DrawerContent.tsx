@@ -12,6 +12,7 @@ import {
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   LayoutDashboard,
   Users,
@@ -26,6 +27,7 @@ import {
   TrendingUp,
   Landmark,
   PieChart,
+  Layers,
 } from "lucide-react-native";
 
 interface MenuItem {
@@ -38,6 +40,7 @@ interface MenuItem {
 
 export function DrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
@@ -57,6 +60,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
     { label: "Dashboard", icon: LayoutDashboard, route: "Main", params: { screen: "DashboardTab" } },
     { label: "Customers", icon: Users, route: "Customers" },
     { label: "Items", icon: Package, route: "Main", params: { screen: "ItemsTab" } },
+    { label: "Categories", icon: Layers, route: "Categories" },
     {
       label: "Sales",
       icon: TrendingUp,
@@ -141,19 +145,19 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.borderLight }]}>
         <View style={styles.userInfo}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
             <Text style={styles.avatarText}>
               {displayName.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.userName} numberOfLines={1}>
+            <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={styles.userEmail} numberOfLines={1}>{user?.email}</Text>
+            <Text style={[styles.userEmail, { color: colors.textMuted }]} numberOfLines={1}>{user?.email}</Text>
           </View>
         </View>
       </View>
@@ -175,22 +179,22 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                     <TouchableOpacity
                       style={[
                           styles.menuItem,
-                          (expanded || active) && styles.menuItemActive
+                          (expanded || active) && { backgroundColor: colors.primaryMuted }
                       ]}
                       onPress={() => {
                         toggleSection(item.label);
                       }}
                     >
-                      <View style={[styles.menuItemIcon, (expanded || active) && styles.iconActive]}>
-                        <item.icon size={20} color={(expanded || active) ? "#C4A484" : "#64748b"} />
+                      <View style={[styles.menuItemIcon, { backgroundColor: colors.background }, (expanded || active) && { backgroundColor: colors.primaryMuted }]}>
+                        <item.icon size={20} color={(expanded || active) ? colors.primary : colors.textSecondary} />
                       </View>
-                      <Text style={[styles.menuItemLabel, (expanded || active) && styles.labelActive]}>
+                      <Text style={[styles.menuItemLabel, { color: colors.textSecondary }, (expanded || active) && { color: colors.primary }]}>
                           {item.label}
                       </Text>
                       {expanded ? (
-                        <ChevronDown size={16} color="#C4A484" />
+                        <ChevronDown size={16} color={colors.primary} />
                       ) : (
-                        <ChevronRight size={16} color={active ? "#C4A484" : "#94a3b8"} />
+                        <ChevronRight size={16} color={active ? colors.primary : colors.textMuted} />
                       )}
                     </TouchableOpacity>
 
@@ -209,7 +213,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                             >
                               <Text style={[
                                 styles.subMenuItemLabel,
-                                isChildActive && { color: "#C4A484", fontWeight: "700" }
+                                { color: colors.textSecondary },
+                                isChildActive && { color: colors.primary, fontWeight: "700" }
                               ]}>
                                 {child.label}
                               </Text>
@@ -221,15 +226,15 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                   </>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.menuItem, active && styles.menuItemActive]}
+                    style={[styles.menuItem, active && { backgroundColor: colors.primaryMuted }]}
                     onPress={() => {
                       handleNavigation(item.route, item.params);
                     }}
                   >
-                    <View style={[styles.menuItemIcon, active && styles.iconActive]}>
-                      <item.icon size={20} color={active ? "#C4A484" : "#64748b"} />
+                    <View style={[styles.menuItemIcon, { backgroundColor: colors.background }, active && { backgroundColor: colors.primaryMuted }]}>
+                      <item.icon size={20} color={active ? colors.primary : colors.textSecondary} />
                     </View>
-                    <Text style={[styles.menuItemLabel, active && styles.labelActive]}>{item.label}</Text>
+                    <Text style={[styles.menuItemLabel, { color: colors.textSecondary }, active && { color: colors.primary }]}>{item.label}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -238,10 +243,10 @@ export function DrawerContent(props: DrawerContentComponentProps) {
         </View>
       </DrawerContentScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <LogOut size={18} color="#ef4444" />
-          <Text style={styles.logoutText}>Sign Out</Text>
+      <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
+        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.dangerMuted }]} onPress={signOut}>
+          <LogOut size={18} color={colors.danger} />
+          <Text style={[styles.logoutText, { color: colors.danger }]}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -251,15 +256,12 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   header: {
-    backgroundColor: "#f8fafc",
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
   },
   userInfo: {
     flexDirection: "row",
@@ -270,10 +272,8 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: "#C4A484",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#C4A484",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -287,12 +287,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#0f172a",
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 13,
-    color: "#94a3b8",
   },
   scrollContent: {
     paddingTop: 16,
@@ -310,29 +308,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
   },
-  menuItemActive: {
-    backgroundColor: "#f5f0eb",
-  },
   menuItemIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#f8fafc",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  iconActive: {
-    backgroundColor: "#f5f0eb",
-  },
   menuItemLabel: {
     flex: 1,
     fontSize: 15,
-    color: "#475569",
     fontWeight: "600",
-  },
-  labelActive: {
-    color: "#C4A484",
   },
   subMenuContainer: {
     paddingLeft: 48,
@@ -344,13 +331,11 @@ const styles = StyleSheet.create({
   },
   subMenuItemLabel: {
     fontSize: 14,
-    color: "#64748b",
     fontWeight: "500",
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
   },
   logoutButton: {
@@ -360,10 +345,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: "#fef2f2",
   },
   logoutText: {
-    color: "#ef4444",
     fontSize: 15,
     fontWeight: "700",
   },

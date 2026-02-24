@@ -2,7 +2,7 @@ import type React from "react";
 import type { TextInputProps, ViewStyle } from "react-native";
 import { View, Text, TextInput } from "react-native";
 import { cn } from "../../lib/utils";
-import { colors } from "../../lib/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -21,6 +21,7 @@ export function Input({
   icon,
   ...props
 }: InputProps) {
+  const { colors } = useTheme();
   return (
     <View className={cn("gap-1.5", containerClassName)} style={containerStyle}>
       {label && (
@@ -38,7 +39,7 @@ export function Input({
 
         <TextInput
           className={cn("flex-1 text-base text-text", className)}
-          placeholderTextColor={colors.textMuted} // Native prop needed for placeholder color
+          placeholderTextColor={colors.textMuted}
           {...props}
         />
       </View>

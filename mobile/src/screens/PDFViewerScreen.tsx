@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
 import { useTheme } from '../contexts/ThemeContext';
-import { ChevronLeftIcon, Share01Icon, PrinterIcon } from '../components/ui/UntitledIcons';
+import { ChevronLeftIcon, Download01Icon, PrinterIcon } from '../components/ui/UntitledIcons';
 
 export default function PDFViewerScreen() {
     const route = useRoute<any>();
@@ -61,7 +61,7 @@ export default function PDFViewerScreen() {
                         <PrinterIcon size={20} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleShare} className="p-2">
-                        <Share01Icon size={20} color={colors.primary} />
+                        <Download01Icon size={20} color={colors.primary} />
                     </TouchableOpacity>
                 </View>
             </View>

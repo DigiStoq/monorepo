@@ -1,15 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { CalendarIcon } from "../../components/ui/UntitledIcons";
+import { View, Text, FlatList } from "react-native";
 import type { DateRange } from "../../hooks/useReports";
 import { usePurchasesBySupplierReport } from "../../hooks/useReports";
-import { CustomHeader } from "../../components/CustomHeader";
-import { useTheme } from "../../contexts/ThemeContext";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
 
 export function PurchasesBySupplierScreen() {
-    const navigation = useNavigation();
-    const { colors } = useTheme();
 
     // Default to current month
     const now = new Date();
@@ -35,15 +30,8 @@ export function PurchasesBySupplierScreen() {
     );
 
     return (
-        <View className="flex-1 bg-background">
-            <CustomHeader title="Purchase By Supplier" showBack />
-
+        <ReportScreenLayout title="Purchase By Supplier" dateRange={dateRange} onDateRangeChange={setDateRange}>
             <View className="flex-1">
-                <View className="flex-row items-center justify-center py-3 bg-surface-hover">
-                    <CalendarIcon color={colors.textMuted} size={16} />
-                    <Text className="text-sm text-text-secondary font-medium ml-1.5">{dateRange.from} - {dateRange.to}</Text>
-                </View>
-
                 {isLoading ? (
                     <Text className="text-center mt-10 text-text-muted">Loading...</Text>
                 ) : (
@@ -56,6 +44,6 @@ export function PurchasesBySupplierScreen() {
                     />
                 )}
             </View>
-        </View>
+        </ReportScreenLayout>
     );
 }

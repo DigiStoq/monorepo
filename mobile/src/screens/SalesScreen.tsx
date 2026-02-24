@@ -12,11 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSaleInvoices } from "../hooks/useSaleInvoices";
 import { SearchIcon, ReceiptIcon, ChevronRightIcon } from "../components/ui/UntitledIcons";
 import type { ThemeColors } from "../lib/theme";
-import { spacing, borderRadius, fontSize, fontWeight, shadows, profColors } from "../lib/theme";
+import { spacing, borderRadius, fontSize, fontWeight, shadows, getProfColors } from "../lib/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
 function InvoiceCard({ invoice, colors }: { invoice: any; colors: ThemeColors }) {
   const navigation = useNavigation();
+  const { isDark } = useTheme();
+  const profColors = getProfColors(isDark);
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     draft: { bg: profColors.items.bg, text: profColors.items.icon, border: profColors.items.border },

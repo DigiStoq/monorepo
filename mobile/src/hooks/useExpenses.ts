@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { ExpenseRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 
 export type ExpenseCategory =
@@ -137,6 +138,7 @@ export function useExpenseById(id: string | null): {
 
 export function useExpenseMutations() {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createExpense = useCallback(
     async (data: Omit<Expense, "id" | "createdAt" | "updatedAt">): Promise<string> => {
@@ -148,8 +150,8 @@ export function useExpenseMutations() {
           id, expense_number, category, customer_id, customer_name,
           paid_to_name, paid_to_details, date, amount,
           payment_mode, reference_number, description, notes, attachment_url,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.expenseNumber,
@@ -167,6 +169,7 @@ export function useExpenseMutations() {
           data.attachmentUrl || null,
           now,
           now,
+          user?.id || null,
         ]
       );
 

@@ -4,7 +4,7 @@ import {
   Card,
   CardBody,
   Button,
-  Input,
+  DateInput,
   NumberInput,
   Textarea,
 } from "@/components/ui";
@@ -104,15 +104,7 @@ export function CashAdjustmentForm({
       {/* Form Fields */}
       <Card>
         <CardBody className="space-y-4">
-          <Input
-            label="Date"
-            required
-            type="date"
-            value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
-            }}
-          />
+          <DateInput label="Date" required value={date} onChange={setDate} />
 
           <NumberInput
             label="Amount"

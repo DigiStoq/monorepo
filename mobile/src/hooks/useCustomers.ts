@@ -2,6 +2,7 @@ import { useQuery } from "@powersync/react-native";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "../lib/powersync";
 import type { CustomerRecord } from "../lib/powersync";
+import { useAuth } from "../contexts/AuthContext";
 
 export type CustomerType = "customer" | "supplier" | "both";
 
@@ -142,6 +143,7 @@ export function useCustomerById(id: string | null): {
 
 export function useCustomerMutations() {
   const db = getPowerSyncDatabase();
+  const { user } = useAuth();
 
   const createCustomer = useCallback(
     async (data: CustomerFormData): Promise<string> => {
@@ -152,8 +154,8 @@ export function useCustomerMutations() {
         `INSERT INTO customers (
           id, name, type, phone, email, tax_id, address, city, state, zip_code,
           opening_balance, current_balance, credit_limit, credit_days, notes, is_active,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -173,6 +175,7 @@ export function useCustomerMutations() {
           1,
           now,
           now,
+          user?.id || null,
         ]
       );
 

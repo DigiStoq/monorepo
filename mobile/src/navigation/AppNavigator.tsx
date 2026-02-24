@@ -4,6 +4,7 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { DrawerContent } from "./DrawerContent";
 import { MainTabs } from "./MainTabs";
+import { useTheme } from "../contexts/ThemeContext";
 
 // Screens
 import { CustomersScreen } from "../screens/CustomersScreen";
@@ -34,6 +35,7 @@ import { ChequesScreen } from "../screens/ChequesScreen";
 import { ChequeFormScreen } from "../screens/ChequeFormScreen";
 import { LoansScreen } from "../screens/LoansScreen";
 import { LoanFormScreen } from "../screens/LoanFormScreen";
+import { LoanPaymentFormScreen } from "../screens/LoanPaymentFormScreen";
 import { ReportsScreen } from "../screens/reports/ReportsScreen";
 import { SalesSummaryScreen } from "../screens/reports/SalesSummaryScreen";
 import { SalesRegisterScreen } from "../screens/reports/SalesRegisterScreen";
@@ -66,11 +68,14 @@ import { PreferencesScreen } from "../screens/settings/PreferencesScreen";
 import { SecuritySettingsScreen } from "../screens/settings/SecuritySettingsScreen";
 
 import { UtilitiesScreen } from "../screens/UtilitiesScreen";
+import { CategoriesScreen } from "../screens/CategoriesScreen";
+import { CategoryFormScreen } from "../screens/CategoryFormScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
 function AppDrawer() {
+  const { colors } = useTheme();
   return (
     <Drawer.Navigator
       drawerContent={(props) => <DrawerContent {...props} />}
@@ -78,19 +83,19 @@ function AppDrawer() {
         headerShown: false,
         headerStatusBarHeight: 0,
         headerStyle: {
-          backgroundColor: "#ffffff",
+          backgroundColor: colors.surface,
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 1,
-          borderBottomColor: "#e2e8f0",
+          borderBottomColor: colors.border,
         },
         headerTitleAlign: 'left',
         headerTitleStyle: {
           fontSize: 17,
           fontWeight: '600',
-          color: '#0f172a',
+          color: colors.text,
         },
-        headerTintColor: '#C4A484',
+        headerTintColor: colors.primary,
       }}
       id="AppDrawer"
     >
@@ -102,6 +107,7 @@ function AppDrawer() {
         }}
       />
       <Drawer.Screen name="Customers" component={CustomersScreen} options={{ headerShown: false }} />
+      <Drawer.Screen name="Categories" component={CategoriesScreen} options={{ headerShown: false }} />
 
       {/* Cash & Bank Module */}
       <Drawer.Screen
@@ -132,24 +138,25 @@ function AppDrawer() {
 }
 
 export function AppNavigator() {
+  const { colors } = useTheme();
   return (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
           headerShown: true,
           headerStyle: {
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface,
           },
           headerTitleStyle: {
             fontSize: 17,
             fontWeight: '600',
-            color: '#0f172a',
+            color: colors.text,
           },
-          headerTintColor: '#C4A484',
+          headerTintColor: colors.primary,
           headerShadowVisible: false,
-          headerBackVisible: false, // Changed from headerBackTitleVisible which might be invalid
+          headerBackVisible: false,
           contentStyle: {
-            backgroundColor: '#f8fafc',
+            backgroundColor: colors.background,
           },
         }}
         id="RootStack"
@@ -252,6 +259,16 @@ export function AppNavigator() {
         <Stack.Screen
           name="LoanForm"
           component={LoanFormScreen}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="LoanPaymentForm"
+          component={LoanPaymentFormScreen}
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="CategoryForm"
+          component={CategoryFormScreen}
           options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Group screenOptions={{ headerShown: false }}>

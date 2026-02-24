@@ -18,6 +18,7 @@ import type { CustomerRecord } from "../lib/powersync";
 import {
     Button,
     Input,
+    DateInput,
     Card,
     CardHeader,
     CardBody,
@@ -239,19 +240,17 @@ export function ChequeFormScreen() {
 
                         <View className="flex-row gap-2 mb-4">
                             <View className="flex-1">
-                                <Input
+                                <DateInput
                                     label="Issue Date"
                                     value={date}
-                                    onChangeText={setDate}
-                                    placeholder="YYYY-MM-DD"
+                                    onChange={setDate}
                                 />
                             </View>
                             <View className="flex-1">
-                                <Input
+                                <DateInput
                                     label="Due Date"
                                     value={dueDate}
-                                    onChangeText={setDueDate}
-                                    placeholder="YYYY-MM-DD"
+                                    onChange={setDueDate}
                                 />
                             </View>
                         </View>

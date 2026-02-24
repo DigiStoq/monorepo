@@ -170,8 +170,8 @@ export function usePaymentInMutations(): PaymentInMutations {
             id, receipt_number, customer_id, customer_name, date, amount,
             payment_mode, reference_number, invoice_id, invoice_number, notes,
             cheque_number, cheque_date, bank_name, bank_account_number, card_number,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.receiptNumber,
@@ -191,6 +191,7 @@ export function usePaymentInMutations(): PaymentInMutations {
             data.cardNumber ?? null,
             now,
             now,
+            user?.id ?? null,
           ]
         );
 

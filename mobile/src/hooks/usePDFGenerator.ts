@@ -72,6 +72,34 @@ export function usePDFGenerator() {
         await previewPDF(uri, `Estimate #${data.documentNumber}`);
     };
 
+    const generatePurchaseInvoicePDF = async (data: PDFInvoiceData) => {
+        const html = generateInvoiceHTML({ ...data, documentTitle: "PURCHASE INVOICE" });
+        const filename = `PurchaseInvoice_${data.documentNumber}.pdf`;
+        const uri = await generatePDF(html, filename);
+        await sharePDF(uri);
+    };
+
+    const previewPurchaseInvoicePDF = async (data: PDFInvoiceData) => {
+        const html = generateInvoiceHTML({ ...data, documentTitle: "PURCHASE INVOICE" });
+        const filename = `PurchaseInvoice_${data.documentNumber}.pdf`;
+        const uri = await generatePDF(html, filename);
+        await previewPDF(uri, `Purchase Invoice #${data.documentNumber}`);
+    };
+
+    const generateCreditNotePDF = async (data: PDFInvoiceData) => {
+        const html = generateInvoiceHTML({ ...data, documentTitle: "CREDIT NOTE" });
+        const filename = `CreditNote_${data.documentNumber}.pdf`;
+        const uri = await generatePDF(html, filename);
+        await sharePDF(uri);
+    };
+
+    const previewCreditNotePDF = async (data: PDFInvoiceData) => {
+        const html = generateInvoiceHTML({ ...data, documentTitle: "CREDIT NOTE" });
+        const filename = `CreditNote_${data.documentNumber}.pdf`;
+        const uri = await generatePDF(html, filename);
+        await previewPDF(uri, `Credit Note #${data.documentNumber}`);
+    };
+
     const previewPDF = async (uri: string, title?: string) => {
         navigation.navigate('PDFViewer', { uri, title });
     };
@@ -79,8 +107,12 @@ export function usePDFGenerator() {
     return {
         generateInvoicePDF,
         generateEstimatePDF,
+        generatePurchaseInvoicePDF,
+        generateCreditNotePDF,
         previewInvoicePDF,
         previewEstimatePDF,
+        previewPurchaseInvoicePDF,
+        previewCreditNotePDF,
         generatePDF,
         sharePDF,
         previewPDF,

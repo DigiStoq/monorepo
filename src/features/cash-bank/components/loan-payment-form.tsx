@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Button,
+  DateInput,
   Input,
   NumberInput,
   Select,
@@ -123,13 +124,12 @@ export function LoanPaymentForm({
         </div>
       </div>
 
-      <Input
+      <DateInput
         label="Payment Date"
         required
-        type="date"
         value={formData.date}
-        onChange={(e) => {
-          handleChange("date", e.target.value);
+        onChange={(val) => {
+          handleChange("date", val);
         }}
         error={errors.date}
       />

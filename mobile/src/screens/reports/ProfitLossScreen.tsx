@@ -1,15 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowLeftIcon } from "../../components/ui/UntitledIcons";
-import { CustomHeader } from "../../components/CustomHeader";
+import { View, Text, ScrollView } from "react-native";
+import { ReportScreenLayout } from "../../components/reports/ReportScreenLayout";
 import type { DateRange } from "../../hooks/useReports";
 import { useProfitLossReport } from "../../hooks/useReports";
-import { useTheme } from "../../contexts/ThemeContext";
 
 export function ProfitLossScreen() {
-    const navigation = useNavigation();
-    const { colors } = useTheme();
 
     // Default to current month
     const now = new Date();
@@ -23,14 +18,8 @@ export function ProfitLossScreen() {
     const formatCurrency = (amount: number) => "$" + (amount || 0).toFixed(2);
 
     return (
-        <View className="flex-1 bg-background">
-            <CustomHeader title="Profit & Loss" showBack />
-
+        <ReportScreenLayout title="Profit & Loss" dateRange={dateRange} onDateRangeChange={setDateRange}>
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-                <View className="items-center mb-5">
-                    <Text className="text-sm text-text-secondary font-medium">{dateRange.from} - {dateRange.to}</Text>
-                </View>
-
                 {isLoading ? (
                     <Text className="text-center mt-10 text-text-muted">Loading data...</Text>
                 ) : !data ? (
@@ -107,6 +96,6 @@ export function ProfitLossScreen() {
                     </>
                 )}
             </ScrollView>
-        </View>
+        </ReportScreenLayout>
     );
 }

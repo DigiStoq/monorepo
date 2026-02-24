@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Loan } from "@/features/cash-bank/types";
 
 // Database row types (snake_case columns from SQLite)
@@ -150,14 +151,15 @@ export function useLoanMutations(): LoanMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.execute(
         `INSERT INTO loans (
           id, name, type, customer_id, customer_name, lender_name,
           principal_amount, outstanding_amount, interest_rate, interest_type,
           start_date, end_date, emi_amount, emi_day, total_emis, paid_emis,
-          status, notes, linked_bank_account_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          status, notes, linked_bank_account_id, created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -180,6 +182,7 @@ export function useLoanMutations(): LoanMutations {
           data.linkedBankAccountId ?? null,
           now,
           now,
+          user?.id ?? null,
         ]
       );
 
@@ -201,13 +204,14 @@ export function useLoanMutations(): LoanMutations {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
       const totalAmount = data.principalAmount + data.interestAmount;
+      const user = useAuthStore.getState().user;
 
       await db.writeTransaction(async (tx) => {
         await tx.execute(
           `INSERT INTO loan_payments (
             id, loan_id, date, principal_amount, interest_amount, total_amount,
-            payment_method, reference_number, notes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            payment_method, reference_number, notes, created_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.loanId,
@@ -219,6 +223,7 @@ export function useLoanMutations(): LoanMutations {
             data.referenceNumber ?? null,
             data.notes ?? null,
             now,
+            user?.id ?? null,
           ]
         );
 

@@ -12,7 +12,7 @@ import { ItemsScreen } from "../screens/ItemsScreen";
 import { SalesNavigator } from "../navigation/SalesNavigator";
 import { CustomersScreen } from "../screens/CustomersScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
-import { colors } from "../lib/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -37,6 +37,7 @@ const TabButton = (props: any) => {
 };
 
 export function MainTabs() {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator

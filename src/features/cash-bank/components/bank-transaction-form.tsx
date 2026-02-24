@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Button,
+  DateInput,
   Input,
   Select,
   Textarea,
@@ -132,13 +133,12 @@ export function BankTransactionForm({
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
+        <DateInput
           label="Date"
           required
-          type="date"
           value={formData.date}
-          onChange={(e) => {
-            handleChange("date", e.target.value);
+          onChange={(val) => {
+            handleChange("date", val);
           }}
           error={errors.date}
         />

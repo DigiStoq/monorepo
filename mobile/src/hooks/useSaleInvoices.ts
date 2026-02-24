@@ -261,8 +261,8 @@ export function useSaleInvoiceMutations() {
           `INSERT INTO sale_invoices (
             id, invoice_number, customer_id, customer_name, date, due_date, status,
             subtotal, tax_amount, discount_amount, total, amount_paid, amount_due,
-            notes, terms, transport_name, delivery_date, delivery_location, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            notes, terms, transport_name, delivery_date, delivery_location, created_at, updated_at, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             data.invoiceNumber,
@@ -284,6 +284,7 @@ export function useSaleInvoiceMutations() {
             data.deliveryLocation || null,
             now,
             now,
+            user?.id || null,
           ]
         );
 
@@ -293,8 +294,8 @@ export function useSaleInvoiceMutations() {
           await tx.execute(
             `INSERT INTO sale_invoice_items (
                 id, invoice_id, item_id, item_name, description, batch_number, quantity, unit,
-                unit_price, mrp, discount_percent, tax_percent, amount
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                unit_price, mrp, discount_percent, tax_percent, amount, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               id,
@@ -309,6 +310,7 @@ export function useSaleInvoiceMutations() {
               item.discountPercent || 0,
               item.taxPercent || 0,
               item.amount,
+              user?.id || null,
             ]
           );
 

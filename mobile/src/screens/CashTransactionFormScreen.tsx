@@ -14,6 +14,7 @@ import { XCloseIcon, SaveIcon, TrashIcon } from "../components/ui/UntitledIcons"
 import {
     Button,
     Input,
+    DateInput,
     Card,
     CardHeader,
     CardBody
@@ -163,11 +164,10 @@ export function CashTransactionFormScreen() {
                             style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center' }}
                             autoFocus={!isEditing}
                         />
-                        <Input
+                        <DateInput
                             label="Date"
                             value={date}
-                            onChangeText={setDate}
-                            placeholder="YYYY-MM-DD"
+                            onChange={setDate}
                         />
                         <Input
                             label="Description"

@@ -1,6 +1,7 @@
 import { useQuery } from "@powersync/react";
 import { useCallback, useMemo } from "react";
 import { getPowerSyncDatabase } from "@/lib/powersync";
+import { useAuthStore } from "@/stores/auth-store";
 import type { BankAccount, BankAccountType } from "@/features/cash-bank/types";
 
 // Database row type (snake_case columns from SQLite)
@@ -104,13 +105,14 @@ export function useBankAccountMutations(): BankAccountMutations {
     }): Promise<string> => {
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
 
       await db.execute(
         `INSERT INTO bank_accounts (
           id, name, bank_name, account_number, account_type,
           opening_balance, current_balance, is_active, notes,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.name,
@@ -123,6 +125,7 @@ export function useBankAccountMutations(): BankAccountMutations {
           data.notes ?? null,
           now,
           now,
+          user?.id ?? null,
         ]
       );
 
