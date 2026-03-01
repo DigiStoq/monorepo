@@ -26,7 +26,7 @@ export function SettingsCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {Icon && (
-              <div className="p-2 bg-teal-100 rounded-lg">
+              <div className="p-2 rounded-lg">
                 <Icon className="h-5 w-5 text-teal-600" />
               </div>
             )}

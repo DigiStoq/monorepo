@@ -58,7 +58,7 @@ function InfoItem({
 
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-slate-100 rounded-lg shrink-0">{icon}</div>
+      <div className="p-2 rounded-lg shrink-0">{icon}</div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
         <p className="text-sm font-medium text-slate-900">{value}</p>

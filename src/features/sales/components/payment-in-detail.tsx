@@ -40,28 +40,28 @@ const paymentModeConfig: Record<
   PaymentMode,
   { label: string; icon: typeof Banknote; color: string }
 > = {
-  cash: { label: "Cash", icon: Banknote, color: "text-green-600 bg-green-100" },
+  cash: { label: "Cash", icon: Banknote, color: "text-green-600" },
   bank: {
     label: "Bank Transfer",
     icon: Building2,
-    color: "text-blue-600 bg-blue-100",
+    color: "text-blue-600",
   },
   card: {
     label: "Card",
     icon: CreditCard,
-    color: "text-purple-600 bg-purple-100",
+    color: "text-purple-600",
   },
   ach: {
     label: "ACH Transfer",
     icon: Building2,
-    color: "text-teal-600 bg-teal-100",
+    color: "text-teal-600",
   },
   cheque: {
     label: "Cheque",
     icon: FileText,
-    color: "text-slate-600 bg-slate-100",
+    color: "text-slate-600",
   },
-  other: { label: "Other", icon: Wallet, color: "text-gray-600 bg-gray-100" },
+  other: { label: "Other", icon: Wallet, color: "text-gray-600" },
 };
 
 // ============================================================================
@@ -145,8 +145,8 @@ export function PaymentInDetail({
           <CardHeader title="Payment Details" />
           <CardBody className="space-y-4">
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                <User className="h-4 w-4 text-slate-500" />
+              <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Customer</p>
@@ -157,8 +157,8 @@ export function PaymentInDetail({
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                <Calendar className="h-4 w-4 text-slate-500" />
+              <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                <Calendar className="h-5 w-5 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Date</p>
@@ -174,11 +174,11 @@ export function PaymentInDetail({
             <div className="flex items-start gap-3">
               <div
                 className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                  "h-8 w-8 flex items-center justify-center shrink-0",
                   mode.color
                 )}
               >
-                <ModeIcon className="h-4 w-4" />
+                <ModeIcon className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">Payment Mode</p>
@@ -189,8 +189,8 @@ export function PaymentInDetail({
             {/* Conditional Payment Details */}
             {payment.chequeNumber && (
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                  <FileText className="h-4 w-4 text-orange-600" />
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Cheque Details</p>
@@ -213,8 +213,8 @@ export function PaymentInDetail({
 
             {payment.paymentMode === "bank" && payment.bankName && (
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                  <Building2 className="h-4 w-4 text-blue-600" />
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Bank Details</p>
@@ -232,8 +232,8 @@ export function PaymentInDetail({
 
             {payment.paymentMode === "card" && payment.cardNumber && (
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                  <CreditCard className="h-4 w-4 text-purple-600" />
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Card Details</p>
@@ -249,8 +249,8 @@ export function PaymentInDetail({
 
             {payment.referenceNumber && (
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                  <Hash className="h-4 w-4 text-slate-500" />
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <Hash className="h-5 w-5 text-slate-500" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Reference Number</p>
@@ -263,8 +263,8 @@ export function PaymentInDetail({
 
             {payment.invoiceNumber && (
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
-                  <FileText className="h-4 w-4 text-primary-600" />
+                <div className="h-8 w-8 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-primary-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Against Invoice</p>

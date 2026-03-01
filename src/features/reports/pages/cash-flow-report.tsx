@@ -76,7 +76,7 @@ export function CashFlowReportPage(): React.ReactNode {
           <Card>
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <Wallet className="h-5 w-5 text-slate-600" />
                 </div>
                 <div>
@@ -91,7 +91,7 @@ export function CashFlowReportPage(): React.ReactNode {
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <ArrowUpCircle className="h-5 w-5 text-success" />
                 </div>
                 <div>
@@ -106,7 +106,7 @@ export function CashFlowReportPage(): React.ReactNode {
           <Card className="bg-red-50 border-red-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <ArrowDownCircle className="h-5 w-5 text-error" />
                 </div>
                 <div>
@@ -121,7 +121,7 @@ export function CashFlowReportPage(): React.ReactNode {
           <Card className="bg-teal-50 border-teal-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-teal-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <Wallet className="h-5 w-5 text-teal-600" />
                 </div>
                 <div>

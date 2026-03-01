@@ -44,10 +44,9 @@ function UtilityItem({
             activeOpacity={0.7}
         >
             <View
-                className="w-12 h-12 rounded-lg items-center justify-center mr-4"
-                style={{ backgroundColor: `${(color || colors.primary) as string}20` }}
+                className="w-12 h-12 items-center justify-center mr-4"
             >
-                <Icon size={24} color={color || colors.primary} />
+                <Icon size={28} color={color || colors.primary} />
             </View>
             <View className="flex-1">
                 <Text className="text-md font-semibold text-text mb-0.5">{title}</Text>
@@ -85,10 +84,9 @@ function CustomAlert({
                         <XCloseIcon size={20} color={colors.textMuted} />
                     </TouchableOpacity>
                     <View
-                        className="w-12 h-12 rounded-full items-center justify-center self-center mb-4"
-                        style={{ backgroundColor: iconColor + '20' }}
+                        className="w-12 h-12 items-center justify-center self-center mb-4"
                     >
-                        <CheckIcon size={24} color={iconColor} />
+                        <CheckIcon size={32} color={iconColor} />
                     </View>
                     <Text className="text-lg font-bold text-text text-center mb-2">{title}</Text>
                     <Text className="text-sm text-text-secondary text-center mb-6">{message}</Text>
@@ -566,8 +564,8 @@ export function UtilitiesScreen() {
                             onPress={() => handleBulkAction('increase')}
                             disabled={isProcessing}
                         >
-                            <View className="w-10 h-10 rounded-md bg-success-20 items-center justify-center mr-3" style={{ backgroundColor: '#22c55e20' }}>
-                                <TrendingUpIcon size={20} color="#22c55e" />
+                            <View className="w-10 h-10 items-center justify-center mr-3">
+                                <TrendingUpIcon size={24} color="#22c55e" />
                             </View>
                             <View>
                                 <Text className="text-md font-semibold text-text">Increase Prices by 10%</Text>
@@ -580,8 +578,8 @@ export function UtilitiesScreen() {
                             onPress={() => handleBulkAction('decrease')}
                             disabled={isProcessing}
                         >
-                            <View className="w-10 h-10 rounded-md bg-warning-20 items-center justify-center mr-3" style={{ backgroundColor: '#f9731620' }}>
-                                <TrendingDownIcon size={20} color="#f97316" />
+                            <View className="w-10 h-10 items-center justify-center mr-3">
+                                <TrendingDownIcon size={24} color="#f97316" />
                             </View>
                             <View>
                                 <Text className="text-md font-semibold text-text">Decrease Prices by 10%</Text>
@@ -594,8 +592,8 @@ export function UtilitiesScreen() {
                             onPress={() => handleBulkAction('reset')}
                             disabled={isProcessing}
                         >
-                            <View className="w-10 h-10 rounded-md bg-danger-20 items-center justify-center mr-3" style={{ backgroundColor: '#ef444420' }}>
-                                <PackageIcon size={20} color="#ef4444" />
+                            <View className="w-10 h-10 items-center justify-center mr-3">
+                                <PackageIcon size={24} color="#ef4444" />
                             </View>
                             <View>
                                 <Text className="text-md font-semibold text-danger">Reset All Stock to Zero</Text>
@@ -635,8 +633,8 @@ export function UtilitiesScreen() {
                             onPress={() => handleCleanupAction('zero-stock')}
                             disabled={isProcessing}
                         >
-                            <View className="w-10 h-10 rounded-md bg-danger-20 items-center justify-center mr-3" style={{ backgroundColor: '#ef444420' }}>
-                                <PackageIcon size={20} color="#ef4444" />
+                            <View className="w-10 h-10 items-center justify-center mr-3">
+                                <PackageIcon size={24} color="#ef4444" />
                             </View>
                             <View>
                                 <Text className="text-md font-semibold text-danger">Remove Zero-Stock Items</Text>
@@ -649,8 +647,8 @@ export function UtilitiesScreen() {
                             onPress={() => handleCleanupAction('zero-balance')}
                             disabled={isProcessing}
                         >
-                            <View className="w-10 h-10 rounded-md bg-danger-20 items-center justify-center mr-3" style={{ backgroundColor: '#ef444420' }}>
-                                <TrashIcon size={20} color="#ef4444" />
+                            <View className="w-10 h-10 items-center justify-center mr-3">
+                                <TrashIcon size={24} color="#ef4444" />
                             </View>
                             <View>
                                 <Text className="text-md font-semibold text-danger">Remove Zero-Balance Customers</Text>

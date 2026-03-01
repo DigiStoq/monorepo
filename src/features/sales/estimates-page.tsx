@@ -416,7 +416,7 @@ export function EstimatesPage(): React.ReactNode {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-blue-100 whitespace-nowrap">
               <div className="p-1.5 bg-card rounded-md shadow-sm">
                 <Clock className="h-4 w-4 text-blue-600" />
               </div>

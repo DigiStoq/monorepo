@@ -86,7 +86,7 @@ export function TaxSummaryReport(): React.ReactNode {
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-success" />
                 </div>
                 <div>
@@ -103,7 +103,7 @@ export function TaxSummaryReport(): React.ReactNode {
           <Card className="bg-orange-50 border-orange-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <TrendingDown className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
@@ -169,7 +169,7 @@ export function TaxSummaryReport(): React.ReactNode {
           <Card>
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <Receipt className="h-5 w-5 text-slate-600" />
                 </div>
                 <div>

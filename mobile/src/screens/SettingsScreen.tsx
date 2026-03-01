@@ -47,10 +47,9 @@ function MenuItem({
       activeOpacity={0.7}
     >
       <View
-        className="w-12 h-12 rounded-lg items-center justify-center"
-        style={{ backgroundColor: (color || colors.primary) + "20" }}
+        className="w-12 h-12 items-center justify-center"
       >
-        <Icon size={24} color={color || colors.primary} />
+        <Icon size={28} color={color || colors.primary} />
       </View>
       <View className="flex-1">
         <Text className="text-md font-semibold text-text">{title}</Text>
@@ -187,10 +186,9 @@ export function SettingsScreen() {
             activeOpacity={0.7}
           >
             <View
-              className="w-12 h-12 rounded-lg items-center justify-center"
-              style={{ backgroundColor: colors.textSecondary + "20" }}
+              className="w-12 h-12 items-center justify-center"
             >
-              <Text style={{ fontSize: 18 }}>{isDark ? "🌙" : "☀️"}</Text>
+              <Text style={{ fontSize: 24 }}>{isDark ? "🌙" : "☀️"}</Text>
             </View>
             <View className="flex-1">
               <Text className="text-md font-semibold text-text">Dark Mode</Text>
@@ -202,8 +200,7 @@ export function SettingsScreen() {
 
         {/* Sign Out */}
         <TouchableOpacity
-          className="flex-row justify-center items-center gap-2 p-4 rounded-xl mt-8"
-          style={{ backgroundColor: colors.danger + '10' }}
+          className="flex-row justify-center items-center gap-2 p-4 rounded-xl mt-8 border border-danger/20"
           onPress={handleSignOut}
           activeOpacity={0.7}
         >

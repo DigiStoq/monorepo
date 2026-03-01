@@ -101,7 +101,7 @@ export function LoanList({
         <Card>
           <CardBody className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-100">
+              <div className="p-2 rounded-lg">
                 <ArrowDownLeft className="h-5 w-5 text-red-600" />
               </div>
               <div>
@@ -116,7 +116,7 @@ export function LoanList({
         <Card>
           <CardBody className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100">
+              <div className="p-2 rounded-lg">
                 <ArrowUpRight className="h-5 w-5 text-green-600" />
               </div>
               <div>
@@ -133,7 +133,7 @@ export function LoanList({
         <Card>
           <CardBody className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-slate-100">
+              <div className="p-2 rounded-lg">
                 <Landmark className="h-5 w-5 text-slate-600" />
               </div>
               <div>

@@ -119,7 +119,7 @@ export function PaymentInScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={{ marginBottom: 16 }}>
-              <WalletIcon size={48} color={colors.textMuted} />
+              <WalletIcon size={56} color={colors.textMuted} />
             </View>
             <Text style={styles.emptyText}>No payments found</Text>
             <Text style={styles.emptySubtext}>
@@ -223,12 +223,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   mode: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "700",
     color: colors.textSecondary,
-    paddingHorizontal: 8,
     paddingVertical: 2,
-    backgroundColor: colors.surfaceHover,
-    borderRadius: 4,
+    letterSpacing: 0.5,
   },
   ref: {
     fontSize: 12,

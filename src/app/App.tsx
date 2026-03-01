@@ -103,7 +103,7 @@ function AuthPopupScreen(): ReactNode {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center p-8">
-        <div className="h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="h-12 w-12 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
             className="w-6 h-6"
             fill="none"

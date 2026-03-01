@@ -36,7 +36,7 @@ const reportCategories = [
     title: "Sales Reports",
     description: "Track sales performance, invoices, and customer analytics",
     icon: TrendingUp,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
     reports: [
       {
         id: "sales-summary",
@@ -73,7 +73,7 @@ const reportCategories = [
     title: "Purchase Reports",
     description: "Monitor purchases, expenses, and supplier transactions",
     icon: ShoppingCart,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
     reports: [
       {
         id: "purchase-summary",
@@ -110,7 +110,7 @@ const reportCategories = [
     title: "Customer Reports",
     description: "Customer and supplier statements, aging, and balances",
     icon: Users,
-    color: "bg-blue-100 text-blue-700",
+    color: "text-blue-700",
     reports: [
       {
         id: "customer-statement",
@@ -147,7 +147,7 @@ const reportCategories = [
     title: "Inventory Reports",
     description: "Stock levels, movements, and profitability analysis",
     icon: Package,
-    color: "bg-purple-100 text-purple-700",
+    color: "text-purple-700",
     reports: [
       {
         id: "stock-summary",
@@ -184,7 +184,7 @@ const reportCategories = [
     title: "Financial Reports",
     description: "Profit & Loss, Cash Flow, and financial statements",
     icon: DollarSign,
-    color: "bg-teal-100 text-teal-700",
+    color: "text-teal-700",
     reports: [
       {
         id: "profit-loss",

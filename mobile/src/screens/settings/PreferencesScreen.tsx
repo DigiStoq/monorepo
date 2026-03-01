@@ -39,8 +39,8 @@ function PreferenceItem({ icon: Icon, title, value, onValueChange, type = "switc
     const content = (
         <View className="flex-row items-center justify-between p-4 border-b border-border bg-surface">
             <View className="flex-row items-center flex-1">
-                <View className="w-9 h-9 rounded-lg items-center justify-center mr-3 bg-surface-hover" style={{ backgroundColor: colors.surface + '20' }}>
-                    <Icon size={20} color={colors.text} />
+                <View className="w-9 h-9 items-center justify-center mr-3">
+                    <Icon size={24} color={colors.text} />
                 </View>
                 <View className="flex-1">
                     <Text className="text-md font-medium text-text">{title}</Text>

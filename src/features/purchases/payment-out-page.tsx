@@ -272,7 +272,7 @@ export function PaymentOutPage(): React.ReactNode {
 
           {/* Quick Stats */}
           <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-slate-200 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Wallet className="h-4 w-4 text-slate-500" />
               </div>
@@ -286,7 +286,7 @@ export function PaymentOutPage(): React.ReactNode {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-2 bg-green-50 rounded-lg border border-green-100 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-green-100 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Banknote className="h-4 w-4 text-green-600" />
               </div>
@@ -300,7 +300,7 @@ export function PaymentOutPage(): React.ReactNode {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-blue-100 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Building2 className="h-4 w-4 text-blue-600" />
               </div>

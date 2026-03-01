@@ -39,52 +39,52 @@ const categoryConfig: Record<
   rent: {
     label: "Rent",
     icon: <Home className="h-4 w-4" />,
-    color: "bg-blue-100 text-blue-700",
+    color: "text-blue-700",
   },
   utilities: {
     label: "Utilities",
     icon: <Zap className="h-4 w-4" />,
-    color: "bg-yellow-100 text-yellow-700",
+    color: "text-yellow-700",
   },
   salaries: {
     label: "Salaries",
     icon: <Users className="h-4 w-4" />,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
   },
   office: {
     label: "Office",
     icon: <Briefcase className="h-4 w-4" />,
-    color: "bg-purple-100 text-purple-700",
+    color: "text-purple-700",
   },
   travel: {
     label: "Travel",
     icon: <Plane className="h-4 w-4" />,
-    color: "bg-cyan-100 text-cyan-700",
+    color: "text-cyan-700",
   },
   marketing: {
     label: "Marketing",
     icon: <Megaphone className="h-4 w-4" />,
-    color: "bg-pink-100 text-pink-700",
+    color: "text-pink-700",
   },
   maintenance: {
     label: "Maintenance",
     icon: <Wrench className="h-4 w-4" />,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
   },
   insurance: {
     label: "Insurance",
     icon: <Shield className="h-4 w-4" />,
-    color: "bg-teal-100 text-teal-700",
+    color: "text-teal-700",
   },
   taxes: {
     label: "Taxes",
     icon: <Landmark className="h-4 w-4" />,
-    color: "bg-red-100 text-red-700",
+    color: "text-red-700",
   },
   other: {
     label: "Other",
     icon: <MoreHorizontal className="h-4 w-4" />,
-    color: "bg-slate-100 text-slate-700",
+    color: "text-slate-700",
   },
 };
 

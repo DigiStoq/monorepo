@@ -50,10 +50,9 @@ function InvoiceCard({ invoice, colors }: { invoice: any; colors: ThemeColors })
       }
     >
       <View
-        className="w-12 h-12 rounded-md justify-center items-center"
-        style={{ backgroundColor: profColors.items.bg, borderWidth: 1, borderColor: profColors.items.border }}
+        className="w-12 h-12 justify-center items-center"
       >
-        <ReceiptIcon size={20} color={profColors.items.icon} />
+        <ReceiptIcon size={24} color={profColors.items.icon} />
       </View>
       <View className="flex-1">
         <View className="flex-row items-center justify-between mb-0.5">

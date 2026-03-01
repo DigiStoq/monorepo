@@ -158,7 +158,7 @@ export function LoanPaymentForm({
       </div>
 
       {/* Total Amount Display */}
-      <div className="p-3 bg-primary-50 rounded-lg flex items-center justify-between">
+      <div className="p-3 rounded-lg flex items-center justify-between">
         <span className="text-sm font-medium text-primary-700">
           Total Payment
         </span>

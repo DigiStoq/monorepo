@@ -1040,7 +1040,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
                       />
                     </div>
                   ) : (
-                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                    <div className="space-y-3 p-3 rounded-lg">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-700">
                           Add Bank Account
@@ -1224,7 +1224,7 @@ export function PurchaseInvoicesPage(): React.ReactNode {
         ]}
         isLoading={isSubmitting}
       >
-        <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg mt-2">
+        <div className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg mt-2">
           <input
             type="checkbox"
             id="restoreStock"

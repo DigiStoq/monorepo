@@ -277,7 +277,7 @@ export function InvoiceDetail({
         <CardHeader
           title={
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary-100 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center">
                 <FileText className="h-5 w-5 text-primary-600" />
               </div>
               <div>
@@ -813,7 +813,7 @@ function HistorySection({
                   {/* Expanded Details */}
                   {isExpanded && canExpand && (
                     <div className="px-3 pb-3 pt-0">
-                      <div className="ml-11 p-3 bg-slate-50 rounded-lg space-y-3">
+                      <div className="ml-11 p-3 rounded-lg space-y-3">
                         {entry.oldValues &&
                           Object.keys(entry.oldValues).length > 0 && (
                             <div>

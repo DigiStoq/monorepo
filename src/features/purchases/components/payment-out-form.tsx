@@ -343,7 +343,7 @@ export function PaymentOutForm({
               </div>
 
               {selectedInvoice && (
-                <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+                <div className="p-3 rounded-lg space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Invoice Total</span>
                     <span className="font-medium">

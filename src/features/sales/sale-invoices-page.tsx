@@ -1015,7 +1015,7 @@ export function SaleInvoicesPage(): React.ReactNode {
         ]}
         isLoading={isSubmitting}
       >
-        <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg mt-2">
+        <div className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg mt-2">
           <input
             type="checkbox"
             id="restoreStock"
@@ -1355,7 +1355,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                   Return Action
                 </label>
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 transition-all">
+                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]: transition-all">
                     <input
                       type="radio"
                       name="returnAction"
@@ -1379,7 +1379,7 @@ export function SaleInvoicesPage(): React.ReactNode {
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 transition-all">
+                  <label className="flex items-start gap-3 p-3 bg-subtle rounded-lg cursor-pointer border border-transparent has-[:checked]:border-primary-500 has-[:checked]: transition-all">
                     <input
                       type="radio"
                       name="returnAction"

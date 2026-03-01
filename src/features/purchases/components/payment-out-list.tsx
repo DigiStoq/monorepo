@@ -32,32 +32,32 @@ const paymentModeConfig: Record<
   cash: {
     label: "Cash",
     icon: <Banknote className="h-4 w-4" />,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
   },
   bank: {
     label: "Bank Transfer",
     icon: <Building2 className="h-4 w-4" />,
-    color: "bg-blue-100 text-blue-700",
+    color: "text-blue-700",
   },
   card: {
     label: "Card",
     icon: <CreditCard className="h-4 w-4" />,
-    color: "bg-purple-100 text-purple-700",
+    color: "text-purple-700",
   },
   ach: {
     label: "ACH Transfer",
     icon: <Building2 className="h-4 w-4" />,
-    color: "bg-teal-100 text-teal-700",
+    color: "text-teal-700",
   },
   cheque: {
     label: "Cheque",
     icon: <CreditCard className="h-4 w-4" />,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
   },
   other: {
     label: "Other",
     icon: <CreditCard className="h-4 w-4" />,
-    color: "bg-slate-100 text-slate-700",
+    color: "text-slate-700",
   },
 };
 

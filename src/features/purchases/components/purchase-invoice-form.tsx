@@ -442,7 +442,7 @@ export function PurchaseInvoiceForm({
               </div>
 
               {selectedCustomer && (
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                <div className="mt-4 p-3 rounded-lg">
                   <p className="text-sm font-medium text-slate-900">
                     {selectedCustomer.name}
                   </p>
@@ -771,7 +771,7 @@ export function PurchaseInvoiceForm({
                           />
                         </>
                       ) : (
-                        <div className="p-3 bg-slate-50 rounded-lg space-y-3 border border-slate-200">
+                        <div className="p-3 rounded-lg space-y-3 border border-slate-200">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-slate-700">
                               New Bank Account

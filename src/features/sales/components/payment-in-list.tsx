@@ -35,24 +35,24 @@ const paymentModeConfig: Record<
   PaymentMode,
   { label: string; icon: typeof Banknote; color: string }
 > = {
-  cash: { label: "Cash", icon: Banknote, color: "text-green-600 bg-green-100" },
-  bank: { label: "Bank", icon: Building2, color: "text-blue-600 bg-blue-100" },
+  cash: { label: "Cash", icon: Banknote, color: "text-green-600" },
+  bank: { label: "Bank", icon: Building2, color: "text-blue-600" },
   card: {
     label: "Card",
     icon: CreditCard,
-    color: "text-purple-600 bg-purple-100",
+    color: "text-purple-600",
   },
   ach: {
     label: "ACH Transfer",
     icon: Building2,
-    color: "text-teal-600 bg-teal-100",
+    color: "text-teal-600",
   },
   cheque: {
     label: "Cheque",
     icon: FileText,
-    color: "text-text-secondary bg-muted",
+    color: "text-text-secondary",
   },
-  other: { label: "Other", icon: Wallet, color: "text-gray-600 bg-gray-100" },
+  other: { label: "Other", icon: Wallet, color: "text-gray-600" },
 };
 
 // ============================================================================
@@ -99,11 +99,11 @@ function PaymentCard({ payment, onClick }: PaymentCardProps): React.ReactNode {
         {/* Payment Mode Icon */}
         <div
           className={cn(
-            "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+            "h-10 w-10 flex items-center justify-center shrink-0",
             mode.color
           )}
         >
-          <ModeIcon className="h-5 w-5" />
+          <ModeIcon className="h-6 w-6" />
         </div>
 
         {/* Payment Info */}

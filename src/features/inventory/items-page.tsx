@@ -331,7 +331,7 @@ export function ItemsPage(): React.ReactNode {
 
           {/* Quick Stats */}
           <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-primary-50 rounded-lg border border-primary/10 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-primary/10 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Box className="h-4 w-4 text-primary-600" />
               </div>
@@ -345,7 +345,7 @@ export function ItemsPage(): React.ReactNode {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 rounded-lg border border-purple-100 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-purple-100 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Layers className="h-4 w-4 text-purple-600" />
               </div>

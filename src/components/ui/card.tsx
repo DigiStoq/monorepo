@@ -257,7 +257,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
                 {value}
               </p>
             </div>
-            {icon && <div className="rounded-lg bg-white/20 p-2.5">{icon}</div>}
+            {icon && <div className="p-2.5">{icon}</div>}
           </div>
 
           {/* Change indicator */}

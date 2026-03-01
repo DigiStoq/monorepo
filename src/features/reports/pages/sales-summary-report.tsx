@@ -138,7 +138,7 @@ export function SalesSummaryReport(): React.ReactNode {
                     {data.totalInvoices} invoices
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-green-100">
+                <div className="p-2 rounded-lg">
                   <DollarSign className="h-5 w-5 text-green-700" />
                 </div>
               </div>
@@ -157,7 +157,7 @@ export function SalesSummaryReport(): React.ReactNode {
                     Avg: {formatCurrency(data.averageOrderValue)}
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-100">
+                <div className="p-2 rounded-lg">
                   <FileText className="h-5 w-5 text-blue-700" />
                 </div>
               </div>
@@ -176,7 +176,7 @@ export function SalesSummaryReport(): React.ReactNode {
                     {collectionPercent}% collected
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-teal-100">
+                <div className="p-2 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-teal-700" />
                 </div>
               </div>
@@ -195,7 +195,7 @@ export function SalesSummaryReport(): React.ReactNode {
                     {outstandingPercent}% outstanding
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-red-100">
+                <div className="p-2 rounded-lg">
                   <TrendingDown className="h-5 w-5 text-red-700" />
                 </div>
               </div>

@@ -219,7 +219,7 @@ export function PaymentInForm({
               </div>
 
               {selectedCustomer && (
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                <div className="mt-4 p-3 rounded-lg">
                   <p className="text-sm font-medium text-slate-900">
                     {selectedCustomer.name}
                   </p>
@@ -358,7 +358,7 @@ export function PaymentInForm({
               )}
 
               {selectedInvoice && (
-                <div className="mt-4 p-3 bg-primary-50 rounded-lg border border-primary-100">
+                <div className="mt-4 p-3 rounded-lg border border-primary-100">
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm font-medium text-primary-900">

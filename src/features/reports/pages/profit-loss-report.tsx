@@ -170,7 +170,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                     {formatCurrency(data.revenue.total)}
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-green-100">
+                <div className="p-2 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-green-700" />
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                     {formatCurrency(data.expenses.total)}
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-red-100">
+                <div className="p-2 rounded-lg">
                   <TrendingDown className="h-5 w-5 text-red-700" />
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function ProfitLossReportPage(): React.ReactNode {
                     {grossMargin}% margin
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-100">
+                <div className="p-2 rounded-lg">
                   <DollarSign className="h-5 w-5 text-blue-700" />
                 </div>
               </div>

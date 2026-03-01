@@ -32,32 +32,32 @@ const typeConfig: Record<
   sale: {
     label: "Sale",
     icon: <FileText className="h-4 w-4" />,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
   },
   purchase: {
     label: "Purchase",
     icon: <ShoppingCart className="h-4 w-4" />,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
   },
   payment_in: {
     label: "Payment In",
     icon: <ArrowUpCircle className="h-4 w-4" />,
-    color: "bg-teal-100 text-teal-700",
+    color: "text-teal-700",
   },
   payment_out: {
     label: "Payment Out",
     icon: <ArrowDownCircle className="h-4 w-4" />,
-    color: "bg-red-100 text-red-700",
+    color: "text-red-700",
   },
   expense: {
     label: "Expense",
     icon: <Receipt className="h-4 w-4" />,
-    color: "bg-purple-100 text-purple-700",
+    color: "text-purple-700",
   },
   adjustment: {
     label: "Adjustment",
     icon: <Settings2 className="h-4 w-4" />,
-    color: "bg-slate-100 text-slate-700",
+    color: "text-slate-700",
   },
 };
 
@@ -191,7 +191,7 @@ export function DayBookReport(): React.ReactNode {
                   {formatCurrency(filteredTotals.debit)}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-100">
+              <div className="p-2 rounded-lg">
                 <ArrowUpCircle className="h-5 w-5 text-blue-700" />
               </div>
             </div>
@@ -207,7 +207,7 @@ export function DayBookReport(): React.ReactNode {
                   {formatCurrency(filteredTotals.credit)}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-100">
+              <div className="p-2 rounded-lg">
                 <ArrowDownCircle className="h-5 w-5 text-green-700" />
               </div>
             </div>

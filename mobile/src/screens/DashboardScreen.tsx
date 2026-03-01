@@ -73,15 +73,6 @@ export function DashboardScreen() {
     }
   };
 
-  const getTransactionColor = (type: DashboardTransaction['type']) => {
-    switch (type) {
-      case 'sale': return profColors.sales;
-      case 'purchase': return profColors.payable;
-      case 'payment-in': return profColors.receivable;
-      case 'payment-out': return profColors.payable;
-      default: return profColors.items;
-    }
-  };
 
   return (
     <View className="flex-1 bg-background">
@@ -120,14 +111,9 @@ export function DashboardScreen() {
           <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
             <View className="flex-row justify-between items-start mb-3">
               <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: profColors.receivable.bg,
-                  borderWidth: 1,
-                  borderColor: profColors.receivable.border,
-                }}
+                className="w-10 h-10 justify-center items-center"
               >
-                <TrendingUpIcon size={20} color={profColors.receivable.icon} strokeWidth={2} />
+                <TrendingUpIcon size={24} color={profColors.receivable.icon} strokeWidth={2} />
               </View>
               <View
                 className="flex-row items-center px-1.5 py-0.5 rounded-lg gap-0.5"
@@ -153,14 +139,9 @@ export function DashboardScreen() {
           <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
             <View className="flex-row justify-between items-start mb-3">
               <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: profColors.payable.bg,
-                  borderWidth: 1,
-                  borderColor: profColors.payable.border,
-                }}
+                className="w-10 h-10 justify-center items-center"
               >
-                <TrendingDownIcon size={20} color={profColors.payable.icon} strokeWidth={2} />
+                <TrendingDownIcon size={24} color={profColors.payable.icon} strokeWidth={2} />
               </View>
               <View
                 className="flex-row items-center px-1.5 py-0.5 rounded-lg gap-0.5"
@@ -183,14 +164,9 @@ export function DashboardScreen() {
           <View className="w-40 p-3 rounded-2xl mb-1 shadow-sm bg-surface">
             <View className="flex-row justify-between items-start mb-3">
               <View
-                className="w-10 h-10 rounded-xl justify-center items-center"
-                style={{
-                  backgroundColor: colors.info + '12',
-                  borderWidth: 1,
-                  borderColor: colors.info + '25',
-                }}
+                className="w-10 h-10 justify-center items-center"
               >
-                <ReceiptIcon size={18} color={colors.info} strokeWidth={2.5} />
+                <ReceiptIcon size={24} color={colors.info} strokeWidth={2.5} />
               </View>
             </View>
             <Text className="text-xl font-bold text-text mb-0.5">{formatCurrency(metrics.todaySales)}</Text>
@@ -205,14 +181,9 @@ export function DashboardScreen() {
           <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
             <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'all' })}>
               <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.primary + '12',
-                  borderWidth: 1,
-                  borderColor: colors.primary + '25',
-                }}
+                className="w-11 h-11 justify-center items-center mb-2"
               >
-                <BoxIcon size={22} color={colors.primary} strokeWidth={2} />
+                <BoxIcon size={28} color={colors.primary} strokeWidth={2} />
               </View>
               <Text className="text-lg font-bold text-text">{stockMetrics.itemCount}</Text>
               <Text className="text-xs text-text-muted text-center mt-0.5">Total Items</Text>
@@ -223,14 +194,9 @@ export function DashboardScreen() {
           <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
             <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'low' })}>
               <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.warning + '12',
-                  borderWidth: 1,
-                  borderColor: colors.warning + '25',
-                }}
+                className="w-11 h-11 justify-center items-center mb-2"
               >
-                <AlertTriangleIcon size={22} color={colors.warning} strokeWidth={2} />
+                <AlertTriangleIcon size={28} color={colors.warning} strokeWidth={2} />
               </View>
               <Text className="text-lg font-bold text-text">{stockMetrics.lowStockCount}</Text>
               <Text className="text-xs text-text-muted text-center mt-0.5">Low Stock</Text>
@@ -241,14 +207,9 @@ export function DashboardScreen() {
           <View className="flex-1 bg-surface rounded-2xl p-3 items-center shadow-sm">
             <TouchableOpacity className="items-center" onPress={() => navigation.navigate("ItemsTab", { filter: 'out' })}>
               <View
-                className="w-11 h-11 rounded-xl justify-center items-center mb-2"
-                style={{
-                  backgroundColor: colors.danger + '12',
-                  borderWidth: 1,
-                  borderColor: colors.danger + '25',
-                }}
+                className="w-11 h-11 justify-center items-center mb-2"
               >
-                <XCircleIcon size={22} color={colors.danger} strokeWidth={2} />
+                <XCircleIcon size={28} color={colors.danger} strokeWidth={2} />
               </View>
               <Text className="text-lg font-bold text-text">{stockMetrics.outOfStockCount}</Text>
               <Text className="text-xs text-text-muted text-center mt-0.5">Out of Stock</Text>
@@ -312,16 +273,10 @@ export function DashboardScreen() {
 
         <View className="bg-surface rounded-xl shadow-sm p-1">
           {transactions.map((tx) => {
-            const txColors = getTransactionColor(tx.type); // Now returns { bg, icon, border }
             return (
               <TouchableOpacity key={tx.id} className="flex-row items-center p-3 border-b border-border-light last:border-b-0">
                 <View
-                  className="w-10 h-10 rounded-xl justify-center items-center"
-                  style={{
-                    backgroundColor: (txColors as any).bg,
-                    borderWidth: 1,
-                    borderColor: (txColors as any).border,
-                  }}
+                  className="w-10 h-10 justify-center items-center"
                 >
                   {getTransactionIcon(tx.type)}
                 </View>

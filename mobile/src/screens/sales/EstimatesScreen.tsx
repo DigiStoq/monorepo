@@ -49,7 +49,7 @@ function EstimateCard({ estimate, styles, colors }: { estimate: any, styles: any
     >
       <View style={styles.cardMain}>
         <View style={styles.estimateIconBox}>
-          <CalculatorIcon size={20} color={colors.primary} />
+          <CalculatorIcon size={24} color={colors.primary} />
         </View>
         <View style={styles.estimateMainInfo}>
           <View style={styles.estimateHeaderRow}>
@@ -184,12 +184,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   filterButton: {
     width: 48,
     height: 48,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   list: {
     paddingHorizontal: 20,
@@ -215,8 +211,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   estimateIconBox: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.primary + "10",
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -255,10 +249,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
   },
   statusBadge: {
-    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
   },
   statusText: {
     fontSize: 11,
@@ -289,8 +280,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyIconContainer: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.surfaceHover,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,

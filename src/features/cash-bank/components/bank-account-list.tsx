@@ -43,27 +43,27 @@ const accountTypeConfig: Record<
   savings: {
     label: "Savings",
     icon: <PiggyBank className="h-4 w-4" />,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
   },
   checking: {
     label: "Checking",
     icon: <Wallet className="h-4 w-4" />,
-    color: "bg-blue-100 text-blue-700",
+    color: "text-blue-700",
   },
   credit: {
     label: "Credit Card",
     icon: <CreditCard className="h-4 w-4" />,
-    color: "bg-purple-100 text-purple-700",
+    color: "text-purple-700",
   },
   loan: {
     label: "Loan",
     icon: <Landmark className="h-4 w-4" />,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
   },
   other: {
     label: "Other",
     icon: <MoreHorizontal className="h-4 w-4" />,
-    color: "bg-slate-100 text-slate-700",
+    color: "text-slate-700",
   },
 };
 

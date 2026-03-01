@@ -133,7 +133,7 @@ export function CustomerStatementReport(): React.ReactNode {
               <Card className="bg-primary-50 border-primary-100">
                 <CardBody className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary-100 rounded-full text-primary-600">
+                    <div className="p-2 rounded-full text-primary-600">
                       <User className="h-5 w-5" />
                     </div>
                     <div>
@@ -151,7 +151,7 @@ export function CustomerStatementReport(): React.ReactNode {
               <Card className="bg-emerald-50 border-emerald-100">
                 <CardBody className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
+                    <div className="p-2 rounded-full text-emerald-600">
                       <ArrowDownCircle className="h-5 w-5" />
                     </div>
                     <div>
@@ -169,7 +169,7 @@ export function CustomerStatementReport(): React.ReactNode {
               <Card className="bg-amber-50 border-amber-100">
                 <CardBody className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                    <div className="p-2 rounded-full text-amber-600">
                       <ArrowUpCircle className="h-5 w-5" />
                     </div>
                     <div>

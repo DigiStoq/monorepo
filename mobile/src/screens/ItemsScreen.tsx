@@ -92,7 +92,7 @@ function ItemCard({ item, colors }: { item: any, colors: ThemeColors }) {
     >
       <View
         className="w-14 h-14 bg-surface-hover rounded-lg justify-center items-center"
-        style={{ backgroundColor: profColors.items.bg, borderWidth: 1, borderColor: profColors.items.border }}
+        style={{ backgroundColor: "transparent" }}
       >
         <BoxIcon size={24} color={profColors.items.icon} />
       </View>

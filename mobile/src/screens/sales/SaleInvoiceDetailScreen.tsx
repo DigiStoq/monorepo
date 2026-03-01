@@ -201,17 +201,16 @@ export function SaleInvoiceDetailScreen() {
                     {invoice.status !== "paid" && invoice.amount_due > 0 && (
                         <TouchableOpacity
                             onPress={handleRecordPayment}
-                            className="p-2 rounded-md"
-                            style={{ backgroundColor: colors.success + "20" }}
+                            className="p-2"
                         >
-                            <WalletIcon size={20} color={colors.success} />
+                            <WalletIcon size={24} color={colors.success} />
                         </TouchableOpacity>
                     )}
-                    <TouchableOpacity onPress={handlePDFAction} className="p-2 bg-primary-10 rounded-md" disabled={isGenerating}>
-                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <Download01Icon size={20} color={colors.primary} />}
+                    <TouchableOpacity onPress={handlePDFAction} className="p-2" disabled={isGenerating}>
+                        {isGenerating ? <ActivityIndicator size="small" color={colors.primary} /> : <Download01Icon size={24} color={colors.primary} />}
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={handleEdit} className="p-2 bg-primary-10 rounded-md">
-                        <EditIcon size={20} color={colors.primary} />
+                    <TouchableOpacity onPress={handleEdit} className="p-2">
+                        <EditIcon size={24} color={colors.primary} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -220,12 +219,12 @@ export function SaleInvoiceDetailScreen() {
                 {/* Status & Customer Card */}
                 <View className="bg-surface rounded-lg p-4 shadow-sm">
                     <View className="flex-row justify-between items-center mb-2">
-                        <View className="flex-row items-center px-3 py-1 rounded-sm gap-1.5" style={{ backgroundColor: statusStyle.bg }}>
+                        <View className="flex-row items-center gap-1.5">
                             {invoice.status.toLowerCase() === 'paid' ?
-                                <CheckCircleIcon size={14} color={statusStyle.text} /> :
-                                <ReceiptIcon size={14} color={statusStyle.text} />
+                                <CheckCircleIcon size={18} color={statusStyle.text} /> :
+                                <ReceiptIcon size={18} color={statusStyle.text} />
                             }
-                            <Text className="text-xs font-bold" style={{ color: statusStyle.text }}>{invoice.status.toUpperCase()}</Text>
+                            <Text className="text-sm font-bold" style={{ color: statusStyle.text }}>{invoice.status.toUpperCase()}</Text>
                         </View>
                         <Text className="text-sm text-text-muted">Inv Date: {new Date(invoice.date).toLocaleDateString()}</Text>
                     </View>

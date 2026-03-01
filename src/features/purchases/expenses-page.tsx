@@ -273,7 +273,7 @@ export function ExpensesPage(): React.ReactNode {
 
           {/* Quick Stats */}
           <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0 border-t xl:border-t-0 pt-4 xl:pt-0 border-slate-100">
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-slate-200 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <Receipt className="h-4 w-4 text-slate-500" />
               </div>
@@ -287,7 +287,7 @@ export function ExpensesPage(): React.ReactNode {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 whitespace-nowrap">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-slate-200 whitespace-nowrap">
               <div className="p-1.5 bg-white rounded-md shadow-sm">
                 <PieChart className="h-4 w-4 text-slate-500" />
               </div>

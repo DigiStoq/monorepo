@@ -722,7 +722,7 @@ export function BackupSettingsPage(): React.ReactNode {
         <Card className="border-red-200">
           <CardBody>
             <div className="flex items-start gap-4">
-              <div className="p-2 bg-red-100 rounded-lg">
+              <div className="p-2 rounded-lg">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div className="flex-1">

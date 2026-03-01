@@ -286,7 +286,7 @@ export function EstimateForm({
               </div>
 
               {selectedCustomer && (
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                <div className="mt-4 p-3 rounded-lg">
                   <p className="text-sm font-medium text-slate-900">
                     {selectedCustomer.name}
                   </p>

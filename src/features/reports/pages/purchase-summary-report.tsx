@@ -88,7 +88,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
           <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <ShoppingCart className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
@@ -103,7 +103,7 @@ export function PurchaseSummaryReport(): React.ReactNode {
           <Card>
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-slate-600" />
                 </div>
                 <div>

@@ -78,17 +78,17 @@ const typeConfig: Record<
   payment_in: {
     label: "Payment In",
     icon: <ArrowUpCircle className="h-4 w-4" />,
-    color: "bg-green-100 text-green-700",
+    color: "text-green-700",
   },
   payment_out: {
     label: "Payment Out",
     icon: <ArrowDownCircle className="h-4 w-4" />,
-    color: "bg-red-100 text-red-700",
+    color: "text-red-700",
   },
   expense: {
     label: "Expense",
     icon: <Receipt className="h-4 w-4" />,
-    color: "bg-orange-100 text-orange-700",
+    color: "text-orange-700",
   },
 };
 
@@ -192,7 +192,7 @@ export function CashMovementReportPage(): React.ReactNode {
           <Card className="bg-green-50 border-green-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <ArrowUpCircle className="h-6 w-6 text-success" />
                 </div>
                 <div>
@@ -208,7 +208,7 @@ export function CashMovementReportPage(): React.ReactNode {
           <Card className="bg-red-50 border-red-100">
             <CardBody className="py-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
+                <div className="p-2 rounded-lg">
                   <ArrowDownCircle className="h-6 w-6 text-error" />
                 </div>
                 <div>

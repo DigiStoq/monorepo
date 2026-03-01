@@ -19,7 +19,7 @@ const settingsSections = [
       "Manage your business profile, address, and registration details",
     icon: Building2,
     path: "/settings/company",
-    color: "bg-blue-100 text-blue-600",
+    color: "text-blue-600",
   },
   {
     id: "profile",
@@ -27,7 +27,7 @@ const settingsSections = [
     description: "Update your account information and notification preferences",
     icon: User,
     path: "/settings/profile",
-    color: "bg-purple-100 text-purple-600",
+    color: "text-purple-600",
   },
   {
     id: "preferences",
@@ -35,7 +35,7 @@ const settingsSections = [
     description: "Customize app appearance, date formats, and display settings",
     icon: Settings,
     path: "/settings/preferences",
-    color: "bg-slate-100 text-slate-600",
+    color: "text-slate-600",
   },
   {
     id: "tax",
@@ -43,7 +43,7 @@ const settingsSections = [
     description: "Configure tax rates, invoice numbering, and payment terms",
     icon: Receipt,
     path: "/settings/tax",
-    color: "bg-amber-100 text-amber-600",
+    color: "text-amber-600",
   },
   {
     id: "security",
@@ -51,7 +51,7 @@ const settingsSections = [
     description: "Manage passwords, sessions, and security settings",
     icon: Shield,
     path: "/settings/security",
-    color: "bg-rose-100 text-rose-600",
+    color: "text-rose-600",
   },
   {
     id: "backup",
@@ -59,7 +59,7 @@ const settingsSections = [
     description: "Export data, manage backups, and restore from previous saves",
     icon: Database,
     path: "/settings/backup",
-    color: "bg-teal-100 text-teal-600",
+    color: "text-teal-600",
   },
 ];
 
